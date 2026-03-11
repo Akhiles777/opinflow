@@ -55,7 +55,7 @@ export default function Hero() {
               { value: "97%", label: "качество данных" },
             ].map((stat) => (
               <div key={stat.label} className="text-center">
-                <p className="font-display text-3xl font-bold text-white">
+                <p className="font-body tabular-nums text-3xl font-semibold text-white tracking-tight">
                   {stat.value}
                 </p>
                 <p className="text-xs font-body text-white/25 mt-1">

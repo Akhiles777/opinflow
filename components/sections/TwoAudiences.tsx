@@ -26,10 +26,11 @@ const analyticsRows = [
 
 export default function TwoAudiences() {
   return (
-    <section className="py-8 px-8 bg-surface-950">
+    <section className="py-8 px-8 bg-surface-950" aria-label="Для респондентов и бизнеса">
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-5">
         <RevealOnScroll direction="left">
           <div className="relative rounded-3xl border border-white/8 bg-surface-900 overflow-hidden p-10 min-h-[500px] hover:border-white/14 transition-all duration-500 group">
+            <span id="respondents" className="absolute -top-20" aria-hidden="true" />
             <GlowOrb
               size={300}
               opacity={0}
@@ -59,7 +60,7 @@ export default function TwoAudiences() {
 
             <div className="absolute bottom-8 right-8 w-52 bg-surface-800 border border-white/8 rounded-2xl p-5 shadow-card animate-float">
               <p className="text-xs font-body text-white/25 mb-1">Мой баланс</p>
-              <p className="font-display text-2xl text-white font-bold">1 240 ₽</p>
+              <p className="font-body tabular-nums text-2xl text-white font-semibold tracking-tight">1 240 ₽</p>
               <div className="mt-3 pt-3 border-t border-white/5">
                 <p className="text-xs font-body text-white/25">Последнее начисление</p>
                 <p className="text-sm font-semibold text-brand-light mt-0.5">+350 ₽</p>
@@ -70,6 +71,7 @@ export default function TwoAudiences() {
 
         <RevealOnScroll direction="right">
           <div className="relative rounded-3xl border border-white/8 bg-surface-900 overflow-hidden p-10 min-h-[500px] hover:border-white/14 transition-all duration-500 group">
+            <span id="business" className="absolute -top-20" aria-hidden="true" />
             <GlowOrb
               size={300}
               opacity={0}

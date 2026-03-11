@@ -13,16 +13,16 @@ export function Modal({ open, title, onClose, children }: ModalProps) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-gutter">
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-6">
       <div
-        className="absolute inset-0 bg-ink/50"
+        className="absolute inset-0 bg-black/60"
         onClick={onClose}
         aria-hidden="true"
       />
-      <div className="relative w-full max-w-lg rounded-[24px] border border-ink/10 bg-paper p-6 shadow-lift">
+      <div className="relative w-full max-w-lg rounded-2xl border border-white/10 bg-surface-900 p-6 shadow-card-lg">
         <div className="flex items-start justify-between gap-4">
           {title ? (
-            <h3 className="text-lg font-semibold text-ink">{title}</h3>
+            <h3 className="text-lg font-semibold text-white">{title}</h3>
           ) : (
             <div />
           )}
@@ -30,13 +30,13 @@ export function Modal({ open, title, onClose, children }: ModalProps) {
             <button
               type="button"
               onClick={onClose}
-              className="rounded-full border border-ink/15 px-3 py-1 text-[0.6rem] font-semibold uppercase tracking-[0.3em] text-ink/70 transition hover:border-purple hover:text-purple"
+              className="rounded-full border border-white/10 px-3 py-1 text-[0.6rem] font-semibold uppercase tracking-[0.3em] text-white/50 transition hover:border-brand/30 hover:text-white"
             >
               Закрыть
             </button>
           ) : null}
         </div>
-        <div className="mt-4 text-sm text-ink/80">{children}</div>
+        <div className="mt-4 text-sm text-white/75">{children}</div>
       </div>
     </div>
   );

@@ -65,7 +65,7 @@ export default function About() {
           {stats.map((stat) => (
             <RevealOnScroll key={stat.label}>
               <div className="bg-surface-900 border border-white/7 rounded-2xl p-8">
-                <p className="font-display text-4xl text-brand-light font-bold mb-2">
+                <p className="font-body tabular-nums text-4xl text-brand-light font-semibold tracking-tight mb-2">
                   {stat.num}
                 </p>
                 <p className="text-sm font-body text-white/35">{stat.label}</p>

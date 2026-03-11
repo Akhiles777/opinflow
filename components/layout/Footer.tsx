@@ -1,11 +1,12 @@
 import * as React from "react";
+import Image from "next/image";
 
 const navLinks = [
-  "Главная",
-  "Респондентам",
-  "Бизнесу",
-  "О нас",
-  "Контакты",
+  { label: "Главная", href: "#top" },
+  { label: "Респондентам", href: "#respondents" },
+  { label: "Бизнесу", href: "#business" },
+  { label: "О нас", href: "#about" },
+  { label: "Контакты", href: "#contacts" },
 ];
 
 const legalLinks = [
@@ -20,10 +21,20 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr_1fr] gap-16 pb-16 border-b border-white/5">
           <div>
-            <div className="flex items-center gap-2.5">
-              <div className="w-5 h-5 rounded-md bg-brand" />
-              <span className="font-display text-white font-bold">OpinionFlow</span>
+           <a href="/">
+             <div className="flex items-center gap-2.5">
+              <div className="relative h-12 w-12 overflow-hidden">
+                <Image
+                  src="/favicon.png"
+                  alt="ПотокМнений"
+                  fill
+                  sizes="28px"
+                  className="object-contain"
+                />
+              </div>
+              <span className="font-display text-white font-bold">ПотокМнений</span>
             </div>
+           </a>
             <p className="text-sm font-body text-white/20 max-w-xs mt-4 leading-relaxed">
               Автоматизированная платформа маркетинговых исследований. Соединяем бренды и аудиторию.
             </p>
@@ -40,11 +51,11 @@ export default function Footer() {
             <div className="grid gap-2">
               {navLinks.map((link) => (
                 <a
-                  key={link}
-                  href="#"
+                  key={link.href}
+                  href={link.href}
                   className="text-sm font-body text-white/20 hover:text-white/60 transition-colors"
                 >
-                  {link}
+                  {link.label}
                 </a>
               ))}
             </div>

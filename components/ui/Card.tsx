@@ -6,7 +6,7 @@ type CardProps = React.HTMLAttributes<HTMLDivElement> & {
 
 export function Card({ className, ...props }: CardProps) {
   const classes = [
-    "rounded-[24px] border border-ink/10 bg-paper p-6 shadow-soft",
+    "rounded-2xl border border-white/8 bg-surface-900 p-6 shadow-card",
     className,
   ]
     .filter(Boolean)

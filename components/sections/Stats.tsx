@@ -15,7 +15,7 @@ export default function Stats() {
         {stats.map((stat, index) => (
           <RevealOnScroll key={stat.label} delay={index * 80}>
             <div className="py-16 px-10 hover:bg-surface-800 transition-colors duration-300">
-              <p className="font-display text-5xl text-white tracking-tight mb-2">
+              <p className="font-body tabular-nums text-5xl font-semibold text-white tracking-tight mb-2">
                 {stat.num}
               </p>
               <p className="text-sm font-body text-white/25">
