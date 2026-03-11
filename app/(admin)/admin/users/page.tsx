@@ -16,7 +16,7 @@ export default function AdminUsersPage() {
           <h1 className="font-display text-3xl sm:text-4xl text-white tracking-tight">
             Пользователи
           </h1>
-          <p className="mt-2 text-sm sm:text-base font-body text-white/40">
+          <p className="mt-2 text-base font-body text-white/45 leading-relaxed">
             Поиск, блокировки и роли. На Этапе 5 подключим реальную админ-логику.
           </p>
         </div>
@@ -27,14 +27,14 @@ export default function AdminUsersPage() {
 
       <div className="mt-8 rounded-2xl border border-white/8 bg-surface-900 overflow-hidden">
         <div className="px-6 py-4 border-b border-white/5">
-          <p className="text-sm font-semibold text-white/85">Список</p>
+          <p className="text-base font-semibold text-white/90">Список</p>
         </div>
         <div className="divide-y divide-white/5">
           {users.map((u) => (
             <div key={u.email} className="px-6 py-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-white/90 truncate">{u.email}</p>
-                <p className="text-xs font-body text-white/35 mt-1">
+                <p className="text-base font-semibold text-white/90 truncate">{u.email}</p>
+                <p className="text-sm font-body text-white/40 mt-1">
                   Роль: <span className="text-white/55">{u.role}</span> · Статус:{" "}
                   <span className="text-white/55">{u.status}</span>
                 </p>
@@ -50,4 +50,3 @@ export default function AdminUsersPage() {
     </div>
   );
 }
-

@@ -11,9 +11,8 @@ const nav = [
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <DashboardShell roleLabel="Админ-панель" nav={nav}>
+    <DashboardShell roleLabel="Админ-панель" nav={nav} scale="lg">
       {children}
     </DashboardShell>
   );
 }
-

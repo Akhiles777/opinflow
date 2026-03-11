@@ -13,21 +13,21 @@ export default function AdminModerationPage() {
       <h1 className="font-display text-3xl sm:text-4xl text-white tracking-tight">
         Модерация
       </h1>
-      <p className="mt-2 text-sm sm:text-base font-body text-white/40">
+      <p className="mt-2 text-base font-body text-white/45 leading-relaxed">
         Очередь опросов перед публикацией. Сейчас интерфейс статический.
       </p>
 
       <div className="mt-8 rounded-2xl border border-white/8 bg-surface-900 overflow-hidden">
         <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between">
-          <p className="text-sm font-semibold text-white/85">Опросы на проверке</p>
-          <p className="text-xs font-body text-white/35">{queue.length} шт.</p>
+          <p className="text-base font-semibold text-white/90">Опросы на проверке</p>
+          <p className="text-sm font-body text-white/40">{queue.length} шт.</p>
         </div>
         <div className="divide-y divide-white/5">
           {queue.map((item) => (
             <div key={item.title} className="px-6 py-5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-white/90 truncate">{item.title}</p>
-                <p className="text-xs font-body text-white/35 mt-1">
+                <p className="text-base font-semibold text-white/90 truncate">{item.title}</p>
+                <p className="text-sm font-body text-white/40 mt-1">
                   {item.client} · {item.created}
                 </p>
               </div>
@@ -43,4 +43,3 @@ export default function AdminModerationPage() {
     </div>
   );
 }
-
