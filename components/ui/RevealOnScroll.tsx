@@ -4,43 +4,52 @@ import { useEffect, useRef, useState } from "react";
 
 type RevealOnScrollProps = {
   children: React.ReactNode;
-  delay?: 0 | 100 | 200 | 300;
+  delay?: number;
+  direction?: "up" | "left" | "right";
   className?: string;
 };
 
 export default function RevealOnScroll({
   children,
   delay = 0,
+  direction = "up",
   className = "",
 }: RevealOnScrollProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
 
+  const initial =
+    direction === "left"
+      ? "translateX(-24px)"
+      : direction === "right"
+      ? "translateX(24px)"
+      : "translateY(32px)";
+
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const observer = new IntersectionObserver(
+    const obs = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
           setVisible(true);
-          observer.disconnect();
+          obs.disconnect();
         }
       },
-      { threshold: 0.12 }
+      { threshold: 0.1 }
     );
-    observer.observe(el);
-    return () => observer.disconnect();
+    obs.observe(el);
+    return () => obs.disconnect();
   }, []);
 
   return (
     <div
       ref={ref}
-      className={`transition-none ${className}`}
+      className={className}
       style={{
         opacity: visible ? 1 : 0,
-        transform: visible ? "translateY(0)" : "translateY(28px)",
+        transform: visible ? "translate(0)" : initial,
         transition: visible
-          ? `opacity 0.7s cubic-bezier(0.16,1,0.3,1) ${delay}ms, transform 0.7s cubic-bezier(0.16,1,0.3,1) ${delay}ms`
+          ? `opacity 0.8s cubic-bezier(0.16,1,0.3,1) ${delay}ms, transform 0.8s cubic-bezier(0.16,1,0.3,1) ${delay}ms`
           : "none",
       }}
     >

@@ -14,21 +14,22 @@ const partners = [
 
 export default function Partners() {
   return (
-    <section className="bg-gray-50 border-y border-gray-100 py-16">
-      <div className="max-w-6xl mx-auto px-6">
+    <section className="py-20 px-8 bg-surface-900 border-y border-white/5">
+      <div className="max-w-7xl mx-auto">
         <RevealOnScroll>
-          <p className="text-xs font-semibold tracking-[0.2em] uppercase text-gray-300 text-center mb-10">
-            Нам доверяют
+          <p className="text-xs font-semibold font-body uppercase tracking-[0.3em] text-white/15 text-center mb-14">
+            Нам доверяют ведущие компании
           </p>
         </RevealOnScroll>
+
         <div className="relative overflow-hidden">
-          <div className="pointer-events-none absolute left-0 top-0 h-full w-24 bg-gradient-to-r from-gray-50 to-transparent" />
-          <div className="pointer-events-none absolute right-0 top-0 h-full w-24 bg-gradient-to-l from-gray-50 to-transparent" />
+          <div className="pointer-events-none absolute left-0 top-0 h-full w-32 bg-gradient-to-r from-surface-900 to-transparent" />
+          <div className="pointer-events-none absolute right-0 top-0 h-full w-32 bg-gradient-to-l from-surface-900 to-transparent" />
           <div className="flex gap-16 animate-marquee w-max">
             {[...partners, ...partners].map((partner, index) => (
               <span
                 key={`${partner}-${index}`}
-                className="font-display text-base text-gray-300 hover:text-gray-600 transition-colors duration-300 cursor-default uppercase tracking-widest whitespace-nowrap"
+                className="font-display text-sm font-bold uppercase tracking-[0.25em] text-white/15 hover:text-white/50 transition-colors cursor-default whitespace-nowrap"
               >
                 {partner}
               </span>

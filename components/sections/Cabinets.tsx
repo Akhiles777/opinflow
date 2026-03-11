@@ -1,56 +1,76 @@
 import * as React from "react";
+import Button from "@/components/ui/Button";
 import RevealOnScroll from "@/components/ui/RevealOnScroll";
-import SectionLabel from "@/components/ui/SectionLabel";
 
 const roles = [
   {
     title: "Респондент",
     description:
-      "Баланс, история начислений, список доступных опросов и реферальная статистика.",
+      "Всё для заработка: баланс, история начислений, список доступных опросов и реферальная статистика. Вывод средств в один клик.",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-6 h-6">
+        <circle cx="12" cy="8" r="4" />
+        <path d="M4 22c2-5 14-5 16 0" />
+      </svg>
+    ),
   },
   {
     title: "Заказчик",
     description:
-      "Создание опросов, управление бюджетом, статистика в реальном времени и отчеты.",
+      "Создание опросов, управление бюджетом, просмотр статистики в реальном времени и готовые отчёты. Встроенный конструктор и доступ к экспертам.",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-6 h-6">
+        <rect x="3" y="4" width="18" height="14" rx="3" />
+        <path d="M7 8h10" />
+        <path d="M7 12h6" />
+      </svg>
+    ),
+    featured: true,
   },
   {
     title: "Администратор",
     description:
-      "Модерация опросов, управление пользователями, настройка комиссии и мониторинг.",
+      "Модерация опросов, управление пользователями, настройка комиссии, обработка жалоб и финансовый мониторинг — всё в одной панели.",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-6 h-6">
+        <path d="M12 2l7 4v6c0 5-3 9-7 10-4-1-7-5-7-10V6l7-4z" />
+      </svg>
+    ),
   },
 ];
 
 export default function Cabinets() {
   return (
-    <section className="bg-white border-b border-gray-100 py-32 px-6">
-      <div className="max-w-6xl mx-auto text-center">
+    <section className="py-24 px-8 bg-surface-950">
+      <div className="max-w-7xl mx-auto">
         <RevealOnScroll>
-          <SectionLabel>Кабинеты</SectionLabel>
-          <h2 className="font-display text-display-xl text-gray-900">
-            Роли и рабочие пространства
+          <h2 className="font-display text-heading text-white text-center mb-16">
+            Удобные кабинеты для каждой роли
           </h2>
         </RevealOnScroll>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-16 text-left">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           {roles.map((role) => (
             <RevealOnScroll key={role.title}>
-              <div className="border border-gray-200 rounded-2xl p-8 hover:border-brand/30 hover:shadow-card-lg hover:-translate-y-1 transition-all duration-300 group">
-                <div className="h-px w-0 group-hover:w-full bg-brand transition-all duration-500 mb-8" />
-                <div className="w-11 h-11 bg-gray-100 group-hover:bg-brand-light rounded-xl flex items-center justify-center transition-colors duration-300 text-brand">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <path d="M12 2l7 4v6c0 5-3 9-7 10-4-1-7-5-7-10V6l7-4z" />
-                  </svg>
+              <div
+                className={[
+                  "bg-surface-900 border border-white/8 rounded-2xl p-8",
+                  "hover:border-brand/25 hover:-translate-y-1 transition-all duration-300 group",
+                  role.featured ? "border-brand/20" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+              >
+                <div className="w-11 h-11 bg-brand/10 rounded-xl flex items-center justify-center text-brand-light">
+                  {role.icon}
                 </div>
-                <h3 className="font-display text-xl text-gray-900 mt-6 mb-3">
+                <h3 className="font-display text-xl text-white mt-6 mb-3">
                   {role.title}
                 </h3>
-                <p className="text-sm text-gray-400 leading-relaxed mb-8">
+                <p className="text-sm font-body text-white/40 leading-relaxed mb-8">
                   {role.description}
                 </p>
-                <a className="text-sm font-semibold text-brand flex items-center gap-1.5 group-hover:gap-2.5 transition-all" href="#">
-                  Подробнее
-                  <span>→</span>
-                </a>
+                <Button variant="ghost" size="md">Подробнее →</Button>
               </div>
             </RevealOnScroll>
           ))}

@@ -1,41 +1,23 @@
-"use client";
-
 import * as React from "react";
 import Button from "@/components/ui/Button";
 
 export default function Header() {
-  const [scrolled, setScrolled] = React.useState(false);
-
-  React.useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 10);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
   return (
-    <header
-      className={[
-        "sticky top-0 z-50 h-16",
-        scrolled
-          ? "bg-white/90 backdrop-blur-md border-b border-gray-100"
-          : "bg-transparent",
-      ]
-        .filter(Boolean)
-        .join(" ")}
-    >
-      <div className="max-w-6xl mx-auto px-6 h-full flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-brand inline-block" />
-          <span className="font-display text-gray-900 text-base">OpinionFlow</span>
+    <header className="sticky top-0 z-50 bg-surface-950/80 backdrop-blur-xl border-b border-white/5">
+      <div className="h-16 px-8 max-w-7xl mx-auto flex justify-between items-center">
+        <div className="flex items-center gap-2.5">
+          <div className="w-5 h-5 rounded-md bg-brand" />
+          <span className="font-display text-white font-bold text-base">
+            ПотокМнений
+          </span>
         </div>
-        <nav className="hidden lg:flex items-center gap-8 text-sm text-gray-500">
+        <nav className="hidden lg:flex items-center gap-8 text-sm font-body text-white/40">
           {["Главная", "Респондентам", "Бизнесу", "О нас", "Контакты"].map(
             (label) => (
               <a
                 key={label}
                 href={`#${label === "Главная" ? "top" : label === "О нас" ? "about" : label === "Контакты" ? "contacts" : label === "Респондентам" ? "respondents" : "business"}`}
-                className="hover:text-gray-900 transition-colors"
+                className="hover:text-white transition-colors"
               >
                 {label}
               </a>
@@ -43,10 +25,10 @@ export default function Header() {
           )}
         </nav>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm">
+          <Button variant="ghost" size="md">
             Войти
           </Button>
-          <Button variant="primary" size="sm">
+          <Button variant="primary" size="md">
             Регистрация
           </Button>
         </div>

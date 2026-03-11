@@ -1,15 +1,23 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Syne } from "next/font/google";
 import "./globals.css";
+
+const syne = Syne({
+  subsets: ["latin"],
+  weight: ["700", "800"],
+  variable: "--font-syne",
+  display: "swap",
+});
 
 const inter = Inter({
   subsets: ["latin", "cyrillic"],
+  weight: ["400", "500", "600"],
   variable: "--font-inter",
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "OpinionFlow — платформа маркетинговых исследований",
+  title: "ПотокМнений — платформа маркетинговых исследований",
   description:
     "Платформа для платных опросов, таргетинга аудитории и AI-аналитики с быстрыми выплатами.",
 };
@@ -21,7 +29,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ru">
-      <body className={`${inter.variable} font-sans bg-white text-gray-900`}>
+      <body className={`${syne.variable} ${inter.variable} bg-surface-950 text-white antialiased`}>
         {children}
       </body>
     </html>
