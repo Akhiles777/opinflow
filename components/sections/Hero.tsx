@@ -5,7 +5,10 @@ import RevealOnScroll from "@/components/ui/RevealOnScroll";
 
 export default function Hero() {
   return (
-    <section id="top" className="relative overflow-hidden bg-surface-950 pt-24 pb-28 px-8 text-center">
+    <section
+      id="top"
+      className="relative overflow-hidden bg-surface-950 pt-20 pb-28 px-8 text-center sm:pt-24"
+    >
       <GlowOrb size={700} opacity={0.1} className="top-0 left-1/2 -translate-x-1/2 -translate-y-1/4" />
       <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:72px_72px]" />
 

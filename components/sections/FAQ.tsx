@@ -37,10 +37,10 @@ export default function FAQ() {
             <p className="text-xs font-semibold font-body text-brand-light uppercase tracking-[0.2em] mb-4">
               FAQ
             </p>
-            <h2 className="font-display text-heading text-white mb-6">
+            <h2 className="font-display text-heading text-white/90 mb-6">
               Ответы на частые вопросы
             </h2>
-            <p className="text-sm font-body text-white/45 leading-relaxed">
+            <p className="text-sm font-body text-white/55 leading-relaxed">
               Напишите в поддержку, если не нашли нужный ответ.
             </p>
             <a
@@ -58,7 +58,13 @@ export default function FAQ() {
             const active = index === activeIndex;
             return (
               <RevealOnScroll key={faq.q} delay={index * 60}>
-                <div className={`rounded-2xl border border-white/5 px-6 transition-colors ${active ? "bg-surface-900" : "bg-surface-950"} ${index === 0 ? "mt-0" : "mt-4"}`}>
+                <div
+                  className={[
+                    "rounded-2xl border px-6 transition-colors",
+                    active ? "bg-surface-800 border-brand/20" : "bg-surface-900 border-white/8",
+                    index === 0 ? "mt-0" : "mt-4",
+                  ].join(" ")}
+                >
                   <button
                     className="w-full flex justify-between items-center py-6 text-left"
                     onClick={() =>
@@ -66,7 +72,12 @@ export default function FAQ() {
                     }
                     type="button"
                   >
-                    <span className={`text-base font-semibold font-body ${active ? "text-white" : "text-white/70"} hover:text-white transition-colors`}>
+                    <span
+                      className={[
+                        "text-base font-semibold font-body transition-colors",
+                        active ? "text-white/90" : "text-white/80 hover:text-white",
+                      ].join(" ")}
+                    >
                       {faq.q}
                     </span>
                     <span
@@ -82,7 +93,7 @@ export default function FAQ() {
                       active ? "max-h-48 pb-6" : "max-h-0"
                     }`}
                   >
-                    <p className="text-sm font-body text-white/50 leading-relaxed">
+                    <p className="text-sm font-body text-white/60 leading-relaxed">
                       {faq.a}
                     </p>
                   </div>

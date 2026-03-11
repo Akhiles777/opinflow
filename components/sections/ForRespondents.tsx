@@ -90,7 +90,7 @@ export default function ForRespondents() {
 
         <RevealOnScroll delay={300}>
           <div className="mt-16">
-            <Button variant="dark" size="lg">Начать зарабатывать</Button>
+            <Button variant="primary" size="lg">Начать зарабатывать</Button>
           </div>
         </RevealOnScroll>
       </div>

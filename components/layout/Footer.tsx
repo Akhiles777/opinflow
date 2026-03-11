@@ -22,7 +22,7 @@ export default function Footer() {
           <div>
             <div className="flex items-center gap-2.5">
               <div className="w-5 h-5 rounded-md bg-brand" />
-              <span className="font-display text-white font-bold">ПотокМнений</span>
+              <span className="font-display text-white font-bold">OpinionFlow</span>
             </div>
             <p className="text-sm font-body text-white/20 max-w-xs mt-4 leading-relaxed">
               Автоматизированная платформа маркетинговых исследований. Соединяем бренды и аудиторию.
