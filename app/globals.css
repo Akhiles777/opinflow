@@ -2,12 +2,30 @@
 @import "tailwindcss";
 
 :root {
-  font-family: var(--font-inter);
+  font-family: var(--font-geist);
+
+  /* Dashboard variables (light by default) */
+  --dash-sidebar: #0a0a0f;
+  --dash-bg: #f9fafb;
+  --dash-card: #ffffff;
+  --dash-border: #e5e7eb;
+  --dash-muted: #6b7280;
+  --dash-heading: #111827;
+  --dash-body: #374151;
 }
 
-
+/* Dashboard variables (dark theme) */
+.dark {
+  --dash-sidebar: #060608;
+  --dash-bg: #0d0d14;
+  --dash-card: #13131e;
+  --dash-border: rgba(255, 255, 255, 0.07);
+  --dash-muted: rgba(255, 255, 255, 0.35);
+  --dash-heading: #ffffff;
+  --dash-body: rgba(255, 255, 255, 0.65);
+}
 
 body {
   margin: 0;
- scroll-behavior: smooth;
+  scroll-behavior: smooth;
 }

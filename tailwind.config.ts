@@ -1,6 +1,7 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
+  darkMode: "class",
   content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}"],
   theme: {
     extend: {
@@ -17,10 +18,29 @@ const config: Config = {
           800: "#16162A",
           700: "#1E1E35",
         },
+        dash: {
+          sidebar: "var(--dash-sidebar)",
+          bg: "var(--dash-bg)",
+          card: "var(--dash-card)",
+          border: "var(--dash-border)",
+          muted: "var(--dash-muted)",
+          heading: "var(--dash-heading)",
+          body: "var(--dash-body)",
+        },
       },
       fontFamily: {
-        display: ["var(--font-syne)", "sans-serif"],
-        body: ["var(--font-inter)", "sans-serif"],
+        display: [
+          "var(--font-geist)",
+          "var(--font-inter)",
+          "system-ui",
+          "sans-serif",
+        ],
+        body: [
+          "var(--font-geist)",
+          "var(--font-inter)",
+          "system-ui",
+          "sans-serif",
+        ],
       },
       fontSize: {
         hero: ["clamp(44px, 6vw, 88px)", { lineHeight: "1.02", letterSpacing: "-0.04em" }],
