@@ -7,7 +7,7 @@ const roles = [
     title: "Респондент",
     description:
       "Всё для заработка: баланс, история начислений, список доступных опросов и реферальная статистика. Вывод средств в один клик.",
-    href: "/respondent/dashboard",
+    href: "/respondent",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-6 h-6">
         <circle cx="12" cy="8" r="4" />
@@ -19,7 +19,7 @@ const roles = [
     title: "Заказчик",
     description:
       "Создание опросов, управление бюджетом, просмотр статистики в реальном времени и готовые отчёты. Встроенный конструктор и доступ к экспертам.",
-    href: "/client/dashboard",
+    href: "/client",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-6 h-6">
         <rect x="3" y="4" width="18" height="14" rx="3" />
@@ -33,7 +33,7 @@ const roles = [
     title: "Администратор",
     description:
       "Модерация опросов, управление пользователями, настройка комиссии, обработка жалоб и финансовый мониторинг — всё в одной панели.",
-    href: "/admin/dashboard",
+    href: "/admin",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-6 h-6">
         <path d="M12 2l7 4v6c0 5-3 9-7 10-4-1-7-5-7-10V6l7-4z" />
