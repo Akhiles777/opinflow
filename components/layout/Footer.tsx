@@ -1,5 +1,6 @@
 import * as React from "react";
 import Image from "next/image";
+import SmoothHashLink from "@/components/ui/SmoothHashLink";
 
 const navLinks = [
   { label: "Главная", href: "#top" },
@@ -17,58 +18,58 @@ const legalLinks = [
 
 export default function Footer() {
   return (
-    <footer className="bg-surface-950 border-t border-white/5 pt-20 pb-10 px-8" id="contacts">
+    <footer className="bg-site-bg border-t border-site-border pt-20 pb-10 px-8" id="contacts">
       <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr_1fr] gap-16 pb-16 border-b border-white/5">
+        <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr_1fr] gap-16 pb-16 border-b border-site-border">
           <div>
            <a href="/">
              <div className="flex items-center gap-2.5">
-              <div className="relative h-12 w-12 overflow-hidden">
+              <div className="relative h-10 w-10 overflow-hidden">
                 <Image
                   src="/favicon.png"
                   alt="ПотокМнений"
                   fill
-                  sizes="28px"
+                  sizes="40px"
                   className="object-contain"
                 />
               </div>
-              <span className="font-display text-white font-bold">ПотокМнений</span>
+              <span className="font-display text-site-heading font-bold">ПотокМнений</span>
             </div>
            </a>
-            <p className="text-sm font-body text-white/20 max-w-xs mt-4 leading-relaxed">
+            <p className="text-sm font-body text-site-muted max-w-xs mt-4 leading-relaxed">
               Автоматизированная платформа маркетинговых исследований. Соединяем бренды и аудиторию.
             </p>
             <a
               href="mailto:support@potokmneny.ru"
-              className="text-sm font-body text-white/25 hover:text-white mt-6 block"
+              className="text-sm font-body text-site-muted hover:text-site-heading mt-6 block transition-colors"
             >
               support@potokmneny.ru
             </a>
           </div>
 
           <div>
-            <p className="text-sm font-semibold text-white/50 mb-4">Навигация</p>
+            <p className="text-sm font-semibold text-site-heading mb-4">Навигация</p>
             <div className="grid gap-2">
               {navLinks.map((link) => (
-                <a
+                <SmoothHashLink
                   key={link.href}
                   href={link.href}
-                  className="text-sm font-body text-white/20 hover:text-white/60 transition-colors"
+                  className="text-sm font-body text-site-muted hover:text-site-heading transition-colors"
                 >
                   {link.label}
-                </a>
+                </SmoothHashLink>
               ))}
             </div>
           </div>
 
           <div>
-            <p className="text-sm font-semibold text-white/50 mb-4">Документы</p>
+            <p className="text-sm font-semibold text-site-heading mb-4">Документы</p>
             <div className="grid gap-2">
               {legalLinks.map((link) => (
                 <a
                   key={link}
                   href="#"
-                  className="text-sm font-body text-white/20 hover:text-white/60 transition-colors"
+                  className="text-sm font-body text-site-muted hover:text-site-heading transition-colors"
                 >
                   {link}
                 </a>
@@ -77,7 +78,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row justify-between pt-10 text-xs font-body text-white/15">
+        <div className="flex flex-col sm:flex-row justify-between pt-10 text-xs font-body text-site-muted">
           <span>© 2025 ПотокМнений. Все права защищены.</span>
           <span>Политика · Оферта</span>
         </div>

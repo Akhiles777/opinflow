@@ -95,8 +95,8 @@ export default function Sidebar() {
     <aside className="w-64 flex flex-col bg-dash-sidebar border-r border-white/5">
       <div className="px-6 h-16 flex items-center border-b border-white/5 flex-shrink-0">
         <a href="/" className="flex items-center gap-2.5">
-          <div className="relative w-7 h-7 rounded-md overflow-hidden border border-white/10 bg-black/20">
-            <Image src="/logo.png" alt="ПотокМнений" fill sizes="28px" className="object-contain" priority />
+          <div className="relative w-7 h-7 overflow-hidden">
+            <Image src="/favicon.png" alt="ПотокМнений" fill sizes="28px" className="object-contain" priority />
           </div>
           <span className="font-display text-white font-bold text-base">ПотокМнений</span>
         </a>

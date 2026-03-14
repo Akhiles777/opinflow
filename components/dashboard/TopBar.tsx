@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Bell } from "lucide-react";
-import ThemeToggle from "@/components/dashboard/ThemeToggle";
+import ThemeToggle from "@/components/ui/ThemeToggle";
 
 export default function TopBar() {
   return (
@@ -22,7 +22,7 @@ export default function TopBar() {
         </div>
       </div>
       <div className="flex items-center gap-3">
-        <ThemeToggle />
+        <ThemeToggle tone="dash" />
 
         <button
           type="button"

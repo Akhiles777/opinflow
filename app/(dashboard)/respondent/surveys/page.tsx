@@ -38,7 +38,22 @@ export default function RespondentSurveysPage() {
       <PageHeader
         title="Мои опросы"
         subtitle="В работе и завершённые опросы."
-        right={<Tabs tabs={[{ label: "В работе", value: "mine" }, { label: "Завершённые", value: "completed" }]} param="tab" defaultValue="mine" />}
+        right={
+          <React.Suspense
+            fallback={
+              <div className="h-11 w-[260px] rounded-xl border border-dash-border bg-dash-card" />
+            }
+          >
+            <Tabs
+              tabs={[
+                { label: "В работе", value: "mine" },
+                { label: "Завершённые", value: "completed" },
+              ]}
+              param="tab"
+              defaultValue="mine"
+            />
+          </React.Suspense>
+        }
       />
 
       <div className="mt-8">
@@ -93,4 +108,3 @@ export default function RespondentSurveysPage() {
     </div>
   );
 }
-

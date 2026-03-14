@@ -10,15 +10,15 @@ const stats = [
 
 export default function Stats() {
   return (
-    <section className="border-y border-white/5 bg-surface-900">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 lg:divide-x divide-white/5">
+    <section className="border-y border-site-border bg-site-section">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 lg:divide-x divide-site-border">
         {stats.map((stat, index) => (
           <RevealOnScroll key={stat.label} delay={index * 80}>
-            <div className="py-16 px-10 hover:bg-surface-800 transition-colors duration-300">
-              <p className="font-body tabular-nums text-5xl font-semibold text-white tracking-tight mb-2">
+            <div className="py-16 px-10 hover:bg-site-card transition-colors duration-300">
+              <p className="font-body tabular-nums text-5xl font-semibold text-site-heading tracking-tight mb-2">
                 {stat.num}
               </p>
-              <p className="text-sm font-body text-white/25">
+              <p className="text-sm font-body text-site-muted">
                 {stat.label}
               </p>
             </div>

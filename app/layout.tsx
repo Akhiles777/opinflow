@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
+import Providers from "@/components/theme/Providers";
 
 const geist = Geist({
   subsets: ["latin"],
@@ -35,10 +36,10 @@ export default function RootLayout({
   return (
     <html lang="ru" suppressHydrationWarning>
       <body
-        className={`${geist.variable} ${geistMono.variable} ${inter.variable} bg-surface-950 text-white antialiased`}
+        className={`${geist.variable} ${geistMono.variable} ${inter.variable} bg-site-bg text-site-body antialiased`}
         suppressHydrationWarning
       >
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

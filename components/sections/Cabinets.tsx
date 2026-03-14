@@ -44,10 +44,10 @@ const roles = [
 
 export default function Cabinets() {
   return (
-    <section className="py-24 px-8 bg-surface-950">
+    <section className="py-24 px-8 bg-site-bg">
       <div className="max-w-7xl mx-auto">
         <RevealOnScroll>
-          <h2 className="font-display text-heading text-white text-center mb-16">
+          <h2 className="font-display text-heading text-site-heading text-center mb-16">
             Удобные кабинеты для каждой роли
           </h2>
         </RevealOnScroll>
@@ -57,8 +57,8 @@ export default function Cabinets() {
             <RevealOnScroll key={role.title}>
               <div
                 className={[
-                  "bg-surface-900 border border-white/8 rounded-2xl p-8",
-                  "hover:border-brand/25 hover:-translate-y-1 transition-all duration-300 group",
+                  "bg-site-card border border-site-border rounded-2xl p-8",
+                  "hover:border-brand/25 hover:-translate-y-1 hover:shadow-md transition-all duration-300 group",
                   role.featured ? "border-brand/20" : "",
                 ]
                   .filter(Boolean)
@@ -67,10 +67,10 @@ export default function Cabinets() {
                 <div className="w-11 h-11 bg-brand/10 rounded-xl flex items-center justify-center text-brand-light">
                   {role.icon}
                 </div>
-                <h3 className="font-display text-xl text-white mt-6 mb-3">
+                <h3 className="font-display text-xl text-site-heading mt-6 mb-3">
                   {role.title}
                 </h3>
-                <p className="text-sm font-body text-white/40 leading-relaxed mb-8">
+                <p className="text-sm font-body text-site-muted leading-relaxed mb-8">
                   {role.description}
                 </p>
                 <Button variant="ghost" size="md" href={role.href}>

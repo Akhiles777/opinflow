@@ -26,10 +26,10 @@ const analyticsRows = [
 
 export default function TwoAudiences() {
   return (
-    <section className="py-8 px-8 bg-surface-950" aria-label="Для респондентов и бизнеса">
+    <section className="py-8 px-8 bg-site-bg" aria-label="Для респондентов и бизнеса">
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-5">
         <RevealOnScroll direction="left">
-          <div className="relative rounded-3xl border border-white/8 bg-surface-900 overflow-hidden p-10 min-h-[500px] hover:border-white/14 transition-all duration-500 group">
+          <div className="relative rounded-3xl border border-site-border bg-site-card overflow-hidden p-10 min-h-[500px] hover:border-brand/25 transition-all duration-500 group">
             <span id="respondents" className="absolute -top-20" aria-hidden="true" />
             <GlowOrb
               size={300}
@@ -37,19 +37,19 @@ export default function TwoAudiences() {
               className="bottom-0 left-0 group-hover:opacity-15 transition-opacity duration-700"
             />
 
-            <span className="text-xs font-semibold font-body text-white/30 uppercase tracking-[0.2em]">
+            <span className="text-xs font-semibold font-body text-site-muted uppercase tracking-[0.2em]">
               Респондентам
             </span>
-            <h2 className="font-display text-title text-white mt-4 mb-5">
+            <h2 className="font-display text-title text-site-heading mt-4 mb-5">
               Зарабатывайте,<br />делясь мнением
             </h2>
-            <p className="font-body text-white/40 text-base leading-relaxed max-w-xs mb-8">
+            <p className="font-body text-site-muted text-base leading-relaxed max-w-xs mb-8">
               Проходите опросы, которые действительно вам подходят, и получайте деньги на карту
             </p>
 
             <ul className="space-y-4 mb-10">
               {respondentBenefits.map((item) => (
-                <li key={item} className="flex items-start gap-3 text-sm font-body text-white/45">
+                <li key={item} className="flex items-start gap-3 text-sm font-body text-site-body">
                   <span className="w-1 h-1 rounded-full bg-brand-light mt-2 flex-shrink-0" />
                   {item}
                 </li>
@@ -58,11 +58,11 @@ export default function TwoAudiences() {
 
             <Button variant="primary" size="lg">Начать зарабатывать →</Button>
 
-            <div className="absolute bottom-8 right-8 w-52 bg-surface-800 border border-white/8 rounded-2xl p-5 shadow-card animate-float">
-              <p className="text-xs font-body text-white/25 mb-1">Мой баланс</p>
-              <p className="font-body tabular-nums text-2xl text-white font-semibold tracking-tight">1 240 ₽</p>
-              <div className="mt-3 pt-3 border-t border-white/5">
-                <p className="text-xs font-body text-white/25">Последнее начисление</p>
+            <div className="absolute bottom-8 right-8 w-52 bg-site-card border border-site-border rounded-2xl p-5 shadow-card animate-float">
+              <p className="text-xs font-body text-site-muted mb-1">Мой баланс</p>
+              <p className="font-body tabular-nums text-2xl text-site-heading font-semibold tracking-tight">1 240 ₽</p>
+              <div className="mt-3 pt-3 border-t border-site-border">
+                <p className="text-xs font-body text-site-muted">Последнее начисление</p>
                 <p className="text-sm font-semibold text-brand-light mt-0.5">+350 ₽</p>
               </div>
             </div>
@@ -70,7 +70,7 @@ export default function TwoAudiences() {
         </RevealOnScroll>
 
         <RevealOnScroll direction="right">
-          <div className="relative rounded-3xl border border-white/8 bg-surface-900 overflow-hidden p-10 min-h-[500px] hover:border-white/14 transition-all duration-500 group">
+          <div className="relative rounded-3xl border border-site-border bg-site-card overflow-hidden p-10 min-h-[500px] hover:border-brand/25 transition-all duration-500 group">
             <span id="business" className="absolute -top-20" aria-hidden="true" />
             <GlowOrb
               size={300}
@@ -79,19 +79,19 @@ export default function TwoAudiences() {
               className="bottom-0 right-0 group-hover:opacity-15 transition-opacity duration-700"
             />
 
-            <span className="text-xs font-semibold font-body text-white/30 uppercase tracking-[0.2em]">
+            <span className="text-xs font-semibold font-body text-site-muted uppercase tracking-[0.2em]">
               Бизнесу
             </span>
-            <h2 className="font-display text-title text-white mt-4 mb-5">
+            <h2 className="font-display text-title text-site-heading mt-4 mb-5">
               Проводите исследования<br />с помощью ИИ
             </h2>
-            <p className="font-body text-white/40 text-base leading-relaxed max-w-xs mb-8">
+            <p className="font-body text-site-muted text-base leading-relaxed max-w-xs mb-8">
               Создавайте опросы любой сложности, нацеливайтесь на нужную аудиторию и получайте готовые отчёты с графиками
             </p>
 
             <ul className="space-y-4 mb-10">
               {businessBenefits.map((item) => (
-                <li key={item} className="flex items-start gap-3 text-sm font-body text-white/45">
+                <li key={item} className="flex items-start gap-3 text-sm font-body text-site-body">
                   <span className="w-1 h-1 rounded-full bg-brand-light mt-2 flex-shrink-0" />
                   {item}
                 </li>
@@ -100,15 +100,15 @@ export default function TwoAudiences() {
 
             <Button variant="secondary" size="lg">Заказать исследование →</Button>
 
-            <div className="absolute bottom-8 right-8 w-52 bg-surface-800 border border-white/8 rounded-2xl p-5 shadow-card">
-              <p className="text-xs font-body text-white/25 mb-4">Результаты опроса</p>
+            <div className="absolute bottom-8 right-8 w-52 bg-site-card border border-site-border rounded-2xl p-5 shadow-card">
+              <p className="text-xs font-body text-site-muted mb-4">Результаты опроса</p>
               {analyticsRows.map((row) => (
                 <div key={row.label} className="mb-3">
                   <div className="flex justify-between mb-1">
-                    <span className="text-xs font-body text-white/30">{row.label}</span>
-                    <span className="text-xs font-body text-white/30">{row.pct}%</span>
+                    <span className="text-xs font-body text-site-muted">{row.label}</span>
+                    <span className="text-xs font-body text-site-muted">{row.pct}%</span>
                   </div>
-                  <div className="bg-surface-700 rounded-full h-1">
+                  <div className="bg-site-border rounded-full h-1">
                     <div className="bg-brand rounded-full h-1" style={{ width: `${row.pct}%` }} />
                   </div>
                 </div>

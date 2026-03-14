@@ -27,6 +27,15 @@ const config: Config = {
           heading: "var(--dash-heading)",
           body: "var(--dash-body)",
         },
+        site: {
+          bg: "var(--site-bg)",
+          section: "var(--site-section)",
+          card: "var(--site-card)",
+          border: "var(--site-border)",
+          muted: "var(--site-muted)",
+          heading: "var(--site-heading)",
+          body: "var(--site-body)",
+        },
       },
       fontFamily: {
         display: [

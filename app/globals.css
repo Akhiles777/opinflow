@@ -4,18 +4,37 @@
 :root {
   font-family: var(--font-geist);
 
+  /* Site variables (light by default) */
+  /* Slightly darker/off-white to reduce glare */
+  --site-bg: #eef2f7;
+  --site-section: #e6ebf3;
+  --site-card: #ffffff;
+  --site-border: #cbd3df;
+  --site-muted: #556277;
+  --site-heading: #0b1220;
+  --site-body: #2b3547;
+
   /* Dashboard variables (light by default) */
   --dash-sidebar: #0a0a0f;
-  --dash-bg: #f9fafb;
+  --dash-bg: #eceff4;
   --dash-card: #ffffff;
-  --dash-border: #e5e7eb;
-  --dash-muted: #6b7280;
-  --dash-heading: #111827;
-  --dash-body: #374151;
+  --dash-border: #c7ceda;
+  --dash-muted: #5f6b7c;
+  --dash-heading: #0f172a;
+  --dash-body: #334155;
 }
 
 /* Dashboard variables (dark theme) */
 .dark {
+  /* Site variables (dark theme) */
+  --site-bg: #0a0a0f;
+  --site-section: #0f0f1a;
+  --site-card: #16162a;
+  --site-border: rgba(255, 255, 255, 0.09);
+  --site-muted: rgba(255, 255, 255, 0.5);
+  --site-heading: #ffffff;
+  --site-body: rgba(255, 255, 255, 0.78);
+
   --dash-sidebar: #060608;
   --dash-bg: #0d0d14;
   --dash-card: #13131e;
@@ -27,5 +46,14 @@
 
 body {
   margin: 0;
+}
+
+html {
   scroll-behavior: smooth;
+  scroll-padding-top: 80px; /* sticky header offset */
+}
+
+/* Anchor targets shouldn't hide under sticky header when using scrollIntoView */
+[id] {
+  scroll-margin-top: 88px;
 }

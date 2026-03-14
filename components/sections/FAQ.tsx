@@ -30,22 +30,22 @@ export default function FAQ() {
   const [activeIndex, setActiveIndex] = React.useState<number | null>(null);
 
   return (
-    <section className="py-32 px-8 bg-surface-950 border-b border-white/5" id="faq">
+    <section className="py-32 px-8 bg-site-bg border-b border-site-border" id="faq">
       <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-20">
         <div className="sticky top-24 self-start">
           <RevealOnScroll>
             <p className="text-xs font-semibold font-body text-brand-light uppercase tracking-[0.2em] mb-4">
               FAQ
             </p>
-            <h2 className="font-display text-heading text-white/90 mb-6">
+            <h2 className="font-display text-heading text-site-heading mb-6">
               Ответы на частые вопросы
             </h2>
-            <p className="text-sm font-body text-white/55 leading-relaxed">
+            <p className="text-sm font-body text-site-muted leading-relaxed">
               Напишите в поддержку, если не нашли нужный ответ.
             </p>
             <a
               href="mailto:support@potokmneny.ru"
-              className="inline-flex items-center gap-2 text-sm font-body text-brand-light hover:text-white transition-colors mt-4"
+              className="inline-flex items-center gap-2 text-sm font-body text-brand hover:text-brand-dark transition-colors mt-4"
             >
               support@potokmneny.ru
               <span>→</span>
@@ -61,7 +61,7 @@ export default function FAQ() {
                 <div
                   className={[
                     "rounded-2xl border px-6 transition-colors",
-                    active ? "bg-surface-800 border-brand/20" : "bg-surface-900 border-white/8",
+                    active ? "bg-site-section border-brand/20" : "bg-site-card border-site-border",
                     index === 0 ? "mt-0" : "mt-4",
                   ].join(" ")}
                 >
@@ -75,13 +75,13 @@ export default function FAQ() {
                     <span
                       className={[
                         "text-base font-semibold font-body transition-colors",
-                        active ? "text-white/90" : "text-white/80 hover:text-white",
+                        active ? "text-site-heading" : "text-site-body hover:text-site-heading",
                       ].join(" ")}
                     >
                       {faq.q}
                     </span>
                     <span
-                      className={`text-brand-light text-2xl font-light transition-transform duration-300 ${
+                      className={`text-brand text-2xl font-light transition-transform duration-300 ${
                         active ? "rotate-45" : ""
                       }`}
                     >
@@ -93,7 +93,7 @@ export default function FAQ() {
                       active ? "max-h-48 pb-6" : "max-h-0"
                     }`}
                   >
-                    <p className="text-sm font-body text-white/60 leading-relaxed">
+                    <p className="text-sm font-body text-site-muted leading-relaxed">
                       {faq.a}
                     </p>
                   </div>
