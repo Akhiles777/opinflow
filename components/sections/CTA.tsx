@@ -19,9 +19,9 @@ export default function CTA() {
           <p className="font-body text-site-muted text-lg mb-12">
             Реальные люди, реальные ответы и честная система вознаграждений — всё в одном сервисе.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button variant="primary" size="xl">Я хочу зарабатывать →</Button>
-            <Button variant="secondary" size="xl">Я хочу заказать опрос →</Button>
+          <div className="flex flex-col justify-center gap-3 sm:flex-row sm:gap-4">
+            <Button variant="primary" size="lg" className="sm:px-9 sm:py-4 sm:text-lg sm:font-semibold">Я хочу зарабатывать →</Button>
+            <Button variant="secondary" size="lg" className="sm:px-9 sm:py-4 sm:text-lg sm:font-semibold">Я хочу заказать опрос →</Button>
           </div>
         </RevealOnScroll>
       </div>
