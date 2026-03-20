@@ -14,7 +14,7 @@ const partners = [
 
 export default function Partners() {
   return (
-    <section className="bg-site-section border-y border-site-border px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
+    <section className="bg-site-section px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
       <div className="max-w-7xl mx-auto">
         <RevealOnScroll>
           <p className="text-xs font-semibold font-body uppercase tracking-[0.3em] text-site-muted text-center mb-14">

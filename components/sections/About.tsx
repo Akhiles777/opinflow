@@ -58,7 +58,7 @@ export default function About() {
             {principles.map((item) => (
               <RevealOnScroll key={item.title}>
                 <div className="py-6">
-                  <p className="text-sm font-semibold text-site-heading mb-2">{item.title}</p>
+                  <p className="text-xl font-semibold text-site-heading mb-2">{item.title}</p>
                   <p className="text-sm font-body text-site-muted leading-relaxed">
                     {item.description}
                   </p>
@@ -68,7 +68,7 @@ export default function About() {
           </div>
 
           <RevealOnScroll>
-            <Button variant="ghost" size="md" className="mt-6">
+            <Button variant="ghost" size='md' className="mt-6">
               Узнать больше о нас →
             </Button>
           </RevealOnScroll>

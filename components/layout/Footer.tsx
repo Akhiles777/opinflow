@@ -18,9 +18,9 @@ const legalLinks = [
 
 export default function Footer() {
   return (
-    <footer className="bg-site-bg border-t border-site-border px-4 pt-16 pb-10 sm:px-6 lg:px-8 lg:pt-20" id="contacts">
+    <footer className="bg-site-bg px-4 pt-16 pb-10 sm:px-6 lg:px-8 lg:pt-20" id="contacts">
       <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 gap-10 border-b border-site-border pb-12 lg:grid-cols-[2fr_1fr_1fr] lg:gap-16 lg:pb-16">
+        <div className="grid grid-cols-1 gap-10 pb-12 lg:grid-cols-[2fr_1fr_1fr] lg:gap-16 lg:pb-16">
           <div>
            <a href="/">
              <div className="flex items-center gap-2.5">

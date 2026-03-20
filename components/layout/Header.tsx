@@ -18,7 +18,7 @@ export default function Header() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 bg-site-bg/80 backdrop-blur-xl border-b border-site-border">
+    <header className="sticky top-0 z-50 bg-site-bg/80 backdrop-blur-xl">
       <div className="h-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto flex justify-between items-center gap-3">
         <a href="/">
           <div className="flex items-center gap-2.5">
@@ -72,7 +72,7 @@ export default function Header() {
 
       <div
         className={[
-          "border-t border-site-border bg-site-bg/95 backdrop-blur-xl lg:hidden",
+          "bg-site-bg/95 backdrop-blur-xl lg:hidden",
           mobileMenuOpen ? "block" : "hidden",
         ].join(" ")}
       >

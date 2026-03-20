@@ -6,10 +6,9 @@ export default function Hero() {
   return (
     <section
       id="top"
-      className="relative overflow-hidden bg-site-bg px-4 pt-16 pb-20 text-center sm:px-6 sm:pt-20 sm:pb-24 lg:px-8 lg:pb-28"
+      className="relative overflow-hidden bg-site-bg px-4 pt-10 pb-20 text-center sm:px-6 sm:pt-12 sm:pb-24 lg:px-8 lg:pt-14 lg:pb-28"
     >
       <GlowOrb size={700} opacity={0.1} className="top-0 left-1/2 -translate-x-1/2 -translate-y-1/4" />
-      <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(15,23,42,0.06)_1px,transparent_1px)] dark:bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:72px_72px]" />
 
       <div className="relative mx-auto max-w-4xl">
         <RevealOnScroll>
@@ -51,7 +50,7 @@ export default function Hero() {
         </RevealOnScroll>
 
         <RevealOnScroll delay={320}>
-          <div className="flex flex-col sm:flex-row justify-center gap-10 pt-10 border-t border-site-border">
+          <div className="flex flex-col justify-center gap-10 pt-10 sm:flex-row">
             {[
               { value: "25 000+", label: "активных респондентов" },
               { value: "800+", label: "проведённых исследований" },

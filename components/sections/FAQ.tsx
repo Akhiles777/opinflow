@@ -30,7 +30,7 @@ export default function FAQ() {
   const [activeIndex, setActiveIndex] = React.useState<number | null>(null);
 
   return (
-    <section className="bg-site-bg border-b border-site-border px-4 py-20 sm:px-6 sm:py-24 lg:px-8 lg:py-32" id="faq">
+    <section className="bg-site-bg px-4 py-20 sm:px-6 sm:py-24 lg:px-8 lg:py-32" id="faq">
       <div className="max-w-5xl mx-auto grid grid-cols-1 gap-10 lg:grid-cols-[280px_1fr] lg:gap-20">
         <div className="self-start lg:sticky lg:top-24">
           <RevealOnScroll>

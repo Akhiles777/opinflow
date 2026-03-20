@@ -10,7 +10,7 @@ const stats = [
 
 export default function Stats() {
   return (
-    <section className="border-y border-site-border bg-site-section">
+    <section className="bg-site-section">
       <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 lg:divide-x divide-site-border">
         {stats.map((stat, index) => (
           <RevealOnScroll key={stat.label} delay={index * 80}>
