@@ -15,7 +15,27 @@ type Props<Row> = {
 
 export default function DataTable<Row>({ columns, rows, keyForRow }: Props<Row>) {
   return (
-    <div className="bg-dash-card border border-dash-border rounded-2xl overflow-hidden">
+    <div className="overflow-hidden rounded-2xl border border-dash-border bg-dash-card">
+      <div className="grid gap-3 p-3 md:hidden">
+        {rows.map((row, idx) => (
+          <div key={keyForRow(row, idx)} className="rounded-xl border border-dash-border bg-dash-bg p-4">
+            <div className="grid gap-3">
+              {columns.map((col) => (
+                <div key={col.key} className="grid gap-1">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-dash-muted font-body">
+                    {col.header}
+                  </p>
+                  <div className={["min-w-0 break-words text-sm text-dash-body font-body", col.className].filter(Boolean).join(" ")}>
+                    {col.cell(row)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="hidden overflow-x-auto md:block">
       <table className="w-full text-left">
         <thead className="bg-dash-bg border-b border-dash-border">
           <tr>
@@ -41,7 +61,7 @@ export default function DataTable<Row>({ columns, rows, keyForRow }: Props<Row>)
                 <td
                   key={col.key}
                   className={[
-                    "px-6 py-4 text-base text-dash-body font-body",
+                    "min-w-0 break-words px-6 py-4 text-base text-dash-body font-body align-top",
                     col.className,
                   ]
                     .filter(Boolean)
@@ -54,6 +74,7 @@ export default function DataTable<Row>({ columns, rows, keyForRow }: Props<Row>)
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

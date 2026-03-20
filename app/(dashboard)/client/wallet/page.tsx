@@ -41,17 +41,17 @@ export default function ClientWalletPage() {
     <div>
       <PageHeader title="Кошелёк" subtitle="Баланс заказчика, пополнения и списания." />
 
-      <div className="mt-8 grid grid-cols-1 xl:grid-cols-2 gap-5">
-        <div className="rounded-2xl bg-dash-sidebar text-white p-8">
-          <p className="text-sm text-white/40 mb-2 font-body">Текущий баланс</p>
-          <p className="font-display text-5xl text-white font-bold mb-6 tabular-nums">45 200 ₽</p>
+      <div className="mt-8 grid grid-cols-1 gap-5 xl:grid-cols-2 xl:items-start">
+        <div className="rounded-2xl border border-dash-border bg-dash-card p-8">
+          <p className="mb-2 text-sm font-body text-dash-muted">Текущий баланс</p>
+          <p className="mb-6 font-display text-4xl font-bold tabular-nums text-dash-heading sm:text-5xl">45 200 ₽</p>
           <button
             type="button"
             className="inline-flex items-center justify-center rounded-xl bg-brand px-7 py-3.5 text-base font-semibold text-white hover:bg-brand-mid transition-colors"
           >
             Пополнить баланс
           </button>
-          <p className="mt-3 text-xs text-white/35 font-body">Модал пополнения подключим на Этапе 4.</p>
+          <p className="mt-3 text-xs font-body text-dash-muted">Модал пополнения подключим на Этапе 4.</p>
         </div>
 
         <div className="bg-dash-card border border-dash-border rounded-2xl p-6">
@@ -81,4 +81,3 @@ export default function ClientWalletPage() {
     </div>
   );
 }
-

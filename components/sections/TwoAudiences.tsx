@@ -4,17 +4,19 @@ import GlowOrb from "@/components/ui/GlowOrb";
 import RevealOnScroll from "@/components/ui/RevealOnScroll";
 
 const respondentBenefits = [
-  "Умная лента — опросы по возрасту, городу, доходу и интересам",
-  "Выплаты от 100 ₽ на карту, кошелёк или телефон",
-  "Реферальная программа с бонусами за друзей",
-  "Прогресс сохраняется — возвращайтесь когда удобно",
+  "Опросы, которые подходят именно вам — по возрасту, городу и интересам",
+  "Простые анкеты — большинство опросов занимает всего несколько минут",
+  "Честные выплаты — вы получаете деньги за каждый завершённый опрос",
+  "Работает на любом устройстве — проходите опросы когда вам удобно",
+  "Бонусы за друзей — приглашайте знакомых и получайте дополнительные вознаграждения",
 ];
 
 const businessBenefits = [
-  "Гибкий конструктор — 6 типов вопросов, медиа до 50 МБ",
-  "Точный таргетинг по полу, возрасту, гео и интересам",
-  "ИИ-аналитика: темы, тональность, PDF и Excel одним кликом",
-  "Экспертное заключение от профессионального маркетолога",
+  "Конструктор опросов — логические ветвления, изображения, видео и разные типы вопросов",
+  "Точный подбор респондентов — возраст, город, интересы и социальные параметры",
+  "ИИ-аналитика — графики, ключевые темы, облако слов и анализ тональности",
+  "Быстрый запуск исследований — создайте опрос за несколько минут",
+  "Прозрачная система оплаты — вы платите только за реальные ответы",
 ];
 
 const analyticsRows = [
@@ -26,10 +28,10 @@ const analyticsRows = [
 
 export default function TwoAudiences() {
   return (
-    <section className="py-8 px-8 bg-site-bg" aria-label="Для респондентов и бизнеса">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-5">
+    <section className="bg-site-bg px-4 py-8 sm:px-6 lg:px-8" aria-label="Для респондентов и бизнеса">
+      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-5 lg:grid-cols-2">
         <RevealOnScroll direction="left">
-          <div className="relative rounded-3xl border border-site-border bg-site-card overflow-hidden p-10 min-h-[500px] hover:border-brand/25 transition-all duration-500 group">
+          <div className="group relative min-h-0 overflow-hidden rounded-3xl border border-site-border bg-site-card p-6 transition-all duration-500 hover:border-brand/25 sm:min-h-[500px] sm:p-10">
             <span id="respondents" className="absolute -top-20" aria-hidden="true" />
             <GlowOrb
               size={300}
@@ -44,7 +46,7 @@ export default function TwoAudiences() {
               Зарабатывайте,<br />делясь мнением
             </h2>
             <p className="font-body text-site-muted text-base leading-relaxed max-w-xs mb-8">
-              Проходите опросы, которые действительно вам подходят, и получайте деньги на карту
+              Ваше мнение действительно важно — и может приносить дополнительный доход. На платформе ПотокМнений вы можете проходить онлайн-опросы от брендов и получать вознаграждение за ответы.
             </p>
 
             <ul className="space-y-4 mb-10">
@@ -58,7 +60,7 @@ export default function TwoAudiences() {
 
             <Button variant="primary" size="lg">Начать зарабатывать →</Button>
 
-            <div className="absolute bottom-8 right-8 w-52 bg-site-card border border-site-border rounded-2xl p-5 shadow-card animate-float">
+            <div className="mt-8 w-full max-w-52 rounded-2xl border border-site-border bg-site-card p-5 shadow-card animate-float sm:absolute sm:right-8 sm:bottom-8 sm:mt-0">
               <p className="text-xs font-body text-site-muted mb-1">Мой баланс</p>
               <p className="font-body tabular-nums text-2xl text-site-heading font-semibold tracking-tight">1 240 ₽</p>
               <div className="mt-3 pt-3 border-t border-site-border">
@@ -70,7 +72,7 @@ export default function TwoAudiences() {
         </RevealOnScroll>
 
         <RevealOnScroll direction="right">
-          <div className="relative rounded-3xl border border-site-border bg-site-card overflow-hidden p-10 min-h-[500px] hover:border-brand/25 transition-all duration-500 group">
+          <div className="group relative min-h-0 overflow-hidden rounded-3xl border border-site-border bg-site-card p-6 transition-all duration-500 hover:border-brand/25 sm:min-h-[500px] sm:p-10">
             <span id="business" className="absolute -top-20" aria-hidden="true" />
             <GlowOrb
               size={300}
@@ -83,10 +85,10 @@ export default function TwoAudiences() {
               Бизнесу
             </span>
             <h2 className="font-display text-title text-site-heading mt-4 mb-5">
-              Проводите исследования<br />с помощью ИИ
+              Получайте ответы<br />от нужной аудитории
             </h2>
             <p className="font-body text-site-muted text-base leading-relaxed max-w-xs mb-8">
-              Создавайте опросы любой сложности, нацеливайтесь на нужную аудиторию и получайте готовые отчёты с графиками
+              Маркетинговые исследования часто занимают недели и требуют больших бюджетов. ПотокМнений делает этот процесс быстрым и доступным. Вы создаёте опрос, выбираете нужную аудиторию и получаете готовые результаты с аналитикой.
             </p>
 
             <ul className="space-y-4 mb-10">
@@ -98,9 +100,13 @@ export default function TwoAudiences() {
               ))}
             </ul>
 
+            <p className="text-sm font-body text-site-muted leading-relaxed max-w-md mb-10">
+              Подходит для маркетинговых исследований, тестирования продуктов, анализа рекламы, изучения потребительских привычек и HR-опросов.
+            </p>
+
             <Button variant="secondary" size="lg">Заказать исследование →</Button>
 
-            <div className="absolute bottom-8 right-8 w-52 bg-site-card border border-site-border rounded-2xl p-5 shadow-card">
+            <div className="mt-8 w-full max-w-52 rounded-2xl border border-site-border bg-site-card p-5 shadow-card sm:absolute sm:right-8 sm:bottom-8 sm:mt-0">
               <p className="text-xs font-body text-site-muted mb-4">Результаты опроса</p>
               {analyticsRows.map((row) => (
                 <div key={row.label} className="mb-3">

@@ -19,7 +19,7 @@ const rows: Row[] = [
 ];
 
 const columns: Column<Row>[] = [
-  { key: "title", header: "Название", cell: (r) => r.title, className: "max-w-[520px]" },
+  { key: "title", header: "Название", cell: (r) => r.title, className: "max-w-[320px] lg:max-w-[520px]" },
   { key: "progress", header: "Прогресс", cell: (r) => <span className="tabular-nums">{r.progress}</span> },
   { key: "answers", header: "Ответов", cell: (r) => <span className="tabular-nums">{r.answers}</span> },
   { key: "budget", header: "Бюджет", cell: (r) => <span className="tabular-nums font-semibold">{r.budget}</span> },
@@ -40,7 +40,7 @@ const columns: Column<Row>[] = [
     key: "actions",
     header: "Действия",
     cell: (r) => (
-      <div className="flex gap-3">
+      <div className="flex flex-wrap gap-3">
         <a className="text-sm font-semibold text-brand hover:underline" href={`/client/surveys/${r.id}`}>Статистика</a>
         <a className="text-sm font-semibold text-brand hover:underline" href="#">Пауза</a>
         <a className="text-sm font-semibold text-brand hover:underline" href="#">Стоп</a>
@@ -71,4 +71,3 @@ export default function ClientSurveysPage() {
     </div>
   );
 }
-

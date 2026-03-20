@@ -30,9 +30,9 @@ export default function FAQ() {
   const [activeIndex, setActiveIndex] = React.useState<number | null>(null);
 
   return (
-    <section className="py-32 px-8 bg-site-bg border-b border-site-border" id="faq">
-      <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-20">
-        <div className="sticky top-24 self-start">
+    <section className="bg-site-bg border-b border-site-border px-4 py-20 sm:px-6 sm:py-24 lg:px-8 lg:py-32" id="faq">
+      <div className="max-w-5xl mx-auto grid grid-cols-1 gap-10 lg:grid-cols-[280px_1fr] lg:gap-20">
+        <div className="self-start lg:sticky lg:top-24">
           <RevealOnScroll>
             <p className="text-xs font-semibold font-body text-brand-light uppercase tracking-[0.2em] mb-4">
               FAQ
@@ -60,7 +60,7 @@ export default function FAQ() {
               <RevealOnScroll key={faq.q} delay={index * 60}>
                 <div
                   className={[
-                    "rounded-2xl border px-6 transition-colors",
+                    "rounded-2xl border px-4 sm:px-6 transition-colors",
                     active ? "bg-site-section border-brand/20" : "bg-site-card border-site-border",
                     index === 0 ? "mt-0" : "mt-4",
                   ].join(" ")}

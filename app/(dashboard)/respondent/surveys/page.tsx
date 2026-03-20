@@ -41,7 +41,7 @@ export default function RespondentSurveysPage() {
         right={
           <React.Suspense
             fallback={
-              <div className="h-11 w-[260px] rounded-xl border border-dash-border bg-dash-card" />
+              <div className="h-11 w-full rounded-xl border border-dash-border bg-dash-card sm:w-[260px]" />
             }
           >
             <Tabs
@@ -74,7 +74,7 @@ export default function RespondentSurveysPage() {
             <div className="mt-6 grid gap-4">
               {inProgress.map((s) => (
                 <div key={s.title} className="rounded-2xl border border-dash-border bg-dash-bg p-6">
-                  <div className="flex items-start justify-between gap-6">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0">
                       <p className="font-display text-xl text-dash-heading">{s.title}</p>
                       <p className="mt-2 text-sm text-dash-muted font-body">
@@ -84,7 +84,7 @@ export default function RespondentSurveysPage() {
                     </div>
                     <a
                       href="#"
-                      className="inline-flex items-center justify-center rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-mid transition-colors"
+                      className="inline-flex items-center justify-center rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-mid"
                     >
                       Продолжить →
                     </a>

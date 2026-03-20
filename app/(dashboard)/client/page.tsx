@@ -28,12 +28,12 @@ const surveys: SurveyRow[] = [
 ];
 
 const columns: Column<SurveyRow>[] = [
-  { key: "title", header: "Название", cell: (r) => r.title, className: "max-w-[520px]" },
+  { key: "title", header: "Название", cell: (r) => r.title, className: "max-w-[320px] lg:max-w-[520px]" },
   {
     key: "progress",
     header: "Прогресс",
     cell: (r) => (
-      <div className="min-w-[180px]">
+      <div className="min-w-[140px] sm:min-w-[180px]">
         <div className="flex justify-between text-xs text-dash-muted font-body mb-2">
           <span>{r.answered}/{r.max}</span>
           <span>{Math.round((r.answered / r.max) * 100)}%</span>
@@ -62,7 +62,7 @@ const columns: Column<SurveyRow>[] = [
     key: "actions",
     header: "Действия",
     cell: () => (
-      <div className="flex gap-3">
+      <div className="flex flex-wrap gap-3">
         <a className="text-sm font-semibold text-brand hover:underline" href="#">Статистика</a>
         <a className="text-sm font-semibold text-brand hover:underline" href="#">Пауза</a>
         <a className="text-sm font-semibold text-brand hover:underline" href="#">Стоп</a>

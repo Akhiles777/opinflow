@@ -1,16 +1,27 @@
 "use client";
 
 import * as React from "react";
-import { Bell } from "lucide-react";
+import { Bell, Menu } from "lucide-react";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 
-export default function TopBar() {
+export default function TopBar({ onOpenMobileMenu }: { onOpenMobileMenu: () => void }) {
   return (
-    <div className="h-16 border-b border-dash-border bg-dash-card px-8 flex items-center justify-between gap-6">
-      <div className="hidden md:flex items-center gap-3">
+    <div className="flex h-auto flex-wrap items-center justify-between gap-3 border-b border-dash-border bg-dash-card px-4 py-3 sm:px-6 lg:h-16 lg:flex-nowrap lg:gap-6 lg:px-8 lg:py-0">
+      <div className="order-1 flex items-center gap-3 lg:hidden">
+        <button
+          type="button"
+          onClick={onOpenMobileMenu}
+          className="flex h-10 w-10 items-center justify-center rounded-xl border border-dash-border bg-dash-bg text-dash-heading transition-colors hover:bg-dash-card"
+          aria-label="Открыть меню"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+      </div>
+
+      <div className="order-2 hidden w-full items-center gap-3 md:flex lg:order-1 lg:w-auto">
         <div className="relative">
           <input
-            className="h-10 w-[340px] rounded-xl border border-dash-border bg-dash-bg px-10 text-sm text-dash-body placeholder:text-dash-muted font-body focus:outline-none focus:ring-2 focus:ring-brand/20"
+            className="h-10 w-full min-w-0 rounded-xl border border-dash-border bg-dash-bg px-10 text-sm text-dash-body placeholder:text-dash-muted font-body focus:outline-none focus:ring-2 focus:ring-brand/20 lg:w-[340px]"
             placeholder="Поиск по кабинету"
           />
           <div className="absolute left-3 top-1/2 -translate-y-1/2 text-dash-muted">
@@ -21,7 +32,7 @@ export default function TopBar() {
           </div>
         </div>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="order-1 ml-auto flex items-center gap-2 sm:gap-3 lg:order-2">
         <ThemeToggle tone="dash" />
 
         <button

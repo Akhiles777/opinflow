@@ -167,7 +167,7 @@ export default function ClientSurveyCreatePage() {
         ) : null}
 
         {step === "Аудитория" ? (
-          <div className="mt-6 grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-6">
+          <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-start">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Field label="Пол">
                 <div className="flex gap-2">
@@ -189,17 +189,17 @@ export default function ClientSurveyCreatePage() {
               </Field>
             </div>
 
-            <div className="rounded-2xl bg-dash-sidebar text-white p-6 h-fit">
-              <p className="text-sm text-white/40 font-body">Виджет расчёта</p>
-              <p className="mt-4 text-sm text-white/80 font-body">Расчётный охват: ~2 400 чел.</p>
-              <p className="mt-2 text-sm text-white/80 font-body">Прогноз сбора: 3–5 дней</p>
-              <p className="mt-4 text-xs text-white/35 font-body">Обновим на Этапе 3.</p>
+            <div className="h-fit rounded-2xl border border-dash-border bg-dash-card p-6">
+              <p className="text-sm font-body text-dash-muted">Виджет расчёта</p>
+              <p className="mt-4 text-sm font-body text-dash-body">Расчётный охват: ~2 400 чел.</p>
+              <p className="mt-2 text-sm font-body text-dash-body">Прогноз сбора: 3–5 дней</p>
+              <p className="mt-4 text-xs font-body text-dash-muted">Обновим на Этапе 3.</p>
             </div>
           </div>
         ) : null}
 
         {step === "Бюджет" ? (
-          <div className="mt-6 grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-6">
+          <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-start">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Field label="Количество респондентов">
                 <input className="h-11 rounded-xl border border-dash-border bg-dash-bg px-3 text-sm text-dash-body" defaultValue="200" />
@@ -218,9 +218,9 @@ export default function ClientSurveyCreatePage() {
               </Field>
             </div>
 
-            <div className="rounded-2xl bg-dash-sidebar text-white p-6 h-fit">
-              <p className="text-sm text-white/40 font-body mb-4">Итого</p>
-              <div className="grid gap-2 text-sm font-body text-white/80">
+            <div className="h-fit rounded-2xl border border-dash-border bg-dash-card p-6">
+              <p className="mb-4 text-sm font-body text-dash-muted">Итого</p>
+              <div className="grid gap-2 text-sm font-body text-dash-body">
                 <div className="flex justify-between">
                   <span>Вознаграждения</span>
                   <span className="tabular-nums">200 × 120 = 24 000 ₽</span>
@@ -229,8 +229,8 @@ export default function ClientSurveyCreatePage() {
                   <span>Комиссия (15%)</span>
                   <span className="tabular-nums">3 600 ₽</span>
                 </div>
-                <div className="h-px bg-white/10 my-2" />
-                <div className="flex justify-between font-semibold">
+                <div className="my-2 h-px bg-dash-border" />
+                <div className="flex justify-between font-semibold text-dash-heading">
                   <span>Итого к оплате</span>
                   <span className="tabular-nums">27 600 ₽</span>
                 </div>
@@ -238,7 +238,7 @@ export default function ClientSurveyCreatePage() {
               <button type="button" className="mt-6 w-full rounded-xl bg-brand px-6 py-3 text-sm font-semibold text-white hover:bg-brand-mid transition-colors">
                 Опубликовать опрос
               </button>
-              <button type="button" className="mt-2 w-full rounded-xl border border-white/10 bg-black/20 px-6 py-3 text-sm font-semibold text-white/80 hover:text-white hover:bg-white/10 transition-colors">
+              <button type="button" className="mt-2 w-full rounded-xl border border-dash-border bg-dash-bg px-6 py-3 text-sm font-semibold text-dash-body hover:bg-dash-bg/70 hover:text-dash-heading transition-colors">
                 Сохранить черновик
               </button>
             </div>
@@ -248,4 +248,3 @@ export default function ClientSurveyCreatePage() {
     </div>
   );
 }
-

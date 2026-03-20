@@ -1,4 +1,3 @@
-import * as React from "react";
 import Button from "@/components/ui/Button";
 import GlowOrb from "@/components/ui/GlowOrb";
 import RevealOnScroll from "@/components/ui/RevealOnScroll";
@@ -7,12 +6,12 @@ export default function Hero() {
   return (
     <section
       id="top"
-      className="relative overflow-hidden bg-site-bg pt-16 pb-28 px-8 text-center sm:pt-20"
+      className="relative overflow-hidden bg-site-bg px-4 pt-16 pb-20 text-center sm:px-6 sm:pt-20 sm:pb-24 lg:px-8 lg:pb-28"
     >
       <GlowOrb size={700} opacity={0.1} className="top-0 left-1/2 -translate-x-1/2 -translate-y-1/4" />
       <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(15,23,42,0.06)_1px,transparent_1px)] dark:bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:72px_72px]" />
 
-      <div className="relative max-w-4xl mx-auto">
+      <div className="relative mx-auto max-w-4xl">
         <RevealOnScroll>
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-brand/25 bg-brand/8 mb-8">
             <span className="w-1.5 h-1.5 rounded-full bg-brand-light animate-pulse" />
@@ -24,24 +23,28 @@ export default function Hero() {
 
         <RevealOnScroll delay={80}>
           <h1 className="font-display text-hero text-site-heading mb-6">
-            Платформа маркетинговых<br />
+            ПотокМнений — платформа
+            <br />
             <span className="bg-gradient-to-r from-brand-dark via-brand to-brand-dark bg-[length:200%_auto] bg-clip-text text-transparent animate-shimmer">
-              исследований
+              маркетинговых исследований
             </span>
           </h1>
         </RevealOnScroll>
 
         <RevealOnScroll delay={160}>
           <p className="text-xl font-body text-site-muted leading-relaxed max-w-2xl mx-auto mb-4">
-            Зарабатывайте на опросах или проводите исследования с ИИ-аналитикой за 1 день
+            ПотокМнений — это онлайн-платформа, которая объединяет бизнес и людей, готовых делиться своим мнением.
           </p>
-          <p className="text-base font-body text-site-muted/80 leading-relaxed max-w-xl mx-auto mb-10">
-            ПотокМнений объединяет респондентов, готовых делиться мнением, и компании, которым нужны честные данные. Умные алгоритмы, быстрые выплаты и автоматические отчёты на базе ИИ — всё в одном сервисе.
+          <p className="text-base font-body text-site-muted/80 leading-relaxed max-w-3xl mx-auto mb-4">
+            Компании получают быстрые и точные данные о своей аудитории, а пользователи — возможность зарабатывать, проходя онлайн-опросы. Мы автоматизировали процесс маркетинговых исследований: от создания опроса до анализа результатов.
+          </p>
+          <p className="text-base font-body text-site-muted/80 leading-relaxed max-w-2xl mx-auto mb-10">
+            А встроенный искусственный интеллект помогает обрабатывать ответы и превращать их в понятные выводы. Без сложных интерфейсов. Без долгих ожиданий. Без посредников.
           </p>
         </RevealOnScroll>
 
         <RevealOnScroll delay={240}>
-          <div className="flex gap-4 justify-center mb-20">
+          <div className="mb-16 flex flex-col justify-center gap-4 sm:mb-20 sm:flex-row">
             <Button variant="primary" size="lg">Начать зарабатывать</Button>
             <Button variant="secondary" size="lg">Заказать исследование</Button>
           </div>

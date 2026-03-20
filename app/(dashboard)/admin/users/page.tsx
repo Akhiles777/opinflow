@@ -36,7 +36,7 @@ export default function AdminUsersPage() {
   });
 
   const columns: Column<Row>[] = [
-    { key: "user", header: "Пользователь", cell: (r) => r.email, className: "max-w-[420px]" },
+    { key: "user", header: "Пользователь", cell: (r) => r.email, className: "max-w-[280px] lg:max-w-[420px]" },
     { key: "role", header: "Роль", cell: (r) => r.role },
     { key: "reg", header: "Регистрация", cell: (r) => r.registered },
     { key: "act", header: "Активность", cell: (r) => r.activity },
@@ -57,7 +57,7 @@ export default function AdminUsersPage() {
       key: "actions",
       header: "Действия",
       cell: (r) => (
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
           <a className="text-sm font-semibold text-brand hover:underline" href="#">Просмотреть</a>
           <a className="text-sm font-semibold text-brand hover:underline" href="#">
             {r.status === "blocked" ? "Разблокировать" : "Заблокировать"}
@@ -95,4 +95,3 @@ export default function AdminUsersPage() {
     </div>
   );
 }
-

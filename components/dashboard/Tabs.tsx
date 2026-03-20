@@ -25,7 +25,7 @@ export default function Tabs({ tabs, param, defaultValue }: Props) {
   }
 
   return (
-    <div className="inline-flex items-center rounded-xl border border-dash-border bg-dash-card p-1">
+    <div className="inline-flex w-full items-center rounded-xl border border-dash-border bg-dash-card p-1 sm:w-auto">
       {tabs.map((t) => {
         const isActive = t.value === active;
         return (
@@ -33,7 +33,7 @@ export default function Tabs({ tabs, param, defaultValue }: Props) {
             key={t.value}
             href={hrefFor(t.value)}
             className={[
-              "px-3 py-2 rounded-lg text-sm font-body transition-colors",
+              "flex-1 rounded-lg px-3 py-2 text-center text-sm font-body transition-colors sm:flex-none",
               isActive
                 ? "bg-dash-bg text-dash-heading font-medium"
                 : "text-dash-muted hover:text-dash-heading",
@@ -46,4 +46,3 @@ export default function Tabs({ tabs, param, defaultValue }: Props) {
     </div>
   );
 }
-

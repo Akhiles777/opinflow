@@ -38,7 +38,7 @@ export default function AdminModerationPage() {
   const current = rows.find((r) => r.id === previewId) ?? null;
 
   const columns: Column<Row>[] = [
-    { key: "survey", header: "Опрос", cell: (r) => r.survey, className: "max-w-[420px]" },
+    { key: "survey", header: "Опрос", cell: (r) => r.survey, className: "max-w-[280px] lg:max-w-[420px]" },
     { key: "client", header: "Заказчик", cell: (r) => r.client },
     { key: "created", header: "Создан", cell: (r) => r.created },
     { key: "questions", header: "Вопросов", cell: (r) => <span className="tabular-nums">{r.questions}</span> },
@@ -59,7 +59,7 @@ export default function AdminModerationPage() {
       key: "actions",
       header: "Действия",
       cell: (r) => (
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button type="button" onClick={() => setPreviewId(r.id)} className="text-sm font-semibold text-brand hover:underline">
             Просмотреть
           </button>
@@ -105,7 +105,7 @@ export default function AdminModerationPage() {
         title="Превью опроса"
         onClose={() => setPreviewId(null)}
         footer={
-          <div className="flex gap-2 justify-end">
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <button type="button" className="rounded-xl border border-dash-border bg-dash-card px-5 py-2.5 text-sm font-semibold text-dash-heading hover:bg-dash-bg transition-colors">
               Отклонить с причиной
             </button>
@@ -149,7 +149,7 @@ export default function AdminModerationPage() {
         title="Причина отклонения"
         onClose={() => setRejectId(null)}
         footer={
-          <div className="flex gap-2 justify-end">
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <button type="button" onClick={() => setRejectId(null)} className="rounded-xl border border-dash-border bg-dash-card px-5 py-2.5 text-sm font-semibold text-dash-heading hover:bg-dash-bg transition-colors">
               Отмена
             </button>
@@ -164,4 +164,3 @@ export default function AdminModerationPage() {
     </div>
   );
 }
-

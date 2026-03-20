@@ -23,7 +23,7 @@ export default async function ClientSurveyStatsPage({
         title={`Статистика опроса: ${id}`}
         subtitle="Графики и отчёты подключим на Этапе 4 (recharts + PDF)."
         right={
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 lg:justify-end">
             <Badge variant="active">Активен</Badge>
             <button type="button" className="rounded-xl border border-dash-border bg-dash-bg px-5 py-3 text-sm font-semibold text-dash-heading hover:bg-dash-card transition-colors">
               Пауза

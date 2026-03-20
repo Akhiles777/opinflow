@@ -26,31 +26,31 @@ export default function RespondentReferralPage() {
     <div>
       <PageHeader title="Рефералы" subtitle="Ссылка, статистика и приглашённые пользователи." />
 
-      <div className="mt-8 grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-6">
-        <div className="rounded-2xl bg-dash-sidebar text-white p-8">
-          <p className="text-sm text-white/40 mb-2 font-body">Ваша реферальная ссылка</p>
+      <div className="mt-8">
+        <div className="rounded-2xl border border-dash-border bg-dash-card p-8">
+          <p className="mb-2 text-sm font-body text-dash-muted">Ваша реферальная ссылка</p>
           <div className="flex flex-col sm:flex-row gap-2">
             <input
               readOnly
               value="https://potokmneny.ru/r/abc123"
-              className="h-11 flex-1 rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white/80"
+              className="h-11 min-w-0 flex-1 rounded-xl border border-dash-border bg-dash-bg px-3 text-sm text-dash-body"
             />
             <button type="button" className="h-11 rounded-xl bg-brand px-5 text-sm font-semibold text-white hover:bg-brand-mid transition-colors">
               Скопировать
             </button>
           </div>
-          <p className="mt-3 text-xs text-white/35 font-body">Состояние “Скопировано ✓” добавим на Этапе 2.</p>
+          <p className="mt-3 text-xs font-body text-dash-muted">Состояние “Скопировано ✓” добавим на Этапе 2.</p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
           {[
             { label: "Приглашено", value: "3" },
-            { label: "Зарегистрировались", value: "2" },
+            { label: "Зарегистрировалось", value: "2" },
             { label: "Заработано", value: "200 ₽" },
           ].map((s) => (
-            <div key={s.label} className="bg-dash-card border border-dash-border rounded-2xl p-6">
+            <div key={s.label} className="min-w-0 rounded-2xl border border-dash-border bg-dash-card p-6">
               <p className="text-sm text-dash-muted font-body">{s.label}</p>
-              <p className="mt-2 font-display text-3xl text-dash-heading font-bold tabular-nums">{s.value}</p>
+              <p className="mt-2 break-words font-display text-2xl font-bold tabular-nums text-dash-heading sm:text-3xl">{s.value}</p>
             </div>
           ))}
         </div>
@@ -65,4 +65,3 @@ export default function RespondentReferralPage() {
     </div>
   );
 }
-

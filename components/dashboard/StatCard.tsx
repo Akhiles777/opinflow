@@ -17,7 +17,7 @@ export default function StatCard({ icon, label, value, trend, trendUp }: Props) 
         </div>
       ) : null}
       <p className="text-base text-dash-muted font-body mb-1">{label}</p>
-      <p className="font-display text-4xl text-dash-heading font-bold tabular-nums">
+      <p className="font-display text-3xl text-dash-heading font-bold tabular-nums sm:text-4xl">
         {value}
       </p>
       {trend ? (

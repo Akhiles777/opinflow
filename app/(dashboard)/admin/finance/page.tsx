@@ -59,7 +59,7 @@ export default function AdminFinancePage() {
       </div>
 
       <div className="mt-10 bg-dash-card border border-dash-border rounded-2xl p-6">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm font-semibold text-dash-heading font-body">Транзакции</p>
           <button type="button" className="rounded-xl border border-dash-border bg-dash-bg px-4 py-2 text-sm font-semibold text-dash-heading hover:bg-dash-card transition-colors">
             Экспорт в Excel
@@ -85,4 +85,3 @@ export default function AdminFinancePage() {
     </div>
   );
 }
-

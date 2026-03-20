@@ -15,7 +15,7 @@ export default function RespondentProfilePage() {
     <div>
       <PageHeader title="Профиль" subtitle="Данные аккаунта и анкета респондента." />
 
-      <div className="mt-8 grid grid-cols-1 xl:grid-cols-[320px_1fr] gap-6">
+      <div className="mt-8 grid grid-cols-1 gap-6 xl:grid-cols-[320px_1fr]">
         <div className="bg-dash-card border border-dash-border rounded-2xl p-6">
           <div className="w-24 h-24 rounded-3xl bg-brand/10 text-brand flex items-center justify-center text-2xl font-bold font-body">
             PM
@@ -87,4 +87,3 @@ export default function RespondentProfilePage() {
     </div>
   );
 }
-

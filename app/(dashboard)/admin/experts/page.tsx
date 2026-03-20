@@ -28,7 +28,7 @@ export default function AdminExpertsPage() {
 
   const columns: Column<Order>[] = [
     { key: "client", header: "Заказчик", cell: (r) => r.client },
-    { key: "survey", header: "Опрос", cell: (r) => r.survey, className: "max-w-[420px]" },
+    { key: "survey", header: "Опрос", cell: (r) => r.survey, className: "max-w-[280px] lg:max-w-[420px]" },
     { key: "date", header: "Дата заказа", cell: (r) => r.date },
     { key: "expert", header: "Эксперт", cell: (r) => r.expert ?? "—" },
     {
@@ -48,7 +48,7 @@ export default function AdminExpertsPage() {
       key: "actions",
       header: "Действия",
       cell: (r) => (
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
           <button type="button" onClick={() => setAssignId(r.id)} className="text-sm font-semibold text-brand hover:underline">
             Назначить эксперта
           </button>
@@ -73,7 +73,7 @@ export default function AdminExpertsPage() {
         title="Назначить эксперта"
         onClose={() => setAssignId(null)}
         footer={
-          <div className="flex gap-2 justify-end">
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <button type="button" onClick={() => setAssignId(null)} className="rounded-xl border border-dash-border bg-dash-card px-5 py-2.5 text-sm font-semibold text-dash-heading hover:bg-dash-bg transition-colors">
               Отмена
             </button>
@@ -102,4 +102,3 @@ export default function AdminExpertsPage() {
     </div>
   );
 }
-

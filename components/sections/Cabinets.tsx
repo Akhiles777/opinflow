@@ -44,7 +44,7 @@ const roles = [
 
 export default function Cabinets() {
   return (
-    <section className="py-24 px-8 bg-site-bg">
+    <section className="bg-site-bg px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-24">
       <div className="max-w-7xl mx-auto">
         <RevealOnScroll>
           <h2 className="font-display text-heading text-site-heading text-center mb-16">
@@ -52,7 +52,7 @@ export default function Cabinets() {
           </h2>
         </RevealOnScroll>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
           {roles.map((role) => (
             <RevealOnScroll key={role.title}>
               <div

@@ -18,9 +18,9 @@ const legalLinks = [
 
 export default function Footer() {
   return (
-    <footer className="bg-site-bg border-t border-site-border pt-20 pb-10 px-8" id="contacts">
+    <footer className="bg-site-bg border-t border-site-border px-4 pt-16 pb-10 sm:px-6 lg:px-8 lg:pt-20" id="contacts">
       <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr_1fr] gap-16 pb-16 border-b border-site-border">
+        <div className="grid grid-cols-1 gap-10 border-b border-site-border pb-12 lg:grid-cols-[2fr_1fr_1fr] lg:gap-16 lg:pb-16">
           <div>
            <a href="/">
              <div className="flex items-center gap-2.5">
@@ -37,7 +37,7 @@ export default function Footer() {
             </div>
            </a>
             <p className="text-sm font-body text-site-muted max-w-xs mt-4 leading-relaxed">
-              Автоматизированная платформа маркетинговых исследований. Соединяем бренды и аудиторию.
+              Платформа маркетинговых исследований нового поколения. Объединяем бизнес и людей, готовых делиться своим мнением.
             </p>
             <a
               href="mailto:support@potokmneny.ru"
@@ -79,7 +79,7 @@ export default function Footer() {
         </div>
 
         <div className="flex flex-col sm:flex-row justify-between pt-10 text-xs font-body text-site-muted">
-          <span>© 2025 ПотокМнений. Все права защищены.</span>
+          <span>© 2026 ПотокМнений. Все права защищены.</span>
           <span>Политика · Оферта</span>
         </div>
       </div>

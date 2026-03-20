@@ -7,7 +7,7 @@ import SmoothHashLink from "@/components/ui/SmoothHashLink";
 export default function Header() {
   return (
     <header className="sticky top-0 z-50 bg-site-bg/80 backdrop-blur-xl border-b border-site-border">
-      <div className="h-16 px-8 max-w-7xl mx-auto flex justify-between items-center">
+      <div className="h-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto flex justify-between items-center gap-3">
        <a href="/">
          <div className="flex items-center gap-2.5">
           <div className="relative h-10 w-10 overflow-hidden">
@@ -38,9 +38,9 @@ export default function Header() {
             )
           )}
         </nav>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <ThemeToggle />
-          <Button variant="ghost" size="md">
+          <Button variant="ghost" size="md" className="hidden sm:inline-flex">
             Войти
           </Button>
           <Button variant="primary" size="md">
