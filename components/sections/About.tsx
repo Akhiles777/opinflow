@@ -32,15 +32,17 @@ const principles = [
 
 const stats = [
   { num: "25 000+", label: "активных респондентов" },
-  { num: "800+", label: "проведённых исследований" },
-  { num: "5 минут", label: "время запуска опроса" },
-  { num: "97%", label: "контроль качества" },
+  { num: "800+",    label: "исследований" },
+  { num: "5 мин",   label: "запуск опроса" },
+  { num: "97%",     label: "качество ответов" },
 ];
 
 export default function About() {
   return (
     <section id="about" className="bg-site-bg px-4 py-20 sm:px-6 sm:py-24 lg:px-8 lg:py-32">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-24 items-start">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 lg:gap-16 items-center">
+
+        {/* Левая колонка */}
         <div>
           <RevealOnScroll>
             <h2 className="font-display text-heading text-site-heading mb-6">
@@ -68,24 +70,51 @@ export default function About() {
           </div>
 
           <RevealOnScroll>
-            <Button variant="ghost" size='md' className="mt-6">
+            <Button variant="ghost" size="md" className="mt-2">
               Узнать больше о нас →
             </Button>
           </RevealOnScroll>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          {stats.map((stat) => (
-            <RevealOnScroll key={stat.label}>
-              <div className="bg-site-card border border-site-border rounded-2xl p-8">
-                <p className="font-body tabular-nums text-4xl text-brand font-semibold tracking-tight mb-2">
-                  {stat.num}
-                </p>
-                <p className="text-sm font-body text-site-muted">{stat.label}</p>
+        {/* Правая колонка — изображение по центру, без sticky */}
+        <RevealOnScroll direction="right">
+          <div className="mt-12 lg:mt-0">
+            <div className="relative rounded-3xl overflow-hidden w-full aspect-[3/4] max-h-[640px]">
+              <img
+                src="/image.png"
+                alt="Человек проходит опрос на смартфоне"
+                className="w-full h-full object-cover object-center"
+              />
+
+              {/* Градиент снизу */}
+              <div
+                className="absolute inset-0"
+                style={{ background: "linear-gradient(to top, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 50%)" }}
+              />
+
+              {/* Статы поверх */}
+              <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {stats.map((stat) => (
+                    <div
+                      key={stat.label}
+                      className="rounded-xl p-3 text-center"
+                      style={{ background: "rgba(255,255,255,0.12)", backdropFilter: "blur(8px)" }}
+                    >
+                      <p className="font-body tabular-nums text-lg font-semibold tracking-tight text-white leading-none mb-1">
+                        {stat.num}
+                      </p>
+                      <p className="text-[11px] font-body text-white/70 leading-tight">
+                        {stat.label}
+                      </p>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </RevealOnScroll>
-          ))}
-        </div>
+            </div>
+          </div>
+        </RevealOnScroll>
+
       </div>
     </section>
   );
