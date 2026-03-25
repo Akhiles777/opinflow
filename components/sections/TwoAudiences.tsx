@@ -58,7 +58,9 @@ export default function TwoAudiences() {
               ))}
             </ul>
 
-            <Button variant="primary" size="lg">Начать зарабатывать →</Button>
+            <Button variant="primary" size="lg" href="/register?role=RESPONDENT">
+              Начать зарабатывать →
+            </Button>
 
             {/* Мини-карточка снизу, после кнопки */}
             <div className="mt-6 w-full rounded-2xl border border-site-border bg-site-card p-5 shadow-card">
@@ -114,7 +116,9 @@ export default function TwoAudiences() {
               Подходит для маркетинговых исследований, тестирования продуктов, анализа рекламы, изучения потребительских привычек и HR-опросов.
             </p>
 
-            <Button variant="secondary" size="lg">Заказать исследование →</Button>
+            <Button variant="secondary" size="lg" href="/register?role=CLIENT">
+              Заказать исследование →
+            </Button>
 
             {/* Мини-карточка снизу, после кнопки */}
             <div className="mt-6 w-full rounded-2xl border border-site-border bg-site-card p-5 shadow-card">

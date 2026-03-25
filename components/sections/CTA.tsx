@@ -21,8 +21,22 @@ export default function CTA() {
             Реальные люди, реальные ответы и честная система вознаграждений — всё в одном сервисе.
           </p>
           <div className="flex flex-col justify-center gap-3 sm:flex-row sm:gap-4">
-            <Button variant="primary" size="lg" className="sm:px-9 sm:py-4 sm:text-lg sm:font-semibold">Я хочу зарабатывать →</Button>
-            <Button variant="secondary" size="lg" className="sm:px-9 sm:py-4 sm:text-lg sm:font-semibold">Я хочу заказать опрос →</Button>
+            <Button
+              variant="primary"
+              size="lg"
+              href="/register?role=RESPONDENT"
+              className="sm:px-9 sm:py-4 sm:text-lg sm:font-semibold"
+            >
+              Я хочу зарабатывать →
+            </Button>
+            <Button
+              variant="secondary"
+              size="lg"
+              href="/register?role=CLIENT"
+              className="sm:px-9 sm:py-4 sm:text-lg sm:font-semibold"
+            >
+              Я хочу заказать опрос →
+            </Button>
           </div>
         </RevealOnScroll>
       </div>

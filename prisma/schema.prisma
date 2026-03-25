@@ -1,0 +1,228 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+   provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id                 String              @id @default(cuid())
+  email              String              @unique
+  emailVerified      DateTime?
+  name               String?
+  image              String?
+  passwordHash       String?
+  role               Role                @default(RESPONDENT)
+  status             UserStatus          @default(PENDING_VERIFICATION)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  accounts           Account[]
+  sessions           Session[]
+  respondentProfile  RespondentProfile?
+  clientProfile      ClientProfile?
+  wallet             Wallet?
+  surveysCreated     Survey[]            @relation("SurveyCreator")
+  surveyResponses    SurveyResponse[]
+  referralsSent      Referral[]          @relation("ReferralSender")
+  referralsReceived  Referral[]          @relation("ReferralReceiver")
+  emailTokens        EmailToken[]
+
+  @@map("users")
+}
+
+enum Role {
+  RESPONDENT
+  CLIENT
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  PENDING_VERIFICATION
+  BLOCKED
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model EmailToken {
+  id        String         @id @default(cuid())
+  userId    String
+  token     String         @unique @default(cuid())
+  type      EmailTokenType
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime       @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("email_tokens")
+}
+
+enum EmailTokenType {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+}
+
+model RespondentProfile {
+  id         String   @id @default(cuid())
+  userId     String   @unique
+  gender     String?
+  birthDate  DateTime?
+  city       String?
+  income     String?
+  education  String?
+  interests  String[]
+  isVerified Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("respondent_profiles")
+}
+
+model ClientProfile {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  companyName  String?
+  inn          String?
+  contactName  String?
+  phone        String?
+  legalAddress String?
+  bankName     String?
+  bankAccount  String?
+  bankBik      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("client_profiles")
+}
+
+model Wallet {
+  id          String        @id @default(cuid())
+  userId      String        @unique
+  balance     Decimal       @default(0) @db.Decimal(10, 2)
+  totalEarned Decimal       @default(0) @db.Decimal(10, 2)
+  totalSpent  Decimal       @default(0) @db.Decimal(10, 2)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@map("wallets")
+}
+
+model Transaction {
+  id          String            @id @default(cuid())
+  walletId    String
+  type        TransactionType
+  amount      Decimal           @db.Decimal(10, 2)
+  description String?
+  status      TransactionStatus @default(PENDING)
+  createdAt   DateTime          @default(now())
+
+  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@map("transactions")
+}
+
+enum TransactionType {
+  EARNING
+  WITHDRAWAL
+  DEPOSIT
+  SPENDING
+  REFUND
+  BONUS
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+model Survey {
+  id          String       @id @default(cuid())
+  creatorId   String
+  title       String
+  description String?
+  category    String?
+  status      SurveyStatus @default(DRAFT)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  creator   User             @relation("SurveyCreator", fields: [creatorId], references: [id])
+  responses SurveyResponse[]
+
+  @@map("surveys")
+}
+
+enum SurveyStatus {
+  DRAFT
+  PENDING_MODERATION
+  ACTIVE
+  PAUSED
+  COMPLETED
+  REJECTED
+}
+
+model SurveyResponse {
+  id        String   @id @default(cuid())
+  surveyId  String
+  userId    String
+  createdAt DateTime @default(now())
+
+  survey Survey @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([surveyId, userId])
+  @@map("survey_responses")
+}
+
+model Referral {
+  id         String   @id @default(cuid())
+  senderId   String
+  receiverId String   @unique
+  bonusPaid  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  sender   User @relation("ReferralSender", fields: [senderId], references: [id])
+  receiver User @relation("ReferralReceiver", fields: [receiverId], references: [id])
+
+  @@map("referrals")
+}

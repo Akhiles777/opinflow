@@ -60,10 +60,10 @@ export default function Header() {
           </button>
           <div className="hidden items-center gap-2 lg:flex">
             <ThemeToggle />
-            <Button variant="ghost" size="md">
+            <Button variant="ghost" size="md" href="/login">
               Войти
             </Button>
-            <Button variant="primary" size="md">
+            <Button variant="primary" size="md" href="/register">
               Регистрация
             </Button>
           </div>
@@ -93,10 +93,15 @@ export default function Header() {
             ))}
           </nav>
           <div className="grid grid-cols-1 gap-2 pt-2 sm:grid-cols-2">
-            <Button variant="ghost" size="md" className="w-full justify-center">
+            <Button variant="ghost" size="md" href="/login" className="w-full justify-center">
               Войти
             </Button>
-            <Button variant="primary" size="md" className="w-full justify-center">
+            <Button
+              variant="primary"
+              size="md"
+              href="/register"
+              className="w-full justify-center"
+            >
               Регистрация
             </Button>
           </div>

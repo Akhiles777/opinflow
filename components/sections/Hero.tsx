@@ -44,8 +44,12 @@ export default function Hero() {
 
         <RevealOnScroll delay={240}>
           <div className="mb-16 flex flex-col justify-center gap-4 sm:mb-20 sm:flex-row">
-            <Button variant="primary" size="lg">Начать зарабатывать</Button>
-            <Button variant="secondary" size="lg">Заказать исследование</Button>
+            <Button variant="primary" size="lg" href="/register?role=RESPONDENT">
+              Начать зарабатывать
+            </Button>
+            <Button variant="secondary" size="lg" href="/register?role=CLIENT">
+              Заказать исследование
+            </Button>
           </div>
         </RevealOnScroll>
 
