@@ -8,6 +8,8 @@ const stats = [
   { num: "97%", label: "респондентов проходят контроль качества" },
 ];
 
+const vercel_test = 'tt'
+
 export default function Stats() {
   return (
     <section className="bg-site-section">
