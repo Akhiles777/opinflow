@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useActionState } from "react";
 import { registerAction } from "@/actions/auth";
@@ -10,7 +11,7 @@ type Role = "RESPONDENT" | "CLIENT";
 
 const initialState = { success: false, error: "", message: "", email: "" };
 
-export default function RegisterPage() {
+function RegisterPageContent() {
   const searchParams = useSearchParams();
   const roleFromQuery = searchParams.get("role") === "CLIENT" ? "CLIENT" : "RESPONDENT";
   const [role, setRole] = React.useState<Role>(roleFromQuery);
@@ -85,5 +86,23 @@ export default function RegisterPage() {
         Уже есть аккаунт? <Link href="/login" className="text-brand hover:text-brand-light">Войти</Link>
       </p>
     </div>
+  );
+}
+
+function RegisterFallback() {
+  return (
+    <div className="mx-auto mt-16 max-w-md rounded-2xl border border-white/8 bg-surface-900 p-6 text-white sm:mt-24 sm:p-10">
+      <p className="text-xs uppercase tracking-[0.25em] text-white/35">Регистрация</p>
+      <h1 className="mt-4 font-display text-3xl text-white">Создайте аккаунт</h1>
+      <p className="mt-3 text-sm leading-relaxed text-white/55">Загружаем форму регистрации...</p>
+    </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<RegisterFallback />}>
+      <RegisterPageContent />
+    </Suspense>
   );
 }

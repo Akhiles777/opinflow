@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { resendVerificationAction } from "@/actions/auth";
@@ -14,14 +15,18 @@ const errorMap: Record<string, string> = {
   Configuration: "OAuth-вход пока не настроен. Используйте вход по email или завершите настройку провайдеров.",
 };
 
-export default function LoginPage() {
+function LoginPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const vkEnabled = process.env.NEXT_PUBLIC_VK_AUTH_ENABLED === "true";
   const yandexEnabled = process.env.NEXT_PUBLIC_YANDEX_AUTH_ENABLED === "true";
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
-  const [error, setError] = React.useState<string | null>(searchParams.get("error") ? errorMap[searchParams.get("error") as string] ?? "Не удалось выполнить вход" : null);
+  const [error, setError] = React.useState<string | null>(
+    searchParams.get("error")
+      ? errorMap[searchParams.get("error") as string] ?? "Не удалось выполнить вход"
+      : null,
+  );
   const [resendMessage, setResendMessage] = React.useState<string | null>(null);
   const [pending, startTransition] = React.useTransition();
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
@@ -118,5 +123,23 @@ export default function LoginPage() {
         Нет аккаунта? <Link href="/register" className="text-brand hover:text-brand-light">Зарегистрироваться</Link>
       </p>
     </div>
+  );
+}
+
+function LoginFallback() {
+  return (
+    <div className="mx-auto mt-16 max-w-md rounded-2xl border border-white/8 bg-surface-900 p-6 text-white sm:mt-24 sm:p-10">
+      <p className="text-xs uppercase tracking-[0.25em] text-white/35">Вход</p>
+      <h1 className="mt-4 font-display text-3xl text-white">Добро пожаловать</h1>
+      <p className="mt-3 text-sm leading-relaxed text-white/55">Загружаем форму входа...</p>
+    </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<LoginFallback />}>
+      <LoginPageContent />
+    </Suspense>
   );
 }

@@ -2,13 +2,14 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useActionState } from "react";
 import { resetPasswordFormAction, validatePasswordResetTokenAction } from "@/actions/auth";
 
 const initialState = { success: false, error: "", message: "" };
 
-export default function ResetPasswordPage() {
+function ResetPasswordPageContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token") ?? "";
   const [state, formAction, isPending] = useActionState(resetPasswordFormAction, initialState);
@@ -79,5 +80,23 @@ export default function ResetPasswordPage() {
         </form>
       )}
     </div>
+  );
+}
+
+function ResetPasswordFallback() {
+  return (
+    <div className="mx-auto mt-16 max-w-md rounded-2xl border border-white/8 bg-surface-900 p-6 text-white sm:mt-24 sm:p-10">
+      <p className="text-xs uppercase tracking-[0.25em] text-white/35">Новый пароль</p>
+      <h1 className="mt-4 font-display text-3xl text-white">Задайте новый пароль</h1>
+      <p className="mt-3 text-sm leading-relaxed text-white/55">Загружаем форму восстановления...</p>
+    </div>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<ResetPasswordFallback />}>
+      <ResetPasswordPageContent />
+    </Suspense>
   );
 }
