@@ -10,12 +10,6 @@ const navLinks = [
   { label: "Контакты", href: "#contacts" },
 ];
 
-const legalLinks = [
-  "Политика конфиденциальности",
-  "Пользовательское соглашение",
-  "Оферта",
-];
-
 export default function Footer() {
   return (
     <footer className="bg-site-bg px-4 pt-16 pb-10 sm:px-6 lg:px-8 lg:pt-20" id="contacts">
@@ -65,15 +59,9 @@ export default function Footer() {
           <div>
             <p className="text-sm font-semibold text-site-heading mb-4">Документы</p>
             <div className="grid gap-2">
-              {legalLinks.map((link) => (
-                <a
-                  key={link}
-                  href="#"
-                  className="text-sm font-body text-site-muted hover:text-site-heading transition-colors"
-                >
-                  {link}
-                </a>
-              ))}
+              <span className="text-sm font-body text-site-muted">Политика конфиденциальности</span>
+              <span className="text-sm font-body text-site-muted">Пользовательское соглашение</span>
+              <span className="text-sm font-body text-site-muted">Оферта</span>
             </div>
           </div>
         </div>

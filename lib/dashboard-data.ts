@@ -1,4 +1,4 @@
-import type { Role, SurveyStatus, TransactionStatus, TransactionType } from "@prisma/client";
+import type { Role, SurveyStatus, TransactionStatus, TransactionType, UserStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 export type DashboardViewer = {
@@ -239,6 +239,191 @@ export async function getClientOverviewData(userId: string) {
   };
 }
 
+export async function getClientSurveysData(userId: string) {
+  const surveys = await prisma.survey.findMany({
+    where: { creatorId: userId },
+    orderBy: { createdAt: "desc" },
+    include: {
+      _count: { select: { responses: true } },
+    },
+  });
+
+  return surveys.map((survey) => ({
+    id: survey.id,
+    title: survey.title,
+    answers: survey._count.responses,
+    progress: `${survey._count.responses} ответов`,
+    budget: "—",
+    status: mapSurveyStatus(survey.status),
+  }));
+}
+
+export async function getRespondentSurveysData(userId: string) {
+  const responses = await prisma.surveyResponse.findMany({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+    include: {
+      survey: {
+        select: {
+          id: true,
+          title: true,
+          createdAt: true,
+        },
+      },
+    },
+  });
+
+  return {
+    inProgress: [] as Array<{ id: string; title: string; progress: string; deadline: string }>,
+    completed: responses.map((response) => ({
+      id: response.survey.id,
+      date: formatDate(response.createdAt),
+      title: response.survey.title,
+      reward: "—",
+    })),
+  };
+}
+
+export async function getAdminOverviewData() {
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const weekAgo = new Date(now);
+  weekAgo.setDate(now.getDate() - 7);
+
+  const [pendingModeration, newUsers, monthTransactions, latestSurveys, latestUsers, latestTransactions] =
+    await Promise.all([
+      prisma.survey.count({ where: { status: "PENDING_MODERATION" } }),
+      prisma.user.count({ where: { createdAt: { gte: weekAgo } } }),
+      prisma.transaction.findMany({
+        where: { createdAt: { gte: monthStart }, status: "COMPLETED" },
+        select: { amount: true, type: true, createdAt: true, wallet: { select: { user: { select: { email: true } } } } },
+      }),
+      prisma.survey.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 3,
+        select: { title: true, status: true, createdAt: true },
+      }),
+      prisma.user.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 3,
+        select: { email: true, createdAt: true },
+      }),
+      prisma.transaction.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 3,
+        where: { status: "COMPLETED" },
+        select: {
+          amount: true,
+          type: true,
+          createdAt: true,
+          wallet: { select: { user: { select: { email: true } } } },
+        },
+      }),
+    ]);
+
+  const turnover = monthTransactions.reduce((sum, item) => sum + Math.abs(Number(item.amount)), 0);
+  const respondentPayouts = monthTransactions
+    .filter((item) => item.type === "WITHDRAWAL" || item.type === "EARNING" || item.type === "BONUS")
+    .reduce((sum, item) => sum + Math.abs(Number(item.amount)), 0);
+
+  const events = [
+    ...latestSurveys.map((item) => ({
+      text: `${item.title} · ${mapSurveyStatus(item.status).t.toLowerCase()}`,
+      time: formatDate(item.createdAt),
+      sortAt: item.createdAt.getTime(),
+    })),
+    ...latestUsers.map((item) => ({
+      text: `Новый пользователь ${item.email}`,
+      time: formatDate(item.createdAt),
+      sortAt: item.createdAt.getTime(),
+    })),
+    ...latestTransactions.map((item) => ({
+      text: `${mapTransactionTypeForClient(item.type)} ${formatRub(Math.abs(Number(item.amount)))} · ${item.wallet.user.email}`,
+      time: formatDate(item.createdAt),
+      sortAt: item.createdAt.getTime(),
+    })),
+  ]
+    .sort((a, b) => b.sortAt - a.sortAt)
+    .slice(0, 6);
+
+  return {
+    pendingModeration,
+    newUsers,
+    turnover,
+    respondentPayouts,
+    events: events.map(({ text, time }) => ({ text, time })),
+  };
+}
+
+export async function getAdminUsersData() {
+  const users = await prisma.user.findMany({
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      email: true,
+      role: true,
+      createdAt: true,
+      updatedAt: true,
+      status: true,
+    },
+  });
+
+  return users.map((user) => ({
+    id: user.id,
+    email: user.email,
+    role: user.role,
+    registered: formatDate(user.createdAt),
+    activity: formatDate(user.updatedAt),
+    status: mapUserStatus(user.status),
+  }));
+}
+
+export async function getAdminFinanceData() {
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  const transactions = await prisma.transaction.findMany({
+    where: { createdAt: { gte: monthStart } },
+    orderBy: { createdAt: "desc" },
+    include: {
+      wallet: {
+        select: {
+          user: {
+            select: { email: true },
+          },
+        },
+      },
+    },
+  });
+
+  const turnover = transactions
+    .filter((item) => item.status === "COMPLETED")
+    .reduce((sum, item) => sum + Math.abs(Number(item.amount)), 0);
+  const commission = transactions
+    .filter((item) => item.type === "SPENDING")
+    .reduce((sum, item) => sum + Math.abs(Number(item.amount)) * 0.15, 0);
+  const paidOut = transactions
+    .filter((item) => item.type === "WITHDRAWAL" && item.status === "COMPLETED")
+    .reduce((sum, item) => sum + Math.abs(Number(item.amount)), 0);
+  const depositCount = transactions.filter((item) => item.type === "DEPOSIT" && item.status === "COMPLETED").length;
+
+  return {
+    turnover,
+    commission,
+    paidOut,
+    depositCount,
+    rows: transactions.slice(0, 50).map((item) => ({
+      id: item.id,
+      date: formatDate(item.createdAt),
+      type: item.type,
+      user: item.wallet.user.email,
+      amount: Number(item.amount),
+      fee: item.type === "SPENDING" ? Number(item.amount) * 0.15 : 0,
+      status: mapTransactionStatus(item.status),
+    })),
+  };
+}
+
 export function mapSurveyStatus(status: SurveyStatus) {
   return status === "ACTIVE"
     ? { v: "active" as const, t: "Активен" }
@@ -269,4 +454,12 @@ export function mapTransactionTypeForRespondent(type: TransactionType) {
 
 export function mapTransactionTypeForClient(type: TransactionType) {
   return type === "DEPOSIT" || type === "REFUND" ? "Пополнение" : "Списание";
+}
+
+export function mapUserStatus(status: UserStatus) {
+  return status === "ACTIVE"
+    ? { v: "active" as const, t: "Активен" }
+    : status === "BLOCKED"
+      ? { v: "rejected" as const, t: "Заблокирован" }
+      : { v: "pending" as const, t: "Ожидает подтверждения" };
 }

@@ -32,7 +32,7 @@ const columns: Column<SurveyRow>[] = [
     header: "Действия",
     cell: () => (
       <div className="flex flex-wrap gap-3">
-        <a className="text-sm font-semibold text-brand hover:underline" href="#">Открыть</a>
+        <span className="text-sm font-semibold text-dash-muted">Открыть скоро</span>
       </div>
     ),
   },

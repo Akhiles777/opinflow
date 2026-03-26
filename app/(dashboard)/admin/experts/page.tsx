@@ -52,9 +52,7 @@ export default function AdminExpertsPage() {
           <button type="button" onClick={() => setAssignId(r.id)} className="text-sm font-semibold text-brand hover:underline">
             Назначить эксперта
           </button>
-          <a className="text-sm font-semibold text-brand hover:underline" href="#">
-            Загрузить PDF
-          </a>
+          <span className="text-sm font-semibold text-dash-muted">Загрузка PDF скоро</span>
         </div>
       ),
     },
