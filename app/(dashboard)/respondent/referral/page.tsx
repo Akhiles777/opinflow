@@ -1,6 +1,9 @@
 import * as React from "react";
 import PageHeader from "@/components/dashboard/PageHeader";
 import DataTable, { Column } from "@/components/dashboard/DataTable";
+import EmptyState from "@/components/dashboard/EmptyState";
+import { formatRub, getRespondentReferralData } from "@/lib/dashboard-data";
+import { requireRole } from "@/lib/auth-utils";
 
 type Row = {
   name: string;
@@ -9,11 +12,6 @@ type Row = {
   bonus: string;
 };
 
-const rows: Row[] = [
-  { name: "А***", date: "05.03.2026", status: "Зарегистрирован", bonus: "120 ₽" },
-  { name: "М***", date: "01.03.2026", status: "Активен", bonus: "80 ₽" },
-];
-
 const columns: Column<Row>[] = [
   { key: "name", header: "Имя", cell: (r) => r.name },
   { key: "date", header: "Регистрация", cell: (r) => r.date },
@@ -21,7 +19,14 @@ const columns: Column<Row>[] = [
   { key: "bonus", header: "Ваш бонус", cell: (r) => <span className="tabular-nums font-semibold text-brand">{r.bonus}</span> },
 ];
 
-export default function RespondentReferralPage() {
+export default async function RespondentReferralPage() {
+  const session = await requireRole("RESPONDENT");
+  const data = await getRespondentReferralData(session.user.id);
+  const rows: Row[] = data.referrals.map((item) => ({
+    ...item,
+    bonus: formatRub(item.bonus),
+  }));
+
   return (
     <div>
       <PageHeader title="Рефералы" subtitle="Ссылка, статистика и приглашённые пользователи." />
@@ -32,7 +37,7 @@ export default function RespondentReferralPage() {
           <div className="flex flex-col sm:flex-row gap-2">
             <input
               readOnly
-              value="https://potokmneny.ru/r/abc123"
+              value={`https://opinflow-xi.vercel.app/register?ref=${data.referralCode}`}
               className="h-11 min-w-0 flex-1 rounded-xl border border-dash-border bg-dash-bg px-3 text-sm text-dash-body"
             />
             <button type="button" className="h-11 rounded-xl bg-brand px-5 text-sm font-semibold text-white hover:bg-brand-mid transition-colors">
@@ -44,9 +49,9 @@ export default function RespondentReferralPage() {
 
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
           {[
-            { label: "Приглашено", value: "3" },
-            { label: "Зарегистрировалось", value: "2" },
-            { label: "Заработано", value: "200 ₽" },
+            { label: "Приглашено", value: String(data.invitedCount) },
+            { label: "Зарегистрировалось", value: String(data.registeredCount) },
+            { label: "Заработано", value: formatRub(data.earned) },
           ].map((s) => (
             <div key={s.label} className="min-w-0 rounded-2xl border border-dash-border bg-dash-card p-6">
               <p className="text-sm text-dash-muted font-body">{s.label}</p>
@@ -60,7 +65,14 @@ export default function RespondentReferralPage() {
         <p className="text-sm font-semibold text-dash-heading mb-4 font-body">
           Приглашённые
         </p>
-        <DataTable columns={columns} rows={rows} keyForRow={(r) => r.name + r.date} />
+        {rows.length > 0 ? (
+          <DataTable columns={columns} rows={rows} keyForRow={(r) => r.name + r.date} />
+        ) : (
+          <EmptyState
+            title="Вы ещё никого не пригласили"
+            description="Поделитесь ссылкой с друзьями, и их регистрации появятся в этом разделе."
+          />
+        )}
       </div>
     </div>
   );

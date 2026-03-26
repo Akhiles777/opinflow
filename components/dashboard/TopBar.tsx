@@ -3,8 +3,15 @@
 import * as React from "react";
 import { Bell, Menu } from "lucide-react";
 import ThemeToggle from "@/components/ui/ThemeToggle";
+import type { DashboardViewer } from "@/lib/dashboard-data";
 
-export default function TopBar({ onOpenMobileMenu }: { onOpenMobileMenu: () => void }) {
+export default function TopBar({
+  viewer,
+  onOpenMobileMenu,
+}: {
+  viewer: DashboardViewer;
+  onOpenMobileMenu: () => void;
+}) {
   return (
     <div className="flex h-auto flex-wrap items-center justify-between gap-3 border-b border-dash-border bg-dash-card px-4 py-3 sm:px-6 lg:h-16 lg:flex-nowrap lg:gap-6 lg:px-8 lg:py-0">
       <div className="order-1 flex items-center gap-3 lg:hidden">
@@ -50,8 +57,9 @@ export default function TopBar({ onOpenMobileMenu }: { onOpenMobileMenu: () => v
           type="button"
           className="w-9 h-9 rounded-full bg-brand/10 text-brand text-xs font-bold font-body flex items-center justify-center"
           aria-label="Профиль"
+          title={viewer.email}
         >
-          PM
+          {viewer.initials}
         </button>
       </div>
     </div>

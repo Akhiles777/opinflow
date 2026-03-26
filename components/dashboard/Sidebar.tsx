@@ -19,6 +19,7 @@ import {
   User,
   UserPlus,
 } from "lucide-react";
+import type { DashboardViewer } from "@/lib/dashboard-data";
 
 type NavItem = { label: string; href: string; icon: React.ReactNode };
 type NavSection = { title: string; items: NavItem[] };
@@ -88,9 +89,11 @@ const adminNav: NavSection[] = [
 ];
 
 export default function Sidebar({
+  viewer,
   mobileMenuOpen,
   onCloseMobileMenu,
 }: {
+  viewer: DashboardViewer;
   mobileMenuOpen: boolean;
   onCloseMobileMenu: () => void;
 }) {
@@ -169,11 +172,11 @@ export default function Sidebar({
       <div className="border-t border-white/5 px-3 pb-4 pt-4">
         <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
           <div className="w-9 h-9 rounded-full bg-brand/20 flex items-center justify-center text-sm font-bold text-brand-light font-body">
-            PM
+            {viewer.initials}
           </div>
           <div>
-            <p className="text-base font-medium text-white font-body">Пользователь</p>
-            <p className="text-sm text-white/30 font-body">{role}</p>
+            <p className="text-base font-medium text-white font-body">{viewer.name}</p>
+            <p className="text-sm text-white/30 font-body">{viewer.roleLabel}</p>
           </div>
         </div>
       </div>

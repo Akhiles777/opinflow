@@ -6,11 +6,12 @@ type Status = "available" | "in-progress" | "completed";
 type Props = {
   category: string;
   title: string;
-  reward: number;
-  duration: number;
-  questions: number;
+  reward?: number | null;
+  duration?: number | null;
+  questions?: number | null;
   clientRating?: number;
   status: Status;
+  meta?: string;
 };
 
 export default function SurveyCard({
@@ -21,6 +22,7 @@ export default function SurveyCard({
   questions,
   clientRating,
   status,
+  meta,
 }: Props) {
   const statusBadge =
     status === "available"
@@ -44,10 +46,16 @@ export default function SurveyCard({
           </p>
         </div>
         <div className="shrink-0 text-left sm:text-right">
-          <p className="font-display text-2xl text-brand tabular-nums font-bold">
-            {reward} ₽
-          </p>
-          {clientRating ? (
+          {typeof reward === "number" ? (
+            <p className="font-display text-2xl text-brand tabular-nums font-bold">
+              {reward} ₽
+            </p>
+          ) : (
+            <p className="text-sm font-semibold text-dash-muted font-body">
+              {meta ?? "Без дополнительной информации"}
+            </p>
+          )}
+          {typeof clientRating === "number" ? (
             <p className="text-sm text-dash-muted font-body mt-1">
               Рейтинг: {clientRating.toFixed(1)}
             </p>
@@ -57,7 +65,9 @@ export default function SurveyCard({
 
       <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-base text-dash-muted font-body">
-          ~{duration} минут · {questions} вопросов
+          {typeof duration === "number" && typeof questions === "number"
+            ? `~${duration} минут · ${questions} вопросов`
+            : meta ?? "Данные по исследованию появятся позже"}
         </p>
         <span className="text-base font-semibold text-brand opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
           {status === "in-progress" ? "Продолжить →" : "Начать →"}

@@ -2,20 +2,22 @@ import * as React from "react";
 import PageHeader from "@/components/dashboard/PageHeader";
 import DataTable, { Column } from "@/components/dashboard/DataTable";
 import Badge from "@/components/dashboard/Badge";
+import EmptyState from "@/components/dashboard/EmptyState";
+import {
+  formatRub,
+  getWalletData,
+  mapTransactionStatus,
+  mapTransactionTypeForClient,
+} from "@/lib/dashboard-data";
+import { requireRole } from "@/lib/auth-utils";
 
 type Row = {
   date: string;
   type: "Пополнение" | "Списание";
   description: string;
   amount: string;
-  status: "completed" | "pending" | "failed";
+  status: "completed" | "pending" | "rejected" | "draft";
 };
-
-const rows: Row[] = [
-  { date: "12.03.2026", type: "Пополнение", description: "ЮKassa", amount: "+10 000 ₽", status: "completed" },
-  { date: "11.03.2026", type: "Списание", description: "Опрос: доставка", amount: "-12 800 ₽", status: "completed" },
-  { date: "11.03.2026", type: "Списание", description: "Комиссия платформы", amount: "-1 280 ₽", status: "completed" },
-];
 
 const columns: Column<Row>[] = [
   { key: "date", header: "Дата", cell: (r) => r.date },
@@ -25,18 +27,28 @@ const columns: Column<Row>[] = [
   {
     key: "status",
     header: "Статус",
-    cell: (r) => {
-      const map = {
-        completed: { v: "completed" as const, t: "Завершено" },
-        pending: { v: "pending" as const, t: "Ожидание" },
-        failed: { v: "rejected" as const, t: "Ошибка" },
-      }[r.status];
-      return <Badge variant={map.v}>{map.t}</Badge>;
-    },
+    cell: (r) => <Badge variant={r.status}>{mapTransactionStatusText(r.status)}</Badge>,
   },
 ];
 
-export default function ClientWalletPage() {
+function mapTransactionStatusText(status: Row["status"]) {
+  return status === "completed" ? "Завершено" : status === "pending" ? "Ожидание" : status === "rejected" ? "Ошибка" : "Отменено";
+}
+
+export default async function ClientWalletPage() {
+  const session = await requireRole("CLIENT");
+  const wallet = await getWalletData(session.user.id);
+  const rows: Row[] = wallet.transactions.map((item) => {
+    const type = mapTransactionTypeForClient(item.type);
+    return {
+      date: item.date,
+      type,
+      description: item.description,
+      amount: `${type === "Пополнение" ? "+" : "-"}${formatRub(Math.abs(item.amount))}`,
+      status: mapTransactionStatus(item.status).v,
+    };
+  });
+
   return (
     <div>
       <PageHeader title="Кошелёк" subtitle="Баланс заказчика, пополнения и списания." />
@@ -44,7 +56,7 @@ export default function ClientWalletPage() {
       <div className="mt-8 grid grid-cols-1 gap-5 xl:grid-cols-2 xl:items-start">
         <div className="rounded-2xl border border-dash-border bg-dash-card p-8">
           <p className="mb-2 text-sm font-body text-dash-muted">Текущий баланс</p>
-          <p className="mb-6 font-display text-4xl font-bold tabular-nums text-dash-heading sm:text-5xl">45 200 ₽</p>
+          <p className="mb-6 font-display text-4xl font-bold tabular-nums text-dash-heading sm:text-5xl">{formatRub(wallet.balance)}</p>
           <button
             type="button"
             className="inline-flex items-center justify-center rounded-xl bg-brand px-7 py-3.5 text-base font-semibold text-white hover:bg-brand-mid transition-colors"
@@ -76,7 +88,14 @@ export default function ClientWalletPage() {
         <p className="text-sm font-semibold text-dash-heading mb-4 font-body">
           История операций
         </p>
-        <DataTable columns={columns} rows={rows} keyForRow={(r) => r.date + r.description} />
+        {rows.length > 0 ? (
+          <DataTable columns={columns} rows={rows} keyForRow={(r) => r.date + r.description} />
+        ) : (
+          <EmptyState
+            title="Операций пока нет"
+            description="После пополнения баланса и запуска опросов здесь появится история списаний и пополнений."
+          />
+        )}
       </div>
     </div>
   );

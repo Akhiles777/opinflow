@@ -3,58 +3,31 @@ import { Wallet, ListChecks, ClipboardList, UserPlus } from "lucide-react";
 import PageHeader from "@/components/dashboard/PageHeader";
 import StatCard from "@/components/dashboard/StatCard";
 import SurveyCard from "@/components/dashboard/SurveyCard";
+import EmptyState from "@/components/dashboard/EmptyState";
+import { formatRub, getRespondentOverviewData } from "@/lib/dashboard-data";
+import { requireRole } from "@/lib/auth-utils";
 
-const stats = [
-  { label: "Текущий баланс", value: "1 240 ₽", trend: "+350 ₽ сегодня", trendUp: true, icon: <Wallet className="w-5 h-5" /> },
-  { label: "Опросов пройдено", value: "24", trend: "+3 за неделю", trendUp: true, icon: <ListChecks className="w-5 h-5" /> },
-  { label: "Доступных опросов", value: "8", icon: <ClipboardList className="w-5 h-5" /> },
-  { label: "Приглашено друзей", value: "3", trend: "+1 реферал", trendUp: true, icon: <UserPlus className="w-5 h-5" /> },
-];
+export default async function RespondentOverviewPage() {
+  const session = await requireRole("RESPONDENT");
+  const data = await getRespondentOverviewData(session.user.id);
 
-const surveys = [
-  {
-    category: "Потребительский",
-    title: "Оцените качество сервиса доставки",
-    reward: 120,
-    duration: 5,
-    questions: 8,
-    clientRating: 4.8,
-    status: "available" as const,
-  },
-  {
-    category: "Категория",
-    title: "Выбор бренда кофе: привычки и триггеры",
-    reward: 220,
-    duration: 9,
-    questions: 12,
-    clientRating: 4.6,
-    status: "in-progress" as const,
-  },
-  {
-    category: "Финтех",
-    title: "Мобильные банки: удобство и доверие",
-    reward: 150,
-    duration: 6,
-    questions: 10,
-    clientRating: 4.7,
-    status: "available" as const,
-  },
-  {
-    category: "Продукт",
-    title: "Новый интерфейс: что мешает пользоваться чаще?",
-    reward: 180,
-    duration: 7,
-    questions: 9,
-    clientRating: 4.5,
-    status: "completed" as const,
-  },
-];
+  const stats = [
+    {
+      label: "Текущий баланс",
+      value: formatRub(data.balance),
+      trend: data.earnedToday > 0 ? `+${formatRub(data.earnedToday)} сегодня` : "Сегодня начислений не было",
+      trendUp: data.earnedToday > 0,
+      icon: <Wallet className="w-5 h-5" />,
+    },
+    { label: "Опросов пройдено", value: String(data.completedCount), icon: <ListChecks className="w-5 h-5" /> },
+    { label: "Доступных опросов", value: String(data.availableCount), icon: <ClipboardList className="w-5 h-5" /> },
+    { label: "Приглашено друзей", value: String(data.referralCount), icon: <UserPlus className="w-5 h-5" /> },
+  ];
 
-export default function RespondentOverviewPage() {
   return (
     <div>
       <PageHeader
-        title="Добрый день, Пользователь 👋"
+        title={`Добрый день, ${data.viewer?.name ?? "Пользователь"} 👋`}
         subtitle="Сводка по балансу и доступным опросам."
       />
 
@@ -75,22 +48,25 @@ export default function RespondentOverviewPage() {
         <p className="text-sm font-semibold text-dash-heading mb-4 font-body">
           Доступные опросы
         </p>
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          {surveys.map((s) => (
-            <SurveyCard
-              key={s.title}
-              category={s.category}
-              title={s.title}
-              reward={s.reward}
-              duration={s.duration}
-              questions={s.questions}
-              clientRating={s.clientRating}
-              status={s.status}
-            />
-          ))}
-        </div>
+        {data.surveys.length > 0 ? (
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+            {data.surveys.map((survey) => (
+              <SurveyCard
+                key={survey.id}
+                category={survey.category}
+                title={survey.title}
+                status={survey.status}
+                meta={survey.meta}
+              />
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            title="Пока нет доступных опросов"
+            description="Загляните позже — как только заказчики запустят новые исследования, они появятся здесь."
+          />
+        )}
       </div>
     </div>
   );
 }
-

@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import Script from "next/script";
-import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 
 type Props = {
@@ -82,7 +81,6 @@ function extractProfile(data: VKIDUserInfoResult, fallbackEmail?: string | null)
 export default function VKIDButton({ appId, callbackUrl, mode = "login" }: Props) {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const initializedRef = React.useRef(false);
-  const router = useRouter();
   const [sdkReady, setSdkReady] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [pending, setPending] = React.useState(false);
@@ -168,8 +166,7 @@ export default function VKIDButton({ appId, callbackUrl, mode = "login" }: Props
               return;
             }
 
-            router.push(result?.url ?? callbackUrl);
-            router.refresh();
+            window.location.assign(result?.url ?? callbackUrl);
           } catch (sdkError) {
             console.error("[auth][vkid-login-error]", sdkError);
             setError("Вход через VK временно недоступен. Попробуйте позже.");
@@ -183,7 +180,7 @@ export default function VKIDButton({ appId, callbackUrl, mode = "login" }: Props
       console.error("[auth][vkid-runtime-error]", sdkError);
       setError("Не удалось инициализировать VK-вход. Используйте email или Яндекс.");
     }
-  }, [appId, callbackUrl, router, sdkReady]);
+  }, [appId, callbackUrl, sdkReady]);
 
   React.useEffect(() => {
     renderWidget();

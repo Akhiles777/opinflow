@@ -1,21 +1,16 @@
-"use client";
-
 import * as React from "react";
-import Sidebar from "@/components/dashboard/Sidebar";
-import TopBar from "@/components/dashboard/TopBar";
+import { notFound } from "next/navigation";
+import DashboardShell from "@/components/dashboard/DashboardShell";
+import { getDashboardViewer } from "@/lib/dashboard-data";
+import { requireAuth } from "@/lib/auth-utils";
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const session = await requireAuth();
+  const viewer = await getDashboardViewer(session.user.id);
 
-  return (
-    <div className="flex min-h-screen flex-col overflow-hidden bg-dash-bg lg:h-screen lg:flex-row">
-      <Sidebar mobileMenuOpen={mobileMenuOpen} onCloseMobileMenu={() => setMobileMenuOpen(false)} />
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <TopBar onOpenMobileMenu={() => setMobileMenuOpen(true)} />
-        <main className="flex-1 overflow-y-auto p-4 text-base leading-relaxed text-dash-body sm:p-6 lg:p-8">
-          {children}
-        </main>
-      </div>
-    </div>
-  );
+  if (!viewer) {
+    notFound();
+  }
+
+  return <DashboardShell viewer={viewer}>{children}</DashboardShell>;
 }
