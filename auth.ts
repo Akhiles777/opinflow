@@ -93,6 +93,7 @@ if (hasOAuthCredentials(process.env.VK_CLIENT_ID, process.env.VK_CLIENT_SECRET))
     VK({
       clientId: process.env.VK_CLIENT_ID!,
       clientSecret: process.env.VK_CLIENT_SECRET!,
+      checks: ["state"],
       profile(profile) {
         return {
           id: String(profile.id),
@@ -195,10 +196,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
           await ensureUserSetup(user.id, "RESPONDENT");
         } catch (error) {
-          if (isDatabaseUnavailable(error)) {
-            return false;
-          }
-          throw error;
+          console.error("[auth][oauth-setup-error]", {
+            provider: account.provider,
+            userId: user.id,
+            error,
+          });
         }
       }
 
