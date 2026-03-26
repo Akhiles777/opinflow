@@ -1,4 +1,7 @@
 export default function Head() {
+
+  const gasan = 'gasan'
+
   return (
     <>
       <title>ПотокМнений</title>
