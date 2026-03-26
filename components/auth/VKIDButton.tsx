@@ -96,81 +96,97 @@ export default function VKIDButton({ appId, callbackUrl, mode = "login" }: Props
       return;
     }
 
-    const VKID = window.VKIDSDK;
-    if (!VKID) {
-      return;
-    }
+    try {
+      const VKID = window.VKIDSDK;
+      const responseMode = VKID?.Config?.ConfigResponseMode?.Callback ?? VKID?.Config?.ResponseMode?.Callback;
+      const source = VKID?.Config?.ConfigSource?.LOWCODE ?? VKID?.Config?.Source?.LOWCODE;
 
-    const responseMode = VKID.Config.ConfigResponseMode?.Callback ?? VKID.Config.ResponseMode.Callback;
-    const source = VKID.Config.ConfigSource?.LOWCODE ?? VKID.Config.Source.LOWCODE;
+      if (
+        !VKID ||
+        !VKID.Config?.init ||
+        !VKID.OneTap ||
+        !VKID.Auth?.exchangeCode ||
+        !VKID.Auth?.userInfo ||
+        !VKID.WidgetEvents?.ERROR ||
+        !VKID.OneTapInternalEvents?.LOGIN_SUCCESS ||
+        !responseMode ||
+        !source
+      ) {
+        setError("VK SDK загружен некорректно. Попробуйте обновить страницу.");
+        return;
+      }
 
-    VKID.Config.init({
-      app: Number(appId),
-      redirectUrl: `${window.location.origin}/api/auth/callback/vk`,
-      responseMode,
-      source,
-      scope: "email",
-    });
+      VKID.Config.init({
+        app: Number(appId),
+        redirectUrl: `${window.location.origin}/api/auth/callback/vk`,
+        responseMode,
+        source,
+        scope: "email",
+      });
 
-    containerRef.current.innerHTML = "";
+      containerRef.current.innerHTML = "";
 
-    const oneTap = new VKID.OneTap();
-    oneTap
-      .render({
-        container: containerRef.current,
-        showAlternativeLogin: true,
-      })
-      .on(VKID.WidgetEvents.ERROR, (sdkError) => {
-        console.error("[auth][vkid-widget-error]", sdkError);
-        setError("Не удалось открыть вход через VK. Попробуйте ещё раз.");
-      })
-      .on(VKID.OneTapInternalEvents.LOGIN_SUCCESS, async (payload: unknown) => {
-        const loginPayload = payload as VKIDLoginPayload;
-        if (!loginPayload.code || !loginPayload.device_id) {
-          setError("VK не вернул код авторизации. Попробуйте ещё раз.");
-          return;
-        }
-
-        setPending(true);
-        setError(null);
-
-        try {
-          const tokenResult = await VKID.Auth.exchangeCode(loginPayload.code, loginPayload.device_id);
-          if (!tokenResult.access_token) {
-            throw new Error("VK access token is missing");
-          }
-
-          const userInfo = await VKID.Auth.userInfo(tokenResult.access_token);
-          const profile = extractProfile(userInfo, tokenResult.email);
-          if (!profile.id) {
-            throw new Error("VK user id is missing");
-          }
-
-          const result = await signIn("vkid", {
-            redirect: false,
-            callbackUrl,
-            vkUserId: profile.id,
-            email: profile.email,
-            name: profile.name,
-            image: profile.image,
-          });
-
-          if (result?.error) {
-            setError("Не удалось завершить вход через VK. Попробуйте ещё раз.");
+      const oneTap = new VKID.OneTap();
+      oneTap
+        .render({
+          container: containerRef.current,
+          showAlternativeLogin: true,
+        })
+        .on(VKID.WidgetEvents.ERROR, (sdkError) => {
+          console.error("[auth][vkid-widget-error]", sdkError);
+          setError("Не удалось открыть вход через VK. Попробуйте ещё раз.");
+        })
+        .on(VKID.OneTapInternalEvents.LOGIN_SUCCESS, async (payload: unknown) => {
+          const loginPayload = payload as VKIDLoginPayload;
+          if (!loginPayload.code || !loginPayload.device_id) {
+            setError("VK не вернул код авторизации. Попробуйте ещё раз.");
             return;
           }
 
-          router.push(result?.url ?? callbackUrl);
-          router.refresh();
-        } catch (sdkError) {
-          console.error("[auth][vkid-login-error]", sdkError);
-          setError("Вход через VK временно недоступен. Попробуйте позже.");
-        } finally {
-          setPending(false);
-        }
-      });
+          setPending(true);
+          setError(null);
 
-    initializedRef.current = true;
+          try {
+            const tokenResult = await VKID.Auth.exchangeCode(loginPayload.code, loginPayload.device_id);
+            if (!tokenResult.access_token) {
+              throw new Error("VK access token is missing");
+            }
+
+            const userInfo = await VKID.Auth.userInfo(tokenResult.access_token);
+            const profile = extractProfile(userInfo, tokenResult.email);
+            if (!profile.id) {
+              throw new Error("VK user id is missing");
+            }
+
+            const result = await signIn("vkid", {
+              redirect: false,
+              callbackUrl,
+              vkUserId: profile.id,
+              email: profile.email,
+              name: profile.name,
+              image: profile.image,
+            });
+
+            if (result?.error) {
+              setError("Не удалось завершить вход через VK. Попробуйте ещё раз.");
+              return;
+            }
+
+            router.push(result?.url ?? callbackUrl);
+            router.refresh();
+          } catch (sdkError) {
+            console.error("[auth][vkid-login-error]", sdkError);
+            setError("Вход через VK временно недоступен. Попробуйте позже.");
+          } finally {
+            setPending(false);
+          }
+        });
+
+      initializedRef.current = true;
+    } catch (sdkError) {
+      console.error("[auth][vkid-runtime-error]", sdkError);
+      setError("Не удалось инициализировать VK-вход. Используйте email или Яндекс.");
+    }
   }, [appId, callbackUrl, router, sdkReady]);
 
   React.useEffect(() => {
