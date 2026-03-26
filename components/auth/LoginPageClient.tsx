@@ -69,7 +69,12 @@ export default function LoginPageClient({ vkEnabled, yandexEnabled }: Props) {
       <h1 className="mt-4 font-display text-3xl text-white">Добро пожаловать</h1>
       <p className="mt-3 text-sm leading-relaxed text-white/55">Войдите в ПотокМнений через соцсеть или email.</p>
 
-      <OAuthButtons vkEnabled={vkEnabled} yandexEnabled={yandexEnabled} callbackUrl={callbackUrl} />
+      <OAuthButtons
+        vkEnabled={vkEnabled}
+        yandexEnabled={yandexEnabled}
+        callbackUrl={callbackUrl}
+        mode="login"
+      />
       {!vkEnabled && !yandexEnabled ? <div className="mt-8" /> : null}
 
       <form onSubmit={handleCredentialsLogin} className="grid gap-4">

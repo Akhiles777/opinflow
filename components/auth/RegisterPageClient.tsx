@@ -35,7 +35,12 @@ export default function RegisterPageClient({ vkEnabled, yandexEnabled }: Props) 
         Зарегистрируйтесь по email, подтвердите адрес и войдите в свой кабинет.
       </p>
 
-      <OAuthButtons vkEnabled={vkEnabled} yandexEnabled={yandexEnabled} callbackUrl={callbackUrl} />
+      <OAuthButtons
+        vkEnabled={vkEnabled}
+        yandexEnabled={yandexEnabled}
+        callbackUrl={callbackUrl}
+        mode="register"
+      />
       {!vkEnabled && !yandexEnabled ? <div className="mt-8" /> : null}
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

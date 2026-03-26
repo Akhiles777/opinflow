@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 const publicPaths = [
   "/",
   "/login",
+  "/auth/error",
   "/register",
   "/verify-email",
   "/forgot-password",

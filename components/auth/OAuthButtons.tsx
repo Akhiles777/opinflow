@@ -6,12 +6,15 @@ type Props = {
   vkEnabled: boolean;
   yandexEnabled: boolean;
   callbackUrl: string;
+  mode?: "login" | "register";
 };
 
-export default function OAuthButtons({ vkEnabled, yandexEnabled, callbackUrl }: Props) {
+export default function OAuthButtons({ vkEnabled, yandexEnabled, callbackUrl, mode = "login" }: Props) {
   if (!vkEnabled && !yandexEnabled) {
     return null;
   }
+
+  const verb = mode === "register" ? "Зарегистрироваться" : "Войти";
 
   return (
     <>
@@ -22,7 +25,7 @@ export default function OAuthButtons({ vkEnabled, yandexEnabled, callbackUrl }: 
             onClick={() => signIn("vk", { callbackUrl })}
             className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/8"
           >
-            Войти через VK
+            {verb} через VK
           </button>
         ) : null}
         {yandexEnabled ? (
@@ -31,7 +34,7 @@ export default function OAuthButtons({ vkEnabled, yandexEnabled, callbackUrl }: 
             onClick={() => signIn("yandex", { callbackUrl })}
             className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/8"
           >
-            Войти через Яндекс
+            {verb} через Яндекс
           </button>
         ) : null}
       </div>
