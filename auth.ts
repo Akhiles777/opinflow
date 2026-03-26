@@ -32,6 +32,10 @@ function isDatabaseUnavailable(error: unknown) {
   );
 }
 
+function getOAuthFallbackEmail(provider: "vk" | "yandex", profileId: string | number) {
+  return `${provider}-${profileId}@oauth.potokmneny.local`;
+}
+
 const providers: NonNullable<NextAuthConfig["providers"]> = [
   Credentials({
     credentials: {
@@ -89,6 +93,14 @@ if (hasOAuthCredentials(process.env.VK_CLIENT_ID, process.env.VK_CLIENT_SECRET))
     VK({
       clientId: process.env.VK_CLIENT_ID!,
       clientSecret: process.env.VK_CLIENT_SECRET!,
+      profile(profile) {
+        return {
+          id: String(profile.id),
+          name: [profile.first_name, profile.last_name].filter(Boolean).join(" ") || "Пользователь VK",
+          email: profile.email ?? getOAuthFallbackEmail("vk", profile.id),
+          image: profile.photo_100 ?? null,
+        };
+      },
     }),
   );
 }
@@ -98,15 +110,43 @@ if (hasOAuthCredentials(process.env.YANDEX_CLIENT_ID, process.env.YANDEX_CLIENT_
     Yandex({
       clientId: process.env.YANDEX_CLIENT_ID!,
       clientSecret: process.env.YANDEX_CLIENT_SECRET!,
+      profile(profile) {
+        return {
+          id: String(profile.id),
+          name: profile.display_name ?? profile.real_name ?? profile.first_name ?? "Пользователь Яндекса",
+          email:
+            profile.default_email ??
+            profile.emails?.[0] ??
+            getOAuthFallbackEmail("yandex", profile.id),
+          image:
+            !profile.is_avatar_empty && profile.default_avatar_id
+              ? `https://avatars.yandex.net/get-yapic/${profile.default_avatar_id}/islands-200`
+              : null,
+        };
+      },
     }),
   );
 }
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
+  secret: process.env.NEXTAUTH_SECRET,
   session: { strategy: "jwt" },
   trustHost: true,
   providers,
+  logger: {
+    error(error) {
+      console.error("[auth][error]", error);
+    },
+    warn(code) {
+      console.warn("[auth][warn]", code);
+    },
+    debug(code, metadata) {
+      if (process.env.NODE_ENV !== "production") {
+        console.debug("[auth][debug]", code, metadata);
+      }
+    },
+  },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
