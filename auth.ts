@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 import type { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { ensureUserSetup } from "@/lib/user-setup";
+import { resolveManagedRole } from "@/lib/role-utils";
 
 type AuthUserPayload = {
   id: string;
@@ -75,6 +76,14 @@ const providers: NonNullable<NextAuthConfig["providers"]> = [
         throw new Error("NOT_VERIFIED");
       }
 
+      const targetRole = resolveManagedRole(user.email, user.role);
+      if (targetRole !== user.role) {
+        user = await prisma.user.update({
+          where: { id: user.id },
+          data: { role: targetRole },
+        });
+      }
+
       return {
         id: user.id,
         email: user.email,
@@ -114,13 +123,15 @@ const providers: NonNullable<NextAuthConfig["providers"]> = [
           throw new Error("BLOCKED");
         }
 
+        const targetRole = resolveManagedRole(email, user?.role ?? "RESPONDENT");
+
         if (!user) {
           user = await prisma.user.create({
             data: {
               email,
               name,
               image,
-              role: "RESPONDENT",
+              role: targetRole,
               status: "ACTIVE",
               emailVerified: new Date(),
             },
@@ -131,13 +142,14 @@ const providers: NonNullable<NextAuthConfig["providers"]> = [
             data: {
               name: user.name ?? name,
               image: user.image ?? image,
+              role: targetRole,
               status: user.status === "PENDING_VERIFICATION" ? "ACTIVE" : user.status,
               emailVerified: user.emailVerified ?? new Date(),
             },
           });
         }
 
-        await ensureUserSetup(user.id, "RESPONDENT");
+        await ensureUserSetup(user.id, targetRole);
 
         return {
           id: user.id,
@@ -209,7 +221,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.status = appUser.status;
       }
 
-      if ((!token.role || !token.status) && token.email) {
+      if (token.email) {
         try {
           const dbUser = await prisma.user.findUnique({
             where: { email: token.email },
@@ -238,15 +250,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async signIn({ user, account }) {
       if (account?.provider && account.provider !== "credentials" && user.id) {
         try {
+          const targetRole = resolveManagedRole(user.email ?? "", "RESPONDENT");
           await prisma.user.update({
             where: { id: user.id },
             data: {
+              role: targetRole,
               status: "ACTIVE",
               emailVerified: new Date(),
             },
           });
 
-          await ensureUserSetup(user.id, "RESPONDENT");
+          await ensureUserSetup(user.id, targetRole);
         } catch (error) {
           console.error("[auth][oauth-setup-error]", {
             provider: account.provider,

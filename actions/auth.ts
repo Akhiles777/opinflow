@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { sendPasswordResetEmail, sendVerificationEmail } from "@/lib/email";
 import { ensureUserSetup } from "@/lib/user-setup";
 import { forgotPasswordSchema, registerSchema, resetPasswordSchema } from "@/lib/validations";
+import { resolveManagedRole } from "@/lib/role-utils";
 
 type ActionState = {
   success?: boolean;
@@ -70,6 +71,7 @@ export async function registerAction(_prevState: ActionState, formData: FormData
 
   const { name, email, password, role } = result.data;
   const normalizedEmail = email.toLowerCase();
+  const assignedRole = resolveManagedRole(normalizedEmail, role);
 
   try {
     const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } });
@@ -84,7 +86,7 @@ export async function registerAction(_prevState: ActionState, formData: FormData
         name,
         email: normalizedEmail,
         passwordHash,
-        role,
+        role: assignedRole,
         status: "PENDING_VERIFICATION",
       },
     });
