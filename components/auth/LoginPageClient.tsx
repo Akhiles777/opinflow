@@ -17,10 +17,11 @@ const errorMap: Record<string, string> = {
 
 type Props = {
   vkEnabled: boolean;
+  vkAppId?: string | null;
   yandexEnabled: boolean;
 };
 
-export default function LoginPageClient({ vkEnabled, yandexEnabled }: Props) {
+export default function LoginPageClient({ vkEnabled, vkAppId, yandexEnabled }: Props) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [email, setEmail] = React.useState("");
@@ -71,6 +72,7 @@ export default function LoginPageClient({ vkEnabled, yandexEnabled }: Props) {
 
       <OAuthButtons
         vkEnabled={vkEnabled}
+        vkAppId={vkAppId}
         yandexEnabled={yandexEnabled}
         callbackUrl={callbackUrl}
         mode="login"

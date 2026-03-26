@@ -1,15 +1,23 @@
 "use client";
 
 import { signIn } from "next-auth/react";
+import VKIDButton from "@/components/auth/VKIDButton";
 
 type Props = {
   vkEnabled: boolean;
+  vkAppId?: string | null;
   yandexEnabled: boolean;
   callbackUrl: string;
   mode?: "login" | "register";
 };
 
-export default function OAuthButtons({ vkEnabled, yandexEnabled, callbackUrl, mode = "login" }: Props) {
+export default function OAuthButtons({
+  vkEnabled,
+  vkAppId,
+  yandexEnabled,
+  callbackUrl,
+  mode = "login",
+}: Props) {
   if (!vkEnabled && !yandexEnabled) {
     return null;
   }
@@ -19,15 +27,7 @@ export default function OAuthButtons({ vkEnabled, yandexEnabled, callbackUrl, mo
   return (
     <>
       <div className="mt-8 grid gap-3">
-        {vkEnabled ? (
-          <button
-            type="button"
-            onClick={() => signIn("vk", { callbackUrl })}
-            className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/8"
-          >
-            {verb} через VK
-          </button>
-        ) : null}
+        {vkEnabled && vkAppId ? <VKIDButton appId={vkAppId} callbackUrl={callbackUrl} mode={mode} /> : null}
         {yandexEnabled ? (
           <button
             type="button"
