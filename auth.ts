@@ -1,7 +1,6 @@
 import NextAuth, { type NextAuthConfig } from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import Credentials from "next-auth/providers/credentials";
-import VK from "next-auth/providers/vk";
 import Yandex from "next-auth/providers/yandex";
 import bcrypt from "bcryptjs";
 import type { Role } from "@prisma/client";
@@ -90,19 +89,78 @@ const providers: NonNullable<NextAuthConfig["providers"]> = [
 
 if (hasOAuthCredentials(process.env.VK_CLIENT_ID, process.env.VK_CLIENT_SECRET)) {
   providers.push(
-    VK({
+    {
+      id: "vk",
+      name: "VK",
+      type: "oauth",
       clientId: process.env.VK_CLIENT_ID!,
       clientSecret: process.env.VK_CLIENT_SECRET!,
+      authorization: {
+        url: "https://oauth.vk.com/authorize",
+        params: {
+          scope: "email",
+          v: "5.131",
+          response_type: "code",
+        },
+      },
+      client: {
+        token_endpoint_auth_method: "client_secret_post",
+      },
+      token: "https://oauth.vk.com/access_token?v=5.131",
+      userinfo: {
+        url: "https://api.vk.com/method/users.get?fields=photo_200&v=5.131",
+        async request({
+          tokens,
+          provider,
+        }: {
+          tokens: { access_token?: string; email?: string | null };
+          provider: { userinfo?: { url?: URL | string } };
+        }) {
+          const response = await fetch(provider.userinfo?.url as URL | string, {
+            headers: {
+              Authorization: `Bearer ${tokens.access_token}`,
+              "User-Agent": "authjs",
+            },
+          });
+
+          const profile = (await response.json()) as {
+            response?: Array<{
+              id: string | number;
+              first_name?: string;
+              last_name?: string;
+              photo_200?: string | null;
+            }>;
+          };
+
+          return {
+            ...profile,
+            email:
+              typeof tokens.email === "string"
+                ? tokens.email
+                : getOAuthFallbackEmail("vk", profile.response?.[0]?.id ?? "unknown"),
+          };
+        },
+      },
       checks: ["none"],
-      profile(profile) {
+      profile(profile: {
+        response?: Array<{
+          id: string | number;
+          first_name?: string;
+          last_name?: string;
+          photo_200?: string | null;
+        }>;
+        email?: string | null;
+      }) {
+        const user = profile.response?.[0];
         return {
-          id: String(profile.id),
-          name: [profile.first_name, profile.last_name].filter(Boolean).join(" ") || "Пользователь VK",
-          email: profile.email ?? getOAuthFallbackEmail("vk", profile.id),
-          image: profile.photo_100 ?? null,
+          id: String(user?.id ?? ""),
+          name:
+            [user?.first_name, user?.last_name].filter(Boolean).join(" ") || "Пользователь VK",
+          email: profile.email ?? getOAuthFallbackEmail("vk", user?.id ?? "unknown"),
+          image: user?.photo_200 ?? null,
         };
       },
-    }),
+    },
   );
 }
 
