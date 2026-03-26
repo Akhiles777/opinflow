@@ -44,11 +44,9 @@ type VKIDSDKGlobal = {
   };
   Config: {
     init: (config: Record<string, unknown>) => void;
-    ResponseMode: { Callback: string };
-    ConfigResponseMode?: { Callback: string };
-    Source: { LOWCODE: string };
-    ConfigSource?: { LOWCODE: string };
   };
+  ConfigResponseMode: { Callback: string };
+  ConfigSource: { LOWCODE: string };
   OneTap: new () => {
     render: (params: { container: HTMLElement; showAlternativeLogin?: boolean }) => VKIDSDKGlobal["WidgetChain"];
   };
@@ -98,19 +96,17 @@ export default function VKIDButton({ appId, callbackUrl, mode = "login" }: Props
 
     try {
       const VKID = window.VKIDSDK;
-      const responseMode = VKID?.Config?.ConfigResponseMode?.Callback ?? VKID?.Config?.ResponseMode?.Callback;
-      const source = VKID?.Config?.ConfigSource?.LOWCODE ?? VKID?.Config?.Source?.LOWCODE;
 
       if (
         !VKID ||
         !VKID.Config?.init ||
+        !VKID.ConfigResponseMode?.Callback ||
+        !VKID.ConfigSource?.LOWCODE ||
         !VKID.OneTap ||
         !VKID.Auth?.exchangeCode ||
         !VKID.Auth?.userInfo ||
         !VKID.WidgetEvents?.ERROR ||
-        !VKID.OneTapInternalEvents?.LOGIN_SUCCESS ||
-        !responseMode ||
-        !source
+        !VKID.OneTapInternalEvents?.LOGIN_SUCCESS
       ) {
         setError("VK SDK загружен некорректно. Попробуйте обновить страницу.");
         return;
@@ -119,8 +115,8 @@ export default function VKIDButton({ appId, callbackUrl, mode = "login" }: Props
       VKID.Config.init({
         app: Number(appId),
         redirectUrl: `${window.location.origin}/api/auth/callback/vk`,
-        responseMode,
-        source,
+        responseMode: VKID.ConfigResponseMode.Callback,
+        source: VKID.ConfigSource.LOWCODE,
         scope: "email",
       });
 
