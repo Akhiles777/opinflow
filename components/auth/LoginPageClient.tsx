@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { resendVerificationAction } from "@/actions/auth";
+import OAuthButtons from "@/components/auth/OAuthButtons";
 
 const errorMap: Record<string, string> = {
   BLOCKED: "Ваш аккаунт заблокирован",
@@ -68,30 +69,8 @@ export default function LoginPageClient({ vkEnabled, yandexEnabled }: Props) {
       <h1 className="mt-4 font-display text-3xl text-white">Добро пожаловать</h1>
       <p className="mt-3 text-sm leading-relaxed text-white/55">Войдите в ПотокМнений через соцсеть или email.</p>
 
-      {vkEnabled || yandexEnabled ? (
-        <>
-          <div className="mt-8 grid gap-3">
-            {vkEnabled ? (
-              <button type="button" onClick={() => signIn("vk", { callbackUrl })} className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/8">
-                Войти через VK
-              </button>
-            ) : null}
-            {yandexEnabled ? (
-              <button type="button" onClick={() => signIn("yandex", { callbackUrl })} className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/8">
-                Войти через Яндекс
-              </button>
-            ) : null}
-          </div>
-
-          <div className="my-6 flex items-center gap-3 text-xs uppercase tracking-[0.25em] text-white/25">
-            <div className="h-px flex-1 bg-white/10" />
-            или
-            <div className="h-px flex-1 bg-white/10" />
-          </div>
-        </>
-      ) : (
-        <div className="mt-8" />
-      )}
+      <OAuthButtons vkEnabled={vkEnabled} yandexEnabled={yandexEnabled} callbackUrl={callbackUrl} />
+      {!vkEnabled && !yandexEnabled ? <div className="mt-8" /> : null}
 
       <form onSubmit={handleCredentialsLogin} className="grid gap-4">
         <label className="grid gap-2">
