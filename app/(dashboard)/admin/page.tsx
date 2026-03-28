@@ -28,13 +28,13 @@ export default async function AdminOverviewPage() {
       </div>
 
       <div className="mt-10 rounded-2xl border border-dash-border bg-dash-card p-6">
-        <p className="text-sm font-semibold text-dash-heading font-body">Последние события</p>
+        <p className="text-[15px] font-semibold text-dash-heading font-body">Последние события</p>
         {data.events.length > 0 ? (
           <div className="mt-5 grid gap-3">
             {data.events.map((e) => (
               <div key={`${e.text}-${e.time}`} className="flex items-center justify-between rounded-xl border border-dash-border bg-dash-bg px-4 py-3">
-                <p className="text-sm text-dash-body font-body">{e.text}</p>
-                <p className="text-xs text-dash-muted font-body">{e.time}</p>
+                <p className="text-[15px] text-dash-body font-body">{e.text}</p>
+                <p className="text-sm text-dash-muted font-body">{e.time}</p>
               </div>
             ))}
           </div>

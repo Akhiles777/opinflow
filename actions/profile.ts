@@ -39,21 +39,28 @@ export async function updateRespondentProfileAction(_prevState: ProfileState, fo
   }
 
   const { birthDate, ...rest } = parsed.data;
+  const isVerified = Boolean(
+    rest.gender && birthDate && rest.city && rest.income && rest.education && rest.interests.length > 0,
+  );
 
-  await prisma.respondentProfile.upsert({
-    where: { userId: session.user.id },
-    update: {
-      ...rest,
-      birthDate: birthDate ? new Date(birthDate) : null,
-      isVerified: Boolean(rest.gender && birthDate && rest.city && rest.income && rest.education && rest.interests.length > 0),
-    },
-    create: {
-      userId: session.user.id,
-      ...rest,
-      birthDate: birthDate ? new Date(birthDate) : null,
-      isVerified: Boolean(rest.gender && birthDate && rest.city && rest.income && rest.education && rest.interests.length > 0),
-    },
-  });
+  try {
+    await prisma.respondentProfile.upsert({
+      where: { userId: session.user.id },
+      update: {
+        ...rest,
+        birthDate: birthDate ? new Date(birthDate) : null,
+        isVerified,
+      },
+      create: {
+        userId: session.user.id,
+        ...rest,
+        birthDate: birthDate ? new Date(birthDate) : null,
+        isVerified,
+      },
+    });
+  } catch {
+    return { error: "Не удалось сохранить анкету. Попробуйте ещё раз." };
+  }
 
   revalidatePath("/respondent/profile");
   return { success: true, message: "Профиль обновлён ✓" };
@@ -83,27 +90,31 @@ export async function updateClientProfileAction(_prevState: ProfileState, formDa
 
   const { email, contactName, ...profileData } = parsed.data;
 
-  await prisma.$transaction([
-    prisma.clientProfile.upsert({
-      where: { userId: session.user.id },
-      update: {
-        ...profileData,
-        contactName,
-      },
-      create: {
-        userId: session.user.id,
-        ...profileData,
-        contactName,
-      },
-    }),
-    prisma.user.update({
-      where: { id: session.user.id },
-      data: {
-        ...(email ? { email } : {}),
-        name: contactName || undefined,
-      },
-    }),
-  ]);
+  try {
+    await prisma.$transaction([
+      prisma.clientProfile.upsert({
+        where: { userId: session.user.id },
+        update: {
+          ...profileData,
+          contactName,
+        },
+        create: {
+          userId: session.user.id,
+          ...profileData,
+          contactName,
+        },
+      }),
+      prisma.user.update({
+        where: { id: session.user.id },
+        data: {
+          email: email || undefined,
+          name: contactName || undefined,
+        },
+      }),
+    ]);
+  } catch {
+    return { error: "Не удалось сохранить данные компании. Проверьте поля и попробуйте снова." };
+  }
 
   revalidatePath("/client/settings");
   return { success: true, message: "Данные компании сохранены ✓" };

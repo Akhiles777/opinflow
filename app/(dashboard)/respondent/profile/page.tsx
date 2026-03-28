@@ -10,8 +10,6 @@ export default async function RespondentProfilePage() {
     where: { userId: session.user.id },
   });
 
-  console.log(profile)
-
   return (
     <div>
       <PageHeader title="Профиль" subtitle="Данные аккаунта и анкета респондента." />

@@ -96,7 +96,10 @@ VK_CLIENT_SECRET=""
 YANDEX_CLIENT_ID=""
 YANDEX_CLIENT_SECRET=""
 
-RESEND_API_KEY=""
+EMAIL_HOST="smtp.yandex.ru"
+EMAIL_PORT="465"
+EMAIL_USER="your@yandex.ru"
+EMAIL_PASS=""
 ```
 
 ### Что важно
@@ -105,7 +108,7 @@ RESEND_API_KEY=""
 - `DIRECT_URL` — direct connection для Prisma CLI
 - `ADMIN_EMAILS` — список admin-email через запятую
 - `NEXTAUTH_SECRET` — обязателен
-- `RESEND_API_KEY` — обязателен для писем
+- `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USER`, `EMAIL_PASS` — обязательны для писем через Яндекс SMTP
 
 Пример:
 
@@ -312,7 +315,10 @@ Admin назначается автоматически, если email вход
 ### Не приходит письмо
 
 Проверьте:
-- `RESEND_API_KEY`
+- `EMAIL_HOST`
+- `EMAIL_PORT`
+- `EMAIL_USER`
+- `EMAIL_PASS`
 - режим аккаунта Resend
 - подтверждён ли домен / адрес отправителя
 

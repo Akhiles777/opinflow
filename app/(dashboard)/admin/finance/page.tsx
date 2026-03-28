@@ -46,14 +46,14 @@ export default async function AdminFinancePage() {
 
       <div className="mt-10 rounded-2xl border border-dash-border bg-dash-card p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm font-semibold text-dash-heading font-body">Транзакции</p>
-          <span className="rounded-xl border border-dash-border bg-dash-bg px-4 py-2 text-sm font-semibold text-dash-muted">
+          <p className="text-[15px] font-semibold text-dash-heading font-body">Транзакции</p>
+          <span className="rounded-xl border border-dash-border bg-dash-bg px-4 py-2 text-[15px] font-semibold text-dash-muted">
             Экспорт подключим позже
           </span>
         </div>
         <div className="mt-5">
           {data.rows.length > 0 ? (
-            <DataTable columns={columns} rows={data.rows} keyForRow={(r) => r.id} />
+            <DataTable columns={columns} users={data.rows} keyForRow={(r) => r.id} />
           ) : (
             <EmptyState title="Транзакций пока нет" description="Как только пользователи начнут пополнять кошельки и выводить средства, операции появятся здесь." />
           )}
@@ -61,12 +61,12 @@ export default async function AdminFinancePage() {
       </div>
 
       <div className="mt-10 rounded-2xl border border-dash-border bg-dash-card p-6">
-        <p className="text-sm font-semibold text-dash-heading font-body">Настройка комиссии</p>
-        <p className="mt-2 text-sm text-dash-muted font-body">
+        <p className="text-[15px] font-semibold text-dash-heading font-body">Настройка комиссии</p>
+        <p className="mt-2 text-[15px] text-dash-muted font-body">
           В рамках Этапа 2 комиссия пока только отображается. Управление значением подключим в следующем этапе.
         </p>
         <div className="mt-5">
-          <span className="inline-flex rounded-xl border border-dash-border bg-dash-bg px-4 py-3 text-sm font-semibold text-dash-heading">
+          <span className="inline-flex rounded-xl border border-dash-border bg-dash-bg px-4 py-3 text-[15px] font-semibold text-dash-heading">
             Текущая расчётная комиссия: 15%
           </span>
         </div>

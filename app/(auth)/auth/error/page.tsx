@@ -24,6 +24,11 @@ const errorMap: Record<string, { title: string; description: string }> = {
     title: "Аккаунт уже связан с другим способом входа",
     description: "Попробуйте войти тем способом, которым регистрировались изначально.",
   },
+  RESPONDENT_SOCIAL_ONLY: {
+    title: "Соцвход доступен не для всех ролей",
+    description:
+      "Вход и регистрация через соцсети доступны только респондентам. Для заказчика используйте email и пароль.",
+  },
   CallbackRouteError: {
     title: "Не удалось завершить вход",
     description: "Проверьте серверные логи Auth.js и настройки провайдера.",

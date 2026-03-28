@@ -27,7 +27,10 @@ VK_CLIENT_SECRET=""
 YANDEX_CLIENT_ID=""
 YANDEX_CLIENT_SECRET=""
 
-RESEND_API_KEY=""
+EMAIL_HOST="smtp.yandex.ru"
+EMAIL_PORT="465"
+EMAIL_USER="your@yandex.ru"
+EMAIL_PASS=""
 ```
 
 ## Что означает каждая env-переменная
@@ -74,7 +77,10 @@ ADMIN_EMAILS="owner@example.com,admin@example.com"
 
 ### Почта
 
-- `RESEND_API_KEY`
+- `EMAIL_HOST`
+- `EMAIL_PORT`
+- `EMAIL_USER`
+- `EMAIL_PASS`
 
 ## Подготовка Prisma
 
@@ -194,7 +200,10 @@ VK в проекте работает через VK ID SDK и отдельный
 - `VK_CLIENT_SECRET`
 - `YANDEX_CLIENT_ID`
 - `YANDEX_CLIENT_SECRET`
-- `RESEND_API_KEY`
+- `EMAIL_HOST`
+- `EMAIL_PORT`
+- `EMAIL_USER`
+- `EMAIL_PASS`
 
 ### `NEXTAUTH_URL`
 
@@ -246,7 +255,10 @@ npm run dev
 ### 2. Не приходит письмо
 
 Проверьте:
-- `RESEND_API_KEY`
+- `EMAIL_HOST`
+- `EMAIL_PORT`
+- `EMAIL_USER`
+- `EMAIL_PASS`
 - режим Resend
 - подтверждён ли домен
 

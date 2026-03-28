@@ -19,14 +19,14 @@ export default async function VerifyEmailPage({ searchParams }: { searchParams: 
       <h1 className="mt-6 font-display text-3xl text-white">
         {result.success ? "Email подтверждён" : result.error || "Не удалось подтвердить email"}
       </h1>
-      <p className="mt-3 text-sm leading-relaxed text-white/55">
+      <p className="mt-3 text-[15px] leading-relaxed text-white/55">
         {result.success
           ? "Теперь вы можете войти в аккаунт и продолжить работу с платформой."
           : "Проверьте ссылку или запросите новое письмо для подтверждения email."}
       </p>
 
       {result.success ? (
-        <Link href="/login" className="mt-8 inline-flex rounded-xl bg-brand px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-dark">
+        <Link href="/login" className="mt-8 inline-flex rounded-xl bg-brand px-6 py-3 text-[15px] font-semibold text-white transition-colors hover:bg-brand-dark">
           Войти
         </Link>
       ) : result.email ? (
@@ -37,7 +37,7 @@ export default async function VerifyEmailPage({ searchParams }: { searchParams: 
           }}
           className="mt-8"
         >
-          <button type="submit" className="rounded-xl border border-brand/30 bg-brand/10 px-6 py-3 text-sm font-semibold text-brand transition-colors hover:bg-brand/15">
+          <button type="submit" className="rounded-xl border border-brand/30 bg-brand/10 px-6 py-3 text-[15px] font-semibold text-brand transition-colors hover:bg-brand/15">
             Отправить новую ссылку
           </button>
         </form>

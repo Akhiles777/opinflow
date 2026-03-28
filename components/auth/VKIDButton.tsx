@@ -195,15 +195,15 @@ export default function VKIDButton({ appId, callbackUrl, mode = "login" }: Props
         onError={() => setError("Не удалось загрузить VK SDK. Попробуйте позже.")}
       />
 
-      <div className="text-sm font-semibold text-white">{verb} через VK</div>
+      <div className="text-[15px] font-semibold text-white">{verb} через VK</div>
       <div
         ref={containerRef}
         className="min-h-12 rounded-xl border border-white/10 bg-white/5 p-1"
       />
 
-      {pending ? <p className="text-sm text-white/45">Завершаем вход через VK...</p> : null}
+      {pending ? <p className="text-[15px] text-white/45">Завершаем вход через VK...</p> : null}
       {error ? (
-        <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-400">
+        <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-[15px] text-red-400">
           {error}
         </div>
       ) : null}

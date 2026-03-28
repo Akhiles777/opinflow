@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useActionState } from "react";
+import { useRouter } from "next/navigation";
 import { updateClientProfileAction } from "@/actions/profile";
 
 type ClientProfileData = {
@@ -33,7 +34,14 @@ function Field({ label, name, defaultValue, placeholder }: { label: string; name
 }
 
 export default function ClientProfileForm({ profile }: { profile: ClientProfileData }) {
+  const router = useRouter();
   const [state, formAction, isPending] = useActionState(updateClientProfileAction, initialState);
+
+  React.useEffect(() => {
+    if (state.success) {
+      router.refresh();
+    }
+  }, [router, state.success]);
 
   return (
     <form action={formAction} className="mt-8 grid grid-cols-1 gap-6">

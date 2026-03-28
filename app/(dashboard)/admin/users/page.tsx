@@ -76,7 +76,7 @@ export default async function AdminUsersPage({
               key={t.value}
               href={href}
               className={[
-                "rounded-xl border px-4 py-2 text-sm font-semibold font-body transition-colors",
+                "rounded-xl border px-4 py-2 text-[15px] font-semibold font-body transition-colors",
                 active
                   ? "bg-brand/10 border-brand/30 text-brand"
                   : "bg-dash-card border-dash-border text-dash-muted hover:text-dash-heading hover:bg-dash-bg",

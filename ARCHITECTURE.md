@@ -202,7 +202,7 @@
 - `lib/email.ts`
 
 Провайдер:
-- `Resend`
+- `Yandex SMTP (через nodemailer)`
 
 Что отправляется:
 - письмо подтверждения email
@@ -210,7 +210,7 @@
 
 Логика:
 - base URL берётся из `NEXTAUTH_URL`
-- если `RESEND_API_KEY` не задан, выбрасывается контролируемая ошибка
+- если SMTP env не заданы, выбрасывается контролируемая ошибка
 
 ## Dashboard Architecture
 

@@ -31,19 +31,26 @@ function getActionErrorMessage(error: unknown, fallback: string) {
       return "Сервис временно недоступен из-за ошибки подключения к базе данных. Попробуйте позже.";
     }
 
-    if (message.includes("resend_not_configured")) {
-      return "Почтовый сервис не настроен. Добавьте RESEND_API_KEY и попробуйте снова.";
+    if (message.includes("smtp_not_configured")) {
+      return "Почтовый сервис не настроен. Добавьте EMAIL_HOST, EMAIL_PORT, EMAIL_USER и EMAIL_PASS.";
     }
 
     if (
-      message.includes("you can only send testing emails to your own email address") ||
-      message.includes("validation_error")
+      message.includes("invalid login") ||
+      message.includes("auth") ||
+      message.includes("username and password not accepted")
     ) {
-      return "Resend сейчас в тестовом режиме. Письма можно отправлять только на подтверждённый адрес владельца аккаунта Resend или после верификации собственного домена.";
+      return "SMTP отклонил авторизацию. Проверьте EMAIL_USER и пароль приложения Яндекса.";
     }
 
-    if (message.includes("resend_send_failed")) {
-      return "Resend отклонил отправку письма. Проверь настройки домена и адреса отправителя.";
+    if (
+      message.includes("envelope") ||
+      message.includes("eauth") ||
+      message.includes("greeting") ||
+      message.includes("certificate") ||
+      message.includes("smtp")
+    ) {
+      return "Не удалось отправить письмо через SMTP. Проверьте хост, порт и настройки почтового ящика.";
     }
   }
 

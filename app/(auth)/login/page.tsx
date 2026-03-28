@@ -12,9 +12,9 @@ function hasVkClientId(clientId: string | undefined) {
 function LoginFallback() {
   return (
     <div className="mx-auto  max-w-md rounded-2xl border border-white/8 bg-surface-900 p-6 text-white sm:mt-24 sm:p-10">
-      <p className="text-xs uppercase tracking-[0.25em] text-white/35">Вход</p>
+      <p className="text-sm uppercase tracking-[0.25em] text-white/35">Вход</p>
       <h1 className="mt-4 font-display text-3xl text-white">Добро пожаловать</h1>
-      <p className="mt-3 text-sm leading-relaxed text-white/55">Загружаем форму входа...</p>
+      <p className="mt-3 text-[15px] leading-relaxed text-white/55">Загружаем форму входа...</p>
     </div>
   );
 }

@@ -14,6 +14,10 @@ type AuthUserPayload = {
   status: "ACTIVE" | "PENDING_VERIFICATION" | "BLOCKED";
 };
 
+function isRespondentSocialOnlyRole(role: Role) {
+  return role === "CLIENT";
+}
+
 function hasOAuthCredentials(clientId: string | undefined, clientSecret: string | undefined) {
   return Boolean(clientId?.trim() && clientSecret?.trim() && clientId.trim().length > 5 && clientSecret.trim().length > 5);
 }
@@ -123,6 +127,10 @@ const providers: NonNullable<NextAuthConfig["providers"]> = [
           throw new Error("BLOCKED");
         }
 
+        if (user && isRespondentSocialOnlyRole(user.role) && resolveManagedRole(email, user.role) !== "ADMIN") {
+          throw new Error("RESPONDENT_SOCIAL_ONLY");
+        }
+
         const targetRole = resolveManagedRole(email, user?.role ?? "RESPONDENT");
 
         if (!user) {
@@ -221,15 +229,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.status = appUser.status;
       }
 
-      if (token.email) {
+      if (token.id || token.email) {
         try {
           const dbUser = await prisma.user.findUnique({
-            where: { email: token.email },
-            select: { id: true, role: true, status: true },
+            where: token.id ? { id: String(token.id) } : { email: String(token.email) },
+            select: { id: true, email: true, name: true, role: true, status: true },
           });
 
           if (dbUser) {
             token.id = dbUser.id;
+            token.email = dbUser.email;
+            token.name = dbUser.name;
             token.role = dbUser.role;
             token.status = dbUser.status;
           }
@@ -243,6 +253,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async session({ session, token }) {
       if (session.user && token.id && token.role) {
         session.user.id = token.id;
+        session.user.email = String(token.email ?? session.user.email ?? "");
+        session.user.name = token.name ? String(token.name) : null;
         session.user.role = token.role as Role;
       }
       return session;
@@ -250,7 +262,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async signIn({ user, account }) {
       if (account?.provider && account.provider !== "credentials" && user.id) {
         try {
-          const targetRole = resolveManagedRole(user.email ?? "", "RESPONDENT");
+          const currentUser = await prisma.user.findUnique({
+            where: { id: user.id },
+            select: { role: true, email: true },
+          });
+          const targetRole = resolveManagedRole(user.email ?? currentUser?.email ?? "", "RESPONDENT");
+
+          if (currentUser && isRespondentSocialOnlyRole(currentUser.role) && targetRole !== "ADMIN") {
+            return "/auth/error?error=RESPONDENT_SOCIAL_ONLY";
+          }
+
           await prisma.user.update({
             where: { id: user.id },
             data: {
