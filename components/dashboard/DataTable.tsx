@@ -1,24 +1,27 @@
 import * as React from "react";
+import Link from "next/link";
 
 export type Column<Row> = {
   key: string;
   header: string;
-  cell: (row: Row) => React.ReactNode;
+  cell: (users: Row, userId?: string[],) => React.ReactNode;
   className?: string;
 };
 
 type Props<Row> = {
   columns: Column<Row>[];
-  rows: Row[];
-  keyForRow: (row: Row, index: number) => string;
+  users: Row[];
+  userId: string[];
+
+  keyForRow: (users: Row, index: number) => string;
 };
 
-export default function DataTable<Row>({ columns, rows, keyForRow }: Props<Row>) {
+export default function DataTable<Row>({ columns, userId, users, keyForRow }: Props<Row>) {
   return (
     <div className="overflow-hidden rounded-2xl border border-dash-border bg-dash-card">
       <div className="grid gap-3 p-3 md:hidden">
-        {rows.map((row, idx) => (
-          <div key={keyForRow(row, idx)} className="rounded-xl border border-dash-border bg-dash-bg p-4">
+        {users.map((user, idx) => (
+          <div key={keyForRow(user, idx)} className="rounded-xl border border-dash-border bg-dash-bg p-4">
             <div className="grid gap-3">
               {columns.map((col) => (
                 <div key={col.key} className="grid gap-1">
@@ -26,7 +29,7 @@ export default function DataTable<Row>({ columns, rows, keyForRow }: Props<Row>)
                     {col.header}
                   </p>
                   <div className={["min-w-0 break-words text-sm text-dash-body font-body", col.className].filter(Boolean).join(" ")}>
-                    {col.cell(row)}
+                    {col.cell(user, userId)}
                   </div>
                 </div>
               ))}
@@ -55,8 +58,8 @@ export default function DataTable<Row>({ columns, rows, keyForRow }: Props<Row>)
           </tr>
         </thead>
         <tbody className="divide-y divide-dash-border">
-          {rows.map((row, idx) => (
-            <tr key={keyForRow(row, idx)} className="hover:bg-dash-bg transition-colors">
+          {users.map((user, idx) => (
+            <tr key={keyForRow(user, idx)} className="hover:bg-dash-bg transition-colors">
               {columns.map((col) => (
                 <td
                   key={col.key}
@@ -67,7 +70,7 @@ export default function DataTable<Row>({ columns, rows, keyForRow }: Props<Row>)
                     .filter(Boolean)
                     .join(" ")}
                 >
-                  {col.cell(row)}
+                 <Link href={`/${userId}`}> {col.cell(user, userId)}</Link>
                 </td>
               ))}
             </tr>

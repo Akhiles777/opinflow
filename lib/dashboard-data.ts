@@ -375,8 +375,13 @@ export async function getAdminUsersData() {
     registered: formatDate(user.createdAt),
     activity: formatDate(user.updatedAt),
     status: mapUserStatus(user.status),
+    href: `/${user.id}`,
   }));
+
+ 
 }
+
+
 
 export async function getAdminFinanceData() {
   const now = new Date();

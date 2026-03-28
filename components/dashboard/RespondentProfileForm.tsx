@@ -39,6 +39,7 @@ function completionRatio(profile: RespondentProfileData) {
     profile.city,
     profile.income,
     profile.education,
+    profile.userEmail,
     profile.interests.length > 0 ? "interests" : null,
   ].filter(Boolean).length;
 
@@ -70,7 +71,7 @@ export default function RespondentProfileForm({ profile }: { profile: Respondent
       <form action={formAction} className="mt-8 grid grid-cols-1 gap-6 xl:grid-cols-[320px_1fr]">
         <div className="rounded-2xl border border-dash-border bg-dash-card p-6">
           <div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-brand/10 text-2xl font-bold text-brand font-body">
-            {profile.userName?.slice(0, 2).toUpperCase() || "PM"}
+           {profile.userName?.slice(0, 2).toUpperCase() ?? "П"}
           </div>
           <p className="mt-5 font-display text-xl text-dash-heading">{profile.userName ?? "Пользователь"}</p>
           <p className="mt-1 text-sm text-dash-muted font-body">{profile.userEmail}</p>

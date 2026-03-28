@@ -1,10 +1,11 @@
+import * as React from "react";
 import PageHeader from "@/components/dashboard/PageHeader";
 import DataTable, { Column } from "@/components/dashboard/DataTable";
 import Badge from "@/components/dashboard/Badge";
 import EmptyState from "@/components/dashboard/EmptyState";
 import { getAdminUsersData } from "@/lib/dashboard-data";
 import { requireRole } from "@/lib/auth-utils";
-import { Role } from "@prisma/client";
+
 type TabValue = "all" | "RESPONDENT" | "CLIENT" | "blocked";
 
 type Row = Awaited<ReturnType<typeof getAdminUsersData>>[number];
@@ -15,18 +16,6 @@ const tabs = [
   { label: "Заказчики", value: "CLIENT" },
   { label: "Заблокированные", value: "blocked" },
 ] as const;
-type User = {
-  id: string;
-  email: string;
-  role: Role;
-  registered: string;
-  activity: string;
-  status: 
-    | { v: "active"; t: string }
-    | { v: "rejected"; t: string }
-    | { v: "pending"; t: string };
-  href: string;
-};
 
 export default async function AdminUsersPage({
   searchParams,
@@ -37,12 +26,13 @@ export default async function AdminUsersPage({
   const params = (await searchParams) ?? {};
 
   const tab = (params.tab as TabValue) || "all";
-  const rows = await getAdminUsersData();
+  const users = await getAdminUsersData();
+  
 
-  const filtered = rows.filter((r) => {
+  const filtered = users.filter((u) => {
     if (tab === "all") return true;
-    if (tab === "blocked") return r.status.v === "rejected";
-    return r.role === tab;
+    if (tab === "blocked") return u.status.v === "rejected";
+    return u.role === tab;
   });
 
   const columns: Column<Row>[] = [
@@ -56,12 +46,6 @@ export default async function AdminUsersPage({
       cell: (r) => <Badge variant={r.status.v}>{r.status.t}</Badge>,
     },
   ];
-
-  const usersId = rows.map((r) => { 
-    return r.id
-  })
-
-  console.log(usersId)
 
   return (
     <div>
@@ -90,7 +74,7 @@ export default async function AdminUsersPage({
 
       <div className="mt-8">
         {filtered.length > 0 ? (
-          <DataTable  columns={columns} users={filtered} userId = {usersId} keyForRow={(u) => u.id} />
+          <DataTable columns={columns} users={filtered} keyForRow={(r) => r.id} />
         ) : (
           <EmptyState title="Пользователи не найдены" description="По текущему фильтру в базе пока нет подходящих аккаунтов." />
         )}

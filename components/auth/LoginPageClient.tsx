@@ -65,7 +65,7 @@ export default function LoginPageClient({ vkEnabled, vkAppId, yandexEnabled }: P
   }
 
   return (
-    <div className="mx-auto mt-16 max-w-md rounded-2xl border border-white/8 bg-surface-900 p-6 text-white sm:mt-24 sm:p-10">
+    <div className="mx-auto  max-w-md rounded-2xl border border-white/8 bg-surface-900 p-6 text-white sm:mt-24 sm:p-10">
       <p className="text-xs uppercase tracking-[0.25em] text-white/35">Вход</p>
       <h1 className="mt-4 font-display text-3xl text-white">Добро пожаловать</h1>
       <p className="mt-3 text-sm leading-relaxed text-white/55">Войдите в ПотокМнений через соцсеть или email.</p>

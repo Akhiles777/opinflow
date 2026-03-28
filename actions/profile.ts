@@ -28,8 +28,11 @@ export async function updateRespondentProfileAction(_prevState: ProfileState, fo
     city: emptyToNull(formData.get("city")),
     income: emptyToNull(formData.get("income")),
     education: emptyToNull(formData.get("education")),
+    image: emptyToNull(formData.get("image")),
     interests: formData.getAll("interests").map((item) => String(item)),
   });
+
+
 
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Проверьте корректность данных" };

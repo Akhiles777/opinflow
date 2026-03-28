@@ -31,7 +31,12 @@ model User {
   emailTokens        EmailToken[]
 
   @@map("users")
+
 }
+
+
+
+
 
 enum Role {
   RESPONDENT
@@ -107,6 +112,7 @@ model RespondentProfile {
   isVerified Boolean  @default(false)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+  image      String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

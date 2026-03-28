@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useActionState } from "react";
+import { useActionState,useState } from "react";
 import { registerAction } from "@/actions/auth";
 import OAuthButtons from "@/components/auth/OAuthButtons";
 
@@ -23,13 +23,14 @@ export default function RegisterPageClient({ vkEnabled, vkAppId, yandexEnabled }
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
   const [role, setRole] = React.useState<Role>(roleFromQuery);
   const [state, formAction, isPending] = useActionState(registerAction, initialState);
+  const [auth, setAuth] = useState(true)
 
   React.useEffect(() => {
     setRole(roleFromQuery);
   }, [roleFromQuery]);
 
   return (
-    <div className="mx-auto mt-16 max-w-md rounded-2xl border border-white/8 bg-surface-900 p-6 text-white sm:mt-24 sm:p-10">
+    <div className="mx-auto max-w-md rounded-2xl border border-white/8 bg-surface-900 p-6 text-white sm:mt-24 sm:p-10">
       <p className="text-xs uppercase tracking-[0.25em] text-white/35">Регистрация</p>
       <h1 className="mt-4 font-display text-3xl text-white">Создайте аккаунт</h1>
       <p className="mt-3 text-sm leading-relaxed text-white/55">
@@ -43,7 +44,7 @@ export default function RegisterPageClient({ vkEnabled, vkAppId, yandexEnabled }
         callbackUrl={callbackUrl}
         mode="register"
       />
-      {!vkEnabled && !yandexEnabled ? <div className="mt-8" /> : null}
+      {!vkEnabled && !yandexEnabled ? <div className="mt-5" /> : null}
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {[
@@ -67,7 +68,7 @@ export default function RegisterPageClient({ vkEnabled, vkAppId, yandexEnabled }
         ))}
       </div>
 
-      <form action={formAction} className="mt-8 grid gap-4">
+      <form action={formAction} className="mt-5 grid gap-4">
         <input type="hidden" name="role" value={role} />
         <label className="grid gap-2">
           <span className="text-sm text-white/55">Имя</span>
