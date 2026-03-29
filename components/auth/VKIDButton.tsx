@@ -152,21 +152,13 @@ export default function VKIDButton({ appId, callbackUrl, mode = "login" }: Props
               throw new Error("VK user id is missing");
             }
 
-            const result = await signIn("vkid", {
-              redirect: false,
+            await signIn("vkid", {
               callbackUrl,
               vkUserId: profile.id,
               email: profile.email,
               name: profile.name,
               image: profile.image,
             });
-
-            if (result?.error) {
-              setError("Не удалось завершить вход через VK. Попробуйте ещё раз.");
-              return;
-            }
-
-            window.location.assign(result?.url ?? callbackUrl);
           } catch (sdkError) {
             console.error("[auth][vkid-login-error]", sdkError);
             setError("Вход через VK временно недоступен. Попробуйте позже.");
