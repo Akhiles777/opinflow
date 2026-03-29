@@ -102,33 +102,46 @@ const providers: NonNullable<NextAuthConfig["providers"]> = [
 
 if (hasOAuthCredentials(process.env.VK_CLIENT_ID, process.env.VK_CLIENT_SECRET)) {
   providers.push({
-    id: "vkid",
-    name: "VK ID",
-    type: "oidc",
-    issuer: "https://id.vk.com",
+    id: "vk",
+    name: "VK",
+    type: "oauth",
     clientId: process.env.VK_CLIENT_ID!,
     clientSecret: process.env.VK_CLIENT_SECRET!,
+    checks: ["none"],
     client: {
       token_endpoint_auth_method: "client_secret_post",
     },
-    authorization: {
-      params: {
-        scope: "email phone",
+    authorization: "https://oauth.vk.com/authorize?scope=email&v=5.131",
+    token: "https://oauth.vk.com/access_token?v=5.131",
+    userinfo: {
+      url: "https://api.vk.com/method/users.get?fields=photo_200&v=5.131",
+      async request({ tokens, provider }: { tokens: { access_token?: string; email?: string | null }; provider: { userinfo?: { url?: string } } }) {
+        const profile = await fetch(provider.userinfo?.url as string, {
+          headers: {
+            Authorization: `Bearer ${tokens.access_token}`,
+            "User-Agent": "authjs",
+          },
+        }).then(async (res) => await res.json());
+
+        const user = profile?.response?.[0] ?? {};
+        user.email = tokens.email ?? null;
+
+        return user;
       },
     },
     profile(profile: {
-      sub: string;
+      id: string | number;
       first_name?: string;
       last_name?: string;
       email?: string | null;
-      picture?: string | null;
+      photo_200?: string | null;
+      photo_100?: string | null;
     }) {
       return {
-        id: String(profile.sub),
-        name:
-          [profile.first_name, profile.last_name].filter(Boolean).join(" ") || "Пользователь VK",
-        email: profile.email ?? getOAuthFallbackEmail("vk", profile.sub),
-        image: profile.picture ?? null,
+        id: String(profile.id),
+        name: [profile.first_name, profile.last_name].filter(Boolean).join(" ") || "Пользователь VK",
+        email: profile.email ?? getOAuthFallbackEmail("vk", profile.id),
+        image: profile.photo_200 ?? profile.photo_100 ?? null,
       };
     },
   } as NonNullable<NextAuthConfig["providers"]>[number]);

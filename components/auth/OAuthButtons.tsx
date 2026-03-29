@@ -32,7 +32,7 @@ export default function OAuthButtons({
             type="button"
             onClick={() => {
               setPendingProvider("vk");
-              void signIn("vkid", { callbackUrl });
+              void signIn("vk", { callbackUrl });
             }}
             disabled={pendingProvider !== null}
             className="rounded-xl border border-[#0A78FF]/30 bg-[#0A78FF] px-4 py-3 text-[15px] font-semibold text-white transition-colors hover:bg-[#066BE6] disabled:cursor-wait disabled:opacity-70"
