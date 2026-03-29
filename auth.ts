@@ -1,7 +1,6 @@
 import NextAuth, { type NextAuthConfig } from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import Credentials from "next-auth/providers/credentials";
-import VK from "next-auth/providers/vk";
 import Yandex from "next-auth/providers/yandex";
 import bcrypt from "bcryptjs";
 import type { Role } from "@prisma/client";
@@ -102,21 +101,37 @@ const providers: NonNullable<NextAuthConfig["providers"]> = [
 ];
 
 if (hasOAuthCredentials(process.env.VK_CLIENT_ID, process.env.VK_CLIENT_SECRET)) {
-  providers.push(
-    VK({
-      clientId: process.env.VK_CLIENT_ID!,
-      clientSecret: process.env.VK_CLIENT_SECRET!,
-      checks: ["none"],
-      profile(profile) {
-        return {
-          id: String(profile.id),
-          name: [profile.first_name, profile.last_name].filter(Boolean).join(" ") || "Пользователь VK",
-          email: profile.email ?? getOAuthFallbackEmail("vk", profile.id),
-          image: profile.photo_200 ?? profile.photo_100 ?? null,
-        };
+  providers.push({
+    id: "vkid",
+    name: "VK ID",
+    type: "oidc",
+    issuer: "https://id.vk.com",
+    clientId: process.env.VK_CLIENT_ID!,
+    clientSecret: process.env.VK_CLIENT_SECRET!,
+    client: {
+      token_endpoint_auth_method: "client_secret_post",
+    },
+    authorization: {
+      params: {
+        scope: "email phone",
       },
-    }),
-  );
+    },
+    profile(profile: {
+      sub: string;
+      first_name?: string;
+      last_name?: string;
+      email?: string | null;
+      picture?: string | null;
+    }) {
+      return {
+        id: String(profile.sub),
+        name:
+          [profile.first_name, profile.last_name].filter(Boolean).join(" ") || "Пользователь VK",
+        email: profile.email ?? getOAuthFallbackEmail("vk", profile.sub),
+        image: profile.picture ?? null,
+      };
+    },
+  } as NonNullable<NextAuthConfig["providers"]>[number]);
 }
 
 if (hasOAuthCredentials(process.env.YANDEX_CLIENT_ID, process.env.YANDEX_CLIENT_SECRET)) {
