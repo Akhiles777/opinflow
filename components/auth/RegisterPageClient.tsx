@@ -12,13 +12,10 @@ const initialState = { success: false, error: "", message: "", email: "" };
 
 type Props = {
   vkEnabled: boolean;
-  vkAppId?: string | null;
   yandexEnabled: boolean;
 };
 
-
-
-export default function RegisterPageClient({ vkEnabled, vkAppId, yandexEnabled }: Props) {
+export default function RegisterPageClient({ vkEnabled, yandexEnabled }: Props) {
   const searchParams = useSearchParams();
   const roleFromQuery = searchParams.get("role") === "CLIENT" ? "CLIENT" : "RESPONDENT";
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
@@ -87,7 +84,6 @@ export default function RegisterPageClient({ vkEnabled, vkAppId, yandexEnabled }
       {role === "RESPONDENT" ? (
         <OAuthButtons
           vkEnabled={vkEnabled}
-          vkAppId={vkAppId}
           yandexEnabled={yandexEnabled}
           callbackUrl={callbackUrl}
           mode="register"

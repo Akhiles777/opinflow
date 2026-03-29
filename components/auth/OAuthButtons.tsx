@@ -2,11 +2,9 @@
 
 import * as React from "react";
 import { signIn } from "next-auth/react";
-import VKIDButton from "@/components/auth/VKIDButton";
 
 type Props = {
   vkEnabled: boolean;
-  vkAppId?: string | null;
   yandexEnabled: boolean;
   callbackUrl: string;
   mode?: "login" | "register";
@@ -14,12 +12,11 @@ type Props = {
 
 export default function OAuthButtons({
   vkEnabled,
-  vkAppId,
   yandexEnabled,
   callbackUrl,
   mode = "login",
 }: Props) {
-  const [pendingProvider, setPendingProvider] = React.useState<"yandex" | null>(null);
+  const [pendingProvider, setPendingProvider] = React.useState<"vk" | "yandex" | null>(null);
 
   if (!vkEnabled && !yandexEnabled) {
     return null;
@@ -30,7 +27,19 @@ export default function OAuthButtons({
   return (
     <>
       <div className="mt-8 grid gap-3">
-        {vkEnabled && vkAppId ? <VKIDButton appId={vkAppId} callbackUrl={callbackUrl} mode={mode} /> : null}
+        {vkEnabled ? (
+          <button
+            type="button"
+            onClick={() => {
+              setPendingProvider("vk");
+              void signIn("vk", { callbackUrl });
+            }}
+            disabled={pendingProvider !== null}
+            className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-[15px] font-semibold text-white transition-colors hover:bg-white/8 disabled:cursor-wait disabled:opacity-70"
+          >
+            {pendingProvider === "vk" ? "Перенаправляем в VK..." : `${verb} через VK`}
+          </button>
+        ) : null}
         {yandexEnabled ? (
           <button
             type="button"
@@ -38,7 +47,7 @@ export default function OAuthButtons({
               setPendingProvider("yandex");
               void signIn("yandex", { callbackUrl });
             }}
-            disabled={pendingProvider === "yandex"}
+            disabled={pendingProvider !== null}
             className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-[15px] font-semibold text-white transition-colors hover:bg-white/8 disabled:cursor-wait disabled:opacity-70"
           >
             {pendingProvider === "yandex" ? "Перенаправляем в Яндекс..." : `${verb} через Яндекс`}

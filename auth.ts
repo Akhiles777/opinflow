@@ -98,85 +98,57 @@ const providers: NonNullable<NextAuthConfig["providers"]> = [
       };
     },
   }),
-  Credentials({
-    id: "vkid",
+];
+
+if (hasOAuthCredentials(process.env.VK_CLIENT_ID, process.env.VK_CLIENT_SECRET)) {
+  providers.push({
+    id: "vk",
     name: "VK",
-    credentials: {
-      vkUserId: { label: "VK User ID", type: "text" },
-      email: { label: "Email", type: "email" },
-      name: { label: "Имя", type: "text" },
-      image: { label: "Аватар", type: "text" },
+    type: "oauth",
+    clientId: process.env.VK_CLIENT_ID!,
+    clientSecret: process.env.VK_CLIENT_SECRET!,
+    authorization: {
+      url: "https://oauth.vk.com/authorize",
+      params: {
+        scope: "email",
+        v: "5.131",
+        response_type: "code",
+      },
     },
-    async authorize(credentials) {
-      const vkUserId = String(credentials?.vkUserId ?? "").trim();
-      if (!vkUserId) {
-        return null;
-      }
-
-      const rawEmail = String(credentials?.email ?? "").trim().toLowerCase();
-      const email = rawEmail || getOAuthFallbackEmail("vk", vkUserId);
-      const name = String(credentials?.name ?? "").trim() || "Пользователь VK";
-      const image = String(credentials?.image ?? "").trim() || null;
-
-      try {
-        let user = await prisma.user.findUnique({
-          where: { email },
-        });
-
-        if (user?.status === "BLOCKED") {
-          throw new Error("BLOCKED");
+    token: "https://oauth.vk.com/access_token",
+    userinfo: {
+      async request({ tokens }: { tokens: { access_token?: string; email?: string | null } }) {
+        const accessToken = tokens.access_token;
+        if (!accessToken) {
+          throw new Error("VK access token is missing");
         }
 
-        if (user && isRespondentSocialOnlyRole(user.role) && resolveManagedRole(email, user.role) !== "ADMIN") {
-          throw new Error("RESPONDENT_SOCIAL_ONLY");
-        }
+        const url = new URL("https://api.vk.com/method/users.get");
+        url.searchParams.set("fields", "photo_200");
+        url.searchParams.set("v", "5.131");
+        url.searchParams.set("access_token", accessToken);
 
-        const targetRole = resolveManagedRole(email, user?.role ?? "RESPONDENT");
-
-        if (!user) {
-          user = await prisma.user.create({
-            data: {
-              email,
-              name,
-              image,
-              role: targetRole,
-              status: "ACTIVE",
-              emailVerified: new Date(),
-            },
-          });
-        } else {
-          user = await prisma.user.update({
-            where: { id: user.id },
-            data: {
-              name: user.name ?? name,
-              image: user.image ?? image,
-              role: targetRole,
-              status: user.status === "PENDING_VERIFICATION" ? "ACTIVE" : user.status,
-              emailVerified: user.emailVerified ?? new Date(),
-            },
-          });
-        }
-
-        await ensureUserSetup(user.id, targetRole);
+        const response = await fetch(url);
+        const profile = await response.json();
 
         return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          image: user.image,
-          role: user.role,
-          status: user.status,
+          ...profile,
+          email: tokens.email ?? null,
         };
-      } catch (error) {
-        if (isDatabaseUnavailable(error)) {
-          throw new Error("AUTH_UNAVAILABLE");
-        }
-
-        throw error;
-      }
+      },
     },
-  }),
-];
+    profile(profile) {
+      const user = profile?.response?.[0];
+
+      return {
+        id: String(user?.id ?? profile?.user_id ?? ""),
+        name: [user?.first_name, user?.last_name].filter(Boolean).join(" ") || "Пользователь VK",
+        email: profile?.email ?? getOAuthFallbackEmail("vk", user?.id ?? profile?.user_id ?? "unknown"),
+        image: user?.photo_200 ?? null,
+      };
+    },
+  } as NonNullable<NextAuthConfig["providers"]>[number]);
+}
 
 if (hasOAuthCredentials(process.env.YANDEX_CLIENT_ID, process.env.YANDEX_CLIENT_SECRET)) {
   providers.push(

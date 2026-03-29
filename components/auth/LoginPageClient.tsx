@@ -21,11 +21,10 @@ const errorMap: Record<string, string> = {
 
 type Props = {
   vkEnabled: boolean;
-  vkAppId?: string | null;
   yandexEnabled: boolean;
 };
 
-export default function LoginPageClient({ vkEnabled, vkAppId, yandexEnabled }: Props) {
+export default function LoginPageClient({ vkEnabled, yandexEnabled }: Props) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const modeFromQuery: LoginRole = searchParams.get("role") === "CLIENT" ? "CLIENT" : "RESPONDENT";
@@ -116,13 +115,12 @@ export default function LoginPageClient({ vkEnabled, vkAppId, yandexEnabled }: P
       {role === "RESPONDENT" ? (
         <OAuthButtons
           vkEnabled={vkEnabled}
-          vkAppId={vkAppId}
           yandexEnabled={yandexEnabled}
           callbackUrl={callbackUrl}
           mode="login"
         />
       ) : (
-        <div className="mt-6 rounded-2xl border border-white/8 bg-white/5 p-4 text-[15px] leading-relaxed text-white/55">
+        <div className="mt-6  mb-5 rounded-2xl border border-white/8 bg-white/5 p-4 text-[15px] leading-relaxed text-white/55">
           Для заказчиков вход через соцсети отключён. Используйте email и пароль, с которыми
           был создан аккаунт.
         </div>
