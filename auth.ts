@@ -1,4 +1,4 @@
-import NextAuth, { type NextAuthConfig } from "next-auth";
+import NextAuth, { CredentialsSignin, type NextAuthConfig } from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import Credentials from "next-auth/providers/credentials";
 import Yandex from "next-auth/providers/yandex";
@@ -13,6 +13,26 @@ type AuthUserPayload = {
   role: Role;
   status: "ACTIVE" | "PENDING_VERIFICATION" | "BLOCKED";
 };
+
+class BlockedCredentialsError extends CredentialsSignin {
+  code = "BLOCKED";
+}
+
+class NotVerifiedCredentialsError extends CredentialsSignin {
+  code = "NOT_VERIFIED";
+}
+
+class RespondentSocialOnlyCredentialsError extends CredentialsSignin {
+  code = "RESPONDENT_SOCIAL_ONLY";
+}
+
+class AuthUnavailableCredentialsError extends CredentialsSignin {
+  code = "AUTH_UNAVAILABLE";
+}
+
+class VkidSigninFailedCredentialsError extends CredentialsSignin {
+  code = "VKID_SIGNIN_FAILED";
+}
 
 function isRespondentSocialOnlyRole(role: Role) {
   return role === "CLIENT";
@@ -58,7 +78,7 @@ const providers: NonNullable<NextAuthConfig["providers"]> = [
         });
       } catch (error) {
         if (isDatabaseUnavailable(error)) {
-          throw new Error("AUTH_UNAVAILABLE");
+          throw new AuthUnavailableCredentialsError();
         }
         throw error;
       }
@@ -73,11 +93,11 @@ const providers: NonNullable<NextAuthConfig["providers"]> = [
       }
 
       if (user.status === "BLOCKED") {
-        throw new Error("BLOCKED");
+        throw new BlockedCredentialsError();
       }
 
       if (user.status === "PENDING_VERIFICATION") {
-        throw new Error("NOT_VERIFIED");
+        throw new NotVerifiedCredentialsError();
       }
 
       const targetRole = resolveManagedRole(user.email, user.role);
@@ -124,11 +144,11 @@ const providers: NonNullable<NextAuthConfig["providers"]> = [
         });
 
         if (user?.status === "BLOCKED") {
-          throw new Error("BLOCKED");
+          throw new BlockedCredentialsError();
         }
 
         if (user && isRespondentSocialOnlyRole(user.role) && resolveManagedRole(email, user.role) !== "ADMIN") {
-          throw new Error("RESPONDENT_SOCIAL_ONLY");
+          throw new RespondentSocialOnlyCredentialsError();
         }
 
         const targetRole = resolveManagedRole(email, user?.role ?? "RESPONDENT");
@@ -169,10 +189,15 @@ const providers: NonNullable<NextAuthConfig["providers"]> = [
         };
       } catch (error) {
         if (isDatabaseUnavailable(error)) {
-          throw new Error("AUTH_UNAVAILABLE");
+          throw new AuthUnavailableCredentialsError();
         }
 
-        throw error;
+        if (error instanceof CredentialsSignin) {
+          throw error;
+        }
+
+        console.error("[auth][vkid-authorize-error]", error);
+        throw new VkidSigninFailedCredentialsError();
       }
     },
   }),

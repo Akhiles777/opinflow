@@ -17,6 +17,8 @@ const errorMap: Record<string, string> = {
   Configuration: "OAuth-вход пока не настроен. Используйте вход по email или завершите настройку провайдеров.",
   RESPONDENT_SOCIAL_ONLY:
     "Вход через соцсети доступен только респондентам. Для заказчика используйте вход по email.",
+  VKID_SIGNIN_FAILED:
+    "Не удалось завершить вход через VK. Проверьте настройки VK ID и попробуйте ещё раз.",
 };
 
 type Props = {
@@ -28,19 +30,23 @@ type Props = {
 export default function LoginPageClient({ vkEnabled, vkAppId, yandexEnabled }: Props) {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const searchError = searchParams.get("error");
+  const credentialsCode = searchParams.get("code");
   const modeFromQuery: LoginRole = searchParams.get("role") === "CLIENT" ? "CLIENT" : "RESPONDENT";
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [role, setRole] = React.useState<LoginRole>(modeFromQuery);
   const [error, setError] = React.useState<string | null>(
-    searchParams.get("error")
-      ? errorMap[searchParams.get("error") as string] ?? "Не удалось выполнить вход"
+    searchError
+      ? searchError === "CredentialsSignin" && credentialsCode
+        ? errorMap[credentialsCode] ?? errorMap.CredentialsSignin
+        : errorMap[searchError] ?? "Не удалось выполнить вход"
       : null,
   );
   const [resendMessage, setResendMessage] = React.useState<string | null>(null);
   const [pending, startTransition] = React.useTransition();
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
-  const initialErrorCode = searchParams.get("error");
+  const initialErrorCode = searchError;
 
   React.useEffect(() => {
     setRole(modeFromQuery);

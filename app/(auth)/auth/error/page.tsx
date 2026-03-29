@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-type SearchParams = Promise<{ error?: string }>;
+type SearchParams = Promise<{ error?: string; code?: string }>;
 
 const errorMap: Record<string, { title: string; description: string }> = {
   Configuration: {
@@ -29,6 +29,14 @@ const errorMap: Record<string, { title: string; description: string }> = {
     description:
       "Вход и регистрация через соцсети доступны только респондентам. Для заказчика используйте email и пароль.",
   },
+  AUTH_UNAVAILABLE: {
+    title: "Сервис авторизации временно недоступен",
+    description: "Проверьте подключение к базе данных и серверные переменные окружения.",
+  },
+  VKID_SIGNIN_FAILED: {
+    title: "Не удалось завершить вход через VK",
+    description: "VK вернул данные, но сервер не смог завершить авторизацию. Проверьте серверные логи и настройки VK ID.",
+  },
   CallbackRouteError: {
     title: "Не удалось завершить вход",
     description: "Проверьте серверные логи Auth.js и настройки провайдера.",
@@ -42,14 +50,17 @@ const errorMap: Record<string, { title: string; description: string }> = {
 export default async function AuthErrorPage({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
   const errorCode = params.error ?? "Default";
-  const content = errorMap[errorCode] ?? errorMap.Default;
+  const credentialsCode = params.code;
+  const resolvedCode =
+    errorCode === "CredentialsSignin" && credentialsCode ? credentialsCode : errorCode;
+  const content = errorMap[resolvedCode] ?? errorMap[errorCode] ?? errorMap.Default;
 
   return (
     <div className="mx-auto mt-16 max-w-md rounded-2xl border border-white/8 bg-surface-900 p-6 text-white sm:mt-24 sm:p-10">
       <p className="text-xs uppercase tracking-[0.25em] text-white/35">Ошибка авторизации</p>
       <h1 className="mt-4 font-display text-3xl text-white">{content.title}</h1>
       <p className="mt-3 text-sm leading-relaxed text-white/55">{content.description}</p>
-      <p className="mt-3 text-xs text-white/35">Код ошибки: {errorCode}</p>
+      <p className="mt-3 text-xs text-white/35">Код ошибки: {resolvedCode}</p>
 
       <div className="mt-8 flex flex-col gap-3 sm:flex-row">
         <Link
