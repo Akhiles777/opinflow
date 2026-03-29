@@ -177,7 +177,15 @@ const providers: NonNullable<NextAuthConfig["providers"]> = [
           });
         }
 
-        await ensureUserSetup(user.id, targetRole);
+        try {
+          await ensureUserSetup(user.id, targetRole);
+        } catch (setupError) {
+          console.error("[auth][vkid-setup-error]", {
+            userId: user.id,
+            targetRole,
+            setupError,
+          });
+        }
 
         return {
           id: user.id,
