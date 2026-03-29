@@ -35,7 +35,7 @@ export default function OAuthButtons({
               void signIn("vk", { callbackUrl });
             }}
             disabled={pendingProvider !== null}
-            className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-[15px] font-semibold text-white transition-colors hover:bg-white/8 disabled:cursor-wait disabled:opacity-70"
+            className="rounded-xl border border-[#0A78FF]/30 bg-[#0A78FF] px-4 py-3 text-[15px] font-semibold text-white transition-colors hover:bg-[#066BE6] disabled:cursor-wait disabled:opacity-70"
           >
             {pendingProvider === "vk" ? "Перенаправляем в VK..." : `${verb} через VK`}
           </button>
@@ -48,7 +48,7 @@ export default function OAuthButtons({
               void signIn("yandex", { callbackUrl });
             }}
             disabled={pendingProvider !== null}
-            className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-[15px] font-semibold text-white transition-colors hover:bg-white/8 disabled:cursor-wait disabled:opacity-70"
+            className="rounded-xl border border-[#FC3F1D]/30 bg-[#FC3F1D] px-4 py-3 text-[15px] font-semibold text-white transition-colors hover:bg-[#E53818] disabled:cursor-wait disabled:opacity-70"
           >
             {pendingProvider === "yandex" ? "Перенаправляем в Яндекс..." : `${verb} через Яндекс`}
           </button>
