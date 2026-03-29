@@ -20,12 +20,13 @@ function LoginFallback() {
 }
 
 export default function LoginPage() {
-  const vkEnabled = hasOAuthCredentials(process.env.VK_CLIENT_ID, process.env.VK_CLIENT_SECRET);
+  const vkAppId = process.env.VK_CLIENT_ID?.trim() ?? null;
+  const vkEnabled = hasVkClientId(process.env.VK_CLIENT_ID);
   const yandexEnabled = hasOAuthCredentials(process.env.YANDEX_CLIENT_ID, process.env.YANDEX_CLIENT_SECRET);
 
   return (
     <Suspense fallback={<LoginFallback />}>
-      <LoginPageClient vkEnabled={vkEnabled} yandexEnabled={yandexEnabled} />
+      <LoginPageClient vkEnabled={vkEnabled} vkAppId={vkAppId} yandexEnabled={yandexEnabled} />
     </Suspense>
   );
 }

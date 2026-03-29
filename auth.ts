@@ -98,54 +98,85 @@ const providers: NonNullable<NextAuthConfig["providers"]> = [
       };
     },
   }),
-];
-
-if (hasOAuthCredentials(process.env.VK_CLIENT_ID, process.env.VK_CLIENT_SECRET)) {
-  providers.push({
-    id: "vk",
+  Credentials({
+    id: "vkid",
     name: "VK",
-    type: "oauth",
-    clientId: process.env.VK_CLIENT_ID!,
-    clientSecret: process.env.VK_CLIENT_SECRET!,
-    checks: ["none"],
-    client: {
-      token_endpoint_auth_method: "client_secret_post",
+    credentials: {
+      vkUserId: { label: "VK User ID", type: "text" },
+      email: { label: "Email", type: "email" },
+      name: { label: "Имя", type: "text" },
+      image: { label: "Аватар", type: "text" },
     },
-    authorization: "https://oauth.vk.com/authorize?scope=email&v=5.131",
-    token: "https://oauth.vk.com/access_token?v=5.131",
-    userinfo: {
-      url: "https://api.vk.com/method/users.get?fields=photo_200&v=5.131",
-      async request({ tokens, provider }: { tokens: { access_token?: string; email?: string | null }; provider: { userinfo?: { url?: string } } }) {
-        const profile = await fetch(provider.userinfo?.url as string, {
-          headers: {
-            Authorization: `Bearer ${tokens.access_token}`,
-            "User-Agent": "authjs",
-          },
-        }).then(async (res) => await res.json());
+    async authorize(credentials) {
+      const vkUserId = String(credentials?.vkUserId ?? "").trim();
+      if (!vkUserId) {
+        return null;
+      }
 
-        const user = profile?.response?.[0] ?? {};
-        user.email = tokens.email ?? null;
+      const rawEmail = String(credentials?.email ?? "").trim().toLowerCase();
+      const email = rawEmail || getOAuthFallbackEmail("vk", vkUserId);
+      const name = String(credentials?.name ?? "").trim() || "Пользователь VK";
+      const image = String(credentials?.image ?? "").trim() || null;
 
-        return user;
-      },
+      try {
+        let user = await prisma.user.findUnique({
+          where: { email },
+        });
+
+        if (user?.status === "BLOCKED") {
+          throw new Error("BLOCKED");
+        }
+
+        if (user && isRespondentSocialOnlyRole(user.role) && resolveManagedRole(email, user.role) !== "ADMIN") {
+          throw new Error("RESPONDENT_SOCIAL_ONLY");
+        }
+
+        const targetRole = resolveManagedRole(email, user?.role ?? "RESPONDENT");
+
+        if (!user) {
+          user = await prisma.user.create({
+            data: {
+              email,
+              name,
+              image,
+              role: targetRole,
+              status: "ACTIVE",
+              emailVerified: new Date(),
+            },
+          });
+        } else {
+          user = await prisma.user.update({
+            where: { id: user.id },
+            data: {
+              name: user.name ?? name,
+              image: user.image ?? image,
+              role: targetRole,
+              status: user.status === "PENDING_VERIFICATION" ? "ACTIVE" : user.status,
+              emailVerified: user.emailVerified ?? new Date(),
+            },
+          });
+        }
+
+        await ensureUserSetup(user.id, targetRole);
+
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          image: user.image,
+          role: user.role,
+          status: user.status,
+        };
+      } catch (error) {
+        if (isDatabaseUnavailable(error)) {
+          throw new Error("AUTH_UNAVAILABLE");
+        }
+
+        throw error;
+      }
     },
-    profile(profile: {
-      id: string | number;
-      first_name?: string;
-      last_name?: string;
-      email?: string | null;
-      photo_200?: string | null;
-      photo_100?: string | null;
-    }) {
-      return {
-        id: String(profile.id),
-        name: [profile.first_name, profile.last_name].filter(Boolean).join(" ") || "Пользователь VK",
-        email: profile.email ?? getOAuthFallbackEmail("vk", profile.id),
-        image: profile.photo_200 ?? profile.photo_100 ?? null,
-      };
-    },
-  } as NonNullable<NextAuthConfig["providers"]>[number]);
-}
+  }),
+];
 
 if (hasOAuthCredentials(process.env.YANDEX_CLIENT_ID, process.env.YANDEX_CLIENT_SECRET)) {
   providers.push(

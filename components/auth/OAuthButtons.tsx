@@ -2,9 +2,11 @@
 
 import * as React from "react";
 import { signIn } from "next-auth/react";
+import VKIDButton from "@/components/auth/VKIDButton";
 
 type Props = {
   vkEnabled: boolean;
+  vkAppId?: string | null;
   yandexEnabled: boolean;
   callbackUrl: string;
   mode?: "login" | "register";
@@ -12,11 +14,12 @@ type Props = {
 
 export default function OAuthButtons({
   vkEnabled,
+  vkAppId,
   yandexEnabled,
   callbackUrl,
   mode = "login",
 }: Props) {
-  const [pendingProvider, setPendingProvider] = React.useState<"vk" | "yandex" | null>(null);
+  const [pendingProvider, setPendingProvider] = React.useState<"yandex" | null>(null);
 
   if (!vkEnabled && !yandexEnabled) {
     return null;
@@ -27,19 +30,7 @@ export default function OAuthButtons({
   return (
     <>
       <div className="mt-8 grid gap-3">
-        {vkEnabled ? (
-          <button
-            type="button"
-            onClick={() => {
-              setPendingProvider("vk");
-              void signIn("vk", { callbackUrl });
-            }}
-            disabled={pendingProvider !== null}
-            className="rounded-xl border border-[#0A78FF]/30 bg-[#0A78FF] px-4 py-3 text-[15px] font-semibold text-white transition-colors hover:bg-[#066BE6] disabled:cursor-wait disabled:opacity-70"
-          >
-            {pendingProvider === "vk" ? "Перенаправляем в VK..." : `${verb} через VK`}
-          </button>
-        ) : null}
+        {vkEnabled && vkAppId ? <VKIDButton appId={vkAppId} callbackUrl={callbackUrl} mode={mode} /> : null}
         {yandexEnabled ? (
           <button
             type="button"
