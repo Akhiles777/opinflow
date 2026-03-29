@@ -63,17 +63,6 @@ declare global {
   }
 }
 
-function VkIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M15.07 2H8.93C3.33 2 2 3.33 2 8.93v6.14C2 20.67 3.33 22 8.93 22h6.14C20.67 22 22 20.67 22 15.07V8.93C22 3.33 20.67 2 15.07 2zm3.08 13.56h-1.8c-.68 0-.89-.54-2.11-1.77-1.06-1.03-1.52-.97-1.52.3v1.47c0 .39-.12.62-1.15.62-1.7 0-3.57-1.03-4.89-2.95C4.91 10.7 4.5 8.7 4.5 8.28c0-.23.09-.44.32-.44h1.8c.54 0 .65.25.83.66.92 2.65 2.46 4.97 3.1 4.97.24 0 .35-.11.35-.72V9.93c-.07-1.29-.75-1.4-.75-1.86 0-.22.18-.44.46-.44h2.83c.46 0 .62.25.62.79v4.24c0 .46.2.62.33.62.24 0 .44-.16.88-.6 1.36-1.52 2.33-3.86 2.33-3.86.13-.27.35-.52.88-.52h1.8c.54 0 .66.28.54.66-.22 1.04-2.4 4.11-2.4 4.11-.19.31-.26.45 0 .79.19.26.81.8 1.22 1.28.76.87 1.34 1.6 1.5 2.1.16.5-.1.75-.6.75z"
-        fill="white"
-      />
-    </svg>
-  );
-}
-
 function extractProfile(data: VKIDUserInfoResult, fallbackEmail?: string | null) {
   const user = data.user ?? data;
   const id = user.user_id ?? data.user_id;
@@ -198,19 +187,12 @@ export default function VKIDButton({ appId, callbackUrl, mode = "login" }: Props
         onError={() => setError("Не удалось загрузить VK SDK. Попробуйте позже.")}
       />
 
-      <div className="overflow-hidden rounded-xl" style={{ backgroundColor: "#0077FF" }}>
-        <div className="flex items-center justify-center gap-3 px-5 py-3 text-[15px] font-semibold text-white">
-          <VkIcon />
-          <span>{verb} через VK</span>
-        </div>
-        <div className="px-2 pb-2">
-          <div
-            ref={containerRef}
-            className="min-h-12 rounded-[10px] bg-white/95 p-1 transition-opacity"
-            style={{ opacity: pending ? 0.8 : 1 }}
-          />
-        </div>
-      </div>
+      <div className="text-[15px] font-semibold text-white">{verb} через VK</div>
+      <div
+        ref={containerRef}
+        className="min-h-12 rounded-xl border border-white/10 bg-white/5 p-1 transition-opacity"
+        style={{ opacity: pending ? 0.8 : 1 }}
+      />
 
       {pending ? <p className="text-[15px] text-white/45">Завершаем вход через VK...</p> : null}
       {error ? (
