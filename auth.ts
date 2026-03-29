@@ -1,6 +1,7 @@
 import NextAuth, { type NextAuthConfig } from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import Credentials from "next-auth/providers/credentials";
+import VK from "next-auth/providers/vk";
 import Yandex from "next-auth/providers/yandex";
 import bcrypt from "bcryptjs";
 import type { Role } from "@prisma/client";
@@ -101,53 +102,20 @@ const providers: NonNullable<NextAuthConfig["providers"]> = [
 ];
 
 if (hasOAuthCredentials(process.env.VK_CLIENT_ID, process.env.VK_CLIENT_SECRET)) {
-  providers.push({
-    id: "vk",
-    name: "VK",
-    type: "oauth",
-    clientId: process.env.VK_CLIENT_ID!,
-    clientSecret: process.env.VK_CLIENT_SECRET!,
-    authorization: {
-      url: "https://oauth.vk.com/authorize",
-      params: {
-        scope: "email",
-        v: "5.131",
-        response_type: "code",
-      },
-    },
-    token: "https://oauth.vk.com/access_token",
-    userinfo: {
-      async request({ tokens }: { tokens: { access_token?: string; email?: string | null } }) {
-        const accessToken = tokens.access_token;
-        if (!accessToken) {
-          throw new Error("VK access token is missing");
-        }
-
-        const url = new URL("https://api.vk.com/method/users.get");
-        url.searchParams.set("fields", "photo_200");
-        url.searchParams.set("v", "5.131");
-        url.searchParams.set("access_token", accessToken);
-
-        const response = await fetch(url);
-        const profile = await response.json();
-
+  providers.push(
+    VK({
+      clientId: process.env.VK_CLIENT_ID!,
+      clientSecret: process.env.VK_CLIENT_SECRET!,
+      profile(profile) {
         return {
-          ...profile,
-          email: tokens.email ?? null,
+          id: String(profile.id),
+          name: [profile.first_name, profile.last_name].filter(Boolean).join(" ") || "Пользователь VK",
+          email: profile.email ?? getOAuthFallbackEmail("vk", profile.id),
+          image: profile.photo_200 ?? profile.photo_100 ?? null,
         };
       },
-    },
-    profile(profile) {
-      const user = profile?.response?.[0];
-
-      return {
-        id: String(user?.id ?? profile?.user_id ?? ""),
-        name: [user?.first_name, user?.last_name].filter(Boolean).join(" ") || "Пользователь VK",
-        email: profile?.email ?? getOAuthFallbackEmail("vk", user?.id ?? profile?.user_id ?? "unknown"),
-        image: user?.photo_200 ?? null,
-      };
-    },
-  } as NonNullable<NextAuthConfig["providers"]>[number]);
+    }),
+  );
 }
 
 if (hasOAuthCredentials(process.env.YANDEX_CLIENT_ID, process.env.YANDEX_CLIENT_SECRET)) {
