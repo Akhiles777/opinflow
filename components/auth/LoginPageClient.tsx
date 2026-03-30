@@ -33,24 +33,48 @@ export default function LoginPageClient({ vkEnabled, vkAppId, yandexEnabled }: P
   const searchError = searchParams.get("error");
   const credentialsCode = searchParams.get("code");
   const modeFromQuery: LoginRole = searchParams.get("role") === "CLIENT" ? "CLIENT" : "RESPONDENT";
+  const resolvedErrorCode =
+    searchError === "CredentialsSignin" && credentialsCode ? credentialsCode : searchError;
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [role, setRole] = React.useState<LoginRole>(modeFromQuery);
   const [error, setError] = React.useState<string | null>(
-    searchError
-      ? searchError === "CredentialsSignin" && credentialsCode
-        ? errorMap[credentialsCode] ?? errorMap.CredentialsSignin
-        : errorMap[searchError] ?? "Не удалось выполнить вход"
+    resolvedErrorCode
+      ? errorMap[resolvedErrorCode] ?? errorMap[searchError ?? ""] ?? "Не удалось выполнить вход"
       : null,
   );
   const [resendMessage, setResendMessage] = React.useState<string | null>(null);
   const [pending, startTransition] = React.useTransition();
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
-  const initialErrorCode = searchError;
+  const initialErrorCode = resolvedErrorCode;
 
   React.useEffect(() => {
     setRole(modeFromQuery);
   }, [modeFromQuery]);
+
+  React.useEffect(() => {
+    setError(
+      resolvedErrorCode
+        ? errorMap[resolvedErrorCode] ?? errorMap[searchError ?? ""] ?? "Не удалось выполнить вход"
+        : null,
+    );
+    setResendMessage(null);
+  }, [resolvedErrorCode, searchError]);
+
+  React.useEffect(() => {
+    setError((currentError) => {
+      if (!currentError) {
+        return null;
+      }
+
+      if (role === "CLIENT" && currentError === errorMap.RESPONDENT_SOCIAL_ONLY) {
+        return null;
+      }
+
+      return currentError;
+    });
+    setResendMessage(null);
+  }, [role]);
 
   async function handleCredentialsLogin(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -146,7 +170,12 @@ export default function LoginPageClient({ vkEnabled, vkAppId, yandexEnabled }: P
         </label>
 
         <div className="flex justify-end">
-          <Link href="/forgot-password" className="text-[15px] text-brand hover:text-brand-light">Забыли пароль?</Link>
+          <Link
+            href={`/forgot-password?callbackUrl=${encodeURIComponent(callbackUrl)}`}
+            className="text-[15px] text-brand hover:text-brand-light"
+          >
+            Забыли пароль?
+          </Link>
         </div>
 
         {error ? <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-[15px] text-red-400">{error}</div> : null}
@@ -165,7 +194,10 @@ export default function LoginPageClient({ vkEnabled, vkAppId, yandexEnabled }: P
 
       <p className="mt-6 text-[15px] text-white/45">
         Нет аккаунта?{" "}
-        <Link href={`/register?role=${role}`} className="text-brand hover:text-brand-light">
+        <Link
+          href={`/register?role=${role}&callbackUrl=${encodeURIComponent(callbackUrl)}`}
+          className="text-brand hover:text-brand-light"
+        >
           Зарегистрироваться
         </Link>
       </p>

@@ -35,9 +35,6 @@ export default function RegisterPageClient({ vkEnabled, vkAppId, yandexEnabled }
   useEffect(() => {
     setRole(roleFromQuery);
   }, [roleFromQuery]);
-
-
-
   return (
     <div className="mx-auto max-w-md rounded-2xl border border-white/8 bg-surface-900 p-6 text-white sm:mt-24 sm:p-10">
       <p className="text-sm uppercase tracking-[0.25em] text-white/35">Регистрация</p>
@@ -131,7 +128,10 @@ export default function RegisterPageClient({ vkEnabled, vkAppId, yandexEnabled }
 
       <p className="mt-6 text-[15px] text-white/45">
         Уже есть аккаунт?{" "}
-        <Link href={`/login?role=${role}`} className="text-brand hover:text-brand-light">
+        <Link
+          href={`/login?role=${role}&callbackUrl=${encodeURIComponent(callbackUrl)}`}
+          className="text-brand hover:text-brand-light"
+        >
           Войти
         </Link>
       </p>

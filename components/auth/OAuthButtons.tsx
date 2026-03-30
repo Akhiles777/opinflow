@@ -31,7 +31,14 @@ export default function OAuthButtons({
   return (
     <>
       <div className="mt-8 grid gap-3">
-        {vkEnabled && vkAppId ? <VKIDButton appId={vkAppId} callbackUrl={callbackUrl} mode={mode} /> : null}
+        {vkEnabled && vkAppId ? (
+          <VKIDButton
+            key={`vkid-${mode}-${callbackUrl}`}
+            appId={vkAppId}
+            callbackUrl={callbackUrl}
+            mode={mode}
+          />
+        ) : null}
         {yandexEnabled ? (
           <button
             type="button"

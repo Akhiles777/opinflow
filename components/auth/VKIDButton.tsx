@@ -87,6 +87,22 @@ export default function VKIDButton({ appId, callbackUrl, mode = "login" }: Props
 
   const verb = mode === "register" ? "Зарегистрироваться" : "Войти";
 
+  React.useEffect(() => {
+    if (typeof window !== "undefined" && window.VKIDSDK) {
+      setSdkReady(true);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    initializedRef.current = false;
+    setError(null);
+    setPending(false);
+
+    if (containerRef.current) {
+      containerRef.current.innerHTML = "";
+    }
+  }, [appId, callbackUrl, mode]);
+
   const renderWidget = React.useCallback(() => {
     if (!sdkReady || initializedRef.current || !containerRef.current || typeof window === "undefined") {
       return;
