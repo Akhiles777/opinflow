@@ -11,6 +11,10 @@ type ProfileState = {
   message?: string;
 };
 
+type TableColumnRow = {
+  column_name: string;
+};
+
 function hasMissingColumnError(error: unknown, columnName: string) {
   if (!(error instanceof Error)) {
     return false;
@@ -21,6 +25,116 @@ function hasMissingColumnError(error: unknown, columnName: string) {
     message.includes("column") &&
     message.includes(columnName.toLowerCase())
   );
+}
+
+async function getTableColumns(tableName: string) {
+  const rows = await prisma.$queryRawUnsafe<TableColumnRow[]>(
+    `SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = $1`,
+    tableName,
+  );
+
+  return new Set(rows.map((row) => row.column_name));
+}
+
+async function saveRespondentProfileWithSqlFallback(params: {
+  userId: string;
+  gender: string | null | undefined;
+  birthDate: Date | null;
+  city: string | null | undefined;
+  income: string | null | undefined;
+  education: string | null | undefined;
+  interests: string[];
+  isVerified: boolean;
+}) {
+  const columns = await getTableColumns("respondent_profiles");
+  const valuesByColumn: Record<string, unknown> = {
+    userId: params.userId,
+    gender: params.gender ?? null,
+    birthDate: params.birthDate,
+    city: params.city ?? null,
+    income: params.income ?? null,
+    education: params.education ?? null,
+    interests: params.interests,
+    isVerified: params.isVerified,
+  };
+
+  const orderedColumns = ["userId", "gender", "birthDate", "city", "income", "education", "interests", "isVerified"]
+    .filter((column) => columns.has(column));
+
+  if (!orderedColumns.includes("userId")) {
+    throw new Error("respondent_profiles.userId column is missing");
+  }
+
+  const insertColumns = orderedColumns.map((column) => `"${column}"`).join(", ");
+  const placeholders = orderedColumns.map((_, index) => `$${index + 1}`).join(", ");
+  const updateColumns = orderedColumns
+    .filter((column) => column !== "userId")
+    .map((column) => `"${column}" = EXCLUDED."${column}"`);
+
+  if (columns.has("updatedAt")) {
+    updateColumns.push(`"updatedAt" = NOW()`);
+  }
+
+  const sql = `INSERT INTO "respondent_profiles" (${insertColumns}) VALUES (${placeholders}) ON CONFLICT ("userId") DO UPDATE SET ${updateColumns.join(", ")}`;
+  const values = orderedColumns.map((column) => valuesByColumn[column]);
+
+  await prisma.$executeRawUnsafe(sql, ...values);
+}
+
+async function saveClientProfileWithSqlFallback(params: {
+  userId: string;
+  companyName: string | null | undefined;
+  inn: string | null | undefined;
+  contactName: string | null | undefined;
+  phone: string | null | undefined;
+  legalAddress: string | null | undefined;
+  bankName: string | null | undefined;
+  bankAccount: string | null | undefined;
+  bankBik: string | null | undefined;
+}) {
+  const columns = await getTableColumns("client_profiles");
+  const valuesByColumn: Record<string, unknown> = {
+    userId: params.userId,
+    companyName: params.companyName ?? null,
+    inn: params.inn ?? null,
+    contactName: params.contactName ?? null,
+    phone: params.phone ?? null,
+    legalAddress: params.legalAddress ?? null,
+    bankName: params.bankName ?? null,
+    bankAccount: params.bankAccount ?? null,
+    bankBik: params.bankBik ?? null,
+  };
+
+  const orderedColumns = [
+    "userId",
+    "companyName",
+    "inn",
+    "contactName",
+    "phone",
+    "legalAddress",
+    "bankName",
+    "bankAccount",
+    "bankBik",
+  ].filter((column) => columns.has(column));
+
+  if (!orderedColumns.includes("userId")) {
+    throw new Error("client_profiles.userId column is missing");
+  }
+
+  const insertColumns = orderedColumns.map((column) => `"${column}"`).join(", ");
+  const placeholders = orderedColumns.map((_, index) => `$${index + 1}`).join(", ");
+  const updateColumns = orderedColumns
+    .filter((column) => column !== "userId")
+    .map((column) => `"${column}" = EXCLUDED."${column}"`);
+
+  if (columns.has("updatedAt")) {
+    updateColumns.push(`"updatedAt" = NOW()`);
+  }
+
+  const sql = `INSERT INTO "client_profiles" (${insertColumns}) VALUES (${placeholders}) ON CONFLICT ("userId") DO UPDATE SET ${updateColumns.join(", ")}`;
+  const values = orderedColumns.map((column) => valuesByColumn[column]);
+
+  await prisma.$executeRawUnsafe(sql, ...values);
 }
 
 function emptyToNull(value: FormDataEntryValue | null) {
@@ -79,17 +193,34 @@ export async function updateRespondentProfileAction(_prevState: ProfileState, fo
 
     if (hasMissingColumnError(error, "isVerified")) {
       try {
-        await prisma.respondentProfile.upsert({
-          where: { userId: session.user.id },
-          update: {
-            ...rest,
-            birthDate: birthDateValue,
-          },
-          create: {
-            userId: session.user.id,
-            ...rest,
-            birthDate: birthDateValue,
-          },
+        await saveRespondentProfileWithSqlFallback({
+          userId: session.user.id,
+          gender: rest.gender,
+          birthDate: birthDateValue,
+          city: rest.city,
+          income: rest.income,
+          education: rest.education,
+          interests: rest.interests,
+          isVerified,
+        });
+      } catch (fallbackError) {
+        console.error("[profile][respondent-save-fallback-error]", {
+          userId: session.user.id,
+          fallbackError,
+        });
+        return { error: "Не удалось сохранить анкету. Попробуйте ещё раз." };
+      }
+    } else if (hasMissingColumnError(error, "updatedAt") || hasMissingColumnError(error, "createdAt")) {
+      try {
+        await saveRespondentProfileWithSqlFallback({
+          userId: session.user.id,
+          gender: rest.gender,
+          birthDate: birthDateValue,
+          city: rest.city,
+          income: rest.income,
+          education: rest.education,
+          interests: rest.interests,
+          isVerified,
         });
       } catch (fallbackError) {
         console.error("[profile][respondent-save-fallback-error]", {
@@ -158,7 +289,34 @@ export async function updateClientProfileAction(_prevState: ProfileState, formDa
       userId: session.user.id,
       error,
     });
-    return { error: "Не удалось сохранить данные компании. Проверьте поля и попробуйте снова." };
+
+    try {
+      await saveClientProfileWithSqlFallback({
+        userId: session.user.id,
+        companyName: profileData.companyName,
+        inn: profileData.inn,
+        contactName,
+        phone: profileData.phone,
+        legalAddress: profileData.legalAddress,
+        bankName: profileData.bankName,
+        bankAccount: profileData.bankAccount,
+        bankBik: profileData.bankBik,
+      });
+
+      await prisma.user.update({
+        where: { id: session.user.id },
+        data: {
+          email: email || undefined,
+          name: contactName || undefined,
+        },
+      });
+    } catch (fallbackError) {
+      console.error("[profile][client-save-fallback-error]", {
+        userId: session.user.id,
+        fallbackError,
+      });
+      return { error: "Не удалось сохранить данные компании. Проверьте поля и попробуйте снова." };
+    }
   }
 
   revalidatePath("/client/settings");
