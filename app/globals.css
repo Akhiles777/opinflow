@@ -53,6 +53,19 @@ html {
   scroll-padding-top: 80px; /* sticky header offset */
 }
 
+.dashboard-root,
+.dashboard-root input,
+.dashboard-root textarea,
+.dashboard-root select,
+.dashboard-root button {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.dashboard-root .font-display,
+.dashboard-root .font-body {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
 /* Anchor targets shouldn't hide under sticky header when using scrollIntoView */
 [id] {
   scroll-margin-top: 88px;

@@ -15,7 +15,7 @@ export default function DashboardShell({
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
   return (
-    <div className="flex min-h-screen flex-col overflow-hidden bg-dash-bg lg:h-screen lg:flex-row">
+    <div className="dashboard-root flex min-h-screen flex-col overflow-hidden bg-dash-bg lg:h-screen lg:flex-row">
       <Sidebar
         viewer={viewer}
         mobileMenuOpen={mobileMenuOpen}

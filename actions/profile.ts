@@ -11,6 +11,18 @@ type ProfileState = {
   message?: string;
 };
 
+function hasMissingColumnError(error: unknown, columnName: string) {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const message = error.message.toLowerCase();
+  return (
+    message.includes("column") &&
+    message.includes(columnName.toLowerCase())
+  );
+}
+
 function emptyToNull(value: FormDataEntryValue | null) {
   const normalized = String(value ?? "").trim();
   return normalized.length > 0 ? normalized : null;
@@ -42,24 +54,53 @@ export async function updateRespondentProfileAction(_prevState: ProfileState, fo
   const isVerified = Boolean(
     rest.gender && birthDate && rest.city && rest.income && rest.education && rest.interests.length > 0,
   );
+  const birthDateValue = birthDate ? new Date(birthDate) : null;
 
   try {
     await prisma.respondentProfile.upsert({
       where: { userId: session.user.id },
       update: {
         ...rest,
-        birthDate: birthDate ? new Date(birthDate) : null,
+        birthDate: birthDateValue,
         isVerified,
       },
       create: {
         userId: session.user.id,
         ...rest,
-        birthDate: birthDate ? new Date(birthDate) : null,
+        birthDate: birthDateValue,
         isVerified,
       },
     });
-  } catch {
-    return { error: "Не удалось сохранить анкету. Попробуйте ещё раз." };
+  } catch (error) {
+    console.error("[profile][respondent-save-error]", {
+      userId: session.user.id,
+      error,
+    });
+
+    if (hasMissingColumnError(error, "isVerified")) {
+      try {
+        await prisma.respondentProfile.upsert({
+          where: { userId: session.user.id },
+          update: {
+            ...rest,
+            birthDate: birthDateValue,
+          },
+          create: {
+            userId: session.user.id,
+            ...rest,
+            birthDate: birthDateValue,
+          },
+        });
+      } catch (fallbackError) {
+        console.error("[profile][respondent-save-fallback-error]", {
+          userId: session.user.id,
+          fallbackError,
+        });
+        return { error: "Не удалось сохранить анкету. Попробуйте ещё раз." };
+      }
+    } else {
+      return { error: "Не удалось сохранить анкету. Попробуйте ещё раз." };
+    }
   }
 
   revalidatePath("/respondent/profile");
@@ -112,7 +153,11 @@ export async function updateClientProfileAction(_prevState: ProfileState, formDa
         },
       }),
     ]);
-  } catch {
+  } catch (error) {
+    console.error("[profile][client-save-error]", {
+      userId: session.user.id,
+      error,
+    });
     return { error: "Не удалось сохранить данные компании. Проверьте поля и попробуйте снова." };
   }
 
