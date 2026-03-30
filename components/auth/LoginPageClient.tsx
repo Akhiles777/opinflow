@@ -113,35 +113,7 @@ export default function LoginPageClient({ vkEnabled, vkAppId, yandexEnabled }: P
         только вход по email.
       </p>
 
-      <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {[
-          {
-            value: "RESPONDENT" as const,
-            title: "Респондент",
-            text: "Вход по email, VK или Яндексу",
-          },
-          {
-            value: "CLIENT" as const,
-            title: "Заказчик",
-            text: "Вход только по email и паролю",
-          },
-        ].map((item) => (
-          <button
-            key={item.value}
-            type="button"
-            onClick={() => setRole(item.value)}
-            className={[
-              "rounded-2xl border p-4 text-left transition-colors",
-              role === item.value
-                ? "border-brand bg-brand/10"
-                : "border-white/8 bg-white/5 hover:bg-white/8",
-            ].join(" ")}
-          >
-            <p className="font-semibold text-white">{item.title}</p>
-            <p className="mt-2 text-[15px] leading-relaxed text-white/45">{item.text}</p>
-          </button>
-        ))}
-      </div>
+      
 
       {role === "RESPONDENT" ? (
         <OAuthButtons
