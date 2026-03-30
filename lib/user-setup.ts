@@ -4,10 +4,17 @@ import { prisma } from "@/lib/prisma";
 export async function ensureUserSetup(userId: string, role: Role) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    include: {
-      wallet: true,
-      respondentProfile: true,
-      clientProfile: true,
+    select: {
+      id: true,
+      wallet: {
+        select: { id: true },
+      },
+      respondentProfile: {
+        select: { id: true },
+      },
+      clientProfile: {
+        select: { id: true },
+      },
     },
   });
 

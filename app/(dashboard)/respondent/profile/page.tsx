@@ -19,9 +19,33 @@ function formatBirthDate(value: Date | null | undefined) {
 export default async function RespondentProfilePage() {
   const session = await requireRole("RESPONDENT");
 
-  const profile = await prisma.respondentProfile.findUnique({
-    where: { userId: session.user.id },
-  });
+  let profile: {
+    gender: string | null;
+    birthDate: Date | null;
+    city: string | null;
+    income: string | null;
+    education: string | null;
+    interests: string[];
+  } | null = null;
+
+  try {
+    profile = await prisma.respondentProfile.findUnique({
+      where: { userId: session.user.id },
+      select: {
+        gender: true,
+        birthDate: true,
+        city: true,
+        income: true,
+        education: true,
+        interests: true,
+      },
+    });
+  } catch (error) {
+    console.error("[dashboard][respondent-profile-load-error]", {
+      userId: session.user.id,
+      error,
+    });
+  }
 
   return (
     <div>

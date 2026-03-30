@@ -6,9 +6,37 @@ import { requireRole } from "@/lib/auth-utils";
 export default async function ClientSettingsPage() {
   const session = await requireRole("CLIENT");
 
-  const profile = await prisma.clientProfile.findUnique({
-    where: { userId: session.user.id },
-  });
+  let profile: {
+    companyName: string | null;
+    inn: string | null;
+    contactName: string | null;
+    phone: string | null;
+    legalAddress: string | null;
+    bankName: string | null;
+    bankAccount: string | null;
+    bankBik: string | null;
+  } | null = null;
+
+  try {
+    profile = await prisma.clientProfile.findUnique({
+      where: { userId: session.user.id },
+      select: {
+        companyName: true,
+        inn: true,
+        contactName: true,
+        phone: true,
+        legalAddress: true,
+        bankName: true,
+        bankAccount: true,
+        bankBik: true,
+      },
+    });
+  } catch (error) {
+    console.error("[dashboard][client-settings-load-error]", {
+      userId: session.user.id,
+      error,
+    });
+  }
 
   return (
     <div>
