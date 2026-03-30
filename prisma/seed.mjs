@@ -267,16 +267,7 @@ async function main() {
     ],
   });
 
-  console.log("");
-  console.log("Тестовые данные успешно загружены.");
-  console.log("Тестовые аккаунты:");
-  console.log(`RESPONDENT: ${users.respondent.email} / ${PASSWORD}`);
-  console.log(`CLIENT:     ${users.client.email} / ${PASSWORD}`);
-  console.log(`ADMIN:      ${users.admin.email} / ${PASSWORD}`);
-  console.log("");
-  console.log("Для локального admin-доступа добавьте в .env:");
-  console.log('ADMIN_EMAILS="admin@test.local"');
-  console.log("");
+
 }
 
 main()

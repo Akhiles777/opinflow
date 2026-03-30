@@ -127,34 +127,45 @@ export default function RespondentProfileForm({ profile }: { profile: Respondent
         </div>
       ) : null}
 
-      <form action={formAction} className="mt-8 grid grid-cols-1 gap-6 xl:grid-cols-[320px_1fr]">
-        <div className="rounded-2xlm sm:ml-10 border border-dash-border bg-dash-card p-6">
-          <label className="group relative block h-32 w-48 cursor-pointer overflow-hidden rounded-3xl border border-dash-border bg-dash-bg">
-            {previewUrl ? (
-              <img src={previewUrl} alt="Фото профиля" className="h-full  w-full object-cover" />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center bg-brand/10 text-2xl font-bold text-brand font-body">
-                {getProfileInitials(profile.userName)}
+      <form action={formAction} className="mt-8 grid grid-cols-1 items-start gap-6 xl:grid-cols-[360px_1fr]">
+        <div className="grid gap-4 self-start xl:sticky xl:top-6">
+          <div className="rounded-2xl border border-dash-border bg-dash-card p-6">
+            <label className="group relative block h-36 w-full cursor-pointer overflow-hidden rounded-3xl border border-dash-border bg-dash-bg">
+              {previewUrl ? (
+                <img src={previewUrl} alt="Фото профиля" className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center bg-brand/10 text-3xl font-bold text-brand font-body">
+                  {getProfileInitials(profile.userName)}
+                </div>
+              )}
+              <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                <span className="rounded-full bg-white/92 px-3 py-1 text-xs font-semibold text-slate-900">
+                  Выберите фото
+                </span>
               </div>
-            )}
-            <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-              <span className="rounded-full bg-white/92 px-3 py-1 text-xs font-semibold text-slate-900">
-                Выберите фото
-              </span>
-            </div>
-            <input
-              name="avatar"
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              onChange={handleAvatarChange}
-              className="sr-only"
-            />
-          </label>
-          <p className="mt-5 font-display text-xl text-dash-heading">{profile.userName ?? "Пользователь"}</p>
-          <p className="mt-1 text-sm text-dash-muted font-body">{profile.userEmail}</p>
-          <div className="mt-6 rounded-xl border border-dash-border bg-dash-bg p-4">
+              <input
+                name="avatar"
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                onChange={handleAvatarChange}
+                className="sr-only"
+              />
+            </label>
+            <p className="mt-5 font-display text-2xl text-dash-heading">{profile.userName ?? "Пользователь"}</p>
+            <p className="mt-1 text-sm text-dash-muted font-body">{profile.userEmail}</p>
+          </div>
+
+          <div className="rounded-2xl border border-dash-border bg-dash-card p-6">
             <p className="text-xs uppercase tracking-[0.2em] text-dash-muted font-body">Заполнение профиля</p>
-            <p className="mt-2 text-2xl font-display text-dash-heading">{completionProfile}%</p>
+            <div className="mt-3 flex items-end justify-between gap-4">
+              <p className="text-4xl font-display text-dash-heading">{completionProfile}%</p>
+              <div className="rounded-full border border-dash-border px-3 py-1 text-xs font-semibold text-dash-muted">
+                Профиль заполнен
+              </div>
+            </div>
+            <p className="mt-4 text-sm leading-relaxed text-dash-muted font-body">
+              Чем полнее анкета, тем больше релевантных опросов и приглашений вы будете получать.
+            </p>
           </div>
         </div>
 
