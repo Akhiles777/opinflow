@@ -14,6 +14,7 @@ type RespondentProfileData = {
   interests: string[];
   userName: string | null;
   userEmail: string;
+  image: string | null;
 };
 
 const interestOptions = [
@@ -62,6 +63,8 @@ export default function RespondentProfileForm({ profile }: { profile: Respondent
   const completion = useMemo(() => completionRatio(profile), [profile]);
   const [selectedGender, setSelectedGender] = React.useState(profile.gender ?? "");
   const [selectedInterests, setSelectedInterests] = React.useState<string[]>(profile.interests);
+  const [previewUrl, setPreviewUrl] = React.useState<string | null>(profile.image);
+  const objectUrlRef = React.useRef<string | null>(null);
 
   React.useEffect(() => {
     setSelectedGender(profile.gender ?? "");
@@ -69,10 +72,22 @@ export default function RespondentProfileForm({ profile }: { profile: Respondent
   }, [profile.gender, profile.interests]);
 
   React.useEffect(() => {
+    setPreviewUrl(profile.image);
+  }, [profile.image]);
+
+  React.useEffect(() => {
     if (state.success) {
       router.refresh();
     }
   }, [router, state.success]);
+
+  React.useEffect(() => {
+    return () => {
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current);
+      }
+    };
+  }, []);
 
   function toggleInterest(interest: string) {
     setSelectedInterests((current) =>
@@ -81,6 +96,28 @@ export default function RespondentProfileForm({ profile }: { profile: Respondent
         : [...current, interest],
     );
   }
+
+  function handleAvatarChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) {
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current);
+        objectUrlRef.current = null;
+      }
+      setPreviewUrl(profile.image);
+      return;
+    }
+
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
+    }
+
+    const objectUrl = URL.createObjectURL(file);
+    objectUrlRef.current = objectUrl;
+    setPreviewUrl(objectUrl);
+  }
+
+  const completionProfile = Math.min(100, Math.round(completion * 100));
 
   return (
     <div>
@@ -91,15 +128,33 @@ export default function RespondentProfileForm({ profile }: { profile: Respondent
       ) : null}
 
       <form action={formAction} className="mt-8 grid grid-cols-1 gap-6 xl:grid-cols-[320px_1fr]">
-        <div className="rounded-2xl border border-dash-border bg-dash-card p-6">
-          <div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-brand/10 text-2xl font-bold text-brand font-body">
-            {getProfileInitials(profile.userName)}
-          </div>
+        <div className="rounded-2xlm sm:ml-10 border border-dash-border bg-dash-card p-6">
+          <label className="group relative block h-32 w-48 cursor-pointer overflow-hidden rounded-3xl border border-dash-border bg-dash-bg">
+            {previewUrl ? (
+              <img src={previewUrl} alt="Фото профиля" className="h-full  w-full object-cover" />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-brand/10 text-2xl font-bold text-brand font-body">
+                {getProfileInitials(profile.userName)}
+              </div>
+            )}
+            <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+              <span className="rounded-full bg-white/92 px-3 py-1 text-xs font-semibold text-slate-900">
+                Выберите фото
+              </span>
+            </div>
+            <input
+              name="avatar"
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              onChange={handleAvatarChange}
+              className="sr-only"
+            />
+          </label>
           <p className="mt-5 font-display text-xl text-dash-heading">{profile.userName ?? "Пользователь"}</p>
           <p className="mt-1 text-sm text-dash-muted font-body">{profile.userEmail}</p>
           <div className="mt-6 rounded-xl border border-dash-border bg-dash-bg p-4">
             <p className="text-xs uppercase tracking-[0.2em] text-dash-muted font-body">Заполнение профиля</p>
-            <p className="mt-2 text-2xl font-display text-dash-heading">{Math.round(completion * 100)}%</p>
+            <p className="mt-2 text-2xl font-display text-dash-heading">{completionProfile}%</p>
           </div>
         </div>
 
@@ -135,15 +190,29 @@ export default function RespondentProfileForm({ profile }: { profile: Respondent
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <label className="grid gap-2">
                 <span className="text-sm text-dash-muted font-body">Дата рождения</span>
-                <input name="birthDate" type="date" defaultValue={profile.birthDate ?? ""} className="h-11 rounded-xl border border-dash-border bg-dash-bg px-3 text-sm text-dash-body" />
+                <input
+                  name="birthDate"
+                  type="date"
+                  defaultValue={profile.birthDate ?? ""}
+                  className="h-11 rounded-xl border border-dash-border bg-dash-bg px-3 text-sm text-dash-body"
+                />
               </label>
               <label className="grid gap-2">
                 <span className="text-sm text-dash-muted font-body">Город</span>
-                <input name="city" defaultValue={profile.city ?? ""} placeholder="Москва" className="h-11 rounded-xl border border-dash-border bg-dash-bg px-3 text-sm text-dash-body placeholder:text-dash-muted" />
+                <input
+                  name="city"
+                  defaultValue={profile.city ?? ""}
+                  placeholder="Москва"
+                  className="h-11 rounded-xl border border-dash-border bg-dash-bg px-3 text-sm text-dash-body placeholder:text-dash-muted"
+                />
               </label>
               <label className="grid gap-2">
                 <span className="text-sm text-dash-muted font-body">Уровень дохода</span>
-                <select name="income" defaultValue={profile.income ?? ""} className="h-11 rounded-xl border border-dash-border bg-dash-bg px-3 text-sm text-dash-body">
+                <select
+                  name="income"
+                  defaultValue={profile.income ?? ""}
+                  className="h-11 rounded-xl border border-dash-border bg-dash-bg px-3 text-sm text-dash-body"
+                >
                   <option value="">Не выбрано</option>
                   <option value="under30k">до 30 000 ₽</option>
                   <option value="30-60k">30 000–60 000 ₽</option>
@@ -153,7 +222,11 @@ export default function RespondentProfileForm({ profile }: { profile: Respondent
               </label>
               <label className="grid gap-2">
                 <span className="text-sm text-dash-muted font-body">Образование</span>
-                <select name="education" defaultValue={profile.education ?? ""} className="h-11 rounded-xl border border-dash-border bg-dash-bg px-3 text-sm text-dash-body">
+                <select
+                  name="education"
+                  defaultValue={profile.education ?? ""}
+                  className="h-11 rounded-xl border border-dash-border bg-dash-bg px-3 text-sm text-dash-body"
+                >
                   <option value="">Не выбрано</option>
                   <option value="school">Школа</option>
                   <option value="college">Среднее профессиональное</option>
@@ -192,11 +265,23 @@ export default function RespondentProfileForm({ profile }: { profile: Respondent
             </div>
           </div>
 
-          {state.error ? <p className="mt-5 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-400">{state.error}</p> : null}
-          {state.success ? <p className="mt-5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm text-emerald-400">{state.message}</p> : null}
+          {state.error ? (
+            <p className="mt-5 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-400">
+              {state.error}
+            </p>
+          ) : null}
+          {state.success ? (
+            <p className="mt-5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm text-emerald-400">
+              {state.message}
+            </p>
+          ) : null}
 
           <div className="mt-6 flex flex-col gap-2 sm:flex-row">
-            <button type="submit" disabled={isPending} className="rounded-xl bg-brand px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-dark disabled:opacity-60">
+            <button
+              type="submit"
+              disabled={isPending}
+              className="rounded-xl bg-brand px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-dark disabled:opacity-60"
+            >
               {isPending ? "Сохраняем..." : "Сохранить изменения"}
             </button>
           </div>

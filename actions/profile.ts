@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { uploadProfileAvatar } from "@/lib/supabase-storage";
 import { clientProfileSchema, respondentProfileSchema } from "@/lib/validations";
 
 type ProfileState = {
@@ -142,11 +143,38 @@ function emptyToNull(value: FormDataEntryValue | null) {
   return normalized.length > 0 ? normalized : null;
 }
 
+function getProfileActionErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof Error) {
+    const message = error.message.toLowerCase();
+
+    if (message.includes("supabase_storage_not_configured")) {
+      return "Хранилище изображений не настроено. Проверьте переменные Supabase.";
+    }
+
+    if (message.includes("invalid_image_type")) {
+      return "Загрузите изображение в формате JPG, PNG или WEBP.";
+    }
+
+    if (message.includes("image_too_large")) {
+      return "Изображение слишком большое. Максимальный размер файла: 5 МБ.";
+    }
+
+    if (message.includes("supabase_upload_failed") || message.includes("supabase_bucket_create_failed")) {
+      return "Не удалось загрузить изображение профиля. Попробуйте ещё раз.";
+    }
+  }
+
+  return fallback;
+}
+
 export async function updateRespondentProfileAction(_prevState: ProfileState, formData: FormData): Promise<ProfileState> {
   const session = await auth();
   if (!session?.user?.id) {
     return { error: "Сессия истекла. Войдите снова." };
   }
+
+  const avatarFile = formData.get("avatar");
+  let uploadedAvatarUrl: string | null = null;
 
   const parsed = respondentProfileSchema.safeParse({
     gender: emptyToNull(formData.get("gender")),
@@ -171,6 +199,24 @@ export async function updateRespondentProfileAction(_prevState: ProfileState, fo
   const birthDateValue = birthDate ? new Date(birthDate) : null;
 
   try {
+    if (avatarFile instanceof File && avatarFile.size > 0) {
+      uploadedAvatarUrl = await uploadProfileAvatar(session.user.id, avatarFile);
+      await prisma.user.update({
+        where: { id: session.user.id },
+        data: { image: uploadedAvatarUrl },
+      });
+    }
+  } catch (error) {
+    console.error("[profile][respondent-avatar-upload-error]", {
+      userId: session.user.id,
+      error,
+    });
+    return {
+      error: getProfileActionErrorMessage(error, "Не удалось загрузить изображение профиля."),
+    };
+  }
+
+  try {
     await prisma.respondentProfile.upsert({
       where: { userId: session.user.id },
       update: {
@@ -191,50 +237,31 @@ export async function updateRespondentProfileAction(_prevState: ProfileState, fo
       error,
     });
 
-    if (hasMissingColumnError(error, "isVerified")) {
-      try {
-        await saveRespondentProfileWithSqlFallback({
-          userId: session.user.id,
-          gender: rest.gender,
-          birthDate: birthDateValue,
-          city: rest.city,
-          income: rest.income,
-          education: rest.education,
-          interests: rest.interests,
-          isVerified,
-        });
-      } catch (fallbackError) {
-        console.error("[profile][respondent-save-fallback-error]", {
-          userId: session.user.id,
-          fallbackError,
-        });
-        return { error: "Не удалось сохранить анкету. Попробуйте ещё раз." };
-      }
-    } else if (hasMissingColumnError(error, "updatedAt") || hasMissingColumnError(error, "createdAt")) {
-      try {
-        await saveRespondentProfileWithSqlFallback({
-          userId: session.user.id,
-          gender: rest.gender,
-          birthDate: birthDateValue,
-          city: rest.city,
-          income: rest.income,
-          education: rest.education,
-          interests: rest.interests,
-          isVerified,
-        });
-      } catch (fallbackError) {
-        console.error("[profile][respondent-save-fallback-error]", {
-          userId: session.user.id,
-          fallbackError,
-        });
-        return { error: "Не удалось сохранить анкету. Попробуйте ещё раз." };
-      }
-    } else {
+    try {
+      await saveRespondentProfileWithSqlFallback({
+        userId: session.user.id,
+        gender: rest.gender,
+        birthDate: birthDateValue,
+        city: rest.city,
+        income: rest.income,
+        education: rest.education,
+        interests: rest.interests,
+        isVerified,
+      });
+    } catch (fallbackError) {
+      console.error("[profile][respondent-save-fallback-error]", {
+        userId: session.user.id,
+        fallbackError,
+        missingIsVerified: hasMissingColumnError(error, "isVerified"),
+        missingCreatedAt: hasMissingColumnError(error, "createdAt"),
+        missingUpdatedAt: hasMissingColumnError(error, "updatedAt"),
+      });
       return { error: "Не удалось сохранить анкету. Попробуйте ещё раз." };
     }
   }
 
   revalidatePath("/respondent/profile");
+  revalidatePath("/respondent");
   return { success: true, message: "Профиль обновлён ✓" };
 }
 

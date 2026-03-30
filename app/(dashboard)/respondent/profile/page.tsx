@@ -26,20 +26,45 @@ export default async function RespondentProfilePage() {
     income: string | null;
     education: string | null;
     interests: string[];
+    image: string | null;
+    userName: string | null;
+    userEmail: string;
   } | null = null;
 
   try {
-    profile = await prisma.respondentProfile.findUnique({
-      where: { userId: session.user.id },
-      select: {
-        gender: true,
-        birthDate: true,
-        city: true,
-        income: true,
-        education: true,
-        interests: true,
-      },
-    });
+    const [respondentProfile, user] = await Promise.all([
+      prisma.respondentProfile.findUnique({
+        where: { userId: session.user.id },
+        select: {
+          gender: true,
+          birthDate: true,
+          city: true,
+          income: true,
+          education: true,
+          interests: true,
+        },
+      }),
+      prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: {
+          image: true,
+          name: true,
+          email: true,
+        },
+      }),
+    ]);
+
+    profile = {
+      gender: respondentProfile?.gender ?? null,
+      birthDate: respondentProfile?.birthDate ?? null,
+      city: respondentProfile?.city ?? null,
+      income: respondentProfile?.income ?? null,
+      education: respondentProfile?.education ?? null,
+      interests: respondentProfile?.interests ?? [],
+      image: user?.image ?? null,
+      userName: user?.name ?? session.user.name ?? null,
+      userEmail: user?.email ?? session.user.email ?? "",
+    };
   } catch (error) {
     console.error("[dashboard][respondent-profile-load-error]", {
       userId: session.user.id,
@@ -58,9 +83,9 @@ export default async function RespondentProfilePage() {
           income: profile?.income ?? null,
           education: profile?.education ?? null,
           interests: profile?.interests ?? [],
-          userName: session.user.name ?? null,
-          userEmail: session.user.email ?? "",
-          
+          userName: profile?.userName ?? session.user.name ?? null,
+          userEmail: profile?.userEmail ?? session.user.email ?? "",
+          image: profile?.image ?? null,
         }}
       />
     </div>

@@ -12,6 +12,7 @@ type AuthUserPayload = {
   id: string;
   role: Role;
   status: "ACTIVE" | "PENDING_VERIFICATION" | "BLOCKED";
+  image?: string | null;
 };
 
 class BlockedCredentialsError extends CredentialsSignin {
@@ -266,13 +267,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         try {
           const dbUser = await prisma.user.findUnique({
             where: token.id ? { id: String(token.id) } : { email: String(token.email) },
-            select: { id: true, email: true, name: true, role: true, status: true },
+            select: { id: true, email: true, name: true, image: true, role: true, status: true },
           });
 
           if (dbUser) {
             token.id = dbUser.id;
             token.email = dbUser.email;
             token.name = dbUser.name;
+            token.picture = dbUser.image;
             token.role = dbUser.role;
             token.status = dbUser.status;
           }
@@ -288,6 +290,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.id = token.id;
         session.user.email = String(token.email ?? session.user.email ?? "");
         session.user.name = token.name ? String(token.name) : null;
+        session.user.image = token.picture ? String(token.picture) : session.user.image ?? null;
         session.user.role = token.role as Role;
       }
       return session;

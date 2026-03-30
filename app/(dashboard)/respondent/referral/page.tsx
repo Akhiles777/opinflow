@@ -4,6 +4,7 @@ import DataTable, { Column } from "@/components/dashboard/DataTable";
 import EmptyState from "@/components/dashboard/EmptyState";
 import { formatRub, getRespondentReferralData } from "@/lib/dashboard-data";
 import { requireRole } from "@/lib/auth-utils";
+import CopyButton from "@/components/dashboard/CopyButton";
 
 type Row = {
   name: string;
@@ -40,11 +41,10 @@ export default async function RespondentReferralPage() {
               value={`https://opinflow-xi.vercel.app/register?ref=${data.referralCode}`}
               className="h-11 min-w-0 flex-1 rounded-xl border border-dash-border bg-dash-bg px-3 text-sm text-dash-body"
             />
-            <button type="button" className="h-11 rounded-xl bg-brand px-5 text-sm font-semibold text-white hover:bg-brand-mid transition-colors">
-              Скопировать
-            </button>
+            <CopyButton text={`https://opinflow-xi.vercel.app/register?ref=${data.referralCode}`} />
+
           </div>
-          <p className="mt-3 text-xs font-body text-dash-muted">Состояние “Скопировано ✓” добавим на Этапе 2.</p>
+         
         </div>
 
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">

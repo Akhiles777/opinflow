@@ -24,6 +24,11 @@ function getInitials(name: string, email: string) {
   return `${parts[0][0] ?? ""}${parts[1][0] ?? ""}`.toUpperCase();
 }
 
+function normalizeImageUrl(value: string | null | undefined) {
+  const normalized = value?.trim();
+  return normalized ? normalized : null;
+}
+
 export function formatRub(amount: number | string | null | undefined) {
   const numeric = Number(amount ?? 0);
   const hasFraction = Math.abs(numeric % 1) > 0.001;
@@ -57,7 +62,7 @@ export async function getDashboardViewer(userId: string): Promise<DashboardViewe
     id: user.id,
     name: user.name?.trim() || "Пользователь",
     email: user.email,
-    image: user.image,
+    image: normalizeImageUrl(user.image),
     role: user.role,
     roleLabel: roleLabel(user.role),
     initials: getInitials(user.name ?? "", user.email),

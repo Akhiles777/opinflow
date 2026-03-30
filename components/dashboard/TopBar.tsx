@@ -55,11 +55,15 @@ export default function TopBar({
 
         <button
           type="button"
-          className="w-9 h-9 rounded-full bg-brand/10 text-brand text-xs font-bold font-body flex items-center justify-center"
+          className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-brand/10 text-brand text-xs font-bold font-body"
           aria-label="Профиль"
           title={viewer.email}
         >
-          {viewer.initials}
+          {viewer.image ? (
+            <img src={viewer.image} alt={viewer.name} className="h-full w-full object-cover" />
+          ) : (
+            viewer.initials
+          )}
         </button>
       </div>
     </div>
