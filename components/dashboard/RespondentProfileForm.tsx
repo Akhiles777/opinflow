@@ -122,7 +122,7 @@ export default function RespondentProfileForm({ profile }: { profile: Respondent
   return (
     <div>
       {completion < 0.5 ? (
-        <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4 text-sm text-amber-300 font-body">
+        <div className="rounded-2xl mt-2 border border-amber-500/20 bg-amber-500/10 p-4 text-sm text-amber-300 font-body">
           Заполните профиль полностью — вам будут доступны больше опросов.
         </div>
       ) : null}
