@@ -32,12 +32,12 @@ function ResetPasswordPageContent() {
   }, [token]);
 
   if (!tokenState.checked) {
-    return <div className="mx-auto mt-24 max-w-md rounded-2xl border border-white/8 bg-surface-900 p-10 text-center text-[15px] text-white">Проверяем ссылку...</div>;
+    return <div className="mx-auto max-w-md rounded-2xl border border-white/8 bg-surface-900 p-10 text-center text-[15px] text-white">Проверяем ссылку...</div>;
   }
 
   if (!tokenState.valid) {
     return (
-      <div className="mx-auto mt-16 max-w-md rounded-2xl border border-white/8 bg-surface-900 p-6 text-white sm:mt-24 sm:p-10">
+      <div className="mx-auto max-w-md rounded-2xl border border-white/8 bg-surface-900 p-6 text-white sm:p-10">
         <h1 className="font-display text-3xl text-white">{tokenState.error}</h1>
         <p className="mt-3 text-[15px] leading-relaxed text-white/55">Запросите новую ссылку для восстановления пароля.</p>
         <Link href="/forgot-password" className="mt-8 inline-flex rounded-xl bg-brand px-6 py-3 text-[15px] font-semibold text-white transition-colors hover:bg-brand-dark">
@@ -48,7 +48,7 @@ function ResetPasswordPageContent() {
   }
 
   return (
-    <div className="mx-auto mt-16 max-w-md rounded-2xl border border-white/8 bg-surface-900 p-6 text-white sm:mt-24 sm:p-10">
+    <div className="mx-auto max-w-md rounded-2xl border border-white/8 bg-surface-900 p-6 text-white sm:p-10">
       <p className="text-sm uppercase tracking-[0.25em] text-white/35">Новый пароль</p>
       <h1 className="mt-4 font-display text-3xl text-white">Задайте новый пароль</h1>
       <p className="mt-3 text-[15px] leading-relaxed text-white/55">После смены пароля все старые сессии будут завершены.</p>
@@ -85,7 +85,7 @@ function ResetPasswordPageContent() {
 
 function ResetPasswordFallback() {
   return (
-    <div className="mx-auto mt-16 max-w-md rounded-2xl border border-white/8 bg-surface-900 p-6 text-white sm:mt-24 sm:p-10">
+    <div className="mx-auto max-w-md rounded-2xl border border-white/8 bg-surface-900 p-6 text-white sm:p-10">
       <p className="text-sm uppercase tracking-[0.25em] text-white/35">Новый пароль</p>
       <h1 className="mt-4 font-display text-3xl text-white">Задайте новый пароль</h1>
       <p className="mt-3 text-[15px] leading-relaxed text-white/55">Загружаем форму восстановления...</p>

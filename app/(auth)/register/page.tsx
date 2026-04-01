@@ -11,7 +11,7 @@ function hasVkClientId(clientId: string | undefined) {
 
 function RegisterFallback() {
   return (
-    <div className="mx-auto mt-16 max-w-md rounded-2xl border border-white/8 bg-surface-900 p-6 text-white sm:mt-24 sm:p-10">
+    <div className="mx-auto max-w-md rounded-2xl border border-white/8 bg-surface-900 p-6 text-white sm:p-10">
       <p className="text-sm uppercase tracking-[0.25em] text-white/35">Регистрация</p>
       <h1 className="mt-4 font-display text-3xl text-white">Создайте аккаунт</h1>
       <p className="mt-3 text-[15px] leading-relaxed text-white/55">Загружаем форму регистрации...</p>

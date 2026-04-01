@@ -99,7 +99,6 @@ export default function Sidebar({
   onCloseMobileMenu: () => void;
 }) {
   const pathname = usePathname() ?? "/";
-  console.log(pathname)
   const role = roleForPath(pathname);
   const sections = role === "client" ? clientNav : role === "admin" ? adminNav : respondentNav;
 

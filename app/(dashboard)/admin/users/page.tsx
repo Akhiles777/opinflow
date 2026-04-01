@@ -56,13 +56,6 @@ export default async function AdminUsersPage({
       cell: (r) => <Badge variant={r.status.v}>{r.status.t}</Badge>,
     },
   ];
-
-  const usersId = rows.map((r) => { 
-    return r.id
-  })
-
-  console.log(usersId)
-
   return (
     <div>
       <PageHeader title="Пользователи" subtitle="Реальные пользователи, роли и статусы из базы данных." />
@@ -90,7 +83,7 @@ export default async function AdminUsersPage({
 
       <div className="mt-8">
         {filtered.length > 0 ? (
-          <DataTable  columns={columns} users={filtered} userId = {usersId} keyForRow={(u) => u.id} />
+          <DataTable columns={columns} users={filtered} keyForRow={(u) => u.id} />
         ) : (
           <EmptyState title="Пользователи не найдены" description="По текущему фильтру в базе пока нет подходящих аккаунтов." />
         )}

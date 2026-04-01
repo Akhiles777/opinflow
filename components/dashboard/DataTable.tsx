@@ -1,5 +1,4 @@
 import * as React from "react";
-import Link from "next/link";
 
 export type Column<Row> = {
   key: string;
@@ -65,14 +64,14 @@ export default function DataTable<Row>({ columns, userId, users, rows, keyForRow
               {columns.map((col) => (
                 <td
                   key={col.key}
-                  className={[
+                className={[
                     "min-w-0 break-words px-6 py-4 text-base text-dash-body font-body align-top",
                     col.className,
                   ]
                     .filter(Boolean)
                     .join(" ")}
                 >
-                  {userId?.length ? <Link href={`/${userId}`}>{col.cell(user, userId)}</Link> : col.cell(user, userId)}
+                  {col.cell(user, userId)}
                 </td>
               ))}
             </tr>

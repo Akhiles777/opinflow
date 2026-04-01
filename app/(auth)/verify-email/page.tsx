@@ -9,7 +9,7 @@ export default async function VerifyEmailPage({ searchParams }: { searchParams: 
   const result = await verifyEmailTokenAction(token);
 
   return (
-    <div className="mx-auto mt-16 max-w-md rounded-2xl border border-white/8 bg-surface-900 p-6 text-center text-white sm:mt-24 sm:p-10">
+    <div className="mx-auto max-w-md rounded-2xl border border-white/8 bg-surface-900 p-6 text-center text-white sm:p-10">
       <div className={[
         "mx-auto flex h-14 w-14 items-center justify-center rounded-full text-2xl",
         result.success ? "bg-emerald-500/15 text-emerald-400" : "bg-red-500/15 text-red-400",
