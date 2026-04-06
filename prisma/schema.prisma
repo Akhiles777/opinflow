@@ -30,6 +30,10 @@ model User {
   referralsReceived  Referral[]          @relation("ReferralReceiver")
   emailTokens        EmailToken[]
 
+surveySessions SurveySession[]
+complaintsSent Complaint[]
+
+
   @@map("users")
 
 }
@@ -191,11 +195,144 @@ model Survey {
   status      SurveyStatus @default(DRAFT)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
+  maxResponses    Int?
+  reward          Decimal?   @db.Decimal(10, 2)
+  estimatedTime   Int?
+  budget          Decimal?   @db.Decimal(10, 2)
+  targetGender    String?
+  targetAgeMin    Int?
+  targetAgeMax    Int?
+  targetCities    String[]
+  targetIncomes   String[]
+  targetInterests String[]
+  startsAt        DateTime?
+  endsAt          DateTime?
+  moderationNote  String?
+ 
 
   creator   User             @relation("SurveyCreator", fields: [creatorId], references: [id])
   responses SurveyResponse[]
+  questions  SurveyQuestion[]  
+  sessions   SurveySession[]   
+  complaints Complaint[]       
+
 
   @@map("surveys")
+}
+
+
+model SurveyQuestion {
+  id          String       @id @default(cuid())
+  surveyId    String
+  order       Int
+  type        QuestionType
+  title       String
+  description String?
+  required    Boolean      @default(true)
+  mediaUrl    String?
+  options     Json?
+  settings    Json?
+  logic       Json?
+  createdAt   DateTime     @default(now())
+  survey  Survey         @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  answers SurveyAnswer[]
+
+  @@map("survey_questions")
+
+}
+
+
+enum QuestionType {
+  SINGLE_CHOICE    // Одиночный выбор — radio кнопки
+  MULTIPLE_CHOICE  // Множественный выбор — чекбоксы
+  SCALE            // Шкала — ползунок
+  MATRIX           // Матрица — таблица с radio
+  RANKING          // Ранжирование — drag-and-drop список
+  OPEN_TEXT        // Открытый ответ — textarea
+}
+
+
+model SurveySession {
+  id          String        @id @default(cuid())
+  surveyId    String
+  userId      String
+
+  status      SessionStatus @default(IN_PROGRESS)
+
+  startedAt   DateTime      @default(now())
+  completedAt DateTime?
+  timeSpent   Int?
+  ipAddress   String?
+  userAgent   String?
+  deviceId    String?
+  isValid     Boolean       @default(true)
+  fraudFlags  String[]
+  survey  Survey         @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  answers SurveyAnswer[]
+
+  @@unique([surveyId, userId])
+
+
+  @@map("survey_sessions")
+}
+
+enum SessionStatus {
+  IN_PROGRESS  // Пользователь начал но не закончил
+  COMPLETED    // Успешно завершено
+  ABANDONED    // Бросил на середине (для статистики)
+  REJECTED     // Антифрод заблокировал — деньги не начисляются
+}
+
+
+
+model SurveyAnswer {
+  id         String   @id @default(cuid())
+  sessionId  String
+  questionId String
+
+  value      Json
+ 
+
+  createdAt  DateTime @default(now())
+
+  session  SurveySession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  question SurveyQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, questionId])
+
+
+  @@map("survey_answers")
+}
+
+
+model Complaint {
+  id         String          @id @default(cuid())
+  fromUserId String
+  surveyId   String?
+  sessionId  String?
+  reason     String
+  
+
+  details    String?
+
+
+  status     ComplaintStatus @default(PENDING)
+  createdAt  DateTime        @default(now())
+
+  fromUser User    @relation(fields: [fromUserId], references: [id])
+  survey   Survey? @relation(fields: [surveyId], references: [id])
+
+  @@map("complaints")
+}
+
+
+
+enum ComplaintStatus {
+  PENDING   // Новая, не рассмотрена
+  REVIEWED  // Взята в работу
+  RESOLVED  // Решена
+  DISMISSED // Отклонена как необоснованная
 }
 
 enum SurveyStatus {
