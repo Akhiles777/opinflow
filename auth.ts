@@ -7,6 +7,7 @@ import type { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { ensureUserSetup } from "@/lib/user-setup";
 import { resolveManagedRole } from "@/lib/role-utils";
+import { DEMO_ADMIN_ID, getDemoAdminUser, matchesDemoAdmin } from "@/lib/demo-admin";
 
 type AuthUserPayload = {
   id: string;
@@ -72,10 +73,17 @@ const providers: NonNullable<NextAuthConfig["providers"]> = [
         return null;
       }
 
+      const identifier = String(credentials.email).trim();
+      const password = String(credentials.password);
+
+      if (matchesDemoAdmin(identifier, password)) {
+        return getDemoAdminUser();
+      }
+
       let user;
       try {
         user = await prisma.user.findUnique({
-          where: { email: String(credentials.email).toLowerCase() },
+          where: { email: identifier.toLowerCase() },
         });
       } catch (error) {
         if (isDatabaseUnavailable(error)) {
@@ -88,7 +96,7 @@ const providers: NonNullable<NextAuthConfig["providers"]> = [
         return null;
       }
 
-      const isValid = await bcrypt.compare(String(credentials.password), user.passwordHash);
+      const isValid = await bcrypt.compare(password, user.passwordHash);
       if (!isValid) {
         return null;
       }
@@ -264,6 +272,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
 
       if (token.id || token.email) {
+        if (token.id === DEMO_ADMIN_ID) {
+          const demoAdmin = getDemoAdminUser();
+          token.id = demoAdmin.id;
+          token.email = demoAdmin.email;
+          token.name = demoAdmin.name;
+          token.picture = demoAdmin.image;
+          token.role = demoAdmin.role;
+          token.status = demoAdmin.status;
+          return token;
+        }
+
         try {
           const dbUser = await prisma.user.findUnique({
             where: token.id ? { id: String(token.id) } : { email: String(token.email) },
