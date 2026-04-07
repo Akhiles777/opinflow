@@ -1,5 +1,31 @@
 # ИНСТРУКЦИЯ ПО РАЗРАБОТКЕ — ЭТАП 3
-# Конструктор опросов + Лента + Прохождение + Антифрод + Начисления
+# Вариант 2: Лента в кабинете + Прохождение на весь экран
+
+---
+
+# АРХИТЕКТУРА РОУТИНГА
+
+Прежде чем начать — важно понять как устроены роуты.
+
+```
+app/
+  (dashboard)/              ← layout с сайдбаром и topbar
+    respondent/
+      page.tsx              ← обзор (дашборд)
+      surveys/
+        page.tsx            ← лента опросов (с сайдбаром)
+      wallet/page.tsx
+      profile/page.tsx
+      referral/page.tsx
+
+  (survey)/                 ← НОВЫЙ layout — без сайдбара, на весь экран
+    survey/
+      [id]/
+        page.tsx            ← прохождение опроса
+        complete/page.tsx   ← экран завершения
+```
+
+**Ключевое решение:** прохождение опроса живёт в отдельной группе роутов `(survey)` с собственным layout — чистая страница без сайдбара, без topbar, только контент.
 
 ---
 
@@ -7,9 +33,7 @@
 
 ---
 
-## 1.1 — Проверка что проект работает
-
-Прежде чем писать новый код — убедись что текущий проект запускается без ошибок.
+## 1.1 — Проверка текущего состояния
 
 ```bash
 cd opinflow
@@ -17,12 +41,12 @@ npm install
 npm run dev
 ```
 
-Открой `http://localhost:3000`. Проверь:
-- Главная страница открывается
-- Авторизация через email работает
-- Кабинеты открываются после входа
+Открой `http://localhost:3000`. Убедись:
+- Главная страница работает
+- Авторизация работает
+- Кабинеты всех трёх ролей открываются
 
-Если что-то не работает — исправь это сначала. Никогда не начинай новый функционал на сломанной основе.
+Если что-то сломано — чини сначала это.
 
 ---
 
@@ -35,67 +59,43 @@ npm install uuid
 npm install @types/uuid -D
 ```
 
-**Что это и зачем:**
-
-`@dnd-kit/core` — основная библиотека для drag-and-drop. Нужна для перетаскивания вопросов в конструкторе.
-
-`@dnd-kit/sortable` — расширение dnd-kit специально для сортируемых списков. Именно это используем для списка вопросов.
-
-`@dnd-kit/utilities` — утилиты dnd-kit, нужны для CSS трансформаций при перетаскивании.
-
-`date-fns` — работа с датами. Нужна для дат начала и окончания опроса.
-
-`uuid` — генерация уникальных ID. Нужна для временных ID вопросов пока они не сохранены в БД.
-
-После установки проверь:
-```bash
-npm run dev
-# Не должно быть ошибок
-```
+**Что это:**
+- `@dnd-kit/*` — drag-and-drop для конструктора вопросов
+- `date-fns` — работа с датами начала/окончания опроса
+- `uuid` — временные ID вопросов в конструкторе до сохранения в БД
 
 ---
 
 ## 1.3 — Настройка Supabase Storage
 
-Медиафайлы (изображения к вопросам) нужно хранить в облаке. Используем Supabase Storage который уже подключён к проекту.
+Медиафайлы к вопросам хранятся в Supabase Storage.
 
-**Создание bucket:**
+**Создать bucket:**
+1. supabase.com → твой проект → Storage → New bucket
+2. Name: `opinflow-media`
+3. Public bucket: ✅
+4. Create bucket
 
-1. Зайди на supabase.com → твой проект
-2. В левом меню → **Storage**
-3. Нажми **New bucket**
-4. Name: `opinflow-media`
-5. Поставь галку **Public bucket** — файлы будут доступны по прямой ссылке
-6. Нажми **Create bucket**
+**Политики доступа:**
+Storage → Policies → `opinflow-media` → New policy → For full customization
 
-**Настройка политик доступа:**
+```sql
+-- Чтение для всех
+CREATE POLICY "Public read"
+ON storage.objects FOR SELECT
+USING (bucket_id = 'opinflow-media');
 
-После создания bucket нажми на него → **Policies** → **New policy**
-
-Добавь две политики:
-
-Политика 1 — чтение для всех:
-```
-Policy name: Public read
-Allowed operation: SELECT
-Target roles: public
-Policy definition: true
+-- Загрузка для авторизованных
+CREATE POLICY "Auth upload"
+ON storage.objects FOR INSERT
+WITH CHECK (bucket_id = 'opinflow-media');
 ```
 
-Политика 2 — загрузка для авторизованных:
-```
-Policy name: Authenticated upload
-Allowed operation: INSERT
-Target roles: authenticated
-Policy definition: true
-```
-
-**Создание файла `lib/storage.ts`:**
+**Создай `lib/storage.ts`:**
 
 ```typescript
 import { createClient } from '@supabase/supabase-js'
 
-// Используем service role key — только на сервере, никогда на клиенте
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -103,46 +103,32 @@ const supabase = createClient(
 
 const BUCKET = 'opinflow-media'
 
-// Загрузить файл и получить публичный URL
 export async function uploadQuestionMedia(file: File): Promise<string> {
-  // Проверяем тип файла
-  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
-  if (!allowedTypes.includes(file.type)) {
+  const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+  if (!allowed.includes(file.type)) {
     throw new Error('Разрешены только изображения: JPEG, PNG, WebP, GIF')
   }
-
-  // Проверяем размер (максимум 10MB)
   if (file.size > 10 * 1024 * 1024) {
-    throw new Error('Файл слишком большой. Максимум 10MB')
+    throw new Error('Максимальный размер файла — 10MB')
   }
 
-  // Генерируем уникальное имя
-  const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
+  const ext      = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
   const filename = `questions/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
 
-  // Загружаем
   const { error } = await supabase.storage
     .from(BUCKET)
-    .upload(filename, file, {
-      contentType: file.type,
-      cacheControl: '3600',
-    })
+    .upload(filename, file, { contentType: file.type, cacheControl: '3600' })
 
-  if (error) throw new Error(`Ошибка загрузки файла: ${error.message}`)
+  if (error) throw new Error(`Ошибка загрузки: ${error.message}`)
 
-  // Получаем публичный URL
   const { data } = supabase.storage.from(BUCKET).getPublicUrl(filename)
   return data.publicUrl
 }
 
-// Удалить файл по URL
 export async function deleteMedia(publicUrl: string): Promise<void> {
-  // Извлекаем путь из URL
-  const urlParts = publicUrl.split(`/${BUCKET}/`)
-  if (urlParts.length < 2) return
-
-  const filePath = urlParts[1]
-  await supabase.storage.from(BUCKET).remove([filePath])
+  const parts = publicUrl.split(`/${BUCKET}/`)
+  if (parts.length < 2) return
+  await supabase.storage.from(BUCKET).remove([parts[1]])
 }
 ```
 
@@ -150,11 +136,11 @@ export async function deleteMedia(publicUrl: string): Promise<void> {
 
 ## 1.4 — Расширение Prisma схемы
 
-Это самый критичный шаг всего этапа. Открой `prisma/schema.prisma`.
+Открой `prisma/schema.prisma`.
 
-### Шаг А — Обновить модель Survey
+### А — Обновить модель Survey
 
-Найди существующую модель `Survey` и добавь новые поля:
+Найди существующую модель `Survey` и добавь поля:
 
 ```prisma
 model Survey {
@@ -169,120 +155,58 @@ model Survey {
 
   // ─── НОВЫЕ ПОЛЯ ──────────────────────────────────────
   maxResponses    Int?
-  // Сколько ответов нужно собрать. Когда собрано — опрос автоматически закрывается.
-
-  reward          Decimal?   @db.Decimal(10, 2)
-  // Вознаграждение респонденту за одно прохождение в рублях.
-
+  reward          Decimal?    @db.Decimal(10, 2)
   estimatedTime   Int?
-  // Примерное время прохождения в минутах. Показывается в карточке опроса.
-
-  budget          Decimal?   @db.Decimal(10, 2)
-  // Общий бюджет = maxResponses × reward × 1.15 (с комиссией).
-  // Списывается с кошелька заказчика при создании опроса.
-
-  targetGender    String?
-  // Таргетинг по полу: "any" | "male" | "female"
-
+  budget          Decimal?    @db.Decimal(10, 2)
+  targetGender    String?     // "any" | "male" | "female"
   targetAgeMin    Int?
   targetAgeMax    Int?
-  // Таргетинг по возрасту. Если null — без ограничений.
-
   targetCities    String[]
-  // Список городов. Пустой массив = все города.
-
   targetIncomes   String[]
-  // Уровни дохода: "under30k" | "30-60k" | "60-100k" | "over100k"
-
   targetInterests String[]
-  // Интересы из профиля респондента.
-
   startsAt        DateTime?
-  // Дата начала показа опроса. Если null — сразу после одобрения.
-
   endsAt          DateTime?
-  // Дата окончания. После этой даты опрос скрывается из ленты.
-
   moderationNote  String?
-  // Причина отклонения — видит только заказчик в своём кабинете.
   // ─────────────────────────────────────────────────────
 
-  // Связи
   creator    User             @relation("SurveyCreator", fields: [creatorId], references: [id])
   responses  SurveyResponse[]
-  questions  SurveyQuestion[]  // ← новая связь
-  sessions   SurveySession[]   // ← новая связь
-  complaints Complaint[]       // ← новая связь
+  questions  SurveyQuestion[]
+  sessions   SurveySession[]
+  complaints Complaint[]
 
   @@map("surveys")
 }
 ```
 
-### Шаг Б — Добавить новые модели
-
-Добавь в конец файла после всех существующих моделей:
+### Б — Добавить новые модели в конец файла
 
 ```prisma
 // ══════════════════════════════════════════════════════════
-// ВОПРОСЫ ОПРОСА
+// ВОПРОСЫ
 // ══════════════════════════════════════════════════════════
 
 model SurveyQuestion {
   id          String       @id @default(cuid())
   surveyId    String
   order       Int
-  // Порядок вопроса (0, 1, 2...). Используется для сортировки.
-  // При drag-and-drop обновляется у всех затронутых вопросов.
-
   type        QuestionType
-
   title       String
-  // Текст вопроса. Обязательное поле.
-
   description String?
-  // Дополнительное пояснение к вопросу. Необязательное.
-
   required    Boolean      @default(true)
-  // Если true — респондент не может пропустить вопрос.
-
   mediaUrl    String?
-  // Ссылка на изображение из Supabase Storage.
 
   options     Json?
-  // Варианты ответов. Структура зависит от типа вопроса:
-  //
-  // SINGLE_CHOICE / MULTIPLE_CHOICE / RANKING:
-  //   ["Вариант 1", "Вариант 2", "Вариант 3"]
-  //
-  // MATRIX:
-  //   { rows: ["Строка 1", "Строка 2"], cols: ["Столбец 1", "Столбец 2"] }
-  //
-  // SCALE / OPEN_TEXT:
-  //   null (не используется)
+  // SINGLE_CHOICE / MULTIPLE_CHOICE / RANKING: ["Вариант 1", "Вариант 2"]
+  // MATRIX: { rows: ["Строка 1"], cols: ["Столбец 1"] }
+  // SCALE / OPEN_TEXT: null
 
   settings    Json?
-  // Дополнительные настройки. Структура:
-  //
-  // SCALE:
-  //   { min: 1, max: 10, minLabel: "Плохо", maxLabel: "Отлично" }
-  //
-  // OPEN_TEXT:
-  //   { maxLength: 500, placeholder: "Введите ваш ответ..." }
-  //
-  // Остальные типы: null
+  // SCALE: { min: 1, max: 10, minLabel: "Плохо", maxLabel: "Отлично" }
+  // OPEN_TEXT: { maxLength: 500, placeholder: "Введите ответ..." }
 
   logic       Json?
-  // Правила показа вопроса. Массив LogicRule:
-  // [
-  //   {
-  //     ifQuestionId: "question_id",
-  //     operator: "equals",       // "equals" | "not_equals" | "contains"
-  //     value: "Да",
-  //     action: "show"            // "show" | "hide"
-  //   }
-  // ]
-  // Все правила применяются через AND.
-  // Если logic пустой или null — вопрос всегда показывается.
+  // [{ ifQuestionId, operator: "equals"|"not_equals"|"contains", value, action: "show"|"hide" }]
 
   createdAt   DateTime     @default(now())
 
@@ -293,12 +217,12 @@ model SurveyQuestion {
 }
 
 enum QuestionType {
-  SINGLE_CHOICE    // Одиночный выбор — radio кнопки
-  MULTIPLE_CHOICE  // Множественный выбор — чекбоксы
-  SCALE            // Шкала — ползунок
-  MATRIX           // Матрица — таблица с radio
-  RANKING          // Ранжирование — drag-and-drop список
-  OPEN_TEXT        // Открытый ответ — textarea
+  SINGLE_CHOICE
+  MULTIPLE_CHOICE
+  SCALE
+  MATRIX
+  RANKING
+  OPEN_TEXT
 }
 
 // ══════════════════════════════════════════════════════════
@@ -309,83 +233,46 @@ model SurveySession {
   id          String        @id @default(cuid())
   surveyId    String
   userId      String
-
   status      SessionStatus @default(IN_PROGRESS)
-
   startedAt   DateTime      @default(now())
   completedAt DateTime?
-  // Заполняется когда пользователь дошёл до конца.
-
   timeSpent   Int?
-  // Время прохождения в секундах.
-  // Считается на фронте: Date.now() - startedAt.
-
   ipAddress   String?
-  // IP адрес пользователя. Берётся из заголовка x-forwarded-for.
-
   userAgent   String?
-  // User-Agent браузера.
-
   deviceId    String?
-  // Fingerprint браузера. Генерируется на фронте.
-  // Позволяет отслеживать устройство даже при смене IP.
-
   isValid     Boolean       @default(true)
-  // false если антифрод заблокировал прохождение.
-
   fraudFlags  String[]
-  // Список причин блокировки:
-  // "TOO_FAST"          — прошёл слишком быстро
-  // "DUPLICATE_IP"      — тот же IP уже проходил
-  // "DUPLICATE_DEVICE"  — то же устройство уже проходило
-  // "IDENTICAL_ANSWERS" — все ответы одинаковые
-  // "NEW_ACCOUNT"       — аккаунт создан менее суток назад
 
   survey  Survey         @relation(fields: [surveyId], references: [id], onDelete: Cascade)
   user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   answers SurveyAnswer[]
 
   @@unique([surveyId, userId])
-  // Один пользователь может пройти опрос только один раз.
-  // При попытке создать вторую сессию — ошибка уникальности.
-
   @@map("survey_sessions")
 }
 
 enum SessionStatus {
-  IN_PROGRESS  // Пользователь начал но не закончил
-  COMPLETED    // Успешно завершено
-  ABANDONED    // Бросил на середине (для статистики)
-  REJECTED     // Антифрод заблокировал — деньги не начисляются
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+  REJECTED
 }
 
 // ══════════════════════════════════════════════════════════
-// ОТВЕТЫ НА ВОПРОСЫ
+// ОТВЕТЫ
 // ══════════════════════════════════════════════════════════
 
 model SurveyAnswer {
   id         String   @id @default(cuid())
   sessionId  String
   questionId String
-
   value      Json
-  // Ответ пользователя. Структура зависит от типа вопроса:
-  //
-  // SINGLE_CHOICE:    "Вариант 2"
-  // MULTIPLE_CHOICE:  ["Вариант 1", "Вариант 3"]
-  // SCALE:            7
-  // MATRIX:           { "Строка 1": "Столбец 2", "Строка 2": "Столбец 1" }
-  // RANKING:          ["Вариант 3", "Вариант 1", "Вариант 2"]
-  // OPEN_TEXT:        "Текст ответа пользователя"
-
   createdAt  DateTime @default(now())
 
   session  SurveySession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   question SurveyQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
   @@unique([sessionId, questionId])
-  // Один ответ на один вопрос в рамках одной сессии.
-
   @@map("survey_answers")
 }
 
@@ -399,11 +286,7 @@ model Complaint {
   surveyId   String?
   sessionId  String?
   reason     String
-  // Краткая причина: "inappropriate_content" | "technical_issue" | "other"
-
   details    String?
-  // Подробное описание от пользователя.
-
   status     ComplaintStatus @default(PENDING)
   createdAt  DateTime        @default(now())
 
@@ -414,28 +297,24 @@ model Complaint {
 }
 
 enum ComplaintStatus {
-  PENDING   // Новая, не рассмотрена
-  REVIEWED  // Взята в работу
-  RESOLVED  // Решена
-  DISMISSED // Отклонена как необоснованная
+  PENDING
+  REVIEWED
+  RESOLVED
+  DISMISSED
 }
 ```
 
-### Шаг В — Применить схему
+### В — Применить схему
 
 ```bash
-# Сгенерировать Prisma Client с новыми моделями
 npx prisma generate
-
-# Применить изменения в базу данных
 npx prisma db push
 ```
 
-Должно вывести что таблицы созданы. Проверь:
-
+Проверь через Prisma Studio:
 ```bash
 npx prisma studio
-# Открой http://localhost:5555
+# http://localhost:5555
 # Должны появиться: survey_questions, survey_sessions, survey_answers, complaints
 ```
 
@@ -447,10 +326,9 @@ npx prisma studio
 
 ## 2.1 — Типы TypeScript
 
-Создай файл `types/survey.ts`:
+Создай `types/survey.ts`:
 
 ```typescript
-// Типы вопросов — соответствуют enum QuestionType в Prisma
 export type QuestionType =
   | 'SINGLE_CHOICE'
   | 'MULTIPLE_CHOICE'
@@ -459,61 +337,44 @@ export type QuestionType =
   | 'RANKING'
   | 'OPEN_TEXT'
 
-// Правило логики показа вопроса
 export type LogicRule = {
-  ifQuestionId: string    // ID вопроса на который смотрим
+  ifQuestionId: string
   operator:     'equals' | 'not_equals' | 'contains'
-  value:        string    // Значение для сравнения
-  action:       'show' | 'hide'  // Что делать с текущим вопросом
+  value:        string
+  action:       'show' | 'hide'
 }
 
-// Настройки вопроса (зависят от типа)
-export type QuestionSettings =
-  | { min: number; max: number; minLabel?: string; maxLabel?: string }  // SCALE
-  | { maxLength: number; placeholder?: string }                          // OPEN_TEXT
-  | Record<string, never>                                                // остальные
-
-// Вопрос в конструкторе (до сохранения в БД)
 export type Question = {
-  id:          string           // временный uuid, заменяется на cuid после сохранения
+  id:          string
   type:        QuestionType
   title:       string
   description: string
   required:    boolean
   mediaUrl:    string | null
-  options:     string[]         // для SINGLE, MULTIPLE, RANKING
-  matrixRows:  string[]         // для MATRIX
-  matrixCols:  string[]         // для MATRIX
-  settings:    QuestionSettings
+  options:     string[]
+  matrixRows:  string[]
+  matrixCols:  string[]
+  settings:    Record<string, any>
   logic:       LogicRule[]
 }
 
-// Черновик опроса — полное состояние конструктора
 export type SurveyDraft = {
-  // Шаг 1
-  title:       string
-  description: string
-  category:    string
-
-  // Шаг 2
-  questions: Question[]
-
-  // Шаг 3
+  title:           string
+  description:     string
+  category:        string
+  questions:       Question[]
   targetGender:    'any' | 'male' | 'female'
-  targetAgeMin:    number   // 18
-  targetAgeMax:    number   // 99
+  targetAgeMin:    number
+  targetAgeMax:    number
   targetCities:    string[]
   targetIncomes:   string[]
   targetInterests: string[]
-
-  // Шаг 4
-  maxResponses:  number   // минимум 10
-  reward:        number   // минимум 20 ₽
-  startsAt:      string   // ISO строка даты
-  endsAt:        string   // ISO строка даты
+  maxResponses:    number
+  reward:          number
+  startsAt:        string
+  endsAt:          string
 }
 
-// Начальное состояние черновика
 export const EMPTY_DRAFT: SurveyDraft = {
   title:           '',
   description:     '',
@@ -531,9 +392,26 @@ export const EMPTY_DRAFT: SurveyDraft = {
   endsAt:          new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
 }
 
-// Создать пустой вопрос по типу
+export const QUESTION_TYPE_LABELS: Record<QuestionType, string> = {
+  SINGLE_CHOICE:   'Одиночный выбор',
+  MULTIPLE_CHOICE: 'Множественный выбор',
+  SCALE:           'Шкала оценки',
+  MATRIX:          'Матрица',
+  RANKING:         'Ранжирование',
+  OPEN_TEXT:       'Открытый ответ',
+}
+
+export const QUESTION_TYPE_ICONS: Record<QuestionType, string> = {
+  SINGLE_CHOICE:   '◉',
+  MULTIPLE_CHOICE: '☑',
+  SCALE:           '⟷',
+  MATRIX:          '⊞',
+  RANKING:         '↕',
+  OPEN_TEXT:       '✎',
+}
+
 export function createEmptyQuestion(type: QuestionType): Question {
-  const base = {
+  const base: Question = {
     id:          crypto.randomUUID(),
     type,
     title:       '',
@@ -543,52 +421,37 @@ export function createEmptyQuestion(type: QuestionType): Question {
     options:     [],
     matrixRows:  [],
     matrixCols:  [],
-    settings:    {} as QuestionSettings,
+    settings:    {},
     logic:       [],
   }
 
   switch (type) {
     case 'SINGLE_CHOICE':
     case 'MULTIPLE_CHOICE':
-      return { ...base, options: ['Вариант 1', 'Вариант 2'] }
-
+      return { ...base, options: ['Вариант 1', 'Вариант 2', 'Вариант 3'] }
     case 'RANKING':
       return { ...base, options: ['Элемент 1', 'Элемент 2', 'Элемент 3'] }
-
     case 'SCALE':
-      return { ...base, settings: { min: 1, max: 5, minLabel: 'Плохо', maxLabel: 'Отлично' } }
-
+      return { ...base, settings: { min: 1, max: 10, minLabel: 'Совсем нет', maxLabel: 'Определённо да' } }
     case 'MATRIX':
       return {
         ...base,
         matrixRows: ['Критерий 1', 'Критерий 2'],
         matrixCols: ['Плохо', 'Нейтрально', 'Хорошо'],
       }
-
     case 'OPEN_TEXT':
       return { ...base, settings: { maxLength: 500, placeholder: 'Введите ваш ответ...' } }
-
     default:
       return base
   }
-}
-
-// Метки типов для UI
-export const QUESTION_TYPE_LABELS: Record<QuestionType, string> = {
-  SINGLE_CHOICE:   'Одиночный выбор',
-  MULTIPLE_CHOICE: 'Множественный выбор',
-  SCALE:           'Шкала оценки',
-  MATRIX:          'Матрица',
-  RANKING:         'Ранжирование',
-  OPEN_TEXT:       'Открытый ответ',
 }
 ```
 
 ---
 
-## 2.2 — Антифрод система
+## 2.2 — Антифрод
 
-Создай файл `lib/antifrod.ts`:
+Создай `lib/antifrod.ts`:
 
 ```typescript
 import { prisma } from '@/lib/prisma'
@@ -596,7 +459,7 @@ import { prisma } from '@/lib/prisma'
 export type FraudCheckInput = {
   userId:    string
   surveyId:  string
-  timeSpent: number             // секунды
+  timeSpent: number
   answers:   Record<string, any>
   ipAddress: string
   userAgent: string
@@ -611,16 +474,12 @@ export type FraudCheckResult = {
 export async function checkFraud(input: FraudCheckInput): Promise<FraudCheckResult> {
   const flags: string[] = []
 
-  // Загружаем данные опроса параллельно
-  const [survey, user, sameIpSession, sameDeviceSession] = await Promise.all([
+  const [survey, user, sameIp, sameDevice] = await Promise.all([
     prisma.survey.findUnique({
-      where:   { id: input.surveyId },
+      where: { id: input.surveyId },
       include: { questions: true },
     }),
-    prisma.user.findUnique({
-      where: { id: input.userId },
-    }),
-    // Проверяем тот же IP у другого пользователя
+    prisma.user.findUnique({ where: { id: input.userId } }),
     prisma.surveySession.findFirst({
       where: {
         surveyId:  input.surveyId,
@@ -630,174 +489,95 @@ export async function checkFraud(input: FraudCheckInput): Promise<FraudCheckResu
         status:    'COMPLETED',
       },
     }),
-    // Проверяем то же устройство у другого пользователя
-    input.deviceId
-      ? prisma.surveySession.findFirst({
-          where: {
-            surveyId: input.surveyId,
-            deviceId: input.deviceId,
-            userId:   { not: input.userId },
-            isValid:  true,
-            status:   'COMPLETED',
-          },
-        })
-      : Promise.resolve(null),
+    input.deviceId ? prisma.surveySession.findFirst({
+      where: {
+        surveyId: input.surveyId,
+        deviceId: input.deviceId,
+        userId:   { not: input.userId },
+        isValid:  true,
+        status:   'COMPLETED',
+      },
+    }) : Promise.resolve(null),
   ])
 
-  // ─── Проверка 1: Слишком быстрое прохождение ───────────
-  // Минимум 8 секунд на каждый вопрос
-  const questionCount = survey?.questions.length ?? 5
-  const minTimeSeconds = questionCount * 8
-  if (input.timeSpent < minTimeSeconds) {
-    flags.push('TOO_FAST')
+  // Слишком быстро — меньше 8 секунд на вопрос
+  const minTime = (survey?.questions.length ?? 5) * 8
+  if (input.timeSpent < minTime) flags.push('TOO_FAST')
+
+  // Дублирующий IP
+  if (sameIp) flags.push('DUPLICATE_IP')
+
+  // Дублирующее устройство
+  if (sameDevice) flags.push('DUPLICATE_DEVICE')
+
+  // Все ответы одинаковые
+  const values = Object.values(input.answers)
+  if (values.length > 3) {
+    const first  = JSON.stringify(values[0])
+    const allSame = values.every(v => JSON.stringify(v) === first)
+    if (allSame) flags.push('IDENTICAL_ANSWERS')
   }
 
-  // ─── Проверка 2: Дублирующий IP адрес ──────────────────
-  if (sameIpSession) {
-    flags.push('DUPLICATE_IP')
-  }
-
-  // ─── Проверка 3: Дублирующее устройство ────────────────
-  if (sameDeviceSession) {
-    flags.push('DUPLICATE_DEVICE')
-  }
-
-  // ─── Проверка 4: Одинаковые ответы на все вопросы ──────
-  // Если пользователь тыкал одну и ту же кнопку везде
-  const answerValues = Object.values(input.answers)
-  if (answerValues.length > 3) {
-    const firstAnswerStr = JSON.stringify(answerValues[0])
-    const allSame = answerValues.every(v => JSON.stringify(v) === firstAnswerStr)
-    if (allSame) {
-      flags.push('IDENTICAL_ANSWERS')
-    }
-  }
-
-  // ─── Проверка 5: Очень новый аккаунт ───────────────────
-  // Аккаунт создан менее 24 часов назад
+  // Новый аккаунт (менее 24 часов)
   if (user) {
-    const accountAgeMs = Date.now() - user.createdAt.getTime()
-    const oneDayMs = 24 * 60 * 60 * 1000
-    if (accountAgeMs < oneDayMs) {
-      flags.push('NEW_ACCOUNT')
-    }
+    const ageMs = Date.now() - user.createdAt.getTime()
+    if (ageMs < 24 * 60 * 60 * 1000) flags.push('NEW_ACCOUNT')
   }
 
-  return {
-    isValid: flags.length === 0,
-    flags,
-  }
+  return { isValid: flags.length === 0, flags }
 }
 ```
 
 ---
 
-## 2.3 — Лента опросов для респондента
+## 2.3 — Лента опросов
 
-Создай файл `lib/survey-feed.ts`:
+Создай `lib/survey-feed.ts`:
 
 ```typescript
 import { prisma } from '@/lib/prisma'
 
-// Возраст в годах из даты рождения
 function getAge(birthDate?: Date | null): number {
   if (!birthDate) return 0
-  const diffMs = Date.now() - birthDate.getTime()
-  return Math.floor(diffMs / (365.25 * 24 * 60 * 60 * 1000))
+  return Math.floor((Date.now() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
 }
 
 export async function getSurveyFeed(userId: string) {
-  // Загружаем профиль респондента для таргетинга
-  const profile = await prisma.respondentProfile.findUnique({
-    where: { userId },
-  })
+  const profile = await prisma.respondentProfile.findUnique({ where: { userId } })
 
-  // ID опросов которые пользователь уже проходил (или проходит)
-  const existingSessions = await prisma.surveySession.findMany({
+  const sessions = await prisma.surveySession.findMany({
     where:  { userId },
     select: { surveyId: true },
   })
-  const excludeIds = existingSessions.map(s => s.surveyId)
+  const excludeIds = sessions.map(s => s.surveyId)
 
   const userAge = getAge(profile?.birthDate)
-  const now = new Date()
+  const now     = new Date()
 
-  const surveys = await prisma.survey.findMany({
+  return prisma.survey.findMany({
     where: {
       status: 'ACTIVE',
-
-      // Исключить уже пройденные
-      id: { notIn: excludeIds.length > 0 ? excludeIds : [''] },
-
-      // Опрос ещё идёт
-      OR: [
-        { endsAt: null },
-        { endsAt: { gt: now } },
-      ],
-
-      // Опрос уже начался
+      id:     { notIn: excludeIds.length > 0 ? excludeIds : ['_none_'] },
       AND: [
-        {
-          OR: [
-            { startsAt: null },
-            { startsAt: { lte: now } },
-          ],
-        },
-
-        // Таргетинг по полу
-        {
-          OR: [
-            { targetGender: 'any' },
-            { targetGender: null },
-            { targetGender: profile?.gender ?? 'any' },
-          ],
-        },
-
-        // Таргетинг по минимальному возрасту
-        {
-          OR: [
-            { targetAgeMin: null },
-            { targetAgeMin: { lte: userAge } },
-          ],
-        },
-
-        // Таргетинг по максимальному возрасту
-        {
-          OR: [
-            { targetAgeMax: null },
-            { targetAgeMax: { gte: userAge } },
-          ],
-        },
-
-        // Таргетинг по городу
-        {
-          OR: [
-            { targetCities: { isEmpty: true } },
-            profile?.city
-              ? { targetCities: { has: profile.city } }
-              : {},
-          ],
-        },
+        { OR: [{ endsAt: null }, { endsAt: { gt: now } }] },
+        { OR: [{ startsAt: null }, { startsAt: { lte: now } }] },
+        { OR: [{ targetGender: 'any' }, { targetGender: null }, { targetGender: profile?.gender ?? null }] },
+        { OR: [{ targetAgeMin: null }, { targetAgeMin: { lte: userAge } }] },
+        { OR: [{ targetAgeMax: null }, { targetAgeMax: { gte: userAge } }] },
+        { OR: [{ targetCities: { isEmpty: true } }, profile?.city ? { targetCities: { has: profile.city } } : {}] },
       ],
     },
-
     include: {
-      questions: { select: { id: true } },  // только для подсчёта
-      _count:    { select: { sessions: { where: { isValid: true, status: 'COMPLETED' } } } },
+      _count: {
+        select: { sessions: { where: { isValid: true, status: 'COMPLETED' } } },
+      },
+      questions: { select: { id: true } },
     },
-
-    orderBy: [
-      { reward: 'desc' },     // сначала самые дорогие
-      { createdAt: 'desc' },  // потом новые
-    ],
-
+    orderBy: [{ reward: 'desc' }, { createdAt: 'desc' }],
     take: 20,
   })
-
-  return surveys
 }
 
-// Незавершённые сессии пользователя (опросы в работе)
 export async function getInProgressSurveys(userId: string) {
   return prisma.surveySession.findMany({
     where:   { userId, status: 'IN_PROGRESS' },
@@ -806,7 +586,6 @@ export async function getInProgressSurveys(userId: string) {
   })
 }
 
-// Завершённые сессии пользователя
 export async function getCompletedSurveys(userId: string) {
   return prisma.surveySession.findMany({
     where:   { userId, status: { in: ['COMPLETED', 'REJECTED'] } },
@@ -821,52 +600,41 @@ export async function getCompletedSurveys(userId: string) {
 
 # ЧАСТЬ 3 — SERVER ACTIONS
 
----
-
-## 3.1 — Все actions для опросов
-
-Создай файл `actions/surveys.ts`:
+Создай `actions/surveys.ts`:
 
 ```typescript
 'use server'
 
-import { prisma } from '@/lib/prisma'
-import { requireRole, requireAuth } from '@/lib/auth-utils'
-import { checkFraud } from '@/lib/antifrod'
-import { headers } from 'next/headers'
-import type { SurveyDraft } from '@/types/survey'
-import { revalidatePath } from 'next/cache'
+import { prisma }                    from '@/lib/prisma'
+import { requireRole }               from '@/lib/auth-utils'
+import { checkFraud }                from '@/lib/antifrod'
+import { headers }                   from 'next/headers'
+import { revalidatePath }            from 'next/cache'
+import type { SurveyDraft }          from '@/types/survey'
 
 // ══════════════════════════════════════════════════════════
-// ЗАКАЗЧИК — СОЗДАНИЕ ОПРОСА
+// СОЗДАНИЕ ОПРОСА (CLIENT)
 // ══════════════════════════════════════════════════════════
 
 export async function createSurveyAction(draft: SurveyDraft) {
   const session = await requireRole('CLIENT')
 
-  // Валидация
-  if (!draft.title.trim()) return { error: 'Введите название опроса' }
-  if (draft.questions.length === 0) return { error: 'Добавьте хотя бы один вопрос' }
-  if (draft.maxResponses < 10) return { error: 'Минимум 10 респондентов' }
-  if (draft.reward < 20) return { error: 'Минимальное вознаграждение — 20 ₽' }
+  if (!draft.title.trim())        return { error: 'Введите название опроса' }
+  if (draft.questions.length < 1) return { error: 'Добавьте хотя бы один вопрос' }
+  if (draft.maxResponses < 10)    return { error: 'Минимум 10 респондентов' }
+  if (draft.reward < 20)          return { error: 'Минимальное вознаграждение — 20 ₽' }
 
-  // Рассчитать бюджет (вознаграждения + 15% комиссия платформы)
   const rewardTotal = draft.maxResponses * draft.reward
   const commission  = rewardTotal * 0.15
   const budget      = rewardTotal + commission
 
-  // Проверить баланс заказчика
-  const wallet = await prisma.wallet.findUnique({
-    where: { userId: session.user.id },
-  })
+  const wallet = await prisma.wallet.findUnique({ where: { userId: session.user.id } })
   if (!wallet) return { error: 'Кошелёк не найден' }
   if (Number(wallet.balance) < budget) {
     return { error: `Недостаточно средств. Нужно ${budget.toFixed(0)} ₽, доступно ${Number(wallet.balance).toFixed(0)} ₽` }
   }
 
-  // Создать опрос и вопросы в транзакции
   const survey = await prisma.$transaction(async (tx) => {
-    // Создаём опрос
     const newSurvey = await tx.survey.create({
       data: {
         creatorId:       session.user.id,
@@ -888,11 +656,10 @@ export async function createSurveyAction(draft: SurveyDraft) {
       },
     })
 
-    // Создаём вопросы
     await tx.surveyQuestion.createMany({
-      data: draft.questions.map((q, index) => ({
+      data: draft.questions.map((q, i) => ({
         surveyId:    newSurvey.id,
-        order:       index,
+        order:       i,
         type:        q.type,
         title:       q.title,
         description: q.description || null,
@@ -901,21 +668,16 @@ export async function createSurveyAction(draft: SurveyDraft) {
         options:     q.type === 'MATRIX'
           ? { rows: q.matrixRows, cols: q.matrixCols }
           : q.options.length > 0 ? q.options : null,
-        settings:    Object.keys(q.settings).length > 0 ? q.settings : null,
-        logic:       q.logic.length > 0 ? q.logic : null,
+        settings: Object.keys(q.settings).length > 0 ? q.settings : null,
+        logic:    q.logic.length > 0 ? q.logic : null,
       })),
     })
 
-    // Списываем бюджет с кошелька
     await tx.wallet.update({
       where: { id: wallet.id },
-      data: {
-        balance:    { decrement: budget },
-        totalSpent: { increment: budget },
-      },
+      data:  { balance: { decrement: budget }, totalSpent: { increment: budget } },
     })
 
-    // Записываем транзакцию
     await tx.transaction.create({
       data: {
         walletId:    wallet.id,
@@ -934,41 +696,27 @@ export async function createSurveyAction(draft: SurveyDraft) {
 }
 
 // ══════════════════════════════════════════════════════════
-// РЕСПОНДЕНТ — УПРАВЛЕНИЕ ПРОХОЖДЕНИЕМ
+// ПРОХОЖДЕНИЕ (RESPONDENT)
 // ══════════════════════════════════════════════════════════
 
 export async function startSurveyAction(surveyId: string) {
   const session = await requireRole('RESPONDENT')
 
-  // Проверяем что опрос существует и активен
-  const survey = await prisma.survey.findUnique({
-    where: { id: surveyId },
-  })
-  if (!survey) return { error: 'Опрос не найден' }
+  const survey = await prisma.survey.findUnique({ where: { id: surveyId } })
+  if (!survey)               return { error: 'Опрос не найден' }
   if (survey.status !== 'ACTIVE') return { error: 'Опрос недоступен' }
 
-  // Проверяем что не проходил
   const existing = await prisma.surveySession.findUnique({
-    where: {
-      surveyId_userId: { surveyId, userId: session.user.id },
-    },
+    where: { surveyId_userId: { surveyId, userId: session.user.id } },
   })
 
   if (existing) {
-    if (existing.status === 'IN_PROGRESS') {
-      // Продолжить незавершённую сессию
-      return { success: true, sessionId: existing.id, isResume: true }
-    }
+    if (existing.status === 'IN_PROGRESS') return { success: true, sessionId: existing.id, isResume: true }
     return { error: 'Вы уже проходили этот опрос' }
   }
 
-  // Создаём новую сессию
   const surveySession = await prisma.surveySession.create({
-    data: {
-      surveyId,
-      userId: session.user.id,
-      status: 'IN_PROGRESS',
-    },
+    data: { surveyId, userId: session.user.id, status: 'IN_PROGRESS' },
   })
 
   return { success: true, sessionId: surveySession.id, isResume: false }
@@ -982,75 +730,57 @@ export async function completeSurveyAction(params: {
   deviceId:  string
 }) {
   const session = await requireRole('RESPONDENT')
-  const hdrs = await headers()
+  const hdrs    = await headers()
+  const ip      = hdrs.get('x-forwarded-for')?.split(',')[0].trim() ?? 'unknown'
+  const ua      = hdrs.get('user-agent') ?? 'unknown'
 
-  const ipAddress = hdrs.get('x-forwarded-for')?.split(',')[0].trim() ?? 'unknown'
-  const userAgent = hdrs.get('user-agent') ?? 'unknown'
-
-  // Загружаем опрос с вопросами
   const survey = await prisma.survey.findUnique({
     where:   { id: params.surveyId },
     include: { questions: true },
   })
   if (!survey) return { error: 'Опрос не найден' }
 
-  // Запускаем антифрод проверку
   const fraud = await checkFraud({
     userId:    session.user.id,
     surveyId:  params.surveyId,
     timeSpent: params.timeSpent,
     answers:   params.answers,
-    ipAddress,
-    userAgent,
+    ipAddress: ip,
+    userAgent: ua,
     deviceId:  params.deviceId,
   })
 
-  // Всё сохраняем в одной транзакции
   await prisma.$transaction(async (tx) => {
-    // Обновляем сессию
     const updatedSession = await tx.surveySession.update({
       where: { id: params.sessionId },
       data: {
         status:      fraud.isValid ? 'COMPLETED' : 'REJECTED',
         completedAt: new Date(),
         timeSpent:   params.timeSpent,
-        ipAddress,
-        userAgent,
+        ipAddress:   ip,
+        userAgent:   ua,
         deviceId:    params.deviceId,
         isValid:     fraud.isValid,
         fraudFlags:  fraud.flags,
       },
     })
 
-    // Сохраняем ответы (только на вопросы которые есть в опросе)
-    const validQuestionIds = new Set(survey.questions.map(q => q.id))
-    const answersToSave = Object.entries(params.answers)
-      .filter(([questionId]) => validQuestionIds.has(questionId))
-      .map(([questionId, value]) => ({
-        sessionId:  updatedSession.id,
-        questionId,
-        value,
-      }))
+    const validIds = new Set(survey.questions.map(q => q.id))
+    const toSave   = Object.entries(params.answers)
+      .filter(([id]) => validIds.has(id))
+      .map(([questionId, value]) => ({ sessionId: updatedSession.id, questionId, value }))
 
-    if (answersToSave.length > 0) {
-      await tx.surveyAnswer.createMany({ data: answersToSave })
+    if (toSave.length > 0) {
+      await tx.surveyAnswer.createMany({ data: toSave })
     }
 
-    // Начисляем вознаграждение только если прошёл антифрод
     if (fraud.isValid && survey.reward) {
-      const wallet = await tx.wallet.findUnique({
-        where: { userId: session.user.id },
-      })
-
+      const wallet = await tx.wallet.findUnique({ where: { userId: session.user.id } })
       if (wallet) {
         await tx.wallet.update({
           where: { id: wallet.id },
-          data: {
-            balance:     { increment: survey.reward },
-            totalEarned: { increment: survey.reward },
-          },
+          data:  { balance: { increment: survey.reward }, totalEarned: { increment: survey.reward } },
         })
-
         await tx.transaction.create({
           data: {
             walletId:    wallet.id,
@@ -1064,12 +794,12 @@ export async function completeSurveyAction(params: {
     }
   })
 
-  // Проверяем достигнут ли maxResponses — закрываем опрос
+  // Закрыть опрос если набрали нужное количество
   if (fraud.isValid && survey.maxResponses) {
-    const validCount = await prisma.surveySession.count({
+    const count = await prisma.surveySession.count({
       where: { surveyId: params.surveyId, isValid: true, status: 'COMPLETED' },
     })
-    if (validCount >= survey.maxResponses) {
+    if (count >= survey.maxResponses) {
       await prisma.survey.update({
         where: { id: params.surveyId },
         data:  { status: 'COMPLETED' },
@@ -1080,61 +810,40 @@ export async function completeSurveyAction(params: {
   revalidatePath('/respondent/surveys')
   revalidatePath('/respondent/wallet')
 
-  return {
-    success:  true,
-    rewarded: fraud.isValid,
-    amount:   fraud.isValid ? Number(survey.reward) : 0,
-  }
+  return { success: true, rewarded: fraud.isValid, amount: fraud.isValid ? Number(survey.reward) : 0 }
 }
 
 // ══════════════════════════════════════════════════════════
-// АДМИНИСТРАТОР — МОДЕРАЦИЯ
+// МОДЕРАЦИЯ (ADMIN)
 // ══════════════════════════════════════════════════════════
 
 export async function approveSurveyAction(surveyId: string) {
   await requireRole('ADMIN')
-
-  await prisma.survey.update({
-    where: { id: surveyId },
-    data:  { status: 'ACTIVE' },
-  })
-
+  await prisma.survey.update({ where: { id: surveyId }, data: { status: 'ACTIVE' } })
   revalidatePath('/admin/moderation')
   return { success: true }
 }
 
 export async function rejectSurveyAction(surveyId: string, reason: string) {
   await requireRole('ADMIN')
-
   if (!reason.trim()) return { error: 'Укажите причину отклонения' }
 
-  const survey = await prisma.survey.findUnique({
-    where: { id: surveyId },
-  })
+  const survey = await prisma.survey.findUnique({ where: { id: surveyId } })
   if (!survey) return { error: 'Опрос не найден' }
 
   await prisma.$transaction(async (tx) => {
-    // Отклоняем опрос
     await tx.survey.update({
       where: { id: surveyId },
       data:  { status: 'REJECTED', moderationNote: reason.trim() },
     })
 
-    // Возвращаем деньги заказчику
     if (survey.budget && survey.creatorId) {
-      const wallet = await tx.wallet.findUnique({
-        where: { userId: survey.creatorId },
-      })
-
+      const wallet = await tx.wallet.findUnique({ where: { userId: survey.creatorId } })
       if (wallet) {
         await tx.wallet.update({
           where: { id: wallet.id },
-          data: {
-            balance:    { increment: survey.budget },
-            totalSpent: { decrement: survey.budget },
-          },
+          data:  { balance: { increment: survey.budget }, totalSpent: { decrement: survey.budget } },
         })
-
         await tx.transaction.create({
           data: {
             walletId:    wallet.id,
@@ -1152,206 +861,66 @@ export async function rejectSurveyAction(surveyId: string, reason: string) {
   return { success: true }
 }
 
-// Пауза / возобновление опроса заказчиком
 export async function toggleSurveyPauseAction(surveyId: string) {
   const session = await requireRole('CLIENT')
-
-  const survey = await prisma.survey.findFirst({
-    where: { id: surveyId, creatorId: session.user.id },
-  })
+  const survey  = await prisma.survey.findFirst({ where: { id: surveyId, creatorId: session.user.id } })
   if (!survey) return { error: 'Опрос не найден' }
 
-  const newStatus = survey.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE'
-
-  await prisma.survey.update({
-    where: { id: surveyId },
-    data:  { status: newStatus },
-  })
-
+  const next = survey.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE'
+  await prisma.survey.update({ where: { id: surveyId }, data: { status: next } })
   revalidatePath('/client/surveys')
-  return { success: true, newStatus }
+  return { success: true, newStatus: next }
 }
 ```
 
 ---
 
-# ЧАСТЬ 4 — КОНСТРУКТОР ОПРОСОВ
+# ЧАСТЬ 4 — LAYOUT ДЛЯ ПРОХОЖДЕНИЯ ОПРОСА
+
+Это ключевое отличие Варианта 2 — отдельный layout без сайдбара.
 
 ---
 
-## 4.1 — Главный компонент SurveyBuilder
+## 4.1 — Создать группу роутов (survey)
 
-Файл: `components/survey-builder/SurveyBuilder.tsx`
+Создай папку `app/(survey)/` и файл `app/(survey)/layout.tsx`:
 
 ```typescript
-'use client'
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { SurveyDraft, EMPTY_DRAFT } from '@/types/survey'
-import { createSurveyAction } from '@/actions/surveys'
-import StepBasic     from './StepBasic'
-import StepQuestions from './StepQuestions'
-import StepAudience  from './StepAudience'
-import StepBudget    from './StepBudget'
+// app/(survey)/layout.tsx
+import type { Metadata } from 'next'
 
-const STEPS = [
-  { number: 1, label: 'Основное'  },
-  { number: 2, label: 'Вопросы'   },
-  { number: 3, label: 'Аудитория' },
-  { number: 4, label: 'Бюджет'    },
-]
+export const metadata: Metadata = {
+  title: 'Опрос — ПотокМнений',
+}
 
-export default function SurveyBuilder() {
-  const router = useRouter()
-  const [step, setStep] = useState<1|2|3|4>(1)
-  const [draft, setDraft] = useState<SurveyDraft>(EMPTY_DRAFT)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  function updateDraft(updates: Partial<SurveyDraft>) {
-    setDraft(prev => ({ ...prev, ...updates }))
-  }
-
-  // Валидация текущего шага перед переходом
-  function validateStep(): string | null {
-    switch (step) {
-      case 1:
-        if (!draft.title.trim())    return 'Введите название опроса'
-        if (!draft.category)        return 'Выберите категорию'
-        return null
-      case 2:
-        if (draft.questions.length === 0) return 'Добавьте хотя бы один вопрос'
-        for (const q of draft.questions) {
-          if (!q.title.trim()) return 'Заполните текст всех вопросов'
-          if (['SINGLE_CHOICE','MULTIPLE_CHOICE','RANKING'].includes(q.type) && q.options.length < 2) {
-            return 'Добавьте минимум 2 варианта ответа'
-          }
-        }
-        return null
-      case 3:
-        return null // аудитория необязательна
-      case 4:
-        if (draft.maxResponses < 10)  return 'Минимум 10 респондентов'
-        if (draft.reward < 20)        return 'Минимальное вознаграждение — 20 ₽'
-        if (!draft.endsAt)            return 'Укажите дату окончания'
-        return null
-      default:
-        return null
-    }
-  }
-
-  function handleNext() {
-    const err = validateStep()
-    if (err) { setError(err); return }
-    setError(null)
-    setStep(prev => Math.min(prev + 1, 4) as 1|2|3|4)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
-
-  function handleBack() {
-    setError(null)
-    setStep(prev => Math.max(prev - 1, 1) as 1|2|3|4)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
-
-  async function handleSubmit() {
-    const err = validateStep()
-    if (err) { setError(err); return }
-
-    setIsSubmitting(true)
-    setError(null)
-
-    const result = await createSurveyAction(draft)
-
-    if (result.error) {
-      setError(result.error)
-      setIsSubmitting(false)
-      return
-    }
-
-    router.push(`/client/surveys/${result.surveyId}`)
-  }
-
+export default function SurveyLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="max-w-4xl mx-auto">
-      {/* Stepper */}
-      <div className="flex items-center mb-10">
-        {STEPS.map((s, i) => (
-          <div key={s.number} className="flex items-center flex-1 last:flex-none">
-            {/* Круг с номером */}
-            <div className={`
-              w-9 h-9 rounded-full flex items-center justify-center
-              text-sm font-bold flex-shrink-0 transition-all
-              ${step === s.number
-                ? 'bg-brand text-white'
-                : step > s.number
-                  ? 'bg-brand/20 text-brand'
-                  : 'bg-dash-border text-dash-muted'}
-            `}>
-              {step > s.number ? '✓' : s.number}
-            </div>
-            {/* Лейбл */}
-            <span className={`ml-2 text-sm font-medium ${
-              step >= s.number ? 'text-dash-heading' : 'text-dash-muted'
-            }`}>
-              {s.label}
+    // Полностью чистая страница — никакого сайдбара, никакого topbar
+    // Только минимальный header с логотипом и контент
+    <div className="min-h-screen bg-surface-950 text-white">
+      {/* Минимальный header */}
+      <header className="fixed top-0 left-0 right-0 z-50 h-14
+                         bg-surface-950/90 backdrop-blur-xl
+                         border-b border-white/5">
+        <div className="max-w-3xl mx-auto px-6 h-full flex items-center justify-between">
+          {/* Логотип */}
+          <a href="/" className="flex items-center gap-2 group">
+            <div className="w-5 h-5 rounded-md bg-brand
+                            group-hover:bg-brand-light transition-colors" />
+            <span className="font-display text-white font-bold text-sm">
+              ПотокМнений
             </span>
-            {/* Линия */}
-            {i < STEPS.length - 1 && (
-              <div className={`flex-1 h-px mx-4 ${step > s.number ? 'bg-brand/30' : 'bg-dash-border'}`} />
-            )}
-          </div>
-        ))}
-      </div>
+          </a>
 
-      {/* Контент шага */}
-      <div className="bg-dash-card border border-dash-border rounded-2xl p-8 mb-6">
-        {step === 1 && <StepBasic     draft={draft} onChange={updateDraft} />}
-        {step === 2 && <StepQuestions draft={draft} onChange={updateDraft} />}
-        {step === 3 && <StepAudience  draft={draft} onChange={updateDraft} />}
-        {step === 4 && <StepBudget    draft={draft} onChange={updateDraft} />}
-      </div>
-
-      {/* Ошибка */}
-      {error && (
-        <div className="bg-red-500/10 border border-red-500/20 text-red-500
-                        rounded-xl p-4 mb-6 text-sm">
-          {error}
+          {/* Ничего лишнего — только логотип */}
+          {/* Прогресс-бар будет внутри самого плеера, не здесь */}
         </div>
-      )}
+      </header>
 
-      {/* Навигация */}
-      <div className="flex justify-between">
-        <button
-          onClick={handleBack}
-          disabled={step === 1}
-          className="px-6 py-3 rounded-xl border border-dash-border
-                     text-dash-body hover:border-dash-muted
-                     disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-        >
-          ← Назад
-        </button>
-
-        {step < 4 ? (
-          <button
-            onClick={handleNext}
-            className="px-7 py-3 rounded-xl bg-brand text-white font-semibold
-                       hover:bg-brand-dark transition-all"
-          >
-            Далее →
-          </button>
-        ) : (
-          <button
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-            className="px-7 py-3 rounded-xl bg-brand text-white font-semibold
-                       hover:bg-brand-dark disabled:opacity-50
-                       disabled:cursor-not-allowed transition-all"
-          >
-            {isSubmitting ? 'Публикация...' : 'Опубликовать опрос'}
-          </button>
-        )}
-      </div>
+      {/* Контент — начинается под header */}
+      <main className="pt-14">
+        {children}
+      </main>
     </div>
   )
 }
@@ -1359,391 +928,183 @@ export default function SurveyBuilder() {
 
 ---
 
-## 4.2 — StepQuestions — редактор вопросов
+## 4.2 — Страница прохождения опроса
 
-Это самый сложный компонент. Файл: `components/survey-builder/StepQuestions.tsx`
+Создай `app/(survey)/survey/[id]/page.tsx`:
 
 ```typescript
-'use client'
-import { useState } from 'react'
-import {
-  DndContext, closestCenter, DragEndEvent,
-  PointerSensor, useSensor, useSensors,
-} from '@dnd-kit/core'
-import {
-  SortableContext, verticalListSortingStrategy,
-  arrayMove, useSortable,
-} from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
-import { SurveyDraft, Question, QuestionType, QUESTION_TYPE_LABELS, createEmptyQuestion } from '@/types/survey'
+// app/(survey)/survey/[id]/page.tsx
+import { notFound, redirect } from 'next/navigation'
+import { auth }               from '@/auth'
+import { prisma }             from '@/lib/prisma'
+import SurveyPlayer           from '@/components/survey-player/SurveyPlayer'
 
-// ─── Компонент одной карточки вопроса ────────────────────
+type Props = { params: { id: string } }
 
-function QuestionCard({
-  question,
-  index,
-  isExpanded,
-  onToggle,
-  onUpdate,
-  onDelete,
-}: {
-  question:   Question
-  index:      number
-  isExpanded: boolean
-  onToggle:   () => void
-  onUpdate:   (updates: Partial<Question>) => void
-  onDelete:   () => void
-}) {
-  // Подключаем sortable
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: question.id,
+export default async function SurveyPage({ params }: Props) {
+  const session = await auth()
+
+  // Не авторизован → на логин с возвратом сюда
+  if (!session?.user) {
+    redirect(`/login?callbackUrl=/survey/${params.id}`)
+  }
+
+  // Только респондент может проходить опросы
+  if (session.user.role !== 'RESPONDENT') {
+    redirect('/')
+  }
+
+  // Загружаем опрос с вопросами
+  const survey = await prisma.survey.findUnique({
+    where:   { id: params.id },
+    include: {
+      questions: {
+        orderBy: { order: 'asc' },
+      },
+    },
   })
 
-  const style = {
-    transform:  CSS.Transform.toString(transform),
-    transition,
-    opacity:    isDragging ? 0.5 : 1,
+  if (!survey) notFound()
+
+  // Опрос не активен
+  if (survey.status !== 'ACTIVE') {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center max-w-sm px-6">
+          <div className="text-5xl mb-6">🔒</div>
+          <h1 className="font-display text-2xl text-white font-bold mb-3">
+            Опрос недоступен
+          </h1>
+          <p className="text-white/40 text-sm mb-8">
+            Этот опрос завершён или временно приостановлен.
+          </p>
+          <a href="/respondent/surveys"
+             className="inline-flex px-6 py-3 bg-brand text-white rounded-xl
+                        font-semibold text-sm hover:bg-brand-dark transition-colors">
+            Вернуться к ленте
+          </a>
+        </div>
+      </div>
+    )
+  }
+
+  // Проверяем — не проходил ли уже
+  const existingSession = await prisma.surveySession.findUnique({
+    where: { surveyId_userId: { surveyId: params.id, userId: session.user.id } },
+  })
+
+  if (existingSession && existingSession.status !== 'IN_PROGRESS') {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center max-w-sm px-6">
+          <div className="text-5xl mb-6">✅</div>
+          <h1 className="font-display text-2xl text-white font-bold mb-3">
+            Вы уже проходили этот опрос
+          </h1>
+          <p className="text-white/40 text-sm mb-8">
+            Каждый опрос можно пройти только один раз.
+          </p>
+          <a href="/respondent/surveys"
+             className="inline-flex px-6 py-3 bg-brand text-white rounded-xl
+                        font-semibold text-sm hover:bg-brand-dark transition-colors">
+            Найти новые опросы
+          </a>
+        </div>
+      </div>
+    )
   }
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className="bg-dash-card border border-dash-border rounded-xl overflow-hidden"
-    >
-      {/* Заголовок карточки */}
-      <div
-        className="flex items-center gap-3 p-5 cursor-pointer hover:bg-dash-bg transition-colors"
-        onClick={onToggle}
-      >
-        {/* Drag handle */}
-        <div
-          {...attributes}
-          {...listeners}
-          className="cursor-grab active:cursor-grabbing text-dash-muted
-                     hover:text-dash-body transition-colors select-none p-1"
-          onClick={e => e.stopPropagation()}
-        >
-          ⠿
-        </div>
-
-        {/* Номер */}
-        <span className="w-7 h-7 rounded-lg bg-dash-bg border border-dash-border
-                         flex items-center justify-center text-xs font-bold
-                         text-dash-muted flex-shrink-0">
-          {index + 1}
-        </span>
-
-        {/* Тип и заголовок */}
-        <div className="flex-1 min-w-0">
-          <span className="text-xs font-semibold text-brand uppercase tracking-wider">
-            {QUESTION_TYPE_LABELS[question.type]}
-          </span>
-          <p className="text-sm text-dash-heading font-medium truncate mt-0.5">
-            {question.title || 'Без названия'}
-          </p>
-        </div>
-
-        {/* Обязательный */}
-        {question.required && (
-          <span className="text-xs text-red-400 flex-shrink-0">обязательный</span>
-        )}
-
-        {/* Удалить */}
-        <button
-          onClick={e => { e.stopPropagation(); onDelete() }}
-          className="p-1.5 rounded-lg text-dash-muted hover:text-red-500
-                     hover:bg-red-500/10 transition-all flex-shrink-0"
-        >
-          ✕
-        </button>
-
-        {/* Стрелка раскрытия */}
-        <span className={`text-dash-muted transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
-          ▾
-        </span>
-      </div>
-
-      {/* Редактор (раскрывается) */}
-      {isExpanded && (
-        <div className="border-t border-dash-border p-5 space-y-4">
-          {/* Текст вопроса */}
-          <div>
-            <label className="block text-xs font-semibold text-dash-muted uppercase tracking-wider mb-1.5">
-              Текст вопроса *
-            </label>
-            <input
-              type="text"
-              value={question.title}
-              onChange={e => onUpdate({ title: e.target.value })}
-              placeholder="Введите вопрос..."
-              className="w-full bg-dash-bg border border-dash-border rounded-lg px-4 py-2.5
-                         text-sm text-dash-heading placeholder:text-dash-muted
-                         focus:border-brand/50 focus:outline-none transition-colors"
-            />
-          </div>
-
-          {/* Описание */}
-          <div>
-            <label className="block text-xs font-semibold text-dash-muted uppercase tracking-wider mb-1.5">
-              Описание (необязательно)
-            </label>
-            <input
-              type="text"
-              value={question.description}
-              onChange={e => onUpdate({ description: e.target.value })}
-              placeholder="Дополнительное пояснение..."
-              className="w-full bg-dash-bg border border-dash-border rounded-lg px-4 py-2.5
-                         text-sm text-dash-heading placeholder:text-dash-muted
-                         focus:border-brand/50 focus:outline-none transition-colors"
-            />
-          </div>
-
-          {/* Варианты для SINGLE / MULTIPLE / RANKING */}
-          {['SINGLE_CHOICE', 'MULTIPLE_CHOICE', 'RANKING'].includes(question.type) && (
-            <div>
-              <label className="block text-xs font-semibold text-dash-muted uppercase tracking-wider mb-2">
-                Варианты ответов
-              </label>
-              <div className="space-y-2">
-                {question.options.map((opt, i) => (
-                  <div key={i} className="flex items-center gap-2">
-                    <span className="text-xs text-dash-muted w-5 text-right">{i + 1}.</span>
-                    <input
-                      type="text"
-                      value={opt}
-                      onChange={e => {
-                        const newOptions = [...question.options]
-                        newOptions[i] = e.target.value
-                        onUpdate({ options: newOptions })
-                      }}
-                      placeholder={`Вариант ${i + 1}`}
-                      className="flex-1 bg-dash-bg border border-dash-border rounded-lg px-3 py-2
-                                 text-sm text-dash-heading placeholder:text-dash-muted
-                                 focus:border-brand/50 focus:outline-none transition-colors"
-                    />
-                    <button
-                      onClick={() => onUpdate({ options: question.options.filter((_, idx) => idx !== i) })}
-                      className="text-dash-muted hover:text-red-500 transition-colors text-sm"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                ))}
-                <button
-                  onClick={() => onUpdate({ options: [...question.options, ''] })}
-                  className="text-sm text-brand hover:text-brand-dark transition-colors mt-1"
-                >
-                  + Добавить вариант
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Настройки шкалы */}
-          {question.type === 'SCALE' && (
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-dash-muted mb-1.5">Минимум</label>
-                <input
-                  type="number"
-                  value={(question.settings as any).min ?? 1}
-                  onChange={e => onUpdate({ settings: { ...question.settings, min: Number(e.target.value) } })}
-                  className="w-full bg-dash-bg border border-dash-border rounded-lg px-3 py-2 text-sm
-                             text-dash-heading focus:border-brand/50 focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-dash-muted mb-1.5">Максимум</label>
-                <input
-                  type="number"
-                  value={(question.settings as any).max ?? 10}
-                  onChange={e => onUpdate({ settings: { ...question.settings, max: Number(e.target.value) } })}
-                  className="w-full bg-dash-bg border border-dash-border rounded-lg px-3 py-2 text-sm
-                             text-dash-heading focus:border-brand/50 focus:outline-none"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Строки и столбцы матрицы */}
-          {question.type === 'MATRIX' && (
-            <div className="grid grid-cols-2 gap-6">
-              <div>
-                <label className="block text-xs font-semibold text-dash-muted uppercase tracking-wider mb-2">
-                  Строки
-                </label>
-                {question.matrixRows.map((row, i) => (
-                  <div key={i} className="flex gap-2 mb-2">
-                    <input
-                      type="text"
-                      value={row}
-                      onChange={e => {
-                        const rows = [...question.matrixRows]
-                        rows[i] = e.target.value
-                        onUpdate({ matrixRows: rows })
-                      }}
-                      className="flex-1 bg-dash-bg border border-dash-border rounded-lg px-3 py-2
-                                 text-sm text-dash-heading focus:border-brand/50 focus:outline-none"
-                    />
-                    <button onClick={() => onUpdate({ matrixRows: question.matrixRows.filter((_, idx) => idx !== i) })}
-                            className="text-dash-muted hover:text-red-500 text-sm">✕</button>
-                  </div>
-                ))}
-                <button onClick={() => onUpdate({ matrixRows: [...question.matrixRows, ''] })}
-                        className="text-sm text-brand hover:text-brand-dark">+ Строка</button>
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-dash-muted uppercase tracking-wider mb-2">
-                  Столбцы
-                </label>
-                {question.matrixCols.map((col, i) => (
-                  <div key={i} className="flex gap-2 mb-2">
-                    <input
-                      type="text"
-                      value={col}
-                      onChange={e => {
-                        const cols = [...question.matrixCols]
-                        cols[i] = e.target.value
-                        onUpdate({ matrixCols: cols })
-                      }}
-                      className="flex-1 bg-dash-bg border border-dash-border rounded-lg px-3 py-2
-                                 text-sm text-dash-heading focus:border-brand/50 focus:outline-none"
-                    />
-                    <button onClick={() => onUpdate({ matrixCols: question.matrixCols.filter((_, idx) => idx !== i) })}
-                            className="text-dash-muted hover:text-red-500 text-sm">✕</button>
-                  </div>
-                ))}
-                <button onClick={() => onUpdate({ matrixCols: [...question.matrixCols, ''] })}
-                        className="text-sm text-brand hover:text-brand-dark">+ Столбец</button>
-              </div>
-            </div>
-          )}
-
-          {/* Обязательность */}
-          <div className="flex items-center gap-3 pt-2 border-t border-dash-border">
-            <button
-              onClick={() => onUpdate({ required: !question.required })}
-              className={`w-10 h-6 rounded-full transition-colors relative ${
-                question.required ? 'bg-brand' : 'bg-dash-border'
-              }`}
-            >
-              <span className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
-                question.required ? 'translate-x-5' : 'translate-x-1'
-              }`} />
-            </button>
-            <span className="text-sm text-dash-body">Обязательный вопрос</span>
-          </div>
-        </div>
-      )}
-    </div>
+    <SurveyPlayer
+      survey={{
+        id:        survey.id,
+        title:     survey.title,
+        reward:    survey.reward ? Number(survey.reward) : null,
+        questions: survey.questions,
+      }}
+      existingSessionId={existingSession?.id ?? null}
+    />
   )
 }
+```
 
-// ─── Основной компонент StepQuestions ────────────────────
+---
 
-export default function StepQuestions({
-  draft,
-  onChange,
-}: {
-  draft:    SurveyDraft
-  onChange: (updates: Partial<SurveyDraft>) => void
-}) {
-  const [expandedId, setExpandedId] = useState<string | null>(null)
-  const [showTypeMenu, setShowTypeMenu] = useState(false)
+## 4.3 — Страница завершения
 
-  const sensors = useSensors(useSensor(PointerSensor, {
-    activationConstraint: { distance: 8 },
-  }))
+Создай `app/(survey)/survey/[id]/complete/page.tsx`:
 
-  function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event
-    if (!over || active.id === over.id) return
+```typescript
+// Эта страница открывается после успешного завершения
+// Параметры передаются через searchParams
 
-    const oldIndex = draft.questions.findIndex(q => q.id === active.id)
-    const newIndex = draft.questions.findIndex(q => q.id === over.id)
-    onChange({ questions: arrayMove(draft.questions, oldIndex, newIndex) })
-  }
+import { auth }   from '@/auth'
+import { redirect } from 'next/navigation'
 
-  function addQuestion(type: QuestionType) {
-    const newQ = createEmptyQuestion(type)
-    onChange({ questions: [...draft.questions, newQ] })
-    setExpandedId(newQ.id)
-    setShowTypeMenu(false)
-  }
+type Props = {
+  params:       { id: string }
+  searchParams: { rewarded?: string; amount?: string }
+}
 
-  function updateQuestion(id: string, updates: Partial<Question>) {
-    onChange({
-      questions: draft.questions.map(q => q.id === id ? { ...q, ...updates } : q),
-    })
-  }
+export default async function SurveyCompletePage({ params, searchParams }: Props) {
+  const session = await auth()
+  if (!session?.user) redirect('/login')
 
-  function deleteQuestion(id: string) {
-    onChange({ questions: draft.questions.filter(q => q.id !== id) })
-    if (expandedId === id) setExpandedId(null)
-  }
+  const rewarded = searchParams.rewarded === 'true'
+  const amount   = Number(searchParams.amount ?? 0)
 
   return (
-    <div>
-      <h2 className="font-display text-xl font-bold text-dash-heading mb-1">
-        Вопросы
-      </h2>
-      <p className="text-sm text-dash-muted mb-6">
-        Добавьте вопросы и настройте варианты ответов. Перетащите для изменения порядка.
-      </p>
+    <div className="min-h-screen flex items-center justify-center px-6">
+      <div className="max-w-md w-full text-center">
 
-      {/* Список вопросов с DnD */}
-      {draft.questions.length > 0 ? (
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={draft.questions.map(q => q.id)} strategy={verticalListSortingStrategy}>
-            <div className="space-y-3 mb-4">
-              {draft.questions.map((q, i) => (
-                <QuestionCard
-                  key={q.id}
-                  question={q}
-                  index={i}
-                  isExpanded={expandedId === q.id}
-                  onToggle={() => setExpandedId(expandedId === q.id ? null : q.id)}
-                  onUpdate={updates => updateQuestion(q.id, updates)}
-                  onDelete={() => deleteQuestion(q.id)}
-                />
-              ))}
-            </div>
-          </SortableContext>
-        </DndContext>
-      ) : (
-        <div className="border-2 border-dashed border-dash-border rounded-xl p-12 text-center mb-4">
-          <p className="text-dash-muted text-sm">Добавьте первый вопрос</p>
+        {/* Иконка */}
+        <div className={`
+          w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-8
+          ${rewarded ? 'bg-green-500/20' : 'bg-white/10'}
+        `}>
+          <span className="text-5xl">{rewarded ? '🎉' : '✓'}</span>
         </div>
-      )}
 
-      {/* Кнопка добавить вопрос */}
-      <div className="relative">
-        <button
-          onClick={() => setShowTypeMenu(!showTypeMenu)}
-          className="w-full py-3 border-2 border-dashed border-dash-border rounded-xl
-                     text-sm font-medium text-dash-muted hover:border-brand/40
-                     hover:text-brand hover:bg-brand/5 transition-all"
-        >
-          + Добавить вопрос
-        </button>
+        {/* Заголовок */}
+        <h1 className="font-display text-3xl font-bold text-white mb-4">
+          {rewarded ? 'Спасибо за ответы!' : 'Опрос завершён'}
+        </h1>
 
-        {showTypeMenu && (
-          <div className="absolute top-full left-0 right-0 mt-2 bg-dash-card
-                          border border-dash-border rounded-xl shadow-card-lg z-10 overflow-hidden">
-            {(Object.entries(QUESTION_TYPE_LABELS) as [QuestionType, string][]).map(([type, label]) => (
-              <button
-                key={type}
-                onClick={() => addQuestion(type)}
-                className="w-full text-left px-4 py-3 text-sm text-dash-body
-                           hover:bg-dash-bg hover:text-brand transition-colors
-                           border-b border-dash-border last:border-0"
-              >
-                {label}
-              </button>
-            ))}
+        {/* Начисление */}
+        {rewarded && amount > 0 && (
+          <div className="bg-green-500/10 border border-green-500/20
+                          rounded-2xl px-8 py-6 mb-8 inline-block">
+            <p className="text-sm text-green-400/70 mb-1">Начислено на баланс</p>
+            <p className="font-display text-4xl font-bold text-green-400">
+              +{amount} ₽
+            </p>
           </div>
         )}
+
+        {/* Без начисления */}
+        {!rewarded && (
+          <p className="text-white/40 text-base mb-8 leading-relaxed">
+            Ваши ответы приняты и помогут улучшить продукты и сервисы.
+          </p>
+        )}
+
+        {/* Кнопки */}
+        <div className="flex flex-col gap-3">
+          <a href="/respondent/surveys"
+             className="w-full py-4 bg-brand text-white rounded-xl font-semibold
+                        hover:bg-brand-dark transition-colors">
+            Найти новые опросы
+          </a>
+          {rewarded && (
+            <a href="/respondent/wallet"
+               className="w-full py-4 border border-white/10 text-white/70
+                          rounded-xl font-medium hover:border-white/20 hover:text-white
+                          transition-colors">
+              Перейти к кошельку
+            </a>
+          )}
+        </div>
+
       </div>
     </div>
   )
@@ -1758,48 +1119,64 @@ export default function StepQuestions({
 
 ## 5.1 — Главный компонент SurveyPlayer
 
-Файл: `components/survey-player/SurveyPlayer.tsx`
+Создай `components/survey-player/SurveyPlayer.tsx`:
 
 ```typescript
 'use client'
-import { useState, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { useRouter }                   from 'next/navigation'
 import { startSurveyAction, completeSurveyAction } from '@/actions/surveys'
 import QuestionRenderer from './QuestionRenderer'
-import SurveyComplete   from './SurveyComplete'
 
-// Логика видимости вопросов на основе правил
+// Логика показа вопросов на основе правил
 function getVisibleQuestions(questions: any[], answers: Record<string, any>) {
-  return questions.filter(question => {
-    if (!question.logic || question.logic.length === 0) return true
-
-    return question.logic.every((rule: any) => {
-      const answer = answers[rule.ifQuestionId]
-      const answerStr = Array.isArray(answer)
-        ? answer.join(',')
-        : String(answer ?? '')
-
-      let matches = false
+  return questions.filter(q => {
+    if (!q.logic?.length) return true
+    return q.logic.every((rule: any) => {
+      const answer    = answers[rule.ifQuestionId]
+      const answerStr = Array.isArray(answer) ? answer.join(',') : String(answer ?? '')
+      let match = false
       switch (rule.operator) {
-        case 'equals':     matches = answerStr === rule.value; break
-        case 'not_equals': matches = answerStr !== rule.value; break
-        case 'contains':   matches = answerStr.includes(rule.value); break
+        case 'equals':     match = answerStr === rule.value;         break
+        case 'not_equals': match = answerStr !== rule.value;         break
+        case 'contains':   match = answerStr.includes(rule.value);   break
       }
-
-      return rule.action === 'show' ? matches : !matches
+      return rule.action === 'show' ? match : !match
     })
   })
 }
 
-// Генерация Device ID (упрощённый fingerprint)
+// Device fingerprint — простой, без библиотек
 function getDeviceId(): string {
-  const key = 'opinflow_device_id'
-  let id = localStorage.getItem(key)
-  if (!id) {
-    id = `${navigator.userAgent}-${screen.width}x${screen.height}-${new Date().getTimezoneOffset()}`
-    id = btoa(id).slice(0, 32)
-    localStorage.setItem(key, id)
+  try {
+    const KEY = 'opinflow_did'
+    let id = localStorage.getItem(KEY)
+    if (!id) {
+      const raw = [
+        navigator.userAgent,
+        screen.width, screen.height, screen.colorDepth,
+        new Date().getTimezoneOffset(),
+        navigator.language,
+      ].join('|')
+      id = btoa(encodeURIComponent(raw)).slice(0, 40)
+      localStorage.setItem(KEY, id)
+    }
+    return id
+  } catch {
+    return 'unknown'
   }
-  return id
+}
+
+type SurveyQuestion = {
+  id:          string
+  type:        string
+  title:       string
+  description: string | null
+  required:    boolean
+  mediaUrl:    string | null
+  options:     any
+  settings:    any
+  logic:       any
 }
 
 type Props = {
@@ -1807,75 +1184,95 @@ type Props = {
     id:        string
     title:     string
     reward:    number | null
-    questions: any[]
+    questions: SurveyQuestion[]
   }
+  existingSessionId: string | null
 }
 
-type PlayerState = 'LOADING' | 'PLAYING' | 'SUBMITTING' | 'COMPLETE' | 'ERROR'
+type Stage = 'INIT' | 'PLAYING' | 'SUBMITTING' | 'ERROR'
 
-export default function SurveyPlayer({ survey }: Props) {
-  const [state, setState]           = useState<PlayerState>('LOADING')
-  const [sessionId, setSessionId]   = useState<string | null>(null)
+export default function SurveyPlayer({ survey, existingSessionId }: Props) {
+  const router = useRouter()
+
+  const [stage, setStage]               = useState<Stage>('INIT')
+  const [sessionId, setSessionId]       = useState<string | null>(existingSessionId)
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [answers, setAnswers]       = useState<Record<string, any>>({})
-  const [startedAt]                 = useState(() => Date.now())
-  const [result, setResult]         = useState<{ rewarded: boolean; amount: number } | null>(null)
-  const [error, setError]           = useState<string | null>(null)
+  const [answers, setAnswers]           = useState<Record<string, any>>({})
+  const [error, setError]               = useState<string | null>(null)
+  const startedAtRef                    = useRef(Date.now())
 
-  // Инициализация — создать или продолжить сессию
-  const initSession = useCallback(async () => {
-    const res = await startSurveyAction(survey.id)
-    if (res.error) { setError(res.error); setState('ERROR'); return }
-    setSessionId(res.sessionId!)
-    setState('PLAYING')
-  }, [survey.id])
+  // Инициализация сессии
+  useEffect(() => {
+    async function init() {
+      if (existingSessionId) {
+        // Продолжаем существующую сессию
+        setSessionId(existingSessionId)
+        setStage('PLAYING')
+        return
+      }
+      const res = await startSurveyAction(survey.id)
+      if (res.error) { setError(res.error); setStage('ERROR'); return }
+      setSessionId(res.sessionId!)
+      setStage('PLAYING')
+    }
+    init()
+  }, [survey.id, existingSessionId])
 
-  // Запустить при первом рендере
-  useState(() => { initSession() })
-
-  // Текущие видимые вопросы
   const visibleQuestions = getVisibleQuestions(survey.questions, answers)
+  const totalVisible     = visibleQuestions.length
   const currentQuestion  = visibleQuestions[currentIndex]
-  const isLastQuestion   = currentIndex === visibleQuestions.length - 1
-  const progress         = visibleQuestions.length > 0
-    ? (currentIndex / visibleQuestions.length) * 100
-    : 0
+  const isFirst          = currentIndex === 0
+  const isLast           = currentIndex === totalVisible - 1
+  const progressPct      = totalVisible > 0 ? ((currentIndex) / totalVisible) * 100 : 0
 
   function handleAnswer(value: any) {
+    if (!currentQuestion) return
     setAnswers(prev => ({ ...prev, [currentQuestion.id]: value }))
+    setError(null)
   }
 
   function handleNext() {
-    // Проверить обязательный вопрос
-    if (currentQuestion.required && answers[currentQuestion.id] === undefined) {
-      setError('Пожалуйста, ответьте на вопрос')
-      return
+    if (!currentQuestion) return
+
+    // Проверить обязательность
+    if (currentQuestion.required) {
+      const val = answers[currentQuestion.id]
+      const isEmpty =
+        val === undefined || val === null || val === '' ||
+        (Array.isArray(val) && val.length === 0)
+
+      if (isEmpty) {
+        setError('Пожалуйста, ответьте на этот вопрос')
+        return
+      }
     }
+
     setError(null)
 
-    if (isLastQuestion) {
-      handleComplete()
+    if (isLast) {
+      handleSubmit()
     } else {
-      setCurrentIndex(prev => prev + 1)
+      setCurrentIndex(i => i + 1)
       window.scrollTo({ top: 0, behavior: 'smooth' })
     }
   }
 
   function handleBack() {
+    if (isFirst) return
     setError(null)
-    setCurrentIndex(prev => Math.max(prev - 1, 0))
+    setCurrentIndex(i => i - 1)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  async function handleComplete() {
+  async function handleSubmit() {
     if (!sessionId) return
-    setState('SUBMITTING')
+    setStage('SUBMITTING')
 
-    const timeSpent = Math.floor((Date.now() - startedAt) / 1000)
+    const timeSpent = Math.floor((Date.now() - startedAtRef.current) / 1000)
     const deviceId  = getDeviceId()
 
     const res = await completeSurveyAction({
-      surveyId: survey.id,
+      surveyId:  survey.id,
       sessionId,
       answers,
       timeSpent,
@@ -1884,118 +1281,153 @@ export default function SurveyPlayer({ survey }: Props) {
 
     if (res.error) {
       setError(res.error)
-      setState('PLAYING')
+      setStage('PLAYING')
       return
     }
 
-    setResult({ rewarded: res.rewarded!, amount: res.amount! })
-    setState('COMPLETE')
+    // Перенаправить на страницу завершения с результатом
+    router.push(
+      `/survey/${survey.id}/complete?rewarded=${res.rewarded}&amount=${res.amount}`
+    )
   }
 
-  // Состояния
-  if (state === 'LOADING') {
+  // ─── Состояние: инициализация ──────────────────────────
+
+  if (stage === 'INIT') {
     return (
-      <div className="flex items-center justify-center py-32">
-        <div className="w-8 h-8 border-2 border-brand border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-[calc(100vh-56px)] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 border-2 border-brand border-t-transparent
+                          rounded-full animate-spin" />
+          <p className="text-white/40 text-sm">Загрузка опроса...</p>
+        </div>
       </div>
     )
   }
 
-  if (state === 'ERROR' && !sessionId) {
+  // ─── Состояние: ошибка ─────────────────────────────────
+
+  if (stage === 'ERROR') {
     return (
-      <div className="text-center py-32">
-        <p className="text-dash-muted text-lg">{error}</p>
+      <div className="min-h-[calc(100vh-56px)] flex items-center justify-center px-6">
+        <div className="text-center max-w-sm">
+          <div className="text-5xl mb-6">⚠️</div>
+          <h2 className="font-display text-xl text-white font-bold mb-3">
+            Что-то пошло не так
+          </h2>
+          <p className="text-white/40 text-sm mb-8">{error}</p>
+          <a href="/respondent/surveys"
+             className="inline-flex px-6 py-3 bg-brand text-white rounded-xl
+                        font-semibold text-sm hover:bg-brand-dark transition-colors">
+            Вернуться к ленте
+          </a>
+        </div>
       </div>
     )
-  }
-
-  if (state === 'COMPLETE' && result) {
-    return <SurveyComplete rewarded={result.rewarded} amount={result.amount} />
   }
 
   if (!currentQuestion) return null
 
+  // ─── Состояние: прохождение ────────────────────────────
+
   return (
-    <div className="max-w-2xl mx-auto">
-      {/* Прогресс */}
-      <div className="mb-8">
-        <div className="flex justify-between text-xs text-dash-muted mb-2">
-          <span>Вопрос {currentIndex + 1} из {visibleQuestions.length}</span>
-          <span>{Math.round(progress)}%</span>
-        </div>
-        <div className="w-full h-1.5 bg-dash-border rounded-full overflow-hidden">
-          <div
-            className="h-full bg-brand rounded-full transition-all duration-500"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-      </div>
+    <div className="min-h-[calc(100vh-56px)] flex flex-col">
 
-      {/* Вопрос */}
-      <div className="bg-dash-card border border-dash-border rounded-2xl p-8 mb-6">
-        {/* Медиа */}
-        {currentQuestion.mediaUrl && (
-          <img
-            src={currentQuestion.mediaUrl}
-            alt=""
-            className="w-full rounded-xl mb-6 object-cover max-h-64"
-          />
-        )}
-
-        {/* Текст вопроса */}
-        <div className="mb-6">
-          <div className="flex items-start gap-2">
-            <h3 className="text-lg font-semibold text-dash-heading leading-snug">
-              {currentQuestion.title}
-            </h3>
-            {currentQuestion.required && (
-              <span className="text-red-500 mt-1 flex-shrink-0">*</span>
-            )}
-          </div>
-          {currentQuestion.description && (
-            <p className="text-sm text-dash-muted mt-2">{currentQuestion.description}</p>
-          )}
-        </div>
-
-        {/* Ответ */}
-        <QuestionRenderer
-          question={currentQuestion}
-          value={answers[currentQuestion.id]}
-          onChange={handleAnswer}
+      {/* Прогресс-бар — под header, на всю ширину */}
+      <div className="fixed top-14 left-0 right-0 z-40 h-0.5 bg-white/5">
+        <div
+          className="h-full bg-brand transition-all duration-500 ease-out"
+          style={{ width: `${progressPct}%` }}
         />
       </div>
 
-      {/* Ошибка */}
-      {error && (
-        <div className="bg-red-500/10 border border-red-500/20 text-red-500
-                        rounded-xl p-3 mb-4 text-sm">
-          {error}
+      {/* Основной контент */}
+      <div className="flex-1 flex flex-col items-center justify-center px-6 py-16">
+        <div className="w-full max-w-2xl">
+
+          {/* Счётчик вопросов */}
+          <div className="flex items-center justify-between mb-8">
+            <span className="text-xs font-semibold text-white/30 uppercase tracking-widest">
+              {survey.title}
+            </span>
+            <span className="text-xs text-white/25">
+              {currentIndex + 1} / {totalVisible}
+            </span>
+          </div>
+
+          {/* Медиа */}
+          {currentQuestion.mediaUrl && (
+            <div className="mb-8 rounded-2xl overflow-hidden border border-white/8">
+              <img
+                src={currentQuestion.mediaUrl}
+                alt=""
+                className="w-full object-cover max-h-72"
+              />
+            </div>
+          )}
+
+          {/* Вопрос */}
+          <div className="mb-10">
+            <h2 className="font-display text-2xl lg:text-3xl font-bold text-white
+                            leading-snug tracking-tight mb-3">
+              {currentQuestion.title}
+              {currentQuestion.required && (
+                <span className="text-brand ml-2 text-2xl">*</span>
+              )}
+            </h2>
+            {currentQuestion.description && (
+              <p className="text-white/40 text-base leading-relaxed">
+                {currentQuestion.description}
+              </p>
+            )}
+          </div>
+
+          {/* Ответ */}
+          <div className="mb-8">
+            <QuestionRenderer
+              question={currentQuestion}
+              value={answers[currentQuestion.id]}
+              onChange={handleAnswer}
+            />
+          </div>
+
+          {/* Ошибка */}
+          {error && (
+            <div className="bg-red-500/10 border border-red-500/20 rounded-xl
+                            px-4 py-3 mb-6 text-sm text-red-400">
+              {error}
+            </div>
+          )}
+
+          {/* Навигация */}
+          <div className="flex items-center justify-between">
+            <button
+              onClick={handleBack}
+              disabled={isFirst}
+              className="flex items-center gap-2 px-5 py-3 rounded-xl
+                         text-white/40 hover:text-white transition-colors
+                         disabled:opacity-0 disabled:pointer-events-none"
+            >
+              ← Назад
+            </button>
+
+            <button
+              onClick={handleNext}
+              disabled={stage === 'SUBMITTING'}
+              className="flex items-center gap-2 px-8 py-3.5 bg-brand text-white
+                         rounded-xl font-semibold hover:bg-brand-dark
+                         disabled:opacity-50 disabled:cursor-not-allowed
+                         transition-all active:scale-[0.98]"
+            >
+              {stage === 'SUBMITTING'
+                ? 'Отправка...'
+                : isLast ? 'Завершить опрос' : 'Далее →'}
+            </button>
+          </div>
+
         </div>
-      )}
-
-      {/* Навигация */}
-      <div className="flex justify-between">
-        <button
-          onClick={handleBack}
-          disabled={currentIndex === 0}
-          className="px-6 py-3 rounded-xl border border-dash-border text-dash-body
-                     hover:border-dash-muted disabled:opacity-30 disabled:cursor-not-allowed
-                     transition-all"
-        >
-          ← Назад
-        </button>
-
-        <button
-          onClick={handleNext}
-          disabled={state === 'SUBMITTING'}
-          className="px-7 py-3 rounded-xl bg-brand text-white font-semibold
-                     hover:bg-brand-dark disabled:opacity-50 transition-all"
-        >
-          {state === 'SUBMITTING'
-            ? 'Отправка...'
-            : isLastQuestion ? 'Завершить' : 'Далее →'}
-        </button>
       </div>
+
     </div>
   )
 }
@@ -2003,195 +1435,786 @@ export default function SurveyPlayer({ survey }: Props) {
 
 ---
 
-# ЧАСТЬ 6 — ТЕСТИРОВАНИЕ
+## 5.2 — QuestionRenderer
+
+Создай `components/survey-player/QuestionRenderer.tsx`:
+
+```typescript
+'use client'
+
+// Компоненты типов вопросов
+function SingleChoice({ options, value, onChange }: any) {
+  return (
+    <div className="space-y-3">
+      {options?.map((opt: string) => (
+        <button
+          key={opt}
+          onClick={() => onChange(opt)}
+          className={`w-full flex items-center gap-4 px-5 py-4 rounded-xl border
+                      text-left transition-all duration-150 group
+                      ${value === opt
+                        ? 'border-brand bg-brand/10 text-white'
+                        : 'border-white/10 bg-white/3 text-white/70 hover:border-white/20 hover:bg-white/5'
+                      }`}
+        >
+          <div className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center
+                           transition-colors
+                           ${value === opt ? 'border-brand' : 'border-white/20'}`}>
+            {value === opt && <div className="w-2.5 h-2.5 rounded-full bg-brand" />}
+          </div>
+          <span className="text-sm font-medium">{opt}</span>
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function MultipleChoice({ options, value = [], onChange }: any) {
+  function toggle(opt: string) {
+    const current: string[] = Array.isArray(value) ? value : []
+    const next = current.includes(opt)
+      ? current.filter(v => v !== opt)
+      : [...current, opt]
+    onChange(next)
+  }
+
+  const selected: string[] = Array.isArray(value) ? value : []
+
+  return (
+    <div className="space-y-3">
+      {options?.map((opt: string) => (
+        <button
+          key={opt}
+          onClick={() => toggle(opt)}
+          className={`w-full flex items-center gap-4 px-5 py-4 rounded-xl border
+                      text-left transition-all duration-150
+                      ${selected.includes(opt)
+                        ? 'border-brand bg-brand/10 text-white'
+                        : 'border-white/10 bg-white/3 text-white/70 hover:border-white/20 hover:bg-white/5'
+                      }`}
+        >
+          <div className={`w-5 h-5 rounded-md border-2 flex-shrink-0 flex items-center justify-center
+                           transition-colors
+                           ${selected.includes(opt) ? 'border-brand bg-brand' : 'border-white/20'}`}>
+            {selected.includes(opt) && (
+              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7"/>
+              </svg>
+            )}
+          </div>
+          <span className="text-sm font-medium">{opt}</span>
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function Scale({ settings, value, onChange }: any) {
+  const min      = settings?.min ?? 1
+  const max      = settings?.max ?? 10
+  const minLabel = settings?.minLabel ?? ''
+  const maxLabel = settings?.maxLabel ?? ''
+  const steps    = Array.from({ length: max - min + 1 }, (_, i) => min + i)
+
+  return (
+    <div>
+      {/* Числа */}
+      <div className="flex gap-2 mb-4 flex-wrap">
+        {steps.map(n => (
+          <button
+            key={n}
+            onClick={() => onChange(n)}
+            className={`w-12 h-12 rounded-xl font-bold text-sm transition-all duration-150
+                        ${value === n
+                          ? 'bg-brand text-white scale-110'
+                          : 'bg-white/5 border border-white/10 text-white/50 hover:border-white/25'
+                        }`}
+          >
+            {n}
+          </button>
+        ))}
+      </div>
+      {/* Подписи */}
+      {(minLabel || maxLabel) && (
+        <div className="flex justify-between text-xs text-white/30 px-1">
+          <span>{minLabel}</span>
+          <span>{maxLabel}</span>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function Matrix({ options, value = {}, onChange }: any) {
+  const rows: string[] = options?.rows ?? []
+  const cols: string[] = options?.cols ?? []
+  const current: Record<string, string> = typeof value === 'object' && !Array.isArray(value) ? value : {}
+
+  function selectCell(row: string, col: string) {
+    onChange({ ...current, [row]: col })
+  }
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-max">
+        <thead>
+          <tr>
+            <th className="w-40 pb-4" />
+            {cols.map(col => (
+              <th key={col} className="pb-4 px-3 text-xs font-semibold text-white/40 text-center">
+                {col}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-white/5">
+          {rows.map(row => (
+            <tr key={row} className="hover:bg-white/3 transition-colors">
+              <td className="py-4 pr-4 text-sm text-white/70 font-medium">{row}</td>
+              {cols.map(col => (
+                <td key={col} className="py-4 px-3 text-center">
+                  <button
+                    onClick={() => selectCell(row, col)}
+                    className={`w-5 h-5 rounded-full border-2 mx-auto flex items-center
+                                justify-center transition-colors
+                                ${current[row] === col
+                                  ? 'border-brand'
+                                  : 'border-white/20 hover:border-white/40'
+                                }`}
+                  >
+                    {current[row] === col && (
+                      <div className="w-2.5 h-2.5 rounded-full bg-brand" />
+                    )}
+                  </button>
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+function Ranking({ options, value, onChange }: any) {
+  // Инициализируем порядок из value или из оригинального списка
+  const items: string[] = Array.isArray(value) && value.length > 0 ? value : (options ?? [])
+
+  function moveUp(index: number) {
+    if (index === 0) return
+    const next = [...items]
+    ;[next[index - 1], next[index]] = [next[index], next[index - 1]]
+    onChange(next)
+  }
+
+  function moveDown(index: number) {
+    if (index === items.length - 1) return
+    const next = [...items]
+    ;[next[index], next[index + 1]] = [next[index + 1], next[index]]
+    onChange(next)
+  }
+
+  return (
+    <div className="space-y-2">
+      {items.map((item, i) => (
+        <div
+          key={item}
+          className="flex items-center gap-3 px-5 py-4 bg-white/3 border border-white/10
+                     rounded-xl group hover:border-white/20 transition-colors"
+        >
+          {/* Позиция */}
+          <span className="w-7 h-7 rounded-lg bg-brand/20 text-brand text-xs font-bold
+                           flex items-center justify-center flex-shrink-0">
+            {i + 1}
+          </span>
+
+          {/* Текст */}
+          <span className="flex-1 text-sm text-white/80 font-medium">{item}</span>
+
+          {/* Кнопки перемещения */}
+          <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button
+              onClick={() => moveUp(i)}
+              disabled={i === 0}
+              className="w-6 h-5 flex items-center justify-center text-white/40
+                         hover:text-white disabled:opacity-20 transition-colors text-xs"
+            >
+              ▲
+            </button>
+            <button
+              onClick={() => moveDown(i)}
+              disabled={i === items.length - 1}
+              className="w-6 h-5 flex items-center justify-center text-white/40
+                         hover:text-white disabled:opacity-20 transition-colors text-xs"
+            >
+              ▼
+            </button>
+          </div>
+        </div>
+      ))}
+      <p className="text-xs text-white/25 mt-3 text-center">
+        Расставьте элементы в порядке предпочтения
+      </p>
+    </div>
+  )
+}
+
+function OpenText({ settings, value = '', onChange }: any) {
+  const maxLength = settings?.maxLength ?? 500
+  const placeholder = settings?.placeholder ?? 'Введите ваш ответ...'
+
+  return (
+    <div>
+      <textarea
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder={placeholder}
+        maxLength={maxLength}
+        rows={5}
+        className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4
+                   text-white text-sm leading-relaxed resize-none
+                   placeholder:text-white/25
+                   focus:border-brand/50 focus:outline-none focus:bg-white/8
+                   transition-colors"
+      />
+      <div className="flex justify-end mt-2">
+        <span className="text-xs text-white/25">
+          {String(value).length} / {maxLength}
+        </span>
+      </div>
+    </div>
+  )
+}
+
+// ─── Главный рендер ───────────────────────────────────────
+
+export default function QuestionRenderer({
+  question,
+  value,
+  onChange,
+}: {
+  question: any
+  value:    any
+  onChange: (value: any) => void
+}) {
+  switch (question.type) {
+    case 'SINGLE_CHOICE':
+      return <SingleChoice options={question.options} value={value} onChange={onChange} />
+
+    case 'MULTIPLE_CHOICE':
+      return <MultipleChoice options={question.options} value={value} onChange={onChange} />
+
+    case 'SCALE':
+      return <Scale settings={question.settings} value={value} onChange={onChange} />
+
+    case 'MATRIX':
+      return <Matrix options={question.options} value={value} onChange={onChange} />
+
+    case 'RANKING':
+      return <Ranking options={question.options} value={value} onChange={onChange} />
+
+    case 'OPEN_TEXT':
+      return <OpenText settings={question.settings} value={value} onChange={onChange} />
+
+    default:
+      return <p className="text-white/40 text-sm">Неизвестный тип вопроса</p>
+  }
+}
+```
 
 ---
 
-## 6.1 — Полный сценарий тестирования
+# ЧАСТЬ 6 — ЛЕНТА ОПРОСОВ В КАБИНЕТЕ
 
-Тестируй строго в таком порядке. Каждый шаг зависит от предыдущего.
+---
 
-### Тест 1 — Создание опроса (роль CLIENT)
+## 6.1 — Страница ленты
 
-```
-1. Войти: client@test.local / Test12345!
-2. Открыть /client/surveys/create
-3. Шаг 1:
-   - Ввести название "Тестовый опрос"
-   - Выбрать категорию
-   - Нажать "Далее" без названия — ожидаем ошибку валидации ✓
-   - Заполнить и перейти дальше ✓
+Создай `app/(dashboard)/respondent/surveys/page.tsx`:
 
-4. Шаг 2 — добавить по одному вопросу каждого типа:
-   - Одиночный выбор с 3 вариантами
-   - Множественный выбор с 3 вариантами
-   - Шкала (1-10)
-   - Матрица (2 строки × 3 столбца)
-   - Ранжирование с 4 элементами
-   - Открытый ответ
-   - Перетащить вопросы — порядок должен меняться ✓
-   - Попробовать перейти без вопросов — ошибка ✓
+```typescript
+import { requireRole }       from '@/lib/auth-utils'
+import { getSurveyFeed, getInProgressSurveys, getCompletedSurveys } from '@/lib/survey-feed'
+import SurveyFeedClient      from '@/components/respondent/SurveyFeedClient'
 
-5. Шаг 3 — таргетинг:
-   - Пол: Все
-   - Возраст: 18-45
-   - Города: Москва
-   - Перейти дальше ✓
+export default async function RespondentSurveysPage() {
+  const session = await requireRole('RESPONDENT')
 
-6. Шаг 4 — бюджет:
-   - 20 респондентов × 50 ₽ = 1000 ₽ + 150 ₽ комиссия = 1150 ₽
-   - Убедиться что расчёт правильный ✓
-   - Нажать "Опубликовать" ✓
+  const [available, inProgress, completed] = await Promise.all([
+    getSurveyFeed(session.user.id),
+    getInProgressSurveys(session.user.id),
+    getCompletedSurveys(session.user.id),
+  ])
 
-7. Проверить в Prisma Studio:
-   - surveys → статус PENDING_MODERATION ✓
-   - survey_questions → 6 записей с правильными данными ✓
-   - wallets → balance уменьшился на 1150 ₽ ✓
-   - transactions → запись типа SPENDING ✓
+  return (
+    <SurveyFeedClient
+      available={available}
+      inProgress={inProgress}
+      completed={completed}
+    />
+  )
+}
 ```
 
-### Тест 2 — Модерация (роль ADMIN)
+---
+
+## 6.2 — Клиентский компонент ленты
+
+Создай `components/respondent/SurveyFeedClient.tsx`:
+
+```typescript
+'use client'
+import { useState } from 'react'
+import Link         from 'next/link'
+
+type Tab = 'available' | 'inprogress' | 'completed'
+
+// Карточка опроса в ленте — ведёт на /survey/[id]
+function SurveyCard({ survey, type }: { survey: any; type: 'available' | 'inprogress' }) {
+  const completedCount = survey._count?.sessions ?? 0
+  const totalCount     = survey.maxResponses ?? 0
+  const questionsCount = survey.questions?.length ?? 0
+  const progress       = totalCount > 0 ? (completedCount / totalCount) * 100 : 0
+  const sessionProgress = type === 'inprogress' && survey.survey
+    ? null  // прогресс прохождения (TODO в следующей итерации)
+    : null
+
+  const surveyData = type === 'inprogress' ? survey.survey : survey
+  const href       = `/survey/${surveyData.id}`
+
+  return (
+    <Link href={href} className="block">
+      <div className="bg-dash-card border border-dash-border rounded-2xl p-6
+                      hover:border-brand/30 hover:shadow-card transition-all duration-200
+                      group cursor-pointer">
+
+        {/* Шапка */}
+        <div className="flex items-start justify-between gap-4 mb-4">
+          <div className="flex-1 min-w-0">
+            {surveyData.category && (
+              <span className="text-xs font-semibold text-brand uppercase tracking-wider">
+                {surveyData.category}
+              </span>
+            )}
+            <h3 className="text-base font-semibold text-dash-heading mt-1 leading-snug
+                           group-hover:text-brand transition-colors line-clamp-2">
+              {surveyData.title}
+            </h3>
+          </div>
+
+          {/* Вознаграждение */}
+          {surveyData.reward && (
+            <div className="flex-shrink-0 text-right">
+              <span className="text-xl font-bold text-brand">
+                +{Number(surveyData.reward).toFixed(0)} ₽
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Мета */}
+        <div className="flex items-center gap-4 text-xs text-dash-muted mb-4">
+          {questionsCount > 0 && <span>{questionsCount} вопросов</span>}
+          {surveyData.estimatedTime && <span>~{surveyData.estimatedTime} мин</span>}
+          {type === 'inprogress' && (
+            <span className="text-brand font-semibold">В процессе</span>
+          )}
+        </div>
+
+        {/* Прогресс сбора (для available) */}
+        {type === 'available' && totalCount > 0 && (
+          <div>
+            <div className="w-full h-1 bg-dash-border rounded-full overflow-hidden mb-1">
+              <div
+                className="h-full bg-brand/50 rounded-full transition-all"
+                style={{ width: `${Math.min(progress, 100)}%` }}
+              />
+            </div>
+            <span className="text-xs text-dash-muted">
+              {completedCount} из {totalCount} ответов собрано
+            </span>
+          </div>
+        )}
+
+        {/* Кнопка */}
+        <div className="mt-5 flex justify-end">
+          <span className="text-sm font-semibold text-brand
+                           group-hover:gap-2 transition-all inline-flex items-center gap-1">
+            {type === 'inprogress' ? 'Продолжить' : 'Начать'} →
+          </span>
+        </div>
+      </div>
+    </Link>
+  )
+}
+
+// Карточка завершённого опроса
+function CompletedCard({ session }: { session: any }) {
+  const rewarded = session.isValid && session.status === 'COMPLETED'
+  const date     = new Date(session.completedAt).toLocaleDateString('ru-RU', {
+    day: 'numeric', month: 'long',
+  })
+
+  return (
+    <div className="flex items-center justify-between py-4
+                    border-b border-dash-border last:border-0">
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-dash-heading truncate">
+          {session.survey?.title ?? 'Опрос'}
+        </p>
+        <p className="text-xs text-dash-muted mt-0.5">{date}</p>
+      </div>
+      <div className="flex-shrink-0 ml-4 text-right">
+        {rewarded ? (
+          <span className="text-sm font-bold text-green-500">
+            +{Number(session.survey?.reward ?? 0).toFixed(0)} ₽
+          </span>
+        ) : (
+          <span className="text-xs text-dash-muted">Без начисления</span>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ─── Главный компонент ────────────────────────────────────
+
+export default function SurveyFeedClient({ available, inProgress, completed }: {
+  available:  any[]
+  inProgress: any[]
+  completed:  any[]
+}) {
+  const [tab, setTab] = useState<Tab>('available')
+
+  const tabs: { key: Tab; label: string; count: number }[] = [
+    { key: 'available',  label: 'Доступные',    count: available.length  },
+    { key: 'inprogress', label: 'В работе',     count: inProgress.length },
+    { key: 'completed',  label: 'Завершённые',  count: completed.length  },
+  ]
+
+  return (
+    <div>
+      {/* Заголовок */}
+      <div className="mb-8">
+        <h1 className="font-display text-2xl font-bold text-dash-heading">
+          Лента опросов
+        </h1>
+        <p className="text-sm text-dash-muted mt-1">
+          Проходите опросы и зарабатывайте
+        </p>
+      </div>
+
+      {/* Табы */}
+      <div className="flex gap-1 p-1 bg-dash-bg rounded-xl border border-dash-border mb-6 w-fit">
+        {tabs.map(t => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
+                        transition-all duration-150
+                        ${tab === t.key
+                          ? 'bg-dash-card text-dash-heading shadow-sm border border-dash-border'
+                          : 'text-dash-muted hover:text-dash-body'
+                        }`}
+          >
+            {t.label}
+            {t.count > 0 && (
+              <span className={`text-xs px-1.5 py-0.5 rounded-full font-bold
+                                ${tab === t.key ? 'bg-brand/15 text-brand' : 'bg-dash-border text-dash-muted'}`}>
+                {t.count}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* Контент таба */}
+      {tab === 'available' && (
+        available.length > 0 ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {available.map(s => (
+              <SurveyCard key={s.id} survey={s} type="available" />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-20">
+            <div className="text-5xl mb-4">🔍</div>
+            <h3 className="font-display text-lg font-bold text-dash-heading mb-2">
+              Нет доступных опросов
+            </h3>
+            <p className="text-sm text-dash-muted max-w-xs mx-auto">
+              Заполните профиль полнее — система подберёт больше подходящих опросов
+            </p>
+            <Link
+              href="/respondent/profile"
+              className="inline-flex mt-6 px-5 py-2.5 bg-brand text-white text-sm
+                         font-semibold rounded-xl hover:bg-brand-dark transition-colors"
+            >
+              Заполнить профиль
+            </Link>
+          </div>
+        )
+      )}
+
+      {tab === 'inprogress' && (
+        inProgress.length > 0 ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {inProgress.map(s => (
+              <SurveyCard key={s.id} survey={s} type="inprogress" />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-20">
+            <div className="text-5xl mb-4">✨</div>
+            <p className="text-dash-muted text-sm">Нет незавершённых опросов</p>
+          </div>
+        )
+      )}
+
+      {tab === 'completed' && (
+        completed.length > 0 ? (
+          <div className="bg-dash-card border border-dash-border rounded-2xl divide-y divide-dash-border overflow-hidden">
+            {completed.map(s => (
+              <div key={s.id} className="px-6">
+                <CompletedCard session={s} />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-20">
+            <div className="text-5xl mb-4">📋</div>
+            <p className="text-dash-muted text-sm">Вы ещё не прошли ни одного опроса</p>
+          </div>
+        )
+      )}
+    </div>
+  )
+}
+```
+
+---
+
+# ЧАСТЬ 7 — ТЕСТИРОВАНИЕ
+
+---
+
+## 7.1 — Полный сценарий тестирования
+
+### Тест 1 — Создание опроса (CLIENT)
 
 ```
-1. Войти: admin@test.local / Test12345!
-2. Открыть /admin/moderation
-3. Опрос из Теста 1 виден в списке ✓
-4. Нажать "Просмотреть" — открывается превью со всеми вопросами ✓
-5. Нажать "Одобрить"
-6. Проверить: статус опроса → ACTIVE ✓
-7. Создать ещё один опрос (повтори Тест 1)
-8. Нажать "Отклонить" → ввести причину → подтвердить
-9. Проверить:
-   - Статус опроса → REJECTED ✓
-   - moderationNote заполнен ✓
-   - Баланс заказчика вернулся (wallets) ✓
-   - Транзакция типа REFUND ✓
+Войти: client@test.local / Test12345!
+Открыть: /client/surveys/create
+
+Шаг 1 — Основное:
+  □ Попробовать перейти без названия → ошибка валидации
+  □ Заполнить: название, описание, категория
+  □ Нажать Далее →
+
+Шаг 2 — Вопросы:
+  □ Добавить SINGLE_CHOICE с 3 вариантами
+  □ Добавить MULTIPLE_CHOICE с 3 вариантами
+  □ Добавить SCALE (1-10)
+  □ Добавить MATRIX (2 строки × 3 столбца)
+  □ Добавить RANKING с 4 элементами
+  □ Добавить OPEN_TEXT
+  □ Перетащить вопросы — порядок меняется
+  □ Удалить один вопрос — удаляется
+  □ Нажать Далее →
+
+Шаг 3 — Аудитория:
+  □ Пол: Все
+  □ Возраст: 18-45
+  □ Нажать Далее →
+
+Шаг 4 — Бюджет:
+  □ 20 респондентов × 50 ₽ = 1000 ₽ + 150 ₽ = 1150 ₽ итого
+  □ Расчёт правильный
+  □ Нажать Опубликовать
+
+После:
+  □ Prisma Studio → surveys → статус PENDING_MODERATION
+  □ Prisma Studio → survey_questions → 5 записей
+  □ Prisma Studio → wallets → balance уменьшился на 1150 ₽
+  □ Prisma Studio → transactions → запись SPENDING
 ```
 
-### Тест 3 — Прохождение опроса (роль RESPONDENT)
+### Тест 2 — Модерация (ADMIN)
 
 ```
-1. Войти: respondent@test.local / Test12345!
-2. Открыть /respondent/surveys
-3. Одобренный опрос виден в ленте ✓
-4. Карточка показывает: название, вознаграждение, время ✓
-5. Нажать "Начать"
-6. Прохождение:
-   - Первый вопрос отображается ✓
-   - Ответить и нажать "Далее" ✓
-   - Нажать "Назад" — вернуться к предыдущему вопросу ✓
-   - Прогресс-бар движется ✓
-   - На последнем вопросе кнопка "Завершить" ✓
-7. После завершения:
-   - Экран "Опрос завершён!" ✓
-   - Показана сумма начисления ✓
-8. Проверить:
-   - /respondent/wallet → баланс увеличился ✓
-   - Prisma Studio → survey_sessions → статус COMPLETED, isValid true ✓
-   - Prisma Studio → survey_answers → все ответы сохранены ✓
-   - transactions → запись типа EARNING ✓
-9. Открыть /respondent/surveys — опрос исчез из ленты ✓
-10. Попробовать зайти снова на /respondent/survey/[id]:
-    - Должна быть ошибка "Вы уже проходили этот опрос" ✓
+Войти: admin@test.local / Test12345!
+Открыть: /admin/moderation
+
+  □ Опрос из Теста 1 виден
+  □ Нажать Просмотреть → открывается preview со всеми вопросами
+  □ Нажать Одобрить
+  □ Prisma Studio → surveys → статус ACTIVE
+
+Создать второй опрос и:
+  □ Нажать Отклонить → ввести причину → подтвердить
+  □ Prisma Studio → surveys → статус REJECTED, moderationNote заполнен
+  □ Prisma Studio → wallets → баланс заказчика вернулся
+  □ Prisma Studio → transactions → запись REFUND
+```
+
+### Тест 3 — Прохождение опроса (RESPONDENT)
+
+```
+Войти: respondent@test.local / Test12345!
+Открыть: /respondent/surveys
+
+  □ Одобренный опрос виден в ленте (таб "Доступные")
+  □ Карточка показывает: название, вознаграждение, кол-во вопросов
+  □ Нажать Начать → переход на /survey/[id]
+
+На странице прохождения:
+  □ URL: /survey/[id] — НЕТ сайдбара, только логотип вверху
+  □ Прогресс-бар в шапке
+  □ Первый вопрос отображается крупно
+  □ Ответить → нажать Далее
+  □ Нажать Назад → вернулись к предыдущему
+  □ Прогресс-бар движется при переходах
+  □ Попробовать пропустить обязательный вопрос → ошибка
+  □ На последнем вопросе кнопка "Завершить опрос"
+  □ Нажать Завершить
+
+Экран завершения /survey/[id]/complete:
+  □ URL правильный: /survey/[id]/complete
+  □ Нет сайдбара
+  □ Показана сумма начисления
+  □ Кнопки: Найти новые опросы / Перейти к кошельку
+
+После:
+  □ /respondent/wallet → баланс увеличился
+  □ /respondent/surveys → опрос исчез из ленты, появился в "Завершённые"
+  □ Prisma Studio → survey_sessions → статус COMPLETED, isValid true
+  □ Prisma Studio → survey_answers → все ответы сохранены
+  □ Prisma Studio → transactions → запись EARNING
+  □ Попробовать зайти снова на /survey/[id] → "Вы уже проходили этот опрос"
 ```
 
 ### Тест 4 — Антифрод
 
 ```
-1. Создать нового тестового пользователя (respondent2@test.local)
-2. Войти как этот пользователь
-3. Начать прохождение опроса
-4. Ответить очень быстро (буквально за 10 секунд)
-5. Завершить
-6. Проверить в Prisma Studio → survey_sessions:
-   - fraudFlags содержит "TOO_FAST" ✓
-   - isValid = false ✓
-   - status = REJECTED ✓
-7. Проверить → transactions: начисления НЕТ ✓
-8. На экране завершения: нет суммы, просто "Ответы приняты" ✓
+Создать тестового пользователя (новый email)
+Войти как этот пользователь
+
+  □ Начать опрос
+  □ Ответить на все вопросы очень быстро (5-10 секунд)
+  □ Завершить
+
+Проверить:
+  □ Prisma Studio → survey_sessions → fraudFlags: ["TOO_FAST"]
+  □ isValid = false
+  □ status = REJECTED
+  □ transactions → начисления НЕТ
+  □ Экран завершения → нет суммы ("Ответы приняты" без цифр)
 ```
 
 ---
 
-## 6.2 — Частые ошибки и решения
+## 7.2 — Частые проблемы
 
-### Ошибка: "Cannot find module @dnd-kit/..."
+### Ошибки dnd-kit
 ```bash
 npm install @dnd-kit/core @dnd-kit/sortable @dnd-kit/utilities
 ```
 
-### Ошибка: Prisma ругается на новые поля
+### Prisma не видит новые поля
 ```bash
 npx prisma generate
 npx prisma db push
 ```
 
-### Ошибка: Опрос не появляется в ленте
-Проверь в Prisma Studio:
-- `surveys.status` = 'ACTIVE' (не PENDING_MODERATION)
-- `surveys.endsAt` > текущей даты
-- Таргетинг совпадает с профилем респондента (гендер, возраст, город)
+### Опрос не появляется в ленте
+Проверить в Prisma Studio:
+- `surveys.status` = 'ACTIVE'
+- `surveys.endsAt` > текущего времени
+- Профиль респондента совпадает с таргетингом
 
-### Ошибка: Антифрод блокирует при тестировании
-Уменьши minTime в `lib/antifrod.ts` для тестов:
+### Антифрод блокирует при тестировании
+Временно уменьши в `lib/antifrod.ts`:
 ```typescript
-const minTimeSeconds = questionCount * 2 // вместо 8
+const minTime = (survey?.questions.length ?? 5) * 2 // вместо 8
 ```
-Не забудь вернуть обратно перед продакшном.
+Вернуть обратно перед деплоем.
 
-### Ошибка: Медиа не загружается
-- Проверь bucket 'opinflow-media' существует в Supabase Storage
-- Проверь что bucket публичный
-- Проверь SUPABASE_SERVICE_ROLE_KEY в .env
-- Проверь NEXT_PUBLIC_SUPABASE_URL в .env
-
-### Ошибка: TypeScript ошибки при build
-```bash
-npm run build 2>&1 | head -50
-# Читай первые ошибки — обычно это импорты или несоответствие типов
-```
+### Страница /survey/[id] редиректит в кабинет
+Проверь что `app/(survey)/layout.tsx` создан и не конфликтует с `app/(dashboard)/layout.tsx`.
 
 ---
 
-# ЧАСТЬ 7 — ДЕПЛОЙ
-
----
-
-## 7.1 — Подготовка к деплою
+# ЧАСТЬ 8 — ДЕПЛОЙ
 
 ```bash
-# Проверь TypeScript
+# Проверить что нет ошибок
 npm run build
-
-# Проверь lint
 npm run lint
 
-# Убедись что нет незакоммиченных изменений
-git status
-```
-
-Исправь все ошибки до деплоя.
-
-## 7.2 — Деплой
-
-```bash
+# Задеплоить
 git add .
-git commit -m "feat: этап 3 — конструктор, лента, прохождение, антифрод, начисления"
+git commit -m "feat: этап 3 — конструктор, лента, прохождение на весь экран, антифрод"
 git push origin main
-# Vercel задеплоит автоматически
 ```
 
-## 7.3 — Проверка переменных окружения на Vercel
-
-Vercel Dashboard → Settings → Environment Variables.
-Убедись что все есть, особенно новые:
+После деплоя в Vercel Dashboard → Settings → Environment Variables проверить:
 ```
 NEXT_PUBLIC_SUPABASE_URL       ✅
 NEXT_PUBLIC_SUPABASE_ANON_KEY  ✅
 SUPABASE_SERVICE_ROLE_KEY      ✅
 ```
 
-## 7.4 — Финальная проверка на живом сайте
+Пройти все 4 теста из Части 7 на живом сайте.
 
-После деплоя пройди все 4 теста из Части 6 на живом сайте.
-Особенно важно проверить загрузку медиафайлов — на Vercel это работает иначе чем локально.
+---
+
+# ПОРЯДОК РАЗРАБОТКИ ПО ДНЯМ
+
+```
+День 1:
+  □ Установить зависимости
+  □ Настроить Supabase Storage
+  □ Расширить Prisma схему → npx prisma db push
+  □ types/survey.ts
+  □ lib/storage.ts
+
+День 2:
+  □ lib/antifrod.ts
+  □ lib/survey-feed.ts
+  □ actions/surveys.ts
+
+День 3:
+  □ app/(survey)/layout.tsx             ← новый layout без сайдбара
+  □ app/(survey)/survey/[id]/page.tsx
+  □ app/(survey)/survey/[id]/complete/page.tsx
+
+День 4:
+  □ components/survey-player/QuestionRenderer.tsx
+  □ components/survey-player/SurveyPlayer.tsx
+
+День 5:
+  □ app/(dashboard)/respondent/surveys/page.tsx
+  □ components/respondent/SurveyFeedClient.tsx
+
+День 6:
+  □ Конструктор: SurveyBuilder.tsx
+  □ Конструктор: StepBasic.tsx
+  □ Конструктор: StepQuestions.tsx (самый сложный)
+
+День 7:
+  □ Конструктор: StepAudience.tsx
+  □ Конструктор: StepBudget.tsx
+  □ app/(dashboard)/client/surveys/create/page.tsx
+
+День 8:
+  □ app/(dashboard)/admin/moderation/page.tsx
+
+День 9-10:
+  □ Тестирование всех 4 сценариев
+  □ Исправление багов
+
+День 11:
+  □ npm run build без ошибок
+  □ Деплой на Vercel
+  □ Финальная проверка на живом сайте
+```

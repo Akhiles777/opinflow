@@ -3,24 +3,23 @@
 import * as React from "react";
 import Image from "next/image";
 import { Menu, X } from "lucide-react";
-import type { Role } from "@prisma/client";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import Button from "@/components/ui/Button";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import SmoothHashLink from "@/components/ui/SmoothHashLink";
 import PublicUserMenu from "@/components/layout/PublicUserMenu";
 
-type Props = {
-  user?: {
-    name: string;
-    email: string;
-    image: string | null;
-    role: Role;
-  } | null;
-};
-
-export default function Header({ user = null }: Props) {
+export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const { data: session } = useSession();
+  const user = session?.user
+    ? {
+        name: session.user.name ?? "Пользователь",
+        email: session.user.email ?? "",
+        image: session.user.image ?? null,
+        role: session.user.role,
+      }
+    : null;
   const links = [
     { label: "Главная", href: "#top" },
     { label: "Респондентам", href: "#respondents" },
