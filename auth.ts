@@ -87,6 +87,11 @@ function isDatabaseUnavailable(error: unknown) {
   );
 }
 
+function isEdgeRuntime() {
+  const edgeRuntime = (globalThis as typeof globalThis & { EdgeRuntime?: unknown }).EdgeRuntime;
+  return typeof edgeRuntime !== "undefined" || process.env.NEXT_RUNTIME === "edge";
+}
+
 function getOAuthFallbackEmail(provider: "vk" | "yandex", profileId: string | number) {
   return `${provider}-${profileId}@oauth.potokmneny.local`;
 }
@@ -300,6 +305,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.id = appUser.id;
         token.role = appUser.role;
         token.status = appUser.status;
+      }
+
+      if (isEdgeRuntime()) {
+        return token;
       }
 
       if (token.id || token.email) {
