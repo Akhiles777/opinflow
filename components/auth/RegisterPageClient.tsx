@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { registerAction } from "@/actions/auth";
 import OAuthButtons from "@/components/auth/OAuthButtons";
 
@@ -26,6 +26,8 @@ export default function RegisterPageClient({
 }: Props) {
   const [role, setRole] = useState<Role>(initialRole);
   const [state, formAction, isPending] = useActionState(registerAction, initialState);
+  const formRef = useRef<HTMLFormElement>(null);
+  const successRef = useRef<HTMLDivElement>(null);
 
   const personClient = [
     { value: "CLIENT" as const, title: "Заказчик", text: "Создавать исследования и получать аналитику" },
@@ -39,6 +41,16 @@ export default function RegisterPageClient({
   useEffect(() => {
     setRole(initialRole);
   }, [initialRole]);
+
+  useEffect(() => {
+    if (!state.success) {
+      return;
+    }
+
+    formRef.current?.reset();
+    successRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [state.success]);
+
   return (
     <div className="mx-auto max-w-md rounded-2xl border border-white/8 bg-surface-900 p-6 text-white sm:p-10">
       <p className="text-sm uppercase tracking-[0.25em] text-white/35">Регистрация</p>
@@ -99,7 +111,7 @@ export default function RegisterPageClient({
       )}
       {role === "RESPONDENT" && !vkEnabled && !yandexEnabled ? <div className="mt-5" /> : null}
 
-      <form action={formAction} className="mt-5 grid gap-4">
+      <form ref={formRef} action={formAction} className="mt-5 grid gap-4">
         <input type="hidden" name="role" value={role} />
         <label className="grid gap-2">
           <span className="text-[15px] text-white/55">Имя</span>
@@ -123,7 +135,14 @@ export default function RegisterPageClient({
         </label>
 
         {state.error ? <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-[15px] text-red-400">{state.error}</div> : null}
-        {state.success ? <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-[15px] text-emerald-400">{state.message}</div> : null}
+        {state.success ? (
+          <div
+            ref={successRef}
+            className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-[15px] leading-relaxed text-emerald-400"
+          >
+            {state.message}
+          </div>
+        ) : null}
 
         <button type="submit" disabled={isPending || state.success} className="mt-2 rounded-xl bg-brand px-6 py-3 text-[15px] font-semibold text-white transition-colors hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-60">
           {isPending ? "Создаём аккаунт..." : "Зарегистрироваться"}

@@ -47,6 +47,7 @@ export default function LoginPageClient({
   );
   const [resendMessage, setResendMessage] = React.useState<string | null>(null);
   const [pending, startTransition] = React.useTransition();
+  const [credentialsPending, setCredentialsPending] = React.useState(false);
 
   React.useEffect(() => {
     setRole(initialRole);
@@ -80,6 +81,7 @@ export default function LoginPageClient({
     event.preventDefault();
     setError(null);
     setResendMessage(null);
+    setCredentialsPending(true);
 
     const result = await signIn("credentials", {
       email,
@@ -90,6 +92,7 @@ export default function LoginPageClient({
 
     if (result?.error) {
       setError(errorMap[result.error] ?? "Не удалось выполнить вход");
+      setCredentialsPending(false);
       return;
     }
 
@@ -133,11 +136,11 @@ export default function LoginPageClient({
       <form onSubmit={handleCredentialsLogin} className="grid gap-4">
         <label className="grid gap-2">
           <span className="text-[15px] text-white/55">Email</span>
-          <input value={email} onChange={(event) => setEmail(event.target.value)} type="email" className="h-11 rounded-xl border border-white/10 bg-white/5 px-3 text-[15px] text-white outline-none placeholder:text-white/25" placeholder="mail@example.com" />
+          <input value={email} onChange={(event) => setEmail(event.target.value)} type="email" className="h-11 rounded-xl border border-white/10 bg-white/5 px-3 text-[15px] text-white outline-none placeholder:text-white/25" placeholder="mail@example.com" disabled={credentialsPending} />
         </label>
         <label className="grid gap-2">
           <span className="text-[15px] text-white/55">Пароль</span>
-          <input value={password} onChange={(event) => setPassword(event.target.value)} type="password" className="h-11 rounded-xl border border-white/10 bg-white/5 px-3 text-[15px] text-white outline-none" />
+          <input value={password} onChange={(event) => setPassword(event.target.value)} type="password" className="h-11 rounded-xl border border-white/10 bg-white/5 px-3 text-[15px] text-white outline-none" disabled={credentialsPending} />
         </label>
 
         <div className="flex justify-end">
@@ -158,8 +161,8 @@ export default function LoginPageClient({
           </button>
         ) : null}
 
-        <button type="submit" className="rounded-xl bg-brand px-6 py-3 text-[15px] font-semibold text-white transition-colors hover:bg-brand-dark">
-          Войти
+        <button type="submit" disabled={credentialsPending} className="rounded-xl bg-brand px-6 py-3 text-[15px] font-semibold text-white transition-colors hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-60">
+          {credentialsPending ? "Входим..." : "Войти"}
         </button>
       </form>
 
