@@ -3,7 +3,6 @@
 import * as React from "react";
 import Link from "next/link";
 import { LogOut, LayoutDashboard, User, Wallet, Users, Search, Shield } from "lucide-react";
-import { signOut } from "next-auth/react";
 import type { Role } from "@prisma/client";
 
 type Props = {
@@ -104,14 +103,13 @@ export default function PublicUserMenu({ name, email, image, role }: Props) {
             </Link>
           ))}
           <div className="my-1 h-px bg-site-border" />
-          <button
-            type="button"
-            onClick={() => signOut({ callbackUrl: "/" })}
+          <a
+            href="/logout"
             className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm text-site-body transition-colors hover:bg-site-section hover:text-site-heading"
           >
             <LogOut className="h-4 w-4" />
             Выйти
-          </button>
+          </a>
         </div>
       ) : null}
     </div>
