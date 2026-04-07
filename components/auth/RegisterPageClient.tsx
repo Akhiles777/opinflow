@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
+import { signIn } from "next-auth/react";
 import { registerAction } from "@/actions/auth";
 import OAuthButtons from "@/components/auth/OAuthButtons";
 
@@ -34,6 +35,7 @@ export default function RegisterPageClient({
   const [role, setRole] = useState<Role>(initialRole);
   const [state, setState] = useState<RegisterState>(initialState);
   const [isPending, startTransition] = useTransition();
+  const [isSigningIn, setIsSigningIn] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const successRef = useRef<HTMLDivElement>(null);
 
@@ -60,19 +62,53 @@ export default function RegisterPageClient({
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setState(initialState);
+    setIsSigningIn(false);
 
     const form = event.currentTarget;
     const formData = new FormData(form);
     formData.set("role", role);
+    const submittedPassword = String(formData.get("password") ?? "");
 
     startTransition(async () => {
       const result = await registerAction({}, formData);
+
+      if (!result.success) {
+        setState({
+          success: false,
+          error: result.error ?? "",
+          message: result.message ?? "",
+          email: result.email ?? "",
+        });
+        return;
+      }
+
       setState({
-        success: Boolean(result.success),
-        error: result.error ?? "",
+        success: true,
+        error: "",
         message: result.message ?? "",
         email: result.email ?? "",
       });
+      setIsSigningIn(true);
+
+      const signInResult = await signIn("credentials", {
+        email: result.email ?? "",
+        password: submittedPassword,
+        redirect: false,
+        callbackUrl,
+      });
+
+      if (signInResult?.error) {
+        setIsSigningIn(false);
+        setState({
+          success: true,
+          error: "Аккаунт создан, но автоматический вход не сработал. Войдите вручную.",
+          message: "Аккаунт создан. Теперь можно войти по email и паролю.",
+          email: result.email ?? "",
+        });
+        return;
+      }
+
+      window.location.assign(signInResult?.url ?? callbackUrl);
     });
   }
 
@@ -93,23 +129,36 @@ export default function RegisterPageClient({
           ref={successRef}
           className="mt-6 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-5 text-[15px] leading-relaxed text-emerald-300"
         >
-          <p className="font-semibold text-emerald-200">Аккаунт создан</p>
+          <p className="font-semibold text-emerald-200">
+            {isSigningIn ? "Входим в аккаунт" : "Аккаунт создан"}
+          </p>
           <p className="mt-2">{state.message}</p>
-          <div className="mt-5 grid gap-3 sm:grid-cols-2">
-            <Link
-              href={`/login?role=${role}&callbackUrl=${encodeURIComponent(callbackUrl)}`}
-              className="inline-flex items-center justify-center rounded-xl bg-brand px-5 py-3 text-[15px] font-semibold text-white transition-colors hover:bg-brand-dark"
-            >
-              Перейти ко входу
-            </Link>
-            <button
-              type="button"
-              onClick={() => setState(initialState)}
-              className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-[15px] font-semibold text-white transition-colors hover:bg-white/8"
-            >
-              Зарегистрировать ещё
-            </button>
-          </div>
+          {state.error ? (
+            <div className="mt-4 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-[15px] text-red-300">
+              {state.error}
+            </div>
+          ) : null}
+          {isSigningIn ? (
+            <div className="mt-5 h-1.5 overflow-hidden rounded-full bg-emerald-400/15">
+              <div className="h-full w-1/3 animate-pulse rounded-full bg-gradient-to-r from-emerald-400 via-emerald-300 to-white/80" />
+            </div>
+          ) : (
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              <Link
+                href={`/login?role=${role}&callbackUrl=${encodeURIComponent(callbackUrl)}`}
+                className="inline-flex items-center justify-center rounded-xl bg-brand px-5 py-3 text-[15px] font-semibold text-white transition-colors hover:bg-brand-dark"
+              >
+                Перейти ко входу
+              </Link>
+              <button
+                type="button"
+                onClick={() => setState(initialState)}
+                className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-[15px] font-semibold text-white transition-colors hover:bg-white/8"
+              >
+                Зарегистрировать ещё
+              </button>
+            </div>
+          )}
         </div>
       ) : (
         <>
@@ -169,29 +218,29 @@ export default function RegisterPageClient({
             <input type="hidden" name="role" value={role} />
             <label className="grid gap-2">
               <span className="text-[15px] text-white/55">Имя</span>
-              <input name="name" className="h-11 rounded-xl border border-white/10 bg-white/5 px-3 text-[15px] text-white outline-none placeholder:text-white/25" placeholder="Ваше имя" disabled={isPending} />
+              <input name="name" className="h-11 rounded-xl border border-white/10 bg-white/5 px-3 text-[15px] text-white outline-none placeholder:text-white/25" placeholder="Ваше имя" disabled={isPending || isSigningIn} />
             </label>
             <label className="grid gap-2">
               <span className="text-[15px] text-white/55">Email</span>
-              <input name="email" type="email" className="h-11 rounded-xl border border-white/10 bg-white/5 px-3 text-[15px] text-white outline-none placeholder:text-white/25" placeholder="mail@example.com" disabled={isPending} />
+              <input name="email" type="email" className="h-11 rounded-xl border border-white/10 bg-white/5 px-3 text-[15px] text-white outline-none placeholder:text-white/25" placeholder="mail@example.com" disabled={isPending || isSigningIn} />
             </label>
             <label className="grid gap-2">
               <span className="text-[15px] text-white/55">Пароль</span>
-              <input name="password" type="password" className="h-11 rounded-xl border border-white/10 bg-white/5 px-3 text-[15px] text-white outline-none" placeholder="Минимум 8 символов" disabled={isPending} />
+              <input name="password" type="password" className="h-11 rounded-xl border border-white/10 bg-white/5 px-3 text-[15px] text-white outline-none" placeholder="Минимум 8 символов" disabled={isPending || isSigningIn} />
             </label>
             <label className="grid gap-2">
               <span className="text-[15px] text-white/55">Подтвердите пароль</span>
-              <input name="confirmPassword" type="password" className="h-11 rounded-xl border border-white/10 bg-white/5 px-3 text-[15px] text-white outline-none" disabled={isPending} />
+              <input name="confirmPassword" type="password" className="h-11 rounded-xl border border-white/10 bg-white/5 px-3 text-[15px] text-white outline-none" disabled={isPending || isSigningIn} />
             </label>
             <label className="flex items-start gap-3 rounded-xl border border-white/8 bg-white/5 p-4 text-[15px] text-white/65">
-              <input name="acceptTerms" type="checkbox" className="mt-0.5 accent-brand" disabled={isPending} />
+              <input name="acceptTerms" type="checkbox" className="mt-0.5 accent-brand" disabled={isPending || isSigningIn} />
               <span>Согласен с условиями использования и политикой конфиденциальности</span>
             </label>
 
             {state.error ? <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-[15px] text-red-400">{state.error}</div> : null}
 
-            <button type="submit" disabled={isPending} className="mt-2 rounded-xl bg-brand px-6 py-3 text-[15px] font-semibold text-white transition-colors hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-60">
-              {isPending ? "Создаём аккаунт..." : "Зарегистрироваться"}
+            <button type="submit" disabled={isPending || isSigningIn} className="mt-2 rounded-xl bg-brand px-6 py-3 text-[15px] font-semibold text-white transition-colors hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-60">
+              {isPending ? "Создаём аккаунт..." : isSigningIn ? "Входим..." : "Зарегистрироваться"}
             </button>
           </form>
 

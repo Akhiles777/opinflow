@@ -122,20 +122,12 @@ export async function registerAction(_prevState: ActionState, formData: FormData
         email: normalizedEmail,
         passwordHash,
         role: assignedRole,
-        status: "PENDING_VERIFICATION",
+        status: "ACTIVE",
+        emailVerified: new Date(),
       },
       select: registerUserSelect,
     });
-
-    const token = await prisma.emailToken.create({
-      data: {
-        userId: user.id,
-        type: "EMAIL_VERIFICATION",
-        expiresAt: addHours(new Date(), 24),
-      },
-    });
-
-    await sendVerificationEmail(normalizedEmail, name, token.token);
+    await ensureUserSetup(user.id, assignedRole);
   } catch (error) {
     console.error("[auth][register-action-error]", error);
     return {
@@ -151,8 +143,8 @@ export async function registerAction(_prevState: ActionState, formData: FormData
     email: normalizedEmail,
     message:
       assignedRole === "ADMIN"
-        ? `Аккаунт администратора создан. Письмо отправлено на ${normalizedEmail}. Подтвердите email и затем войдите в систему.`
-        : `Письмо отправлено на ${normalizedEmail}. Проверьте почту и подтвердите аккаунт.`,
+        ? `Аккаунт администратора создан. Выполняем вход и перенаправляем в кабинет.`
+        : `Аккаунт создан. Выполняем вход и перенаправляем в кабинет.`,
   };
 }
 
