@@ -3,7 +3,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import Credentials from "next-auth/providers/credentials";
 import Yandex from "next-auth/providers/yandex";
 import bcrypt from "bcryptjs";
-import type { Role } from "@prisma/client";
+import type { Prisma, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { ensureUserSetup } from "@/lib/user-setup";
 import { resolveManagedRole } from "@/lib/role-utils";
@@ -15,6 +15,36 @@ type AuthUserPayload = {
   status: "ACTIVE" | "PENDING_VERIFICATION" | "BLOCKED";
   image?: string | null;
 };
+
+const authUserSelect = {
+  id: true,
+  email: true,
+  name: true,
+  image: true,
+  passwordHash: true,
+  role: true,
+  status: true,
+  emailVerified: true,
+} satisfies Prisma.UserSelect;
+
+const authTokenUserSelect = {
+  id: true,
+  email: true,
+  name: true,
+  image: true,
+  role: true,
+  status: true,
+} satisfies Prisma.UserSelect;
+
+function clearUserToken(token: Record<string, unknown>) {
+  delete token.id;
+  delete token.role;
+  delete token.status;
+  delete token.email;
+  delete token.name;
+  delete token.picture;
+  delete token.sub;
+}
 
 class BlockedCredentialsError extends CredentialsSignin {
   code = "BLOCKED";
@@ -84,8 +114,10 @@ const providers: NonNullable<NextAuthConfig["providers"]> = [
       try {
         user = await prisma.user.findUnique({
           where: { email: identifier.toLowerCase() },
+          select: authUserSelect,
         });
       } catch (error) {
+        console.error("[auth][credentials-authorize-error]", error);
         if (isDatabaseUnavailable(error)) {
           throw new AuthUnavailableCredentialsError();
         }
@@ -114,6 +146,7 @@ const providers: NonNullable<NextAuthConfig["providers"]> = [
         user = await prisma.user.update({
           where: { id: user.id },
           data: { role: targetRole },
+          select: authUserSelect,
         });
       }
 
@@ -150,6 +183,7 @@ const providers: NonNullable<NextAuthConfig["providers"]> = [
       try {
         let user = await prisma.user.findUnique({
           where: { email },
+          select: authUserSelect,
         });
 
         if (user?.status === "BLOCKED") {
@@ -172,6 +206,7 @@ const providers: NonNullable<NextAuthConfig["providers"]> = [
               status: "ACTIVE",
               emailVerified: new Date(),
             },
+            select: authUserSelect,
           });
         } else {
           user = await prisma.user.update({
@@ -183,6 +218,7 @@ const providers: NonNullable<NextAuthConfig["providers"]> = [
               status: user.status === "PENDING_VERIFICATION" ? "ACTIVE" : user.status,
               emailVerified: user.emailVerified ?? new Date(),
             },
+            select: authUserSelect,
           });
         }
 
@@ -286,7 +322,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         try {
           const dbUser = await prisma.user.findUnique({
             where: token.id ? { id: String(token.id) } : { email: String(token.email) },
-            select: { id: true, email: true, name: true, image: true, role: true, status: true },
+            select: authTokenUserSelect,
           });
 
           if (dbUser) {
@@ -296,8 +332,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             token.picture = dbUser.image;
             token.role = dbUser.role;
             token.status = dbUser.status;
+          } else if (token.id && token.id !== DEMO_ADMIN_ID) {
+            clearUserToken(token);
           }
-        } catch {
+        } catch (error) {
+          console.error("[auth][jwt-sync-error]", error);
           return token;
         }
       }
@@ -305,7 +344,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return token;
     },
     async session({ session, token }) {
-      if (session.user && token.id && token.role) {
+      if (!token.id || !token.role) {
+        return {
+          ...session,
+          user: undefined,
+        } as unknown as typeof session;
+      }
+
+      if (session.user) {
         session.user.id = token.id;
         session.user.email = String(token.email ?? session.user.email ?? "");
         session.user.name = token.name ? String(token.name) : null;

@@ -2,6 +2,7 @@
 
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { sendPasswordResetEmail, sendVerificationEmail } from "@/lib/email";
 import { ensureUserSetup } from "@/lib/user-setup";
@@ -15,9 +16,33 @@ type ActionState = {
   email?: string;
 };
 
+const registerUserSelect = {
+  id: true,
+  email: true,
+  name: true,
+  role: true,
+  status: true,
+} satisfies Prisma.UserSelect;
+
+const verificationUserSelect = {
+  id: true,
+  email: true,
+  name: true,
+  role: true,
+} satisfies Prisma.UserSelect;
+
 function getActionErrorMessage(error: unknown, fallback: string) {
   if (error instanceof Error) {
     const message = error.message.toLowerCase();
+
+    if (
+      message.includes("p2022") ||
+      message.includes("column") ||
+      message.includes("current database") ||
+      message.includes("does not exist")
+    ) {
+      return "Схема базы данных на сервере не совпадает с текущим кодом. Выполните prisma db push для продовой базы.";
+    }
 
     if (message.includes("p6002") || message.includes("api key is invalid")) {
       return "Не удалось подключиться к базе данных. Проверьте DATABASE_URL и настройки подключения.";
@@ -81,7 +106,10 @@ export async function registerAction(_prevState: ActionState, formData: FormData
   const assignedRole = resolveManagedRole(normalizedEmail, role);
 
   try {
-    const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+    const existing = await prisma.user.findUnique({
+      where: { email: normalizedEmail },
+      select: { id: true },
+    });
     if (existing) {
       return { error: "Этот email уже зарегистрирован" };
     }
@@ -96,6 +124,7 @@ export async function registerAction(_prevState: ActionState, formData: FormData
         role: assignedRole,
         status: "PENDING_VERIFICATION",
       },
+      select: registerUserSelect,
     });
 
     const token = await prisma.emailToken.create({
@@ -108,6 +137,7 @@ export async function registerAction(_prevState: ActionState, formData: FormData
 
     await sendVerificationEmail(normalizedEmail, name, token.token);
   } catch (error) {
+    console.error("[auth][register-action-error]", error);
     return {
       error: getActionErrorMessage(
         error,
@@ -133,7 +163,10 @@ export async function resendVerificationAction(email: string): Promise<ActionSta
   }
 
   try {
-    const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+    const user = await prisma.user.findUnique({
+      where: { email: normalizedEmail },
+      select: { id: true, name: true, status: true },
+    });
     if (!user || user.status !== "PENDING_VERIFICATION") {
       return { success: true, message: "Если аккаунт ожидает подтверждения, мы отправили новое письмо." };
     }
@@ -153,6 +186,7 @@ export async function resendVerificationAction(email: string): Promise<ActionSta
 
     await sendVerificationEmail(normalizedEmail, user.name ?? "Пользователь", token.token);
   } catch (error) {
+    console.error("[auth][resend-verification-error]", error);
     return { error: getActionErrorMessage(error, "Не удалось отправить письмо повторно. Попробуйте позже.") };
   }
 
@@ -167,7 +201,10 @@ export async function forgotPasswordAction(_prevState: ActionState, formData: Fo
 
   try {
     const normalizedEmail = result.data.email.toLowerCase();
-    const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+    const user = await prisma.user.findUnique({
+      where: { email: normalizedEmail },
+      select: { id: true, name: true, status: true },
+    });
 
     if (!user || user.status === "BLOCKED") {
       return {
@@ -191,6 +228,7 @@ export async function forgotPasswordAction(_prevState: ActionState, formData: Fo
 
     await sendPasswordResetEmail(normalizedEmail, user.name ?? "Пользователь", token.token);
   } catch (error) {
+    console.error("[auth][forgot-password-error]", error);
     return { error: getActionErrorMessage(error, "Не удалось отправить письмо. Проверьте настройки почты и попробуйте снова.") };
   }
 
@@ -239,7 +277,16 @@ export async function resetPasswordFormAction(_prevState: ActionState, formData:
   try {
     const emailToken = await prisma.emailToken.findUnique({
       where: { token },
-      include: { user: true },
+      select: {
+        id: true,
+        userId: true,
+        type: true,
+        expiresAt: true,
+        usedAt: true,
+        user: {
+          select: verificationUserSelect,
+        },
+      },
     });
 
     if (!emailToken || emailToken.type !== "PASSWORD_RESET") {
@@ -270,6 +317,7 @@ export async function resetPasswordFormAction(_prevState: ActionState, formData:
       }),
     ]);
   } catch (error) {
+    console.error("[auth][reset-password-error]", error);
     return { error: getActionErrorMessage(error, "Не удалось изменить пароль. Попробуйте позже.") };
   }
 
@@ -285,7 +333,16 @@ export async function verifyEmailTokenAction(token: string) {
   try {
     const emailToken = await prisma.emailToken.findUnique({
       where: { token },
-      include: { user: true },
+      select: {
+        id: true,
+        userId: true,
+        type: true,
+        expiresAt: true,
+        usedAt: true,
+        user: {
+          select: verificationUserSelect,
+        },
+      },
     });
 
     if (!emailToken || emailToken.type !== "EMAIL_VERIFICATION") {
@@ -322,6 +379,7 @@ export async function verifyEmailTokenAction(token: string) {
 
     return { success: true };
   } catch (error) {
+    console.error("[auth][verify-email-error]", error);
     return { success: false, error: getActionErrorMessage(error, "Не удалось подтвердить email. Попробуйте позже.") };
   }
 }
