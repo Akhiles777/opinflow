@@ -28,6 +28,8 @@ export default function Header() {
     { label: "Контакты", href: "#contacts" },
   ];
 
+  const gasan = 'gasan'
+
   return (
     <header className="sticky top-0 z-50 bg-site-bg/80 backdrop-blur-xl">
       <div className="h-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto flex justify-between items-center gap-3">
