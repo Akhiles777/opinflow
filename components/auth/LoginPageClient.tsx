@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { resendVerificationAction } from "@/actions/auth";
 import OAuthButtons from "@/components/auth/OAuthButtons";
@@ -29,7 +29,6 @@ type Props = {
 
 export default function LoginPageClient({ vkEnabled, vkAppId, yandexEnabled }: Props) {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const searchError = searchParams.get("error");
   const credentialsCode = searchParams.get("code");
   const modeFromQuery: LoginRole = searchParams.get("role") === "CLIENT" ? "CLIENT" : "RESPONDENT";
@@ -93,8 +92,7 @@ export default function LoginPageClient({ vkEnabled, vkAppId, yandexEnabled }: P
       return;
     }
 
-    router.push(result?.url ?? callbackUrl);
-    router.refresh();
+    window.location.assign(result?.url ?? callbackUrl);
   }
 
   function handleResend() {
