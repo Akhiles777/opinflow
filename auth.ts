@@ -7,7 +7,6 @@ import type { Prisma, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { ensureUserSetup } from "@/lib/user-setup";
 import { resolveManagedRole } from "@/lib/role-utils";
-import { DEMO_ADMIN_ID, getDemoAdminUser, matchesDemoAdmin } from "@/lib/demo-admin";
 
 type AuthUserPayload = {
   id: string;
@@ -105,10 +104,6 @@ const providers: NonNullable<NextAuthConfig["providers"]> = [
 
       const identifier = String(credentials.email).trim();
       const password = String(credentials.password);
-
-      if (matchesDemoAdmin(identifier, password)) {
-        return getDemoAdminUser();
-      }
 
       let user;
       try {
@@ -308,17 +303,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
 
       if (token.id || token.email) {
-        if (token.id === DEMO_ADMIN_ID) {
-          const demoAdmin = getDemoAdminUser();
-          token.id = demoAdmin.id;
-          token.email = demoAdmin.email;
-          token.name = demoAdmin.name;
-          token.picture = demoAdmin.image;
-          token.role = demoAdmin.role;
-          token.status = demoAdmin.status;
-          return token;
-        }
-
         try {
           const dbUser = await prisma.user.findUnique({
             where: token.id ? { id: String(token.id) } : { email: String(token.email) },
@@ -332,7 +316,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             token.picture = dbUser.image;
             token.role = dbUser.role;
             token.status = dbUser.status;
-          } else if (token.id && token.id !== DEMO_ADMIN_ID) {
+          } else if (token.id) {
             clearUserToken(token);
           }
         } catch (error) {

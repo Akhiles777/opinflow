@@ -131,8 +131,8 @@ export default function LoginPageClient({ vkEnabled, vkAppId, yandexEnabled }: P
 
       <form onSubmit={handleCredentialsLogin} className="grid gap-4">
         <label className="grid gap-2">
-          <span className="text-[15px] text-white/55">Email или логин</span>
-          <input value={email} onChange={(event) => setEmail(event.target.value)} type="text" className="h-11 rounded-xl border border-white/10 bg-white/5 px-3 text-[15px] text-white outline-none placeholder:text-white/25" placeholder="mail@example.com или admin" />
+          <span className="text-[15px] text-white/55">Email</span>
+          <input value={email} onChange={(event) => setEmail(event.target.value)} type="email" className="h-11 rounded-xl border border-white/10 bg-white/5 px-3 text-[15px] text-white outline-none placeholder:text-white/25" placeholder="mail@example.com" />
         </label>
         <label className="grid gap-2">
           <span className="text-[15px] text-white/55">Пароль</span>
