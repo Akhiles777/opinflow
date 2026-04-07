@@ -11,8 +11,8 @@ import PublicUserMenu from "@/components/layout/PublicUserMenu";
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
-  const { data: session } = useSession();
-  const user = session?.user
+  const { data: session, status } = useSession();
+  const user = status === "authenticated" && session?.user
     ? {
         name: session.user.name ?? "Пользователь",
         email: session.user.email ?? "",
@@ -27,8 +27,6 @@ export default function Header() {
     { label: "О нас", href: "#about" },
     { label: "Контакты", href: "#contacts" },
   ];
-
-  const gasan = 'gasan'
 
   return (
     <header className="sticky top-0 z-50 bg-site-bg/80 backdrop-blur-xl">

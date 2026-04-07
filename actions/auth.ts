@@ -151,7 +151,7 @@ export async function registerAction(_prevState: ActionState, formData: FormData
     email: normalizedEmail,
     message:
       assignedRole === "ADMIN"
-        ? `Аккаунт администратора создан. Письмо отправлено на ${normalizedEmail}. Подтвердите email и войдите в систему.`
+        ? `Аккаунт администратора создан. Письмо отправлено на ${normalizedEmail}. Подтвердите email и затем войдите в систему.`
         : `Письмо отправлено на ${normalizedEmail}. Проверьте почту и подтвердите аккаунт.`,
   };
 }
