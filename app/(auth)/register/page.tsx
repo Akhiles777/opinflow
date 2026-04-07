@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import RegisterPageClient from "@/components/auth/RegisterPageClient";
 
 function hasOAuthCredentials(clientId: string | undefined, clientSecret: string | undefined) {
@@ -9,24 +8,26 @@ function hasVkClientId(clientId: string | undefined) {
   return Boolean(clientId?.trim() && clientId.trim().length > 3);
 }
 
-function RegisterFallback() {
-  return (
-    <div className="mx-auto max-w-md rounded-2xl border border-white/8 bg-surface-900 p-6 text-white sm:p-10">
-      <p className="text-sm uppercase tracking-[0.25em] text-white/35">Регистрация</p>
-      <h1 className="mt-4 font-display text-3xl text-white">Создайте аккаунт</h1>
-      <p className="mt-3 text-[15px] leading-relaxed text-white/55">Загружаем форму регистрации...</p>
-    </div>
-  );
-}
+type SearchParams = Promise<{
+  role?: string;
+  callbackUrl?: string;
+}>;
 
-export default function RegisterPage() {
+export default async function RegisterPage({ searchParams }: { searchParams: SearchParams }) {
+  const params = await searchParams;
   const vkAppId = process.env.VK_CLIENT_ID?.trim() ?? null;
   const vkEnabled = hasVkClientId(process.env.VK_CLIENT_ID);
   const yandexEnabled = hasOAuthCredentials(process.env.YANDEX_CLIENT_ID, process.env.YANDEX_CLIENT_SECRET);
+  const initialRole = params.role === "CLIENT" ? "CLIENT" : "RESPONDENT";
+  const callbackUrl = params.callbackUrl || "/dashboard";
 
   return (
-    <Suspense fallback={<RegisterFallback />}>
-      <RegisterPageClient vkEnabled={vkEnabled} vkAppId={vkAppId} yandexEnabled={yandexEnabled} />
-    </Suspense>
+    <RegisterPageClient
+      vkEnabled={vkEnabled}
+      vkAppId={vkAppId}
+      yandexEnabled={yandexEnabled}
+      initialRole={initialRole}
+      callbackUrl={callbackUrl}
+    />
   );
 }

@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import LoginPageClient from "@/components/auth/LoginPageClient";
 
 function hasOAuthCredentials(clientId: string | undefined, clientSecret: string | undefined) {
@@ -9,24 +8,31 @@ function hasVkClientId(clientId: string | undefined) {
   return Boolean(clientId?.trim() && clientId.trim().length > 3);
 }
 
-function LoginFallback() {
-  return (
-    <div className="mx-auto max-w-md rounded-2xl border border-white/8 bg-surface-900 p-6 text-white sm:p-10">
-      <p className="text-sm uppercase tracking-[0.25em] text-white/35">Вход</p>
-      <h1 className="mt-4 font-display text-3xl text-white">Добро пожаловать</h1>
-      <p className="mt-3 text-[15px] leading-relaxed text-white/55">Загружаем форму входа...</p>
-    </div>
-  );
-}
+type SearchParams = Promise<{
+  error?: string;
+  code?: string;
+  role?: string;
+  callbackUrl?: string;
+}>;
 
-export default function LoginPage() {
+export default async function LoginPage({ searchParams }: { searchParams: SearchParams }) {
+  const params = await searchParams;
   const vkAppId = process.env.VK_CLIENT_ID?.trim() ?? null;
   const vkEnabled = hasVkClientId(process.env.VK_CLIENT_ID);
   const yandexEnabled = hasOAuthCredentials(process.env.YANDEX_CLIENT_ID, process.env.YANDEX_CLIENT_SECRET);
+  const initialRole = params.role === "CLIENT" ? "CLIENT" : "RESPONDENT";
+  const callbackUrl = params.callbackUrl || "/dashboard";
+  const initialErrorCode =
+    params.error === "CredentialsSignin" && params.code ? params.code : params.error ?? null;
 
   return (
-    <Suspense fallback={<LoginFallback />}>
-      <LoginPageClient vkEnabled={vkEnabled} vkAppId={vkAppId} yandexEnabled={yandexEnabled} />
-    </Suspense>
+    <LoginPageClient
+      vkEnabled={vkEnabled}
+      vkAppId={vkAppId}
+      yandexEnabled={yandexEnabled}
+      initialRole={initialRole}
+      callbackUrl={callbackUrl}
+      initialErrorCode={initialErrorCode}
+    />
   );
 }

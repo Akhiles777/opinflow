@@ -1,6 +1,5 @@
 "use client";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { useActionState, useEffect, useState } from "react";
 import { registerAction } from "@/actions/auth";
 import OAuthButtons from "@/components/auth/OAuthButtons";
@@ -14,13 +13,18 @@ type Props = {
   vkEnabled: boolean;
   vkAppId?: string | null;
   yandexEnabled: boolean;
+  initialRole: Role;
+  callbackUrl: string;
 };
 
-export default function RegisterPageClient({ vkEnabled, vkAppId, yandexEnabled }: Props) {
-  const searchParams = useSearchParams();
-  const roleFromQuery = searchParams.get("role") === "CLIENT" ? "CLIENT" : "RESPONDENT";
-  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
-  const [role, setRole] = useState<Role>(roleFromQuery);
+export default function RegisterPageClient({
+  vkEnabled,
+  vkAppId,
+  yandexEnabled,
+  initialRole,
+  callbackUrl,
+}: Props) {
+  const [role, setRole] = useState<Role>(initialRole);
   const [state, formAction, isPending] = useActionState(registerAction, initialState);
 
   const personClient = [
@@ -33,8 +37,8 @@ export default function RegisterPageClient({ vkEnabled, vkAppId, yandexEnabled }
 
 
   useEffect(() => {
-    setRole(roleFromQuery);
-  }, [roleFromQuery]);
+    setRole(initialRole);
+  }, [initialRole]);
   return (
     <div className="mx-auto max-w-md rounded-2xl border border-white/8 bg-surface-900 p-6 text-white sm:p-10">
       <p className="text-sm uppercase tracking-[0.25em] text-white/35">Регистрация</p>

@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { resendVerificationAction } from "@/actions/auth";
 import OAuthButtons from "@/components/auth/OAuthButtons";
@@ -25,40 +24,42 @@ type Props = {
   vkEnabled: boolean;
   vkAppId?: string | null;
   yandexEnabled: boolean;
+  initialRole: LoginRole;
+  callbackUrl: string;
+  initialErrorCode?: string | null;
 };
 
-export default function LoginPageClient({ vkEnabled, vkAppId, yandexEnabled }: Props) {
-  const searchParams = useSearchParams();
-  const searchError = searchParams.get("error");
-  const credentialsCode = searchParams.get("code");
-  const modeFromQuery: LoginRole = searchParams.get("role") === "CLIENT" ? "CLIENT" : "RESPONDENT";
-  const resolvedErrorCode =
-    searchError === "CredentialsSignin" && credentialsCode ? credentialsCode : searchError;
+export default function LoginPageClient({
+  vkEnabled,
+  vkAppId,
+  yandexEnabled,
+  initialRole,
+  callbackUrl,
+  initialErrorCode,
+}: Props) {
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
-  const [role, setRole] = React.useState<LoginRole>(modeFromQuery);
+  const [role, setRole] = React.useState<LoginRole>(initialRole);
   const [error, setError] = React.useState<string | null>(
-    resolvedErrorCode
-      ? errorMap[resolvedErrorCode] ?? errorMap[searchError ?? ""] ?? "Не удалось выполнить вход"
+    initialErrorCode
+      ? errorMap[initialErrorCode] ?? "Не удалось выполнить вход"
       : null,
   );
   const [resendMessage, setResendMessage] = React.useState<string | null>(null);
   const [pending, startTransition] = React.useTransition();
-  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
-  const initialErrorCode = resolvedErrorCode;
 
   React.useEffect(() => {
-    setRole(modeFromQuery);
-  }, [modeFromQuery]);
+    setRole(initialRole);
+  }, [initialRole]);
 
   React.useEffect(() => {
     setError(
-      resolvedErrorCode
-        ? errorMap[resolvedErrorCode] ?? errorMap[searchError ?? ""] ?? "Не удалось выполнить вход"
+      initialErrorCode
+        ? errorMap[initialErrorCode] ?? "Не удалось выполнить вход"
         : null,
     );
     setResendMessage(null);
-  }, [resolvedErrorCode, searchError]);
+  }, [initialErrorCode]);
 
   React.useEffect(() => {
     setError((currentError) => {
