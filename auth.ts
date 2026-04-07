@@ -321,6 +321,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           }
         } catch (error) {
           console.error("[auth][jwt-sync-error]", error);
+          clearUserToken(token);
           return token;
         }
       }
