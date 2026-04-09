@@ -1,79 +1,99 @@
-import * as React from "react";
+import { notFound } from "next/navigation";
+import Badge from "@/components/dashboard/Badge";
+import ClientSurveyActions from "@/components/dashboard/ClientSurveyActions";
 import PageHeader from "@/components/dashboard/PageHeader";
 import StatCard from "@/components/dashboard/StatCard";
-import Badge from "@/components/dashboard/Badge";
+import { requireRole } from "@/lib/auth-utils";
+import { prisma } from "@/lib/prisma";
+import { getSurveyStatusMeta } from "@/lib/survey-mappers";
 
-const stats = [
-  { label: "Всего ответов", value: "64" },
-  { label: "Конверсия входа", value: "73%" },
-  { label: "Среднее время", value: "5:12" },
-  { label: "Завершили", value: "58" },
-];
+function daysLeft(date: Date | null) {
+  if (!date) return "—";
+  const diff = Math.ceil((date.getTime() - Date.now()) / (24 * 60 * 60 * 1000));
+  return diff > 0 ? `${diff}` : "0";
+}
 
-export default async function ClientSurveyStatsPage({
-  params,
-}: {
-  params: { id: string };
-}) {
-  const { id } = params;
+export default async function ClientSurveyDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const session = await requireRole("CLIENT");
+  const { id } = await params;
+
+  const survey = await prisma.survey.findUnique({
+    where: { id },
+    include: {
+      questions: { orderBy: { order: "asc" } },
+      sessions: {
+        orderBy: { startedAt: "desc" },
+        select: { id: true, status: true, isValid: true, completedAt: true },
+      },
+    },
+  });
+
+  if (!survey || survey.creatorId !== session.user.id) {
+    notFound();
+  }
+
+  const statusMeta = getSurveyStatusMeta(survey.status);
+  const completedCount = survey.sessions.filter((item) => item.status === "COMPLETED" && item.isValid).length;
+  const targetCount = survey.maxResponses ?? 0;
+  const progress = targetCount > 0 ? Math.min((completedCount / targetCount) * 100, 100) : 0;
+  const filledSegments = Math.max(0, Math.min(12, Math.round(progress / (100 / 12))));
+  const spent = survey.budget ? Number(survey.budget) : 0;
 
   return (
-    <div>
+    <div className="space-y-8">
       <PageHeader
-        title={`Статистика опроса: ${id}`}
-        subtitle="Графики и отчёты подключим на Этапе 4 (recharts + PDF)."
-        right={
-          <div className="flex flex-wrap gap-2 lg:justify-end">
-            <Badge variant="active">Активен</Badge>
-            <button type="button" className="rounded-xl border border-dash-border bg-dash-bg px-5 py-3 text-sm font-semibold text-dash-heading hover:bg-dash-card transition-colors">
-              Пауза
-            </button>
-            <button type="button" className="rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white hover:bg-brand-mid transition-colors">
-              Стоп
-            </button>
-          </div>
-        }
+        title={survey.title}
+        subtitle={survey.description ?? "Статистика по опросу, прогресс набора и список вопросов без режима редактирования."}
+        right={<ClientSurveyActions surveyId={survey.id} status={survey.status} />}
       />
 
-      <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
-        {stats.map((s) => (
-          <StatCard key={s.label} label={s.label} value={s.value} />
-        ))}
+      <div className="flex items-center gap-3">
+        <Badge variant={statusMeta.variant}>{statusMeta.label}</Badge>
+        <span className="text-sm text-dash-muted">Создан {new Intl.DateTimeFormat("ru-RU", { day: "2-digit", month: "long", year: "numeric" }).format(survey.createdAt)}</span>
       </div>
 
-      <div className="mt-10 grid grid-cols-1 xl:grid-cols-2 gap-5">
-        <div className="bg-dash-card border border-dash-border rounded-2xl p-6">
-          <p className="text-sm font-semibold text-dash-heading font-body">Динамика ответов</p>
-          <p className="mt-2 text-sm text-dash-muted font-body">
-            Здесь будет LineChart по дням.
-          </p>
-          <div className="mt-6 h-40 rounded-2xl border border-dash-border bg-dash-bg" />
-        </div>
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="Ответов собрано" value={String(completedCount)} />
+        <StatCard label="Из нужных" value={survey.maxResponses ? `${completedCount} / ${survey.maxResponses}` : `${completedCount}`} />
+        <StatCard label="Осталось дней" value={daysLeft(survey.endsAt)} />
+        <StatCard label="Потрачено бюджета" value={`${spent.toLocaleString("ru-RU")} ₽`} />
+      </div>
 
-        <div className="bg-dash-card border border-dash-border rounded-2xl p-6">
-          <p className="text-sm font-semibold text-dash-heading font-body">Демография</p>
-          <p className="mt-2 text-sm text-dash-muted font-body">
-            Здесь будут BarChart по полу и возрасту.
-          </p>
-          <div className="mt-6 h-40 rounded-2xl border border-dash-border bg-dash-bg" />
+      <div className="rounded-2xl border border-dash-border bg-dash-card p-6">
+        <div className="flex items-center justify-between gap-3 text-sm text-dash-muted">
+          <span>Прогресс сбора</span>
+          <span>{completedCount} / {survey.maxResponses ?? "∞"}</span>
+        </div>
+        <div className="mt-4 grid grid-cols-12 gap-1">
+          {Array.from({ length: 12 }, (_, index) => (
+            <div
+              key={`detail-progress-${index}`}
+              className={[
+                "h-3 rounded-full transition-colors",
+                index < filledSegments ? "bg-brand" : "bg-dash-bg",
+              ].join(" ")}
+            />
+          ))}
         </div>
       </div>
 
-      <div className="mt-10 bg-dash-card border border-dash-border rounded-2xl p-6">
-        <p className="text-sm font-semibold text-dash-heading font-body">Открытые ответы</p>
-        <p className="mt-2 text-sm text-dash-muted font-body">
-          Топ-ответы + кнопка ИИ-анализа (OpenRouter) появятся на Этапе 4.
-        </p>
-        <div className="mt-6 flex flex-wrap gap-2">
-          <button type="button" className="rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white hover:bg-brand-mid transition-colors">
-            ИИ-анализ →
-          </button>
-          <button type="button" className="rounded-xl border border-dash-border bg-dash-bg px-5 py-3 text-sm font-semibold text-dash-heading hover:bg-dash-card transition-colors">
-            Скачать отчёт (PDF)
-          </button>
-          <button type="button" className="rounded-xl border border-dash-border bg-dash-bg px-5 py-3 text-sm font-semibold text-dash-heading hover:bg-dash-card transition-colors">
-            Экспорт (Excel)
-          </button>
+      {survey.status === "REJECTED" && survey.moderationNote ? (
+        <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-5 text-red-500">
+          <div className="text-sm font-semibold uppercase tracking-[0.18em]">Причина отклонения</div>
+          <div className="mt-2 text-base text-red-600 dark:text-red-300">{survey.moderationNote}</div>
+        </div>
+      ) : null}
+
+      <div className="rounded-2xl border border-dash-border bg-dash-card p-6">
+        <div className="text-sm font-semibold text-dash-heading">Список вопросов</div>
+        <div className="mt-5 grid gap-3">
+          {survey.questions.map((question, index) => (
+            <div key={question.id} className="rounded-2xl border border-dash-border bg-dash-bg p-4">
+              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-brand">Вопрос {index + 1}</div>
+              <div className="mt-2 text-base font-semibold text-dash-heading">{question.title}</div>
+              {question.description ? <div className="mt-2 text-sm text-dash-muted">{question.description}</div> : null}
+            </div>
+          ))}
         </div>
       </div>
     </div>

@@ -3,44 +3,37 @@ generator client {
 }
 
 datasource db {
-   provider  = "postgresql"
+  provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
 model User {
-  id                 String              @id @default(cuid())
-  email              String              @unique
-  emailVerified      DateTime?
-  name               String?
-  image              String?
-  passwordHash       String?
-  role               Role                @default(RESPONDENT)
-  status             UserStatus          @default(PENDING_VERIFICATION)
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
-  accounts           Account[]
-  sessions           Session[]
-  respondentProfile  RespondentProfile?
-  clientProfile      ClientProfile?
-  wallet             Wallet?
-  surveysCreated     Survey[]            @relation("SurveyCreator")
-  surveyResponses    SurveyResponse[]
-  referralsSent      Referral[]          @relation("ReferralSender")
-  referralsReceived  Referral[]          @relation("ReferralReceiver")
-  emailTokens        EmailToken[]
-
-surveySessions SurveySession[]
-complaintsSent Complaint[]
-
+  id                String              @id @default(cuid())
+  email             String              @unique
+  emailVerified     DateTime?
+  name              String?
+  image             String?
+  passwordHash      String?
+  role              Role                @default(RESPONDENT)
+  status            UserStatus          @default(PENDING_VERIFICATION)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  accounts          Account[]
+  sessions          Session[]
+  respondentProfile RespondentProfile?
+  clientProfile     ClientProfile?
+  wallet            Wallet?
+  surveysCreated    Survey[]            @relation("SurveyCreator")
+  surveyResponses   SurveyResponse[]
+  referralsSent     Referral[]          @relation("ReferralSender")
+  referralsReceived Referral[]          @relation("ReferralReceiver")
+  emailTokens       EmailToken[]
+  surveySessions    SurveySession[]
+  complaintsSent    Complaint[]
 
   @@map("users")
-
 }
-
-
-
-
 
 enum Role {
   RESPONDENT
@@ -150,6 +143,7 @@ model Wallet {
   totalSpent  Decimal       @default(0) @db.Decimal(10, 2)
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
+
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions Transaction[]
 
@@ -187,18 +181,18 @@ enum TransactionStatus {
 }
 
 model Survey {
-  id          String       @id @default(cuid())
-  creatorId   String
-  title       String
-  description String?
-  category    String?
-  status      SurveyStatus @default(DRAFT)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id              String       @id @default(cuid())
+  creatorId       String
+  title           String
+  description     String?
+  category        String?
+  status          SurveyStatus @default(DRAFT)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
   maxResponses    Int?
-  reward          Decimal?   @db.Decimal(10, 2)
+  reward          Decimal?     @db.Decimal(10, 2)
   estimatedTime   Int?
-  budget          Decimal?   @db.Decimal(10, 2)
+  budget          Decimal?     @db.Decimal(10, 2)
   targetGender    String?
   targetAgeMin    Int?
   targetAgeMax    Int?
@@ -208,18 +202,24 @@ model Survey {
   startsAt        DateTime?
   endsAt          DateTime?
   moderationNote  String?
- 
 
-  creator   User             @relation("SurveyCreator", fields: [creatorId], references: [id])
-  responses SurveyResponse[]
-  questions  SurveyQuestion[]  
-  sessions   SurveySession[]   
-  complaints Complaint[]       
-
+  creator    User             @relation("SurveyCreator", fields: [creatorId], references: [id])
+  responses  SurveyResponse[]
+  questions  SurveyQuestion[]
+  sessions   SurveySession[]
+  complaints Complaint[]
 
   @@map("surveys")
 }
 
+enum SurveyStatus {
+  DRAFT
+  PENDING_MODERATION
+  ACTIVE
+  PAUSED
+  COMPLETED
+  REJECTED
+}
 
 model SurveyQuestion {
   id          String       @id @default(cuid())
@@ -234,31 +234,27 @@ model SurveyQuestion {
   settings    Json?
   logic       Json?
   createdAt   DateTime     @default(now())
+
   survey  Survey         @relation(fields: [surveyId], references: [id], onDelete: Cascade)
   answers SurveyAnswer[]
 
   @@map("survey_questions")
-
 }
-
 
 enum QuestionType {
-  SINGLE_CHOICE    // Одиночный выбор — radio кнопки
-  MULTIPLE_CHOICE  // Множественный выбор — чекбоксы
-  SCALE            // Шкала — ползунок
-  MATRIX           // Матрица — таблица с radio
-  RANKING          // Ранжирование — drag-and-drop список
-  OPEN_TEXT        // Открытый ответ — textarea
+  SINGLE_CHOICE
+  MULTIPLE_CHOICE
+  SCALE
+  MATRIX
+  RANKING
+  OPEN_TEXT
 }
-
 
 model SurveySession {
   id          String        @id @default(cuid())
   surveyId    String
   userId      String
-
   status      SessionStatus @default(IN_PROGRESS)
-
   startedAt   DateTime      @default(now())
   completedAt DateTime?
   timeSpent   Int?
@@ -267,44 +263,35 @@ model SurveySession {
   deviceId    String?
   isValid     Boolean       @default(true)
   fraudFlags  String[]
+
   survey  Survey         @relation(fields: [surveyId], references: [id], onDelete: Cascade)
   user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   answers SurveyAnswer[]
 
   @@unique([surveyId, userId])
-
-
   @@map("survey_sessions")
 }
 
 enum SessionStatus {
-  IN_PROGRESS  // Пользователь начал но не закончил
-  COMPLETED    // Успешно завершено
-  ABANDONED    // Бросил на середине (для статистики)
-  REJECTED     // Антифрод заблокировал — деньги не начисляются
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+  REJECTED
 }
-
-
 
 model SurveyAnswer {
   id         String   @id @default(cuid())
   sessionId  String
   questionId String
-
   value      Json
- 
-
   createdAt  DateTime @default(now())
 
   session  SurveySession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   question SurveyQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
   @@unique([sessionId, questionId])
-
-
   @@map("survey_answers")
 }
-
 
 model Complaint {
   id         String          @id @default(cuid())
@@ -312,11 +299,7 @@ model Complaint {
   surveyId   String?
   sessionId  String?
   reason     String
-  
-
   details    String?
-
-
   status     ComplaintStatus @default(PENDING)
   createdAt  DateTime        @default(now())
 
@@ -326,22 +309,11 @@ model Complaint {
   @@map("complaints")
 }
 
-
-
 enum ComplaintStatus {
-  PENDING   // Новая, не рассмотрена
-  REVIEWED  // Взята в работу
-  RESOLVED  // Решена
-  DISMISSED // Отклонена как необоснованная
-}
-
-enum SurveyStatus {
-  DRAFT
-  PENDING_MODERATION
-  ACTIVE
-  PAUSED
-  COMPLETED
-  REJECTED
+  PENDING
+  REVIEWED
+  RESOLVED
+  DISMISSED
 }
 
 model SurveyResponse {
