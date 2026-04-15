@@ -44,6 +44,7 @@ export default async function RespondentSurveysPage({
       : params.tab === "completed"
         ? "completed"
         : "available";
+  const showIntro = inProgress.length === 0 && completed.length === 0;
 
   return (
     <div>
@@ -53,7 +54,14 @@ export default async function RespondentSurveysPage({
       />
 
       <div className="mt-8">
-        <SurveyFeedClient available={available} inProgress={inProgress} completed={completed} initialTab={initialTab} />
+        <SurveyFeedClient
+          userId={session.user.id}
+          available={available}
+          inProgress={inProgress}
+          completed={completed}
+          initialTab={initialTab}
+          showIntro={showIntro}
+        />
       </div>
     </div>
   );

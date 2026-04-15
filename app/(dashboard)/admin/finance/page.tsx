@@ -5,6 +5,7 @@ import StatCard from "@/components/dashboard/StatCard";
 import DataTable, { Column } from "@/components/dashboard/DataTable";
 import Badge from "@/components/dashboard/Badge";
 import EmptyState from "@/components/dashboard/EmptyState";
+import AdminFinanceExportButton from "@/components/dashboard/AdminFinanceExportButton";
 import { formatRub, getAdminFinanceData } from "@/lib/dashboard-data";
 import { requireRole } from "@/lib/auth-utils";
 
@@ -47,9 +48,7 @@ export default async function AdminFinancePage() {
       <div className="mt-10 rounded-2xl border border-dash-border bg-dash-card p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-[15px] font-semibold text-dash-heading font-body">Транзакции</p>
-          <span className="rounded-xl border border-dash-border bg-dash-bg px-4 py-2 text-[15px] font-semibold text-dash-muted">
-            Экспорт подключим позже
-          </span>
+          <AdminFinanceExportButton rows={data.rows} />
         </div>
         <div className="mt-5">
           {data.rows.length > 0 ? (

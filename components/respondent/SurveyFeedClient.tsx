@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import EmptyState from "@/components/dashboard/EmptyState";
+import SurveyIntroModal from "@/components/respondent/SurveyIntroModal";
 
 type AvailableSurvey = {
   id: string;
@@ -45,10 +46,12 @@ type CompletedSurvey = {
 };
 
 type Props = {
+  userId: string;
   available: AvailableSurvey[];
   inProgress: InProgressSurvey[];
   completed: CompletedSurvey[];
   initialTab?: Tab;
+  showIntro?: boolean;
 };
 
 type Tab = "available" | "inprogress" | "completed";
@@ -126,7 +129,14 @@ function SurveyCard({
   );
 }
 
-export default function SurveyFeedClient({ available, inProgress, completed, initialTab = "available" }: Props) {
+export default function SurveyFeedClient({
+  userId,
+  available,
+  inProgress,
+  completed,
+  initialTab = "available",
+  showIntro = false,
+}: Props) {
   const [tab, setTab] = useState<Tab>(initialTab);
 
   useEffect(() => {
@@ -144,6 +154,8 @@ export default function SurveyFeedClient({ available, inProgress, completed, ini
 
   return (
     <div className="space-y-8">
+      <SurveyIntroModal userId={userId} openByDefault={showIntro} />
+
       <div className="flex flex-wrap gap-2">
         {tabItems.map((item) => {
           const active = item.value === tab;
