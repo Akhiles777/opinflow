@@ -30,9 +30,11 @@ const columns: Column<SurveyRow>[] = [
   {
     key: "actions",
     header: "Действия",
-    cell: () => (
+    cell: (row) => (
       <div className="flex flex-wrap gap-3">
-        <span className="text-sm font-semibold text-dash-muted">Открыть скоро</span>
+        <a href={`/client/surveys/${row.id}`} className="text-sm font-semibold text-brand hover:underline">
+          Открыть
+        </a>
       </div>
     ),
   },

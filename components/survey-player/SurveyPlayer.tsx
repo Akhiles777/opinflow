@@ -100,6 +100,12 @@ export default function SurveyPlayer({ survey, existingSessionId }: Props) {
   const filledProgressSegments = Math.max(1, Math.min(10, Math.round(((currentIndex + 1) / Math.max(visibleQuestions.length, 1)) * 10)));
 
   useEffect(() => {
+    if (existingSessionId) {
+      setSessionId(existingSessionId);
+      setStage("PLAYING");
+      return;
+    }
+
     let cancelled = false;
 
     startTransition(async () => {
@@ -119,7 +125,7 @@ export default function SurveyPlayer({ survey, existingSessionId }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [survey.id]);
+  }, [existingSessionId, survey.id]);
 
   useEffect(() => {
     if (currentIndex > 0 && currentIndex >= visibleQuestions.length) {

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { X } from "lucide-react";
 import {
   BarChart3,
@@ -25,12 +25,22 @@ import SignOutButton from "@/components/auth/SignOutButton";
 type NavItem = { label: string; href: string; icon: React.ReactNode };
 type NavSection = { title: string; items: NavItem[] };
 
-function isActive(pathname: string, href: string) {
-  const hrefPath = href.split("?")[0] ?? href;
+function isActive(pathname: string, searchParams: URLSearchParams | null, href: string) {
+  const [hrefPath, hrefQuery] = href.split("?");
   if (href === "/respondent" || href === "/client" || href === "/admin") {
     return pathname === hrefPath;
   }
-  return pathname === hrefPath || pathname.startsWith(hrefPath + "/");
+
+  if (hrefQuery) {
+    const expected = new URLSearchParams(hrefQuery);
+    if (pathname !== hrefPath) {
+      return false;
+    }
+
+    return Array.from(expected.entries()).every(([key, value]) => searchParams?.get(key) === value);
+  }
+
+  return pathname === hrefPath || pathname.startsWith(`${hrefPath}/`);
 }
 
 function roleForPath(pathname: string): "respondent" | "client" | "admin" {
@@ -99,6 +109,7 @@ export default function Sidebar({
   onCloseMobileMenu: () => void;
 }) {
   const pathname = usePathname() ?? "/";
+  const searchParams = useSearchParams();
   const role = roleForPath(pathname);
   const sections = role === "client" ? clientNav : role === "admin" ? adminNav : respondentNav;
 
@@ -146,7 +157,7 @@ export default function Sidebar({
             </p>
             <div className="grid gap-1">
               {section.items.map((item) => {
-                const active = isActive(pathname, item.href);
+                const active = isActive(pathname, searchParams, item.href);
                 return (
                   <a
                     key={item.href + item.label}

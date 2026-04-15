@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import EmptyState from "@/components/dashboard/EmptyState";
 
@@ -14,6 +14,7 @@ type AvailableSurvey = {
   createdAt: Date;
   questions: { id: string }[];
   _count: { sessions: number };
+  recommended: boolean;
 };
 
 type InProgressSurvey = {
@@ -47,6 +48,7 @@ type Props = {
   available: AvailableSurvey[];
   inProgress: InProgressSurvey[];
   completed: CompletedSurvey[];
+  initialTab?: Tab;
 };
 
 type Tab = "available" | "inprogress" | "completed";
@@ -124,8 +126,12 @@ function SurveyCard({
   );
 }
 
-export default function SurveyFeedClient({ available, inProgress, completed }: Props) {
-  const [tab, setTab] = useState<Tab>("available");
+export default function SurveyFeedClient({ available, inProgress, completed, initialTab = "available" }: Props) {
+  const [tab, setTab] = useState<Tab>(initialTab);
+
+  useEffect(() => {
+    setTab(initialTab);
+  }, [initialTab]);
 
   const tabItems = useMemo(
     () => [
@@ -180,7 +186,7 @@ export default function SurveyFeedClient({ available, inProgress, completed }: P
                 maxResponses={survey.maxResponses}
                 href={`/survey/${survey.id}`}
                 actionLabel="Начать →"
-                badge="Доступен"
+                badge={survey.recommended ? "Подходит вам" : "Можно пройти"}
               />
             ))}
           </div>

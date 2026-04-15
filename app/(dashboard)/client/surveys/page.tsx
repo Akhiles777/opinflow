@@ -28,7 +28,6 @@ export default async function ClientSurveysPage() {
       cell: (r) => (
         <div className="flex flex-wrap gap-3">
           <a className="text-sm font-semibold text-brand hover:underline" href={`/client/surveys/${r.id}`}>Статистика</a>
-          <span className="text-sm font-semibold text-dash-muted">Пауза позже</span>
         </div>
       ),
     },

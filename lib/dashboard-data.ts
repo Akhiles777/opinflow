@@ -70,6 +70,7 @@ export async function getDashboardViewer(userId: string): Promise<DashboardViewe
 }
 
 export async function getRespondentOverviewData(userId: string) {
+  const now = new Date();
   const [viewer, wallet, completedCount, availableCount, referralCount, recentTransactions, surveys] =
     await Promise.all([
       getDashboardViewer(userId),
@@ -77,8 +78,19 @@ export async function getRespondentOverviewData(userId: string) {
         where: { userId },
         select: { balance: true },
       }),
-      prisma.surveyResponse.count({ where: { userId } }),
-      prisma.survey.count({ where: { status: "ACTIVE" } }),
+      prisma.surveySession.count({
+        where: { userId, status: "COMPLETED", isValid: true },
+      }),
+      prisma.survey.count({
+        where: {
+          status: "ACTIVE",
+          sessions: { none: { userId } },
+          AND: [
+            { OR: [{ endsAt: null }, { endsAt: { gt: now } }] },
+            { OR: [{ startsAt: null }, { startsAt: { lte: now } }] },
+          ],
+        },
+      }),
       prisma.referral.count({ where: { senderId: userId } }),
       prisma.transaction.findMany({
         where: {
@@ -95,8 +107,17 @@ export async function getRespondentOverviewData(userId: string) {
         orderBy: { createdAt: "desc" },
         take: 4,
         include: {
-          _count: { select: { responses: true } },
-          responses: { where: { userId }, select: { id: true }, take: 1 },
+          sessions: {
+            where: { userId },
+            orderBy: { startedAt: "desc" },
+            take: 1,
+            select: { id: true, status: true, isValid: true },
+          },
+          _count: {
+            select: {
+              sessions: { where: { status: "COMPLETED", isValid: true } },
+            },
+          },
         },
       }),
     ]);
@@ -118,8 +139,13 @@ export async function getRespondentOverviewData(userId: string) {
       id: survey.id,
       category: survey.category || "Исследование",
       title: survey.title,
-      status: survey.responses.length > 0 ? ("completed" as const) : survey.status === "PAUSED" ? ("in-progress" as const) : ("available" as const),
-      meta: `${survey._count.responses} ответов`,
+      status:
+        survey.sessions[0]?.status === "COMPLETED"
+          ? ("completed" as const)
+          : survey.sessions[0]?.status === "IN_PROGRESS" || survey.status === "PAUSED"
+            ? ("in-progress" as const)
+            : ("available" as const),
+      meta: `${survey._count.sessions} ответов`,
     })),
   };
 }
@@ -219,13 +245,17 @@ export async function getClientOverviewData(userId: string) {
       where: { creatorId: userId },
       orderBy: { createdAt: "desc" },
       include: {
-        _count: { select: { responses: true } },
+        _count: {
+          select: {
+            sessions: { where: { status: "COMPLETED", isValid: true } },
+          },
+        },
       },
     }),
   ]);
 
   const activeCount = surveys.filter((survey) => survey.status === "ACTIVE").length;
-  const totalResponses = surveys.reduce((sum, survey) => sum + survey._count.responses, 0);
+  const totalResponses = surveys.reduce((sum, survey) => sum + survey._count.sessions, 0);
   const moderationCount = surveys.filter((survey) => survey.status === "PENDING_MODERATION").length;
 
   return {
@@ -238,7 +268,7 @@ export async function getClientOverviewData(userId: string) {
     surveys: surveys.map((survey) => ({
       id: survey.id,
       title: survey.title,
-      responses: survey._count.responses,
+      responses: survey._count.sessions,
       status: survey.status,
     })),
   };
@@ -249,16 +279,20 @@ export async function getClientSurveysData(userId: string) {
     where: { creatorId: userId },
     orderBy: { createdAt: "desc" },
     include: {
-      _count: { select: { responses: true } },
+      _count: {
+        select: {
+          sessions: { where: { status: "COMPLETED", isValid: true } },
+        },
+      },
     },
   });
 
   return surveys.map((survey) => ({
     id: survey.id,
     title: survey.title,
-    answers: survey._count.responses,
-    progress: `${survey._count.responses} ответов`,
-    budget: "—",
+    answers: survey._count.sessions,
+    progress: survey.maxResponses ? `${survey._count.sessions} / ${survey.maxResponses}` : `${survey._count.sessions} ответов`,
+    budget: survey.budget ? Number(survey.budget) : "—",
     status: mapSurveyStatus(survey.status),
   }));
 }

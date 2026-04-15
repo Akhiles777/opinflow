@@ -3,8 +3,13 @@ import SurveyFeedClient from "@/components/respondent/SurveyFeedClient";
 import { requireRole } from "@/lib/auth-utils";
 import { getCompletedSurveys, getInProgressSurveys, getSurveyFeed } from "@/lib/survey-feed";
 
-export default async function RespondentSurveysPage() {
+export default async function RespondentSurveysPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ tab?: string }>;
+}) {
   const session = await requireRole("RESPONDENT");
+  const params = (await searchParams) ?? {};
   const [availableRaw, inProgressRaw, completedRaw] = await Promise.all([
     getSurveyFeed(session.user.id),
     getInProgressSurveys(session.user.id),
@@ -33,6 +38,13 @@ export default async function RespondentSurveysPage() {
     },
   }));
 
+  const initialTab =
+    params.tab === "mine"
+      ? "inprogress"
+      : params.tab === "completed"
+        ? "completed"
+        : "available";
+
   return (
     <div>
       <PageHeader
@@ -41,7 +53,7 @@ export default async function RespondentSurveysPage() {
       />
 
       <div className="mt-8">
-        <SurveyFeedClient available={available} inProgress={inProgress} completed={completed} />
+        <SurveyFeedClient available={available} inProgress={inProgress} completed={completed} initialTab={initialTab} />
       </div>
     </div>
   );

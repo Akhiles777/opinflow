@@ -12,15 +12,101 @@ function toDate(value: string) {
   return value ? new Date(value) : null;
 }
 
+function roundMoney(value: number) {
+  return Math.round(value * 100) / 100;
+}
+
+function estimateSurveyTime(questions: SurveyDraft["questions"]) {
+  return Math.max(
+    2,
+    questions.reduce((total, question) => {
+      switch (question.type) {
+        case "OPEN_TEXT":
+          return total + 2;
+        case "MATRIX":
+        case "RANKING":
+          return total + 2;
+        default:
+          return total + 1;
+      }
+    }, 0),
+  );
+}
+
+function validateQuestionDraft(draft: SurveyDraft) {
+  for (const question of draft.questions) {
+    if (!question.title.trim()) {
+      return "У каждого вопроса должен быть заполнен заголовок";
+    }
+
+    if (
+      ["SINGLE_CHOICE", "MULTIPLE_CHOICE", "RANKING"].includes(question.type) &&
+      question.options.filter((item) => item.trim()).length < 2
+    ) {
+      return "У вопросов с вариантами должно быть минимум 2 варианта ответа";
+    }
+
+    if (question.type === "MATRIX") {
+      if (question.matrixRows.filter((item) => item.trim()).length < 1) {
+        return "У матричного вопроса должна быть хотя бы одна строка";
+      }
+      if (question.matrixCols.filter((item) => item.trim()).length < 2) {
+        return "У матричного вопроса должно быть минимум 2 столбца";
+      }
+    }
+  }
+
+  return null;
+}
+
+async function canSurveyBeStarted(surveyId: string) {
+  const survey = await prisma.survey.findUnique({
+    where: { id: surveyId },
+    select: {
+      id: true,
+      status: true,
+      startsAt: true,
+      endsAt: true,
+      maxResponses: true,
+    },
+  });
+
+  if (!survey || survey.status !== "ACTIVE") {
+    return { survey: null, error: "Опрос недоступен" as const };
+  }
+
+  const now = new Date();
+  if (survey.startsAt && survey.startsAt > now) {
+    return { survey, error: "Опрос ещё не начался" as const };
+  }
+
+  if (survey.endsAt && survey.endsAt <= now) {
+    return { survey, error: "Срок прохождения опроса уже закончился" as const };
+  }
+
+  if (survey.maxResponses) {
+    const completedCount = await prisma.surveySession.count({
+      where: { surveyId, status: "COMPLETED", isValid: true },
+    });
+
+    if (completedCount >= survey.maxResponses) {
+      return { survey, error: "Опрос уже набрал нужное количество ответов" as const };
+    }
+  }
+
+  return { survey, error: null };
+}
+
 function toQuestionOptions(question: SurveyDraft["questions"][number]) {
   if (question.type === "MATRIX") {
     return {
-      rows: question.matrixRows,
-      cols: question.matrixCols,
+      rows: question.matrixRows.filter((item) => item.trim()),
+      cols: question.matrixCols.filter((item) => item.trim()),
     };
   }
 
-  return question.options.length > 0 ? question.options : null;
+  const options = question.options.map((item) => item.trim()).filter(Boolean);
+  return options.length > 0 ? options : null;
 }
 
 function toJsonValue(value: unknown) {
@@ -30,12 +116,24 @@ function toJsonValue(value: unknown) {
 export async function createSurveyAction(draft: SurveyDraft) {
   const session = await requireRole("CLIENT");
 
-  if (!draft.title.trim()) return { error: "Введите название опроса" };
+  if (draft.title.trim().length < 5) return { error: "Название должно содержать минимум 5 символов" };
+  if (!draft.category.trim()) return { error: "Выберите категорию" };
   if (!draft.questions.length) return { error: "Добавьте хотя бы один вопрос" };
+  const questionError = validateQuestionDraft(draft);
+  if (questionError) return { error: questionError };
   if (draft.maxResponses < 10) return { error: "Минимум 10 респондентов" };
   if (draft.reward < 20) return { error: "Минимальное вознаграждение — 20 ₽" };
+  if (draft.targetAgeMin > draft.targetAgeMax) return { error: "Минимальный возраст не может быть больше максимального" };
+  if (!draft.endsAt) return { error: "Укажите дату окончания" };
 
-  const budget = draft.maxResponses * draft.reward * 1.15;
+  const startsAt = toDate(draft.startsAt);
+  const endsAt = toDate(draft.endsAt);
+  if (startsAt && endsAt && endsAt < startsAt) {
+    return { error: "Дата окончания должна быть позже даты начала" };
+  }
+
+  const estimatedTime = estimateSurveyTime(draft.questions);
+  const budget = roundMoney(draft.maxResponses * draft.reward * 1.15);
   const wallet = await prisma.wallet.findUnique({ where: { userId: session.user.id } });
   if (!wallet) return { error: "Кошелёк не найден" };
   if (Number(wallet.balance) < budget) {
@@ -53,14 +151,15 @@ export async function createSurveyAction(draft: SurveyDraft) {
         maxResponses: draft.maxResponses,
         reward: new Prisma.Decimal(draft.reward),
         budget: new Prisma.Decimal(budget),
+        estimatedTime,
         targetGender: draft.targetGender,
         targetAgeMin: draft.targetAgeMin,
         targetAgeMax: draft.targetAgeMax,
         targetCities: draft.targetCities,
         targetIncomes: draft.targetIncomes,
         targetInterests: draft.targetInterests,
-        startsAt: toDate(draft.startsAt),
-        endsAt: toDate(draft.endsAt),
+        startsAt,
+        endsAt,
       },
     });
 
@@ -70,7 +169,7 @@ export async function createSurveyAction(draft: SurveyDraft) {
         order: index,
         type: question.type,
         title: question.title.trim(),
-        description: question.description || null,
+        description: question.description.trim() || null,
         required: question.required,
         mediaUrl: question.mediaUrl,
         options: toJsonValue(toQuestionOptions(question)),
@@ -103,14 +202,15 @@ export async function createSurveyAction(draft: SurveyDraft) {
   revalidatePath("/client/surveys");
   revalidatePath(`/client/surveys/${survey.id}`);
   revalidatePath("/admin/moderation");
+  revalidatePath("/client");
 
   return { success: true, surveyId: survey.id };
 }
 
 export async function startSurveyAction(surveyId: string) {
   const session = await requireRole("RESPONDENT");
-  const survey = await prisma.survey.findUnique({ where: { id: surveyId } });
-  if (!survey || survey.status !== "ACTIVE") return { error: "Опрос недоступен" };
+  const availability = await canSurveyBeStarted(surveyId);
+  if (availability.error) return { error: availability.error };
 
   const existing = await prisma.surveySession.findUnique({
     where: { surveyId_userId: { surveyId, userId: session.user.id } },
@@ -123,15 +223,30 @@ export async function startSurveyAction(surveyId: string) {
     return { error: "Вы уже проходили этот опрос" };
   }
 
-  const created = await prisma.surveySession.create({
-    data: {
-      surveyId,
-      userId: session.user.id,
-      status: "IN_PROGRESS",
-    },
-  });
+  try {
+    const created = await prisma.surveySession.create({
+      data: {
+        surveyId,
+        userId: session.user.id,
+        status: "IN_PROGRESS",
+      },
+    });
 
-  return { success: true, sessionId: created.id, isResume: false };
+    return { success: true, sessionId: created.id, isResume: false };
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      const concurrent = await prisma.surveySession.findUnique({
+        where: { surveyId_userId: { surveyId, userId: session.user.id } },
+      });
+
+      if (concurrent?.status === "IN_PROGRESS") {
+        return { success: true, sessionId: concurrent.id, isResume: true };
+      }
+      return { error: "Вы уже проходили этот опрос" };
+    }
+
+    throw error;
+  }
 }
 
 export async function completeSurveyAction(params: {
@@ -142,6 +257,8 @@ export async function completeSurveyAction(params: {
   deviceId: string;
 }) {
   const session = await requireRole("RESPONDENT");
+  const availability = await canSurveyBeStarted(params.surveyId);
+  if (availability.error) return { error: availability.error };
   const hdrs = await headers();
   const ip = hdrs.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
   const userAgent = hdrs.get("user-agent") ?? "unknown";
@@ -152,6 +269,9 @@ export async function completeSurveyAction(params: {
   });
 
   if (!survey) return { error: "Опрос не найден" };
+  if (Object.keys(params.answers).length === 0) {
+    return { error: "Нужно ответить хотя бы на один вопрос" };
+  }
 
   const sessionRecord = await prisma.surveySession.findUnique({
     where: { id: params.sessionId },
@@ -236,6 +356,9 @@ export async function completeSurveyAction(params: {
 
   revalidatePath("/respondent/surveys");
   revalidatePath("/respondent/wallet");
+  revalidatePath("/respondent");
+  revalidatePath("/client");
+  revalidatePath("/client/surveys");
   revalidatePath(`/client/surveys/${params.surveyId}`);
 
   return {
@@ -250,6 +373,8 @@ export async function approveSurveyAction(surveyId: string) {
   await prisma.survey.update({ where: { id: surveyId }, data: { status: "ACTIVE", moderationNote: null } });
   revalidatePath("/admin/moderation");
   revalidatePath(`/client/surveys/${surveyId}`);
+  revalidatePath("/client/surveys");
+  revalidatePath("/client");
   revalidatePath("/respondent/surveys");
   return { success: true };
 }
@@ -293,6 +418,8 @@ export async function rejectSurveyAction(surveyId: string, reason: string) {
 
   revalidatePath("/admin/moderation");
   revalidatePath(`/client/surveys/${surveyId}`);
+  revalidatePath("/client/surveys");
+  revalidatePath("/client");
   revalidatePath("/client/wallet");
   return { success: true };
 }
@@ -313,6 +440,8 @@ export async function toggleSurveyPauseAction(surveyId: string) {
   await prisma.survey.update({ where: { id: surveyId }, data: { status: nextStatus } });
 
   revalidatePath(`/client/surveys/${surveyId}`);
+  revalidatePath("/client/surveys");
+  revalidatePath("/client");
   revalidatePath("/respondent/surveys");
   return { success: true, status: nextStatus };
 }
@@ -332,6 +461,8 @@ export async function stopSurveyAction(surveyId: string) {
   await prisma.survey.update({ where: { id: surveyId }, data: { status: "COMPLETED" } });
 
   revalidatePath(`/client/surveys/${surveyId}`);
+  revalidatePath("/client/surveys");
+  revalidatePath("/client");
   revalidatePath("/respondent/surveys");
   revalidatePath("/admin/moderation");
   return { success: true };

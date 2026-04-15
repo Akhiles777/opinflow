@@ -5,33 +5,105 @@ function getAge(date?: Date | null) {
   return Math.floor((Date.now() - date.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
 }
 
+function getMatchScore(
+  survey: {
+    targetGender: string | null;
+    targetAgeMin: number | null;
+    targetAgeMax: number | null;
+    targetCities: string[];
+    targetIncomes: string[];
+    targetInterests: string[];
+  },
+  profile: {
+    gender: string | null;
+    city: string | null;
+    income: string | null;
+    interests: string[];
+  } | null,
+  age: number,
+) {
+  let score = 0;
+
+  if (!survey.targetGender || survey.targetGender === "any") {
+    score += 1;
+  } else if (survey.targetGender === profile?.gender) {
+    score += 3;
+  }
+
+  if (!survey.targetAgeMin && !survey.targetAgeMax) {
+    score += 1;
+  } else {
+    if (!survey.targetAgeMin || age >= survey.targetAgeMin) score += 1;
+    if (!survey.targetAgeMax || age <= survey.targetAgeMax) score += 1;
+  }
+
+  if (survey.targetCities.length === 0) {
+    score += 1;
+  } else if (profile?.city && survey.targetCities.includes(profile.city)) {
+    score += 3;
+  }
+
+  if (survey.targetIncomes.length === 0) {
+    score += 1;
+  } else if (profile?.income && survey.targetIncomes.includes(profile.income)) {
+    score += 2;
+  }
+
+  if (survey.targetInterests.length === 0) {
+    score += 1;
+  } else if ((profile?.interests ?? []).some((interest) => survey.targetInterests.includes(interest))) {
+    score += 2;
+  }
+
+  return score;
+}
+
 export async function getSurveyFeed(userId: string) {
   const profile = await prisma.respondentProfile.findUnique({ where: { userId } });
   const sessions = await prisma.surveySession.findMany({ where: { userId }, select: { surveyId: true } });
   const exclude = sessions.map((session) => session.surveyId);
   const age = getAge(profile?.birthDate);
   const now = new Date();
-
-  return prisma.survey.findMany({
+  const surveys = await prisma.survey.findMany({
     where: {
       status: "ACTIVE",
       id: { notIn: exclude.length > 0 ? exclude : ["_none_"] },
       AND: [
         { OR: [{ endsAt: null }, { endsAt: { gt: now } }] },
         { OR: [{ startsAt: null }, { startsAt: { lte: now } }] },
-        { OR: [{ targetGender: "any" }, { targetGender: null }, { targetGender: profile?.gender ?? null }] },
-        { OR: [{ targetAgeMin: null }, { targetAgeMin: { lte: age } }] },
-        { OR: [{ targetAgeMax: null }, { targetAgeMax: { gte: age } }] },
-        { OR: [{ targetCities: { isEmpty: true } }, profile?.city ? { targetCities: { has: profile.city } } : {}] },
       ],
     },
     include: {
       _count: { select: { sessions: { where: { isValid: true, status: "COMPLETED" } } } },
       questions: { select: { id: true } },
     },
-    orderBy: [{ reward: "desc" }, { createdAt: "desc" }],
-    take: 20,
+    orderBy: [{ createdAt: "desc" }],
+    take: 60,
   });
+
+  return surveys
+    .map((survey) => {
+      const score = getMatchScore(survey, profile, age);
+      return {
+        ...survey,
+        recommended: score >= 8,
+        matchScore: score,
+      };
+    })
+    .sort((left, right) => {
+      if (right.matchScore !== left.matchScore) {
+        return right.matchScore - left.matchScore;
+      }
+
+      const rightReward = Number(right.reward ?? 0);
+      const leftReward = Number(left.reward ?? 0);
+      if (rightReward !== leftReward) {
+        return rightReward - leftReward;
+      }
+
+      return right.createdAt.getTime() - left.createdAt.getTime();
+    })
+    .slice(0, 20);
 }
 
 export async function getInProgressSurveys(userId: string) {

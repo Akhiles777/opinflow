@@ -65,6 +65,7 @@ export default function SurveyBuilder({ balance }: Props) {
       setError(validationError);
       return;
     }
+    setError(null);
     setStep((prev) => Math.min(prev + 1, 4));
   }
 
@@ -76,13 +77,17 @@ export default function SurveyBuilder({ balance }: Props) {
     }
 
     startTransition(async () => {
-      const result = await createSurveyAction(draft);
-      if (result.error || !result.success) {
-        setError(result.error ?? "Не удалось создать опрос");
-        return;
-      }
+      try {
+        const result = await createSurveyAction(draft);
+        if (result.error || !result.success) {
+          setError(result.error ?? "Не удалось создать опрос");
+          return;
+        }
 
-      router.push(`/client/surveys/${result.surveyId}`);
+        router.push(`/client/surveys/${result.surveyId}`);
+      } catch {
+        setError("Не удалось создать опрос. Попробуйте ещё раз.");
+      }
     });
   }
 
@@ -136,7 +141,10 @@ export default function SurveyBuilder({ balance }: Props) {
       <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
         <button
           type="button"
-          onClick={() => setStep((prev) => Math.max(prev - 1, 1))}
+          onClick={() => {
+            setError(null);
+            setStep((prev) => Math.max(prev - 1, 1));
+          }}
           className={[
             "rounded-xl border px-5 py-3 text-sm font-semibold transition-colors",
             step === 1
