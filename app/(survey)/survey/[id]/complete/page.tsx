@@ -35,7 +35,7 @@ export default async function SurveyCompletePage({
         ) : null}
 
         <div className="mt-10 flex flex-col justify-center gap-3 sm:flex-row">
-          <Link href="/respondent/surveys" className="inline-flex items-center justify-center rounded-2xl bg-brand px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-mid">
+          <Link href="/surveys" className="inline-flex items-center justify-center rounded-2xl bg-brand px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-mid">
             Найти новые опросы
           </Link>
           {rewarded ? (

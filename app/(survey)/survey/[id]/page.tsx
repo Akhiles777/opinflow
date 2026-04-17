@@ -51,7 +51,7 @@ export default async function SurveyPage({ params }: { params: Promise<{ id: str
           <p className="mt-3 text-base leading-relaxed text-white/55">
             Этот опрос сейчас не активен, уже завершён или временно недоступен. Вернитесь к ленте и выберите другой.
           </p>
-          <Link href="/respondent/surveys" className="mt-7 inline-flex rounded-2xl border border-white/10 bg-white/6 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/10">
+          <Link href="/surveys" className="mt-7 inline-flex rounded-2xl border border-white/10 bg-white/6 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/10">
             Вернуться к ленте
           </Link>
         </div>
@@ -70,7 +70,7 @@ export default async function SurveyPage({ params }: { params: Promise<{ id: str
         <div className="w-full max-w-xl rounded-3xl border border-white/8 bg-white/4 p-8 text-center shadow-2xl backdrop-blur-sm">
           <h1 className="font-display text-3xl font-bold text-white">Вы уже проходили этот опрос</h1>
           <p className="mt-3 text-base leading-relaxed text-white/55">Ответы по этому исследованию уже отправлены. Можно вернуться в ленту и найти новые задания.</p>
-          <Link href="/respondent/surveys" className="mt-7 inline-flex rounded-2xl border border-white/10 bg-white/6 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/10">
+          <Link href="/surveys" className="mt-7 inline-flex rounded-2xl border border-white/10 bg-white/6 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/10">
             Назад к ленте
           </Link>
         </div>

@@ -54,8 +54,8 @@ const respondentNav: NavSection[] = [
     title: "Респондент",
     items: [
       { label: "Обзор", href: "/respondent", icon: <LayoutDashboard className="w-4 h-4" /> },
-      { label: "Доступные", href: "/respondent/surveys", icon: <ClipboardList className="w-4 h-4" /> },
-      { label: "Мои опросы", href: "/respondent/surveys?tab=mine", icon: <ListChecks className="w-4 h-4" /> },
+      { label: "Лента опросов", href: "/surveys", icon: <ClipboardList className="w-4 h-4" /> },
+      { label: "Мои опросы", href: "/surveys?tab=mine", icon: <ListChecks className="w-4 h-4" /> },
     ],
   },
   {

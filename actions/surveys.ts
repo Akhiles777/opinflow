@@ -461,6 +461,7 @@ export async function completeSurveyAction(params: {
   }
 
   revalidatePath("/respondent/surveys");
+  revalidatePath("/surveys");
   revalidatePath("/respondent/wallet");
   revalidatePath("/respondent");
   revalidatePath("/client");
@@ -482,6 +483,7 @@ export async function approveSurveyAction(surveyId: string) {
   revalidatePath("/client/surveys");
   revalidatePath("/client");
   revalidatePath("/respondent/surveys");
+  revalidatePath("/surveys");
   return { success: true };
 }
 
@@ -549,6 +551,7 @@ export async function toggleSurveyPauseAction(surveyId: string) {
   revalidatePath("/client/surveys");
   revalidatePath("/client");
   revalidatePath("/respondent/surveys");
+  revalidatePath("/surveys");
   return { success: true, status: nextStatus };
 }
 
@@ -570,6 +573,7 @@ export async function stopSurveyAction(surveyId: string) {
   revalidatePath("/client/surveys");
   revalidatePath("/client");
   revalidatePath("/respondent/surveys");
+  revalidatePath("/surveys");
   revalidatePath("/admin/moderation");
   return { success: true };
 }

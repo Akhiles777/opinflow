@@ -58,6 +58,20 @@ function getMatchScore(
   return score;
 }
 
+function getCreatorRating(statuses: string[]) {
+  if (statuses.length === 0) return 4.2;
+
+  const rejected = statuses.filter((status) => status === "REJECTED").length;
+  const completed = statuses.filter((status) => status === "COMPLETED").length;
+  const active = statuses.filter((status) => status === "ACTIVE" || status === "PAUSED").length;
+  const moderation = statuses.filter((status) => status === "PENDING_MODERATION").length;
+
+  const qualityScore = (completed * 1.1 + active * 0.8 + moderation * 0.5 - rejected * 1.3) / statuses.length;
+  const normalized = 4 + qualityScore * 0.8;
+
+  return Math.max(2.5, Math.min(5, Number(normalized.toFixed(1))));
+}
+
 export async function getSurveyFeed(userId: string) {
   const profile = await prisma.respondentProfile.findUnique({ where: { userId } });
   const sessions = await prisma.surveySession.findMany({ where: { userId }, select: { surveyId: true } });
@@ -76,6 +90,17 @@ export async function getSurveyFeed(userId: string) {
     include: {
       _count: { select: { sessions: { where: { isValid: true, status: "COMPLETED" } } } },
       questions: { select: { id: true } },
+      creator: {
+        select: {
+          name: true,
+          clientProfile: { select: { companyName: true } },
+          surveysCreated: {
+            select: { status: true },
+            take: 20,
+            orderBy: { createdAt: "desc" },
+          },
+        },
+      },
     },
     orderBy: [{ createdAt: "desc" }],
     take: 60,
@@ -88,6 +113,8 @@ export async function getSurveyFeed(userId: string) {
         ...survey,
         recommended: score >= 8,
         matchScore: score,
+        creatorName: survey.creator.clientProfile?.companyName || survey.creator.name || "Заказчик",
+        creatorRating: getCreatorRating(survey.creator.surveysCreated.map((item) => item.status)),
       };
     })
     .sort((left, right) => {

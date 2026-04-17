@@ -268,7 +268,7 @@ export default function SurveyPlayer({ survey, existingSessionId }: Props) {
           <h1 className="mt-5 font-display text-3xl font-bold text-white">Не удалось открыть опрос</h1>
           <p className="mt-3 text-base leading-relaxed text-white/55">{error ?? "Попробуйте открыть другой опрос или вернитесь к ленте."}</p>
           <Link
-            href="/respondent/surveys"
+            href="/surveys"
             className="mt-7 inline-flex items-center justify-center rounded-2xl border border-white/10 bg-white/6 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/10"
           >
             Вернуться к ленте
@@ -284,7 +284,7 @@ export default function SurveyPlayer({ survey, existingSessionId }: Props) {
         <div className="w-full max-w-xl rounded-3xl border border-white/8 bg-white/4 p-8 text-center shadow-2xl backdrop-blur-sm">
           <h1 className="font-display text-3xl font-bold text-white">Вопросы не найдены</h1>
           <p className="mt-3 text-base text-white/55">У этого опроса пока нет доступных вопросов для прохождения.</p>
-          <Link href="/respondent/surveys" className="mt-7 inline-flex rounded-2xl border border-white/10 bg-white/6 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/10">
+          <Link href="/surveys" className="mt-7 inline-flex rounded-2xl border border-white/10 bg-white/6 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/10">
             Вернуться к ленте
           </Link>
         </div>

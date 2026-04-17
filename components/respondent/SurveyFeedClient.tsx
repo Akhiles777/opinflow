@@ -9,6 +9,8 @@ type AvailableSurvey = {
   id: string;
   title: string;
   category: string | null;
+  creatorName: string;
+  creatorRating: number;
   reward: number | null;
   estimatedTime: number | null;
   maxResponses: number | null;
@@ -55,6 +57,7 @@ type Props = {
 };
 
 type Tab = "available" | "inprogress" | "completed";
+type SortKey = "recommended" | "date" | "reward" | "time";
 
 function formatDate(date: Date | null) {
   if (!date) return "—";
@@ -64,6 +67,8 @@ function formatDate(date: Date | null) {
 function SurveyCard({
   title,
   category,
+  creatorName,
+  creatorRating,
   reward,
   questionCount,
   estimatedTime,
@@ -75,6 +80,8 @@ function SurveyCard({
 }: {
   title: string;
   category: string | null;
+  creatorName?: string;
+  creatorRating?: number;
   reward: number | null;
   questionCount: number;
   estimatedTime: number | null;
@@ -98,6 +105,17 @@ function SurveyCard({
             <span className="text-sm text-dash-muted">{category || "Без категории"}</span>
           </div>
           <h3 className="mt-3 font-display text-xl text-dash-heading">{title}</h3>
+          {creatorName ? (
+            <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-dash-muted">
+              <span className="truncate">{creatorName}</span>
+              {typeof creatorRating === "number" ? (
+                <span className="inline-flex items-center gap-1 rounded-full border border-dash-border bg-dash-bg px-2.5 py-1 text-xs font-semibold text-dash-heading">
+                  <span className="text-amber-500">★</span>
+                  {creatorRating.toFixed(1)}
+                </span>
+              ) : null}
+            </div>
+          ) : null}
         </div>
         <div className="shrink-0 text-right">
           <div className="font-display text-3xl font-bold text-brand tabular-nums">{reward ? `${reward} ₽` : "—"}</div>
@@ -138,10 +156,35 @@ export default function SurveyFeedClient({
   showIntro = false,
 }: Props) {
   const [tab, setTab] = useState<Tab>(initialTab);
+  const [sort, setSort] = useState<SortKey>("recommended");
 
   useEffect(() => {
     setTab(initialTab);
   }, [initialTab]);
+
+  const sortedAvailable = useMemo(() => {
+    const list = [...available];
+
+    if (sort === "date") {
+      return list.sort((left, right) => right.createdAt.getTime() - left.createdAt.getTime());
+    }
+
+    if (sort === "reward") {
+      return list.sort((left, right) => Number(right.reward ?? 0) - Number(left.reward ?? 0));
+    }
+
+    if (sort === "time") {
+      return list.sort((left, right) => (left.estimatedTime ?? left.questions.length * 2) - (right.estimatedTime ?? right.questions.length * 2));
+    }
+
+    return list.sort((left, right) => {
+      if (Number(right.recommended) !== Number(left.recommended)) {
+        return Number(right.recommended) - Number(left.recommended);
+      }
+
+      return right.createdAt.getTime() - left.createdAt.getTime();
+    });
+  }, [available, sort]);
 
   const tabItems = useMemo(
     () => [
@@ -184,13 +227,44 @@ export default function SurveyFeedClient({
       </div>
 
       {tab === "available" ? (
-        available.length > 0 ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm font-medium text-dash-muted">Сортировка:</span>
+          {[
+            { value: "recommended" as const, label: "Подходящие сначала" },
+            { value: "date" as const, label: "По дате" },
+            { value: "reward" as const, label: "По сумме" },
+            { value: "time" as const, label: "По времени" },
+          ].map((item) => {
+            const active = sort === item.value;
+            return (
+              <button
+                key={item.value}
+                type="button"
+                onClick={() => setSort(item.value)}
+                className={[
+                  "rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
+                  active
+                    ? "border-brand/30 bg-brand/10 text-brand"
+                    : "border-dash-border bg-dash-card text-dash-muted hover:border-dash-body hover:text-dash-heading",
+                ].join(" ")}
+              >
+                {item.label}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+
+      {tab === "available" ? (
+        sortedAvailable.length > 0 ? (
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            {available.map((survey) => (
+            {sortedAvailable.map((survey) => (
               <SurveyCard
                 key={survey.id}
                 title={survey.title}
                 category={survey.category}
+                creatorName={survey.creatorName}
+                creatorRating={survey.creatorRating}
                 reward={survey.reward ? Number(survey.reward) : null}
                 estimatedTime={survey.estimatedTime}
                 questionCount={survey.questions.length}
