@@ -103,7 +103,17 @@ export async function getRespondentOverviewData(userId: string) {
         select: { amount: true, createdAt: true },
       }),
       prisma.survey.findMany({
-        where: { status: { in: ["ACTIVE", "PAUSED", "COMPLETED"] } },
+        where: {
+          status: { in: ["ACTIVE", "PAUSED"] },
+          AND: [
+            { OR: [{ endsAt: null }, { endsAt: { gt: now } }] },
+            { OR: [{ startsAt: null }, { startsAt: { lte: now } }] },
+          ],
+          OR: [
+            { sessions: { some: { userId, status: "IN_PROGRESS" } } },
+            { sessions: { none: { userId } } },
+          ],
+        },
         orderBy: { createdAt: "desc" },
         take: 4,
         include: {
@@ -139,12 +149,9 @@ export async function getRespondentOverviewData(userId: string) {
       id: survey.id,
       category: survey.category || "Исследование",
       title: survey.title,
-      status:
-        survey.sessions[0]?.status === "COMPLETED"
-          ? ("completed" as const)
-          : survey.sessions[0]?.status === "IN_PROGRESS" || survey.status === "PAUSED"
-            ? ("in-progress" as const)
-            : ("available" as const),
+      status: survey.sessions[0]?.status === "IN_PROGRESS" || survey.status === "PAUSED"
+        ? ("in-progress" as const)
+        : ("available" as const),
       meta: `${survey._count.sessions} ответов`,
     })),
   };

@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import EmptyState from "@/components/dashboard/EmptyState";
+import Modal from "@/components/dashboard/Modal";
 import SurveyIntroModal from "@/components/respondent/SurveyIntroModal";
+import { createComplaintAction } from "@/actions/surveys";
 
 type AvailableSurvey = {
   id: string;
@@ -54,6 +56,7 @@ type Props = {
   completed: CompletedSurvey[];
   initialTab?: Tab;
   showIntro?: boolean;
+  mode?: "feed" | "mine";
 };
 
 type Tab = "available" | "inprogress" | "completed";
@@ -62,6 +65,34 @@ type SortKey = "recommended" | "date" | "reward" | "time";
 function formatDate(date: Date | null) {
   if (!date) return "—";
   return new Intl.DateTimeFormat("ru-RU", { day: "2-digit", month: "long", year: "numeric" }).format(date);
+}
+
+function formatElapsed(startedAt: Date, now: number) {
+  const diff = Math.max(0, Math.floor((now - new Date(startedAt).getTime()) / 1000));
+  const hours = Math.floor(diff / 3600);
+  const minutes = Math.floor((diff % 3600) / 60);
+  const seconds = diff % 60;
+
+  if (hours > 0) {
+    return `${hours} ч ${String(minutes).padStart(2, "0")} мин`;
+  }
+
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
+
+function InProgressTimer({ startedAt }: { startedAt: Date }) {
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const interval = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(interval);
+  }, []);
+
+  return (
+    <span className="rounded-full border border-brand/20 bg-brand/10 px-3 py-1 text-xs font-semibold text-brand">
+      Идёт: {formatElapsed(startedAt, now)}
+    </span>
+  );
 }
 
 function SurveyCard({
@@ -154,9 +185,16 @@ export default function SurveyFeedClient({
   completed,
   initialTab = "available",
   showIntro = false,
+  mode = "feed",
 }: Props) {
   const [tab, setTab] = useState<Tab>(initialTab);
   const [sort, setSort] = useState<SortKey>("recommended");
+  const [complaintSessionId, setComplaintSessionId] = useState<string | null>(null);
+  const [complaintReason, setComplaintReason] = useState("");
+  const [complaintDetails, setComplaintDetails] = useState("");
+  const [complaintError, setComplaintError] = useState<string | null>(null);
+  const [complaintSuccess, setComplaintSuccess] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
     setTab(initialTab);
@@ -187,13 +225,52 @@ export default function SurveyFeedClient({
   }, [available, sort]);
 
   const tabItems = useMemo(
-    () => [
-      { value: "available" as const, label: "Доступные", count: available.length },
-      { value: "inprogress" as const, label: "В работе", count: inProgress.length },
-      { value: "completed" as const, label: "Завершённые", count: completed.length },
-    ],
-    [available.length, inProgress.length, completed.length],
+    () =>
+      mode === "mine"
+        ? [
+            { value: "inprogress" as const, label: "В работе", count: inProgress.length },
+            { value: "completed" as const, label: "Завершённые", count: completed.length },
+          ]
+        : [
+            { value: "available" as const, label: "Доступные", count: available.length },
+            { value: "inprogress" as const, label: "В работе", count: inProgress.length },
+            { value: "completed" as const, label: "Завершённые", count: completed.length },
+          ],
+    [available.length, inProgress.length, completed.length, mode],
   );
+
+  const complaintTarget = useMemo(
+    () => completed.find((item) => item.id === complaintSessionId) ?? null,
+    [completed, complaintSessionId],
+  );
+
+  function submitComplaint() {
+    if (!complaintTarget) return;
+
+    setComplaintError(null);
+    setComplaintSuccess(null);
+    startTransition(async () => {
+      const result = await createComplaintAction({
+        surveyId: complaintTarget.survey.id,
+        sessionId: complaintTarget.id,
+        reason: complaintReason,
+        details: complaintDetails,
+      });
+
+      if (result.error) {
+        setComplaintError(result.error);
+        return;
+      }
+
+      setComplaintSuccess("Жалоба отправлена. Мы проверим это прохождение.");
+      setComplaintReason("");
+      setComplaintDetails("");
+      window.setTimeout(() => {
+        setComplaintSessionId(null);
+        setComplaintSuccess(null);
+      }, 900);
+    });
+  }
 
   return (
     <div className="space-y-8">
@@ -293,19 +370,40 @@ export default function SurveyFeedClient({
         inProgress.length > 0 ? (
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             {inProgress.map((session) => (
-              <SurveyCard
-                key={session.id}
-                title={session.survey.title}
-                category={session.survey.category}
-                reward={session.survey.reward ? Number(session.survey.reward) : null}
-                estimatedTime={session.survey.estimatedTime}
-                questionCount={session.survey.questions.length}
-                completedCount={session.survey._count?.sessions ?? 0}
-                maxResponses={session.survey.maxResponses}
-                href={`/survey/${session.survey.id}`}
-                actionLabel="Продолжить →"
-                badge="В процессе"
-              />
+              <div key={session.id} className="rounded-2xl border border-dash-border bg-dash-card p-6 transition-all hover:border-brand/30 hover:shadow-md">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="rounded-full border border-brand/20 bg-brand/10 px-3 py-1 text-xs font-semibold text-brand">
+                        В процессе
+                      </span>
+                      <InProgressTimer startedAt={session.startedAt} />
+                    </div>
+                    <h3 className="mt-3 font-display text-xl text-dash-heading">{session.survey.title}</h3>
+                    <div className="mt-2 text-sm text-dash-muted">
+                      {session.survey.category || "Без категории"} · ~{session.survey.estimatedTime ?? Math.max(session.survey.questions.length * 2, 3)} мин
+                    </div>
+                  </div>
+
+                  <div className="text-right">
+                    <div className="font-display text-3xl font-bold text-brand tabular-nums">
+                      {session.survey.reward ? `${Number(session.survey.reward)} ₽` : "—"}
+                    </div>
+                    <div className="mt-1 text-sm text-dash-muted">
+                      {session.survey._count?.sessions ?? 0} / {session.survey.maxResponses ?? "∞"} ответов
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6 flex justify-end">
+                  <Link
+                    href={`/survey/${session.survey.id}`}
+                    className="inline-flex items-center justify-center rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-mid"
+                  >
+                    Продолжить →
+                  </Link>
+                </div>
+              </div>
             ))}
           </div>
         ) : (
@@ -323,13 +421,28 @@ export default function SurveyFeedClient({
                     <div className="font-semibold text-dash-heading">{item.survey.title}</div>
                     <div className="mt-1 text-sm text-dash-muted">{formatDate(item.completedAt)}</div>
                   </div>
-                  <div className={[
-                    "text-base font-semibold tabular-nums",
-                    item.status === "COMPLETED" && item.isValid ? "text-green-600 dark:text-green-400" : "text-dash-muted",
-                  ].join(" ")}>
-                    {item.status === "COMPLETED" && item.isValid
-                      ? `+${Number(item.survey.reward ?? 0)} ₽`
-                      : "Без начисления"}
+                  <div className="flex flex-wrap items-center gap-3 sm:justify-end">
+                    <div className={[
+                      "text-base font-semibold tabular-nums",
+                      item.status === "COMPLETED" && item.isValid ? "text-green-600 dark:text-green-400" : "text-dash-muted",
+                    ].join(" ")}>
+                      {item.status === "COMPLETED" && item.isValid
+                        ? `+${Number(item.survey.reward ?? 0)} ₽`
+                        : "Без начисления"}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setComplaintError(null);
+                        setComplaintSuccess(null);
+                        setComplaintReason("");
+                        setComplaintDetails("");
+                        setComplaintSessionId(item.id);
+                      }}
+                      className="rounded-xl border border-dash-border bg-dash-bg px-4 py-2 text-sm font-semibold text-dash-heading transition-colors hover:border-brand/30 hover:text-brand"
+                    >
+                      Пожаловаться
+                    </button>
                   </div>
                 </div>
               ))}
@@ -339,6 +452,78 @@ export default function SurveyFeedClient({
           <EmptyState title="Пока нет завершённых опросов" description="После первого завершённого исследования здесь появится история прохождений и начислений." />
         )
       ) : null}
+
+      <Modal
+        open={Boolean(complaintSessionId)}
+        title="Жалоба по прохождению"
+        onClose={() => {
+          setComplaintSessionId(null);
+          setComplaintError(null);
+          setComplaintSuccess(null);
+        }}
+        footer={
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              onClick={() => setComplaintSessionId(null)}
+              className="rounded-xl border border-dash-border bg-dash-card px-5 py-2.5 text-sm font-semibold text-dash-heading transition-colors hover:bg-dash-bg"
+            >
+              Отмена
+            </button>
+            <button
+              type="button"
+              disabled={isPending}
+              onClick={submitComplaint}
+              className="rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-mid disabled:opacity-60"
+            >
+              Отправить жалобу
+            </button>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          <div className="text-sm text-dash-muted">
+            {complaintTarget ? `Опрос: ${complaintTarget.survey.title}` : "Опишите проблему с прохождением"}
+          </div>
+
+          <label className="grid gap-2">
+            <span className="text-sm font-medium text-dash-muted">Причина</span>
+            <select
+              value={complaintReason}
+              onChange={(event) => setComplaintReason(event.target.value)}
+              className="h-12 rounded-xl border border-dash-border bg-dash-bg px-4 text-base text-dash-body outline-none focus:border-brand/40"
+            >
+              <option value="">Выберите причину</option>
+              <option value="Некорректные вопросы">Некорректные вопросы</option>
+              <option value="Техническая проблема">Техническая проблема</option>
+              <option value="Неверное начисление">Неверное начисление</option>
+              <option value="Другое">Другое</option>
+            </select>
+          </label>
+
+          <label className="grid gap-2">
+            <span className="text-sm font-medium text-dash-muted">Подробности</span>
+            <textarea
+              value={complaintDetails}
+              onChange={(event) => setComplaintDetails(event.target.value)}
+              className="min-h-[140px] rounded-xl border border-dash-border bg-dash-bg px-4 py-3 text-base text-dash-body outline-none focus:border-brand/40"
+              placeholder="Кратко опишите, что пошло не так."
+            />
+          </label>
+
+          {complaintError ? (
+            <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm font-medium text-red-500">
+              {complaintError}
+            </div>
+          ) : null}
+
+          {complaintSuccess ? (
+            <div className="rounded-xl border border-green-500/20 bg-green-500/10 p-3 text-sm font-medium text-green-600 dark:text-green-400">
+              {complaintSuccess}
+            </div>
+          ) : null}
+        </div>
+      </Modal>
     </div>
   );
 }

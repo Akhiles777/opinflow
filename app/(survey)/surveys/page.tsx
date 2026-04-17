@@ -20,6 +20,11 @@ export default async function SurveysFeedPage({
   }
 
   const params = (await searchParams) ?? {};
+  if (params.tab === "mine" || params.tab === "completed") {
+    const query = params.tab ? `?tab=${encodeURIComponent(params.tab)}` : "";
+    redirect(`/respondent/surveys${query}`);
+  }
+
   const [availableRaw, inProgressRaw, completedRaw] = await Promise.all([
     getSurveyFeed(session.user.id),
     getInProgressSurveys(session.user.id),
@@ -48,12 +53,7 @@ export default async function SurveysFeedPage({
     },
   }));
 
-  const initialTab =
-    params.tab === "mine"
-      ? "inprogress"
-      : params.tab === "completed"
-        ? "completed"
-        : "available";
+  const initialTab = "available";
   const showIntro = inProgress.length === 0 && completed.length === 0;
 
   return (
@@ -82,13 +82,14 @@ export default async function SurveysFeedPage({
         <div className="mt-8">
           <SurveyFeedClient
             userId={session.user.id}
-            available={available}
-            inProgress={inProgress}
-            completed={completed}
-            initialTab={initialTab}
-            showIntro={showIntro}
-          />
-        </div>
+          available={available}
+          inProgress={inProgress}
+          completed={completed}
+          initialTab={initialTab}
+          showIntro={showIntro}
+          mode="feed"
+        />
+      </div>
       </div>
     </div>
   );

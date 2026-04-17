@@ -577,3 +577,64 @@ export async function stopSurveyAction(surveyId: string) {
   revalidatePath("/admin/moderation");
   return { success: true };
 }
+
+export async function createComplaintAction(params: {
+  surveyId: string;
+  sessionId: string;
+  reason: string;
+  details?: string;
+}) {
+  const session = await requireRole("RESPONDENT");
+
+  if (!params.reason.trim()) {
+    return { error: "Укажите причину жалобы" };
+  }
+
+  const surveySession = await prisma.surveySession.findUnique({
+    where: { id: params.sessionId },
+    select: {
+      id: true,
+      surveyId: true,
+      userId: true,
+      status: true,
+    },
+  });
+
+  if (
+    !surveySession ||
+    surveySession.userId !== session.user.id ||
+    surveySession.surveyId !== params.surveyId ||
+    !["COMPLETED", "REJECTED"].includes(surveySession.status)
+  ) {
+    return { error: "Нельзя отправить жалобу по этому прохождению" };
+  }
+
+  const existingComplaint = await prisma.complaint.findFirst({
+    where: {
+      fromUserId: session.user.id,
+      surveyId: params.surveyId,
+      sessionId: params.sessionId,
+      status: { in: ["PENDING", "REVIEWED"] },
+    },
+    select: { id: true },
+  });
+
+  if (existingComplaint) {
+    return { error: "Жалоба по этому прохождению уже отправлена" };
+  }
+
+  await prisma.complaint.create({
+    data: {
+      fromUserId: session.user.id,
+      surveyId: params.surveyId,
+      sessionId: params.sessionId,
+      reason: params.reason.trim(),
+      details: params.details?.trim() ? params.details.trim() : null,
+    },
+  });
+
+  revalidatePath("/surveys");
+  revalidatePath("/respondent");
+
+  return { success: true };
+}
