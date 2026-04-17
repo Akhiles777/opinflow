@@ -1,5 +1,6 @@
 import * as React from "react";
 import Badge from "@/components/dashboard/Badge";
+import Link from "next/link";
 
 type Status = "available" | "in-progress" | "completed";
 
@@ -12,6 +13,7 @@ type Props = {
   clientRating?: number;
   status: Status;
   meta?: string;
+  link: string
 };
 
 export default function SurveyCard({
@@ -23,6 +25,7 @@ export default function SurveyCard({
   clientRating,
   status,
   meta,
+  link
 }: Props) {
   const statusBadge =
     status === "available"
@@ -33,6 +36,7 @@ export default function SurveyCard({
 
   return (
     <div className="bg-dash-card border border-dash-border rounded-2xl p-6 hover:border-brand/30 hover:shadow-md transition-all duration-200 cursor-pointer group">
+   <Link href={link}>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
@@ -73,6 +77,7 @@ export default function SurveyCard({
           {status === "in-progress" ? "Продолжить →" : "Начать →"}
         </span>
       </div>
+   </Link>
     </div>
   );
 }

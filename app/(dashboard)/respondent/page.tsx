@@ -11,6 +11,9 @@ export default async function RespondentOverviewPage() {
   const session = await requireRole("RESPONDENT");
   const data = await getRespondentOverviewData(session.user.id);
 
+
+
+
   const stats = [
     {
       label: "Текущий баланс",
@@ -51,13 +54,15 @@ export default async function RespondentOverviewPage() {
         {data.surveys.length > 0 ? (
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
             {data.surveys.map((survey) => (
-              <SurveyCard
+               <SurveyCard
                 key={survey.id}
                 category={survey.category}
                 title={survey.title}
                 status={survey.status}
                 meta={survey.meta}
+                link = {`/survey/${survey.id}`}
               />
+     
             ))}
           </div>
         ) : (
