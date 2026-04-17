@@ -103,7 +103,7 @@ export async function getSurveyFeed(userId: string) {
 
       return right.createdAt.getTime() - left.createdAt.getTime();
     })
-    .slice(0, 20);
+    .slice(0, 30);
 }
 
 export async function getInProgressSurveys(userId: string) {

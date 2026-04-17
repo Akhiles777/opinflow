@@ -6,7 +6,10 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth-utils";
 import { checkFraud } from "@/lib/antifrod";
+import { mapSurveyQuestion } from "@/lib/survey-mappers";
+import { uploadSurveyMedia } from "@/lib/storage";
 import type { SurveyDraft } from "@/types/survey";
+import type { LogicRule, Question } from "@/types/survey";
 
 function toDate(value: string) {
   return value ? new Date(value) : null;
@@ -34,7 +37,9 @@ function estimateSurveyTime(questions: SurveyDraft["questions"]) {
 }
 
 function validateQuestionDraft(draft: SurveyDraft) {
-  for (const question of draft.questions) {
+  const questionIds = new Set(draft.questions.map((question) => question.id));
+
+  for (const [index, question] of draft.questions.entries()) {
     if (!question.title.trim()) {
       return "У каждого вопроса должен быть заполнен заголовок";
     }
@@ -52,6 +57,21 @@ function validateQuestionDraft(draft: SurveyDraft) {
       }
       if (question.matrixCols.filter((item) => item.trim()).length < 2) {
         return "У матричного вопроса должно быть минимум 2 столбца";
+      }
+    }
+
+    for (const rule of question.logic) {
+      if (!questionIds.has(rule.ifQuestionId)) {
+        return "В условной логике найден вопрос, которого больше нет в конструкторе";
+      }
+
+      const sourceIndex = draft.questions.findIndex((item) => item.id === rule.ifQuestionId);
+      if (sourceIndex === -1 || sourceIndex >= index) {
+        return "Условная логика может ссылаться только на предыдущие вопросы";
+      }
+
+      if (!rule.value.trim()) {
+        return "Для правил показа и скрытия нужно указать значение сравнения";
       }
     }
   }
@@ -111,6 +131,52 @@ function toQuestionOptions(question: SurveyDraft["questions"][number]) {
 
 function toJsonValue(value: unknown) {
   return (value ?? Prisma.JsonNull) as Prisma.InputJsonValue | typeof Prisma.JsonNull;
+}
+
+function evaluateRule(rule: LogicRule, answer: unknown) {
+  if (rule.operator === "equals") {
+    return String(answer ?? "") === rule.value;
+  }
+
+  if (rule.operator === "not_equals") {
+    return String(answer ?? "") !== rule.value;
+  }
+
+  if (Array.isArray(answer)) {
+    return answer.includes(rule.value);
+  }
+
+  return String(answer ?? "").includes(rule.value);
+}
+
+function getVisibleQuestions(questions: Question[], answers: Record<string, unknown>) {
+  return questions.filter((question) => {
+    if (!question.logic.length) return true;
+
+    return question.logic.every((rule) => {
+      const matched = evaluateRule(rule, answers[rule.ifQuestionId]);
+      return rule.action === "show" ? matched : !matched;
+    });
+  });
+}
+
+function hasAnswer(question: Question, value: unknown) {
+  if (!question.required) return true;
+
+  if (question.type === "MULTIPLE_CHOICE" || question.type === "RANKING") {
+    return Array.isArray(value) && value.length > 0;
+  }
+
+  if (question.type === "MATRIX") {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+    return question.matrixRows.every((row) => Boolean((value as Record<string, unknown>)[row]));
+  }
+
+  if (question.type === "OPEN_TEXT") {
+    return typeof value === "string" && value.trim().length > 0;
+  }
+
+  return value !== undefined && value !== null && value !== "";
 }
 
 export async function createSurveyAction(draft: SurveyDraft) {
@@ -207,6 +273,36 @@ export async function createSurveyAction(draft: SurveyDraft) {
   return { success: true, surveyId: survey.id };
 }
 
+export async function uploadSurveyMediaAction(formData: FormData) {
+  const session = await requireRole("CLIENT");
+  const file = formData.get("file");
+
+  if (!(file instanceof File) || file.size === 0) {
+    return { error: "Выберите изображение для вопроса" };
+  }
+
+  try {
+    const url = await uploadSurveyMedia(session.user.id, file);
+    if (!url) {
+      return { error: "Не удалось загрузить изображение" };
+    }
+
+    return { success: true, url };
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.message === "INVALID_MEDIA_TYPE") {
+        return { error: "Поддерживаются только изображения JPG, PNG и WEBP" };
+      }
+
+      if (error.message === "MEDIA_TOO_LARGE") {
+        return { error: "Изображение должно быть не больше 5 МБ" };
+      }
+    }
+
+    return { error: "Не удалось загрузить изображение. Попробуйте ещё раз." };
+  }
+}
+
 export async function startSurveyAction(surveyId: string) {
   const session = await requireRole("RESPONDENT");
   const availability = await canSurveyBeStarted(surveyId);
@@ -271,6 +367,16 @@ export async function completeSurveyAction(params: {
   if (!survey) return { error: "Опрос не найден" };
   if (Object.keys(params.answers).length === 0) {
     return { error: "Нужно ответить хотя бы на один вопрос" };
+  }
+
+  const mappedQuestions = survey.questions.map(mapSurveyQuestion);
+  const visibleQuestions = getVisibleQuestions(mappedQuestions, params.answers);
+  const firstMissingRequired = visibleQuestions.find((question) =>
+    !hasAnswer(question, params.answers[question.id]),
+  );
+
+  if (firstMissingRequired) {
+    return { error: "Заполните обязательные вопросы перед завершением опроса" };
   }
 
   const sessionRecord = await prisma.surveySession.findUnique({

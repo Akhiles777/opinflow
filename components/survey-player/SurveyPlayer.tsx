@@ -66,6 +66,10 @@ function getDeviceId() {
   return id;
 }
 
+function getProgressStorageKey(surveyId: string) {
+  return `opinflow-survey-progress-${surveyId}`;
+}
+
 function hasAnswer(question: Question, value: unknown) {
   if (!question.required) return true;
 
@@ -98,6 +102,38 @@ export default function SurveyPlayer({ survey, existingSessionId }: Props) {
   const visibleQuestions = useMemo(() => getVisibleQuestions(survey.questions, answers), [survey.questions, answers]);
   const currentQuestion = visibleQuestions[currentIndex] ?? null;
   const filledProgressSegments = Math.max(1, Math.min(10, Math.round(((currentIndex + 1) / Math.max(visibleQuestions.length, 1)) * 10)));
+
+  useEffect(() => {
+    const saved = window.localStorage.getItem(getProgressStorageKey(survey.id));
+    if (!saved) {
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(saved) as {
+        sessionId?: string;
+        currentIndex?: number;
+        answers?: Record<string, unknown>;
+        startedAt?: number;
+      };
+
+      if (parsed.sessionId && existingSessionId && parsed.sessionId !== existingSessionId) {
+        return;
+      }
+
+      if (parsed.answers && typeof parsed.answers === "object") {
+        setAnswers(parsed.answers);
+      }
+      if (typeof parsed.currentIndex === "number") {
+        setCurrentIndex(Math.max(parsed.currentIndex, 0));
+      }
+      if (typeof parsed.startedAt === "number" && Number.isFinite(parsed.startedAt)) {
+        startedAtRef.current = parsed.startedAt;
+      }
+    } catch {
+      window.localStorage.removeItem(getProgressStorageKey(survey.id));
+    }
+  }, [existingSessionId, survey.id]);
 
   useEffect(() => {
     if (existingSessionId) {
@@ -133,6 +169,22 @@ export default function SurveyPlayer({ survey, existingSessionId }: Props) {
     }
   }, [currentIndex, visibleQuestions.length]);
 
+  useEffect(() => {
+    if (!sessionId || stage !== "PLAYING") {
+      return;
+    }
+
+    window.localStorage.setItem(
+      getProgressStorageKey(survey.id),
+      JSON.stringify({
+        sessionId,
+        currentIndex,
+        answers,
+        startedAt: startedAtRef.current,
+      }),
+    );
+  }, [answers, currentIndex, sessionId, stage, survey.id]);
+
   function handleChange(value: unknown) {
     if (!currentQuestion) return;
     setAnswers((prev) => ({ ...prev, [currentQuestion.id]: value }));
@@ -165,6 +217,8 @@ export default function SurveyPlayer({ survey, existingSessionId }: Props) {
         setError(result.error ?? "Не удалось завершить опрос");
         return;
       }
+
+      window.localStorage.removeItem(getProgressStorageKey(survey.id));
 
       const params = new URLSearchParams({
         rewarded: String(result.rewarded),

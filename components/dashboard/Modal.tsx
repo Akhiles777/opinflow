@@ -14,7 +14,7 @@ export default function Modal({ open, title, onClose, children, footer }: Props)
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4 sm:p-6">
       <button
         type="button"
         className="absolute inset-0 bg-black/50"
@@ -22,8 +22,8 @@ export default function Modal({ open, title, onClose, children, footer }: Props)
         aria-label="Закрыть"
       />
 
-      <div className="relative w-full max-w-2xl bg-dash-card border border-dash-border rounded-2xl shadow-xl overflow-hidden">
-        <div className="px-6 py-4 border-b border-dash-border flex items-center justify-between gap-4">
+      <div className="relative flex max-h-[calc(100vh-2rem)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-dash-border bg-dash-card shadow-xl sm:max-h-[calc(100vh-3rem)]">
+        <div className="flex shrink-0 items-center justify-between gap-4 border-b border-dash-border px-6 py-4">
           <div>
             {title ? (
               <p className="font-display text-lg text-dash-heading">{title}</p>
@@ -42,10 +42,10 @@ export default function Modal({ open, title, onClose, children, footer }: Props)
           ) : null}
         </div>
 
-        <div className="p-6 text-sm text-dash-body">{children}</div>
+        <div className="min-h-0 overflow-y-auto p-6 text-sm text-dash-body">{children}</div>
 
         {footer ? (
-          <div className="px-6 py-4 border-t border-dash-border bg-dash-bg">
+          <div className="shrink-0 border-t border-dash-border bg-dash-bg px-6 py-4">
             {footer}
           </div>
         ) : null}
@@ -53,4 +53,3 @@ export default function Modal({ open, title, onClose, children, footer }: Props)
     </div>
   );
 }
-

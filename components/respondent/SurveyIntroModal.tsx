@@ -64,7 +64,7 @@ export default function SurveyIntroModal({ userId, openByDefault }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 sm:p-6">
+    <div className="fixed inset-0 z-[70] flex items-center justify-center overflow-y-auto p-4 sm:p-6">
       <button
         type="button"
         aria-label="Закрыть инструкцию"
@@ -77,7 +77,7 @@ export default function SurveyIntroModal({ userId, openByDefault }: Props) {
 
       <div
         className={[
-          "relative w-full max-w-2xl overflow-hidden rounded-[2rem] border border-white/10 bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.18),_rgba(15,23,42,0.96)_55%)] text-white shadow-2xl transition-all duration-300",
+          "relative flex max-h-[calc(100vh-2rem)] w-full max-w-2xl flex-col overflow-hidden rounded-[2rem] border border-white/10 bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.18),_rgba(15,23,42,0.96)_55%)] text-white shadow-2xl transition-all duration-300 sm:max-h-[calc(100vh-3rem)]",
           visible ? "translate-y-0 scale-100 opacity-100" : "translate-y-4 scale-[0.97] opacity-0",
         ].join(" ")}
       >
@@ -108,7 +108,8 @@ export default function SurveyIntroModal({ userId, openByDefault }: Props) {
           </button>
         </div>
 
-        <div className="grid gap-4 px-6 py-6 sm:grid-cols-2 sm:px-8">
+        <div className="min-h-0 overflow-y-auto px-6 py-6 sm:px-8">
+          <div className="grid gap-4 sm:grid-cols-2">
           <div className="rounded-2xl border border-white/8 bg-white/5 p-5">
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand/15 text-brand-light">
@@ -153,6 +154,7 @@ export default function SurveyIntroModal({ userId, openByDefault }: Props) {
                 Если опрос вам не подходит по содержанию, просто выберите другой из ленты.
               </li>
             </ul>
+          </div>
           </div>
         </div>
 

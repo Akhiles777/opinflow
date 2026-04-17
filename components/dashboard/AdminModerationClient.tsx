@@ -6,9 +6,12 @@ import type { SurveyStatus } from "@prisma/client";
 import Badge from "@/components/dashboard/Badge";
 import DataTable, { type Column } from "@/components/dashboard/DataTable";
 import Modal from "@/components/dashboard/Modal";
+import QuestionRenderer from "@/components/survey-player/QuestionRenderer";
 import { approveSurveyAction, rejectSurveyAction } from "@/actions/surveys";
-import { QUESTION_TYPE_LABELS } from "@/types/survey";
-import { getSurveyStatusMeta } from "@/lib/survey-mappers";
+import { QUESTION_TYPE_LABELS, type Question } from "@/types/survey";
+import { getSurveyStatusMeta, mapSurveyQuestion } from "@/lib/survey-mappers";
+
+type ModerationQuestion = Parameters<typeof mapSurveyQuestion>[0];
 
 type ModerationSurvey = {
   id: string;
@@ -23,12 +26,15 @@ type ModerationSurvey = {
     clientProfile: { companyName: string | null } | null;
   };
   questions: {
-    id: string;
-    title: string;
-    description: string | null;
-    type: keyof typeof QUESTION_TYPE_LABELS;
-    required: boolean;
-    options: unknown;
+    id: ModerationQuestion["id"];
+    title: ModerationQuestion["title"];
+    description: ModerationQuestion["description"];
+    type: ModerationQuestion["type"];
+    required: ModerationQuestion["required"];
+    mediaUrl: ModerationQuestion["mediaUrl"];
+    options: ModerationQuestion["options"];
+    settings: ModerationQuestion["settings"];
+    logic: ModerationQuestion["logic"];
   }[];
 };
 
@@ -50,6 +56,10 @@ export default function AdminModerationClient({ surveys, activeTab }: Props) {
   const [isPending, startTransition] = useTransition();
 
   const current = useMemo(() => surveys.find((survey) => survey.id === previewId || survey.id === rejectId) ?? null, [previewId, rejectId, surveys]);
+  const currentPreviewQuestions = useMemo<Question[]>(
+    () => current?.questions.map((question) => mapSurveyQuestion(question)) ?? [],
+    [current],
+  );
 
   const columns: Column<ModerationSurvey>[] = [
     { key: "title", header: "Название", cell: (survey) => survey.title, className: "max-w-[320px] lg:max-w-[420px]" },
@@ -183,20 +193,44 @@ export default function AdminModerationClient({ surveys, activeTab }: Props) {
               </div>
             </div>
             <div className="space-y-3">
-              {current.questions.map((question, index) => {
-                const options = Array.isArray(question.options) ? (question.options as string[]) : [];
+              {currentPreviewQuestions.map((question, index) => {
+                const sourceQuestionTitles = Object.fromEntries(
+                  currentPreviewQuestions.map((item) => [item.id, item.title || QUESTION_TYPE_LABELS[item.type]]),
+                );
+
                 return (
                   <div key={question.id} className="rounded-2xl border border-dash-border bg-dash-bg p-5">
                     <div className="text-xs font-semibold uppercase tracking-[0.18em] text-brand">{QUESTION_TYPE_LABELS[question.type]}</div>
                     <div className="mt-2 font-semibold text-dash-heading">{index + 1}. {question.title}</div>
                     {question.description ? <div className="mt-2 text-sm text-dash-muted">{question.description}</div> : null}
-                    {options.length > 0 ? (
-                      <div className="mt-3 grid gap-2 text-sm text-dash-body">
-                        {options.map((option) => (
-                          <div key={option} className="rounded-xl border border-dash-border bg-dash-card px-4 py-3">
-                            {option}
-                          </div>
-                        ))}
+                    {question.mediaUrl ? (
+                      <img
+                        src={question.mediaUrl}
+                        alt="Медиа к вопросу"
+                        className="mt-4 max-h-72 w-full rounded-2xl border border-dash-border object-cover"
+                      />
+                    ) : null}
+
+                    <div className="mt-4 pointer-events-none opacity-95">
+                      <QuestionRenderer question={question} value={undefined} onChange={() => undefined} />
+                    </div>
+
+                    {question.logic.length > 0 ? (
+                      <div className="mt-4 rounded-2xl border border-dash-border bg-dash-card p-4">
+                        <div className="text-xs font-semibold uppercase tracking-[0.18em] text-brand">Условная логика</div>
+                        <div className="mt-3 grid gap-2 text-sm text-dash-body">
+                          {question.logic.map((rule, ruleIndex) => (
+                            <div key={`${question.id}-logic-${ruleIndex}`} className="rounded-xl border border-dash-border bg-dash-bg px-4 py-3">
+                              {rule.action === "show" ? "Показывать" : "Скрывать"} вопрос, если ответ на «{sourceQuestionTitles[rule.ifQuestionId] ?? "предыдущий вопрос"}»{" "}
+                              {rule.operator === "equals"
+                                ? "равен"
+                                : rule.operator === "not_equals"
+                                  ? "не равен"
+                                  : "содержит"}{" "}
+                              «{rule.value}»
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     ) : null}
                   </div>

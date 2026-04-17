@@ -47,6 +47,20 @@ export default function SurveyBuilder({ balance }: Props) {
         if (["SINGLE_CHOICE", "MULTIPLE_CHOICE", "RANKING"].includes(question.type) && question.options.filter((item) => item.trim()).length < 2) {
           return "У вопросов с вариантами должно быть минимум 2 варианта ответа";
         }
+        if (question.type === "MATRIX") {
+          if (question.matrixRows.filter((item) => item.trim()).length < 1) {
+            return "У матричного вопроса должна быть хотя бы одна строка";
+          }
+          if (question.matrixCols.filter((item) => item.trim()).length < 2) {
+            return "У матричного вопроса должно быть минимум 2 столбца";
+          }
+        }
+      }
+    }
+
+    if (currentStep === 3) {
+      if (draft.targetAgeMin > draft.targetAgeMax) {
+        return "Минимальный возраст не может быть больше максимального";
       }
     }
 
@@ -54,6 +68,9 @@ export default function SurveyBuilder({ balance }: Props) {
       if (draft.maxResponses < 10) return "Минимум 10 респондентов";
       if (draft.reward < 20) return "Минимальное вознаграждение — 20 ₽";
       if (!draft.endsAt) return "Укажите дату окончания";
+      if (draft.startsAt && draft.endsAt && draft.endsAt < draft.startsAt) {
+        return "Дата окончания должна быть позже даты начала";
+      }
     }
 
     return null;
