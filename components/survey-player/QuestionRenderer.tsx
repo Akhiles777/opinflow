@@ -19,7 +19,7 @@ function RadioMark({ active }: { active: boolean }) {
   return (
     <span className={[
       "flex h-5 w-5 items-center justify-center rounded-full border-2 transition-colors",
-      active ? "border-brand" : "border-white/25",
+      active ? "border-brand" : "border-site-border",
     ].join(" ")}>
       <span className={["h-2.5 w-2.5 rounded-full bg-brand transition-opacity", active ? "opacity-100" : "opacity-0"].join(" ")} />
     </span>
@@ -30,7 +30,7 @@ function CheckboxMark({ active }: { active: boolean }) {
   return (
     <span className={[
       "flex h-5 w-5 items-center justify-center rounded-md border-2 transition-colors",
-      active ? "border-brand bg-brand" : "border-white/25",
+      active ? "border-brand bg-brand" : "border-site-border",
     ].join(" ")}>
       <svg viewBox="0 0 20 20" className={["h-3.5 w-3.5 text-white transition-opacity", active ? "opacity-100" : "opacity-0"].join(" ")} fill="none" stroke="currentColor" strokeWidth="2.4">
         <path d="M4 10l4 4 8-8" />
@@ -53,8 +53,8 @@ export default function QuestionRenderer({ question, value, onChange }: Props) {
               className={[
                 "flex items-center gap-4 rounded-2xl border px-5 py-4 text-left transition-all",
                 active
-                  ? "border-brand bg-brand/10 text-white"
-                  : "border-white/10 bg-white/3 text-white/70 hover:border-white/20",
+                  ? "border-brand bg-brand/10 text-site-heading"
+                  : "border-site-border bg-site-card text-site-body hover:border-brand/30 hover:bg-site-section",
               ].join(" ")}
             >
               <RadioMark active={active} />
@@ -80,8 +80,8 @@ export default function QuestionRenderer({ question, value, onChange }: Props) {
               className={[
                 "flex items-center gap-4 rounded-2xl border px-5 py-4 text-left transition-all",
                 active
-                  ? "border-brand bg-brand/10 text-white"
-                  : "border-white/10 bg-white/3 text-white/70 hover:border-white/20",
+                  ? "border-brand bg-brand/10 text-site-heading"
+                  : "border-site-border bg-site-card text-site-body hover:border-brand/30 hover:bg-site-section",
               ].join(" ")}
             >
               <CheckboxMark active={active} />
@@ -111,7 +111,7 @@ export default function QuestionRenderer({ question, value, onChange }: Props) {
                   "flex h-12 w-12 items-center justify-center rounded-xl border text-base font-semibold transition-all",
                   active
                     ? "scale-110 border-brand bg-brand text-white"
-                    : "border-white/10 bg-white/5 text-white/50 hover:border-white/20 hover:text-white",
+                    : "border-site-border bg-site-card text-site-muted hover:border-brand/30 hover:text-site-heading",
                 ].join(" ")}
               >
                 {item}
@@ -119,7 +119,7 @@ export default function QuestionRenderer({ question, value, onChange }: Props) {
             );
           })}
         </div>
-        <div className="flex items-center justify-between text-xs text-white/30">
+        <div className="flex items-center justify-between text-xs text-site-muted">
           <span>{String(question.settings.minLabel ?? "Минимум")}</span>
           <span>{String(question.settings.maxLabel ?? "Максимум")}</span>
         </div>
@@ -130,13 +130,13 @@ export default function QuestionRenderer({ question, value, onChange }: Props) {
   if (question.type === "MATRIX") {
     const matrixValue = value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, string>) : {};
     return (
-      <div className="overflow-x-auto rounded-2xl border border-white/8 bg-white/3">
-        <table className="min-w-full text-left text-sm text-white/75">
-          <thead className="border-b border-white/8 bg-white/4">
+      <div className="overflow-x-auto rounded-2xl border border-site-border bg-site-card">
+        <table className="min-w-full text-left text-sm text-site-body">
+          <thead className="border-b border-site-border bg-site-section">
             <tr>
-              <th className="px-4 py-3 font-semibold text-white/45">Критерий</th>
+              <th className="px-4 py-3 font-semibold text-site-muted">Критерий</th>
               {question.matrixCols.map((column) => (
-                <th key={column} className="px-4 py-3 text-center font-semibold text-white/45">
+                <th key={column} className="px-4 py-3 text-center font-semibold text-site-muted">
                   {column}
                 </th>
               ))}
@@ -144,8 +144,8 @@ export default function QuestionRenderer({ question, value, onChange }: Props) {
           </thead>
           <tbody>
             {question.matrixRows.map((row) => (
-              <tr key={row} className="border-b border-white/6 last:border-b-0">
-                <td className="px-4 py-4 font-medium text-white">{row}</td>
+              <tr key={row} className="border-b border-site-border last:border-b-0">
+                <td className="px-4 py-4 font-medium text-site-heading">{row}</td>
                 {question.matrixCols.map((column) => {
                   const active = matrixValue[row] === column;
                   return (
@@ -173,17 +173,17 @@ export default function QuestionRenderer({ question, value, onChange }: Props) {
     return (
       <div className="grid gap-3">
         {current.map((option, index) => (
-          <div key={option} className="group flex items-center gap-3 rounded-xl border border-white/10 bg-white/3 px-5 py-4 text-white/75">
+          <div key={option} className="group flex items-center gap-3 rounded-xl border border-site-border bg-site-card px-5 py-4 text-site-body">
             <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand/20 text-sm font-semibold text-brand">
               {index + 1}
             </span>
-            <span className="flex-1 text-base text-white">{option}</span>
+            <span className="flex-1 text-base text-site-heading">{option}</span>
             <div className="flex items-center gap-2 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
               <button
                 type="button"
                 disabled={index === 0}
                 onClick={() => onChange(moveItem(current, index, index - 1))}
-                className="rounded-lg border border-white/10 px-2.5 py-1.5 text-sm text-white/70 transition-colors hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
+                className="rounded-lg border border-site-border px-2.5 py-1.5 text-sm text-site-muted transition-colors hover:border-brand/30 hover:text-site-heading disabled:cursor-not-allowed disabled:opacity-30"
               >
                 ▲
               </button>
@@ -191,7 +191,7 @@ export default function QuestionRenderer({ question, value, onChange }: Props) {
                 type="button"
                 disabled={index === current.length - 1}
                 onClick={() => onChange(moveItem(current, index, index + 1))}
-                className="rounded-lg border border-white/10 px-2.5 py-1.5 text-sm text-white/70 transition-colors hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
+                className="rounded-lg border border-site-border px-2.5 py-1.5 text-sm text-site-muted transition-colors hover:border-brand/30 hover:text-site-heading disabled:cursor-not-allowed disabled:opacity-30"
               >
                 ▼
               </button>
@@ -212,9 +212,9 @@ export default function QuestionRenderer({ question, value, onChange }: Props) {
         maxLength={maxLength}
         placeholder={String(question.settings.placeholder ?? "Введите ваш ответ...")}
         onChange={(event) => onChange(event.target.value)}
-        className="min-h-[180px] w-full rounded-xl border border-white/10 bg-white/5 px-5 py-4 text-base text-white outline-none transition-colors placeholder:text-white/25 focus:border-brand/50"
+        className="min-h-[180px] w-full rounded-xl border border-site-border bg-site-card px-5 py-4 text-base text-site-heading outline-none transition-colors placeholder:text-site-muted focus:border-brand/50"
       />
-      <div className="text-right text-xs text-white/25">
+      <div className="text-right text-xs text-site-muted">
         {textValue.length} / {maxLength}
       </div>
     </div>
