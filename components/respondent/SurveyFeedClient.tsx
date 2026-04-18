@@ -305,7 +305,7 @@ export default function SurveyFeedClient({
 
       {tab === "available" ? (
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm font-medium text-dash-muted">Сортировка:</span>
+          <span className="text-2xl font-medium text-dash-muted">Сортировка:</span>
           {[
             { value: "recommended" as const, label: "Подходящие сначала" },
             { value: "date" as const, label: "По дате" },
