@@ -16,7 +16,7 @@ type AvailableSurvey = {
   reward: number | null;
   estimatedTime: number | null;
   maxResponses: number | null;
-  createdAt: Date;
+  createdAt: Date | string;
   questions: { id: string }[];
   _count: { sessions: number };
   recommended: boolean;
@@ -24,7 +24,7 @@ type AvailableSurvey = {
 
 type InProgressSurvey = {
   id: string;
-  startedAt: Date;
+  startedAt: Date | string;
   survey: {
     id: string;
     title: string;
@@ -40,7 +40,7 @@ type InProgressSurvey = {
 type CompletedSurvey = {
   id: string;
   status: "COMPLETED" | "REJECTED";
-  completedAt: Date | null;
+  completedAt: Date | string | null;
   isValid: boolean;
   survey: {
     id: string;
@@ -62,13 +62,22 @@ type Props = {
 type Tab = "available" | "inprogress" | "completed";
 type SortKey = "recommended" | "date" | "reward" | "time";
 
-function formatDate(date: Date | null) {
-  if (!date) return "—";
-  return new Intl.DateTimeFormat("ru-RU", { day: "2-digit", month: "long", year: "numeric" }).format(date);
+function toSafeDate(value: Date | string | null | undefined) {
+  if (!value) return null;
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
 }
 
-function formatElapsed(startedAt: Date, now: number) {
-  const diff = Math.max(0, Math.floor((now - new Date(startedAt).getTime()) / 1000));
+function formatDate(date: Date | string | null) {
+  const safeDate = toSafeDate(date);
+  if (!safeDate) return "—";
+  return new Intl.DateTimeFormat("ru-RU", { day: "2-digit", month: "long", year: "numeric" }).format(safeDate);
+}
+
+function formatElapsed(startedAt: Date | string, now: number) {
+  const started = toSafeDate(startedAt);
+  if (!started) return "0:00";
+  const diff = Math.max(0, Math.floor((now - started.getTime()) / 1000));
   const hours = Math.floor(diff / 3600);
   const minutes = Math.floor((diff % 3600) / 60);
   const seconds = diff % 60;
@@ -80,7 +89,7 @@ function formatElapsed(startedAt: Date, now: number) {
   return `${minutes}:${String(seconds).padStart(2, "0")}`;
 }
 
-function InProgressTimer({ startedAt }: { startedAt: Date }) {
+function InProgressTimer({ startedAt }: { startedAt: Date | string }) {
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -204,7 +213,10 @@ export default function SurveyFeedClient({
     const list = [...available];
 
     if (sort === "date") {
-      return list.sort((left, right) => right.createdAt.getTime() - left.createdAt.getTime());
+      return list.sort(
+        (left, right) =>
+          (toSafeDate(right.createdAt)?.getTime() ?? 0) - (toSafeDate(left.createdAt)?.getTime() ?? 0),
+      );
     }
 
     if (sort === "reward") {
@@ -220,7 +232,7 @@ export default function SurveyFeedClient({
         return Number(right.recommended) - Number(left.recommended);
       }
 
-      return right.createdAt.getTime() - left.createdAt.getTime();
+      return (toSafeDate(right.createdAt)?.getTime() ?? 0) - (toSafeDate(left.createdAt)?.getTime() ?? 0);
     });
   }, [available, sort]);
 
