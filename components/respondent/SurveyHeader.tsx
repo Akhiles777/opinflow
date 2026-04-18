@@ -70,7 +70,7 @@ export default function SurveyHeader() {
             {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
           <div className="hidden items-center gap-2 lg:flex">
-            <ThemeToggle />
+          
             {user ? (
               <PublicUserMenu name={user.name} email={user.email} image={user.image} role={user.role} />
             ) : (
@@ -95,7 +95,7 @@ export default function SurveyHeader() {
       >
         <div className="mx-auto flex  max-w-7xl flex-col gap-3 px-4 py-4 sm:px-6">
           <div className="flex justify-end sm:hidden">
-            <ThemeToggle />
+           
           </div>
           <nav className="grid gap-2">
             {links.map((link) => (
