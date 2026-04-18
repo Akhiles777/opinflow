@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { isPrismaSchemaMismatchError } from "@/lib/prisma-errors";
 
 function getAge(date?: Date | null) {
   if (!date) return 0;
@@ -105,55 +106,183 @@ function getCreatorRating(statuses: string[]) {
 }
 
 export async function getSurveyFeed(userId: string) {
-  const profile = await prisma.respondentProfile.findUnique({
-    where: { userId },
-    select: {
-      birthDate: true,
-      gender: true,
-      city: true,
-      income: true,
-      interests: true,
-      hasChildren: true,
-      employmentStatus: true,
-      industry: true,
-      maritalStatus: true,
-    },
-  });
+  let profile: {
+    birthDate: Date | null;
+    gender: string | null;
+    city: string | null;
+    income: string | null;
+    interests: string[];
+    hasChildren?: string | null;
+    employmentStatus?: string | null;
+    industry?: string | null;
+    maritalStatus?: string | null;
+  } | null = null;
+
+  try {
+    profile = await prisma.respondentProfile.findUnique({
+      where: { userId },
+      select: {
+        birthDate: true,
+        gender: true,
+        city: true,
+        income: true,
+        interests: true,
+        hasChildren: true,
+        employmentStatus: true,
+        industry: true,
+        maritalStatus: true,
+      },
+    });
+  } catch (error) {
+    if (!isPrismaSchemaMismatchError(error)) {
+      throw error;
+    }
+
+    profile = await prisma.respondentProfile.findUnique({
+      where: { userId },
+      select: {
+        birthDate: true,
+        gender: true,
+        city: true,
+        income: true,
+        interests: true,
+      },
+    });
+  }
   const sessions = await prisma.surveySession.findMany({ where: { userId }, select: { surveyId: true } });
   const exclude = sessions.map((session) => session.surveyId);
   const age = getAge(profile?.birthDate);
   const now = new Date();
-  const surveys = await prisma.survey.findMany({
-    where: {
-      status: "ACTIVE",
-      id: { notIn: exclude.length > 0 ? exclude : ["_none_"] },
-      AND: [
-        { OR: [{ endsAt: null }, { endsAt: { gt: now } }] },
-        { OR: [{ startsAt: null }, { startsAt: { lte: now } }] },
-      ],
-    },
-    include: {
-      _count: { select: { sessions: { where: { isValid: true, status: "COMPLETED" } } } },
-      questions: { select: { id: true } },
-      creator: {
-        select: {
-          name: true,
-          clientProfile: { select: { companyName: true } },
-          surveysCreated: {
-            select: { status: true },
-            take: 20,
-            orderBy: { createdAt: "desc" },
+  let surveys: Array<{
+    id: string;
+    title: string;
+    category: string | null;
+    reward: unknown;
+    estimatedTime: number | null;
+    maxResponses: number | null;
+    createdAt: Date;
+    startsAt: Date | null;
+    endsAt: Date | null;
+    targetGender: string | null;
+    targetAgeMin: number | null;
+    targetAgeMax: number | null;
+    targetCities: string[];
+    targetIncomes: string[];
+    targetInterests: string[];
+    targetHasChildren: string | null;
+    targetEmploymentStatuses: string[];
+    targetIndustries: string[];
+    targetMaritalStatuses: string[];
+    _count: { sessions: number };
+    questions: Array<{ id: string }>;
+    creator: {
+      name: string | null;
+      clientProfile: { companyName: string | null } | null;
+      surveysCreated: Array<{ status: string }>;
+    };
+  }> = [];
+
+  const baseWhere = {
+    status: "ACTIVE" as const,
+    id: { notIn: exclude.length > 0 ? exclude : ["_none_"] },
+    AND: [
+      { OR: [{ endsAt: null }, { endsAt: { gt: now } }] },
+      { OR: [{ startsAt: null }, { startsAt: { lte: now } }] },
+    ],
+  };
+
+  try {
+    surveys = await prisma.survey.findMany({
+      where: baseWhere,
+      select: {
+        id: true,
+        title: true,
+        category: true,
+        reward: true,
+        estimatedTime: true,
+        maxResponses: true,
+        createdAt: true,
+        startsAt: true,
+        endsAt: true,
+        targetGender: true,
+        targetAgeMin: true,
+        targetAgeMax: true,
+        targetCities: true,
+        targetIncomes: true,
+        targetInterests: true,
+        targetHasChildren: true,
+        targetEmploymentStatuses: true,
+        targetIndustries: true,
+        targetMaritalStatuses: true,
+        _count: { select: { sessions: { where: { isValid: true, status: "COMPLETED" } } } },
+        questions: { select: { id: true } },
+        creator: {
+          select: {
+            name: true,
+            clientProfile: { select: { companyName: true } },
+            surveysCreated: {
+              select: { status: true },
+              take: 20,
+              orderBy: { createdAt: "desc" },
+            },
           },
         },
       },
-    },
-    orderBy: [{ createdAt: "desc" }],
-    take: 60,
-  });
+      orderBy: [{ createdAt: "desc" }],
+      take: 60,
+    });
+  } catch (error) {
+    if (!isPrismaSchemaMismatchError(error)) {
+      throw error;
+    }
+
+    surveys = await prisma.survey.findMany({
+      where: baseWhere,
+      select: {
+        id: true,
+        title: true,
+        category: true,
+        reward: true,
+        estimatedTime: true,
+        maxResponses: true,
+        createdAt: true,
+        startsAt: true,
+        endsAt: true,
+        targetGender: true,
+        targetAgeMin: true,
+        targetAgeMax: true,
+        targetCities: true,
+        targetIncomes: true,
+        targetInterests: true,
+        _count: { select: { sessions: { where: { isValid: true, status: "COMPLETED" } } } },
+        questions: { select: { id: true } },
+        creator: {
+          select: {
+            name: true,
+            clientProfile: { select: { companyName: true } },
+            surveysCreated: {
+              select: { status: true },
+              take: 20,
+              orderBy: { createdAt: "desc" },
+            },
+          },
+        },
+      },
+      orderBy: [{ createdAt: "desc" }],
+      take: 60,
+    }) as typeof surveys;
+  }
 
   return surveys
     .map((survey) => {
-      const score = getMatchScore(survey, profile, age);
+      const surveyForScore = {
+        ...survey,
+        targetHasChildren: survey.targetHasChildren ?? null,
+        targetEmploymentStatuses: survey.targetEmploymentStatuses ?? [],
+        targetIndustries: survey.targetIndustries ?? [],
+        targetMaritalStatuses: survey.targetMaritalStatuses ?? [],
+      };
+      const score = getMatchScore(surveyForScore, profile, age);
       return {
         ...survey,
         recommended: score >= 8,
@@ -181,9 +310,27 @@ export async function getSurveyFeed(userId: string) {
 export async function getInProgressSurveys(userId: string) {
   return prisma.surveySession.findMany({
     where: { userId, status: "IN_PROGRESS" },
-    include: {
+    select: {
+      id: true,
+      surveyId: true,
+      userId: true,
+      status: true,
+      startedAt: true,
+      completedAt: true,
+      timeSpent: true,
+      ipAddress: true,
+      userAgent: true,
+      deviceId: true,
+      isValid: true,
+      fraudFlags: true,
       survey: {
-        include: {
+        select: {
+          id: true,
+          title: true,
+          category: true,
+          reward: true,
+          estimatedTime: true,
+          maxResponses: true,
           questions: { select: { id: true } },
           _count: { select: { sessions: { where: { isValid: true, status: "COMPLETED" } } } },
         },
@@ -196,7 +343,31 @@ export async function getInProgressSurveys(userId: string) {
 export async function getCompletedSurveys(userId: string) {
   return prisma.surveySession.findMany({
     where: { userId, status: { in: ["COMPLETED", "REJECTED"] } },
-    include: { survey: true },
+    select: {
+      id: true,
+      surveyId: true,
+      userId: true,
+      status: true,
+      startedAt: true,
+      completedAt: true,
+      timeSpent: true,
+      ipAddress: true,
+      userAgent: true,
+      deviceId: true,
+      isValid: true,
+      fraudFlags: true,
+      survey: {
+        select: {
+          id: true,
+          title: true,
+          category: true,
+          reward: true,
+          estimatedTime: true,
+          maxResponses: true,
+          createdAt: true,
+        },
+      },
+    },
     orderBy: { completedAt: "desc" },
     take: 50,
   });

@@ -365,7 +365,13 @@ export async function completeSurveyAction(params: {
 
   const survey = await prisma.survey.findUnique({
     where: { id: params.surveyId },
-    include: { questions: { orderBy: { order: "asc" } } },
+    select: {
+      id: true,
+      title: true,
+      reward: true,
+      maxResponses: true,
+      questions: { orderBy: { order: "asc" } },
+    },
   });
 
   if (!survey) return { error: "Опрос не найден" };
@@ -495,7 +501,10 @@ export async function rejectSurveyAction(surveyId: string, reason: string) {
   await requireRole("ADMIN");
   if (!reason.trim()) return { error: "Укажите причину" };
 
-  const survey = await prisma.survey.findUnique({ where: { id: surveyId } });
+  const survey = await prisma.survey.findUnique({
+    where: { id: surveyId },
+    select: { id: true, title: true, creatorId: true, budget: true },
+  });
   if (!survey) return { error: "Опрос не найден" };
 
   await prisma.$transaction(async (tx) => {
@@ -538,7 +547,10 @@ export async function rejectSurveyAction(surveyId: string, reason: string) {
 
 export async function toggleSurveyPauseAction(surveyId: string) {
   const session = await requireRole("CLIENT");
-  const survey = await prisma.survey.findUnique({ where: { id: surveyId } });
+  const survey = await prisma.survey.findUnique({
+    where: { id: surveyId },
+    select: { id: true, creatorId: true, status: true },
+  });
 
   if (!survey || survey.creatorId !== session.user.id) {
     return { error: "Опрос не найден" };
@@ -561,7 +573,10 @@ export async function toggleSurveyPauseAction(surveyId: string) {
 
 export async function stopSurveyAction(surveyId: string) {
   const session = await requireRole("CLIENT");
-  const survey = await prisma.survey.findUnique({ where: { id: surveyId } });
+  const survey = await prisma.survey.findUnique({
+    where: { id: surveyId },
+    select: { id: true, creatorId: true, status: true },
+  });
 
   if (!survey || survey.creatorId !== session.user.id) {
     return { error: "Опрос не найден" };

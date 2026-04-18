@@ -19,7 +19,14 @@ export default async function SurveyPage({ params }: { params: Promise<{ id: str
 
   const survey = await prisma.survey.findUnique({
     where: { id },
-    include: {
+    select: {
+      id: true,
+      title: true,
+      reward: true,
+      status: true,
+      startsAt: true,
+      endsAt: true,
+      maxResponses: true,
       questions: { orderBy: { order: "asc" } },
       _count: {
         select: {

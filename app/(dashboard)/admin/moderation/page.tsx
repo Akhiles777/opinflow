@@ -16,7 +16,13 @@ export default async function AdminModerationPage({
 
   const surveys = await prisma.survey.findMany({
     where: { status },
-    include: {
+    select: {
+      id: true,
+      title: true,
+      status: true,
+      budget: true,
+      createdAt: true,
+      moderationNote: true,
       creator: {
         select: {
           name: true,

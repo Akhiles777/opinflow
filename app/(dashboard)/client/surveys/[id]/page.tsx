@@ -109,7 +109,17 @@ export default async function ClientSurveyDetailPage({ params }: { params: Promi
 
   const survey = await prisma.survey.findUnique({
     where: { id },
-    include: {
+    select: {
+      id: true,
+      creatorId: true,
+      title: true,
+      description: true,
+      status: true,
+      maxResponses: true,
+      budget: true,
+      createdAt: true,
+      endsAt: true,
+      moderationNote: true,
       creator: {
         select: {
           clientProfile: {

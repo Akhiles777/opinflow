@@ -116,7 +116,11 @@ export async function getRespondentOverviewData(userId: string) {
         },
         orderBy: { createdAt: "desc" },
         take: 4,
-        include: {
+        select: {
+          id: true,
+          category: true,
+          title: true,
+          status: true,
           sessions: {
             where: { userId },
             orderBy: { startedAt: "desc" },
@@ -251,7 +255,10 @@ export async function getClientOverviewData(userId: string) {
     prisma.survey.findMany({
       where: { creatorId: userId },
       orderBy: { createdAt: "desc" },
-      include: {
+      select: {
+        id: true,
+        title: true,
+        status: true,
         _count: {
           select: {
             sessions: { where: { status: "COMPLETED", isValid: true } },
@@ -285,7 +292,12 @@ export async function getClientSurveysData(userId: string) {
   const surveys = await prisma.survey.findMany({
     where: { creatorId: userId },
     orderBy: { createdAt: "desc" },
-    include: {
+    select: {
+      id: true,
+      title: true,
+      maxResponses: true,
+      budget: true,
+      status: true,
       _count: {
         select: {
           sessions: { where: { status: "COMPLETED", isValid: true } },
