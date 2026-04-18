@@ -11,6 +11,10 @@ type RespondentProfileData = {
   city: string | null;
   income: string | null;
   education: string | null;
+  hasChildren: string | null;
+  employmentStatus: string | null;
+  industry: string | null;
+  maritalStatus: string | null;
   interests: string[];
   userName: string | null;
   userEmail: string;
@@ -30,6 +34,8 @@ const interestOptions = [
   "Музыка",
   "Игры",
   "Недвижимость",
+  "Косметика",
+  "Искусство",
 ];
 
 const initialState = { success: false, error: "", message: "" };
@@ -50,11 +56,15 @@ function completionRatio(profile: RespondentProfileData) {
     profile.city,
     profile.income,
     profile.education,
+    profile.hasChildren,
+    profile.employmentStatus,
+    profile.industry,
+    profile.maritalStatus,
     profile.userEmail,
     profile.interests.length > 0 ? "interests" : null,
   ].filter(Boolean).length;
 
-  return filled / 6;
+  return filled / 10;
 }
 
 export default function RespondentProfileForm({ profile }: { profile: RespondentProfileData }) {
@@ -244,6 +254,62 @@ export default function RespondentProfileForm({ profile }: { profile: Respondent
                   <option value="bachelor">Бакалавриат</option>
                   <option value="master">Магистратура</option>
                   <option value="phd">Аспирантура</option>
+                </select>
+              </label>
+              <label className="grid gap-2">
+                <span className="text-sm text-dash-muted font-body">Есть дети</span>
+                <select
+                  name="hasChildren"
+                  defaultValue={profile.hasChildren ?? ""}
+                  className="h-11 rounded-xl border border-dash-border bg-dash-bg px-3 text-sm text-dash-body"
+                >
+                  <option value="">Не выбрано</option>
+                  <option value="yes">Да</option>
+                  <option value="no">Нет</option>
+                </select>
+              </label>
+              <label className="grid gap-2">
+                <span className="text-sm text-dash-muted font-body">Статус занятости</span>
+                <select
+                  name="employmentStatus"
+                  defaultValue={profile.employmentStatus ?? ""}
+                  className="h-11 rounded-xl border border-dash-border bg-dash-bg px-3 text-sm text-dash-body"
+                >
+                  <option value="">Не выбрано</option>
+                  <option value="working">Работает</option>
+                  <option value="not_working">Не работает</option>
+                </select>
+              </label>
+              <label className="grid gap-2">
+                <span className="text-sm text-dash-muted font-body">Сфера деятельности</span>
+                <select
+                  name="industry"
+                  defaultValue={profile.industry ?? ""}
+                  className="h-11 rounded-xl border border-dash-border bg-dash-bg px-3 text-sm text-dash-body"
+                >
+                  <option value="">Не выбрано</option>
+                  <option value="it">IT и технологии</option>
+                  <option value="finance">Финансы</option>
+                  <option value="education">Образование</option>
+                  <option value="medicine">Медицина</option>
+                  <option value="retail">Ритейл и продажи</option>
+                  <option value="manufacturing">Производство</option>
+                  <option value="marketing">Маркетинг и реклама</option>
+                  <option value="public">Госструктуры</option>
+                  <option value="services">Сфера услуг</option>
+                  <option value="other">Другое</option>
+                </select>
+              </label>
+              <label className="grid gap-2">
+                <span className="text-sm text-dash-muted font-body">Семейное положение</span>
+                <select
+                  name="maritalStatus"
+                  defaultValue={profile.maritalStatus ?? ""}
+                  className="h-11 rounded-xl border border-dash-border bg-dash-bg px-3 text-sm text-dash-body"
+                >
+                  <option value="">Не выбрано</option>
+                  <option value="single">Холост / не замужем</option>
+                  <option value="married">Женат / замужем</option>
                 </select>
               </label>
             </div>

@@ -29,7 +29,13 @@ const INTEREST_POOL = [
   "Музыка",
   "Игры",
   "Недвижимость",
+  "Косметика",
+  "Искусство",
 ];
+const INDUSTRY_POOL = ["it", "finance", "education", "medicine", "retail", "manufacturing", "marketing", "public", "services", "other"];
+const MARITAL_POOL = ["single", "married"];
+const EMPLOYMENT_POOL = ["working", "not_working"];
+const CHILDREN_POOL = ["yes", "no"];
 
 const SURVEY_TEMPLATES = [
   {
@@ -305,6 +311,10 @@ function buildSurveyData(index, clientId) {
   const targetCities = index % 2 === 0 ? [CITY_POOL[index % CITY_POOL.length]] : [];
   const targetIncomes = index % 4 === 0 ? [INCOME_POOL[index % INCOME_POOL.length]] : [];
   const targetInterests = index % 2 === 1 ? [INTEREST_POOL[index % INTEREST_POOL.length], INTEREST_POOL[(index + 3) % INTEREST_POOL.length]] : [];
+  const targetHasChildren = index % 3 === 0 ? CHILDREN_POOL[index % CHILDREN_POOL.length] : "any";
+  const targetEmploymentStatuses = index % 2 === 0 ? [EMPLOYMENT_POOL[index % EMPLOYMENT_POOL.length]] : [];
+  const targetIndustries = index % 3 === 1 ? [INDUSTRY_POOL[index % INDUSTRY_POOL.length]] : [];
+  const targetMaritalStatuses = index % 4 === 0 ? [MARITAL_POOL[index % MARITAL_POOL.length]] : [];
 
   return {
     title: `${template.title} #${index + 1}`,
@@ -322,6 +332,10 @@ function buildSurveyData(index, clientId) {
     targetCities,
     targetIncomes,
     targetInterests,
+    targetHasChildren,
+    targetEmploymentStatuses,
+    targetIndustries,
+    targetMaritalStatuses,
     startsAt,
     endsAt,
     moderationNote:
@@ -413,9 +427,13 @@ async function main() {
     gender: "male",
     birthDate: new Date("1998-06-12"),
     city: "Москва",
-    income: "60 000–100 000 ₽",
-    education: "Высшее",
-    interests: ["Технологии", "Финансы", "Кино", "Игры"],
+    income: "60-100k",
+    education: "bachelor",
+    hasChildren: "no",
+    employmentStatus: "working",
+    industry: "it",
+    maritalStatus: "single",
+    interests: ["Технологии", "Финансы", "Кино", "Игры", "Искусство"],
     isVerified: true,
   });
 
@@ -423,9 +441,13 @@ async function main() {
     gender: "female",
     birthDate: new Date("1995-03-21"),
     city: "Санкт-Петербург",
-    income: "30 000–60 000 ₽",
-    education: "Высшее",
-    interests: ["Путешествия", "Мода", "Еда", "Здоровье"],
+    income: "30-60k",
+    education: "master",
+    hasChildren: "yes",
+    employmentStatus: "working",
+    industry: "marketing",
+    maritalStatus: "married",
+    interests: ["Путешествия", "Мода", "Еда", "Здоровье", "Косметика"],
     isVerified: true,
   });
 
@@ -489,6 +511,10 @@ async function main() {
         targetCities: surveyData.targetCities,
         targetIncomes: surveyData.targetIncomes,
         targetInterests: surveyData.targetInterests,
+        targetHasChildren: surveyData.targetHasChildren,
+        targetEmploymentStatuses: surveyData.targetEmploymentStatuses,
+        targetIndustries: surveyData.targetIndustries,
+        targetMaritalStatuses: surveyData.targetMaritalStatuses,
         startsAt: surveyData.startsAt,
         endsAt: surveyData.endsAt,
         moderationNote: surveyData.moderationNote,

@@ -44,6 +44,10 @@ async function saveRespondentProfileWithSqlFallback(params: {
   city: string | null | undefined;
   income: string | null | undefined;
   education: string | null | undefined;
+  hasChildren: string | null | undefined;
+  employmentStatus: string | null | undefined;
+  industry: string | null | undefined;
+  maritalStatus: string | null | undefined;
   interests: string[];
   isVerified: boolean;
 }) {
@@ -55,11 +59,28 @@ async function saveRespondentProfileWithSqlFallback(params: {
     city: params.city ?? null,
     income: params.income ?? null,
     education: params.education ?? null,
+    hasChildren: params.hasChildren ?? null,
+    employmentStatus: params.employmentStatus ?? null,
+    industry: params.industry ?? null,
+    maritalStatus: params.maritalStatus ?? null,
     interests: params.interests,
     isVerified: params.isVerified,
   };
 
-  const orderedColumns = ["userId", "gender", "birthDate", "city", "income", "education", "interests", "isVerified"]
+  const orderedColumns = [
+    "userId",
+    "gender",
+    "birthDate",
+    "city",
+    "income",
+    "education",
+    "hasChildren",
+    "employmentStatus",
+    "industry",
+    "maritalStatus",
+    "interests",
+    "isVerified",
+  ]
     .filter((column) => columns.has(column));
 
   if (!orderedColumns.includes("userId")) {
@@ -182,6 +203,10 @@ export async function updateRespondentProfileAction(_prevState: ProfileState, fo
     city: emptyToNull(formData.get("city")),
     income: emptyToNull(formData.get("income")),
     education: emptyToNull(formData.get("education")),
+    hasChildren: emptyToNull(formData.get("hasChildren")),
+    employmentStatus: emptyToNull(formData.get("employmentStatus")),
+    industry: emptyToNull(formData.get("industry")),
+    maritalStatus: emptyToNull(formData.get("maritalStatus")),
     image: emptyToNull(formData.get("image")),
     interests: formData.getAll("interests").map((item) => String(item)),
   });
@@ -194,7 +219,16 @@ export async function updateRespondentProfileAction(_prevState: ProfileState, fo
 
   const { birthDate, ...rest } = parsed.data;
   const isVerified = Boolean(
-    rest.gender && birthDate && rest.city && rest.income && rest.education && rest.interests.length > 0,
+    rest.gender &&
+      birthDate &&
+      rest.city &&
+      rest.income &&
+      rest.education &&
+      rest.hasChildren &&
+      rest.employmentStatus &&
+      rest.industry &&
+      rest.maritalStatus &&
+      rest.interests.length > 0,
   );
   const birthDateValue = birthDate ? new Date(birthDate) : null;
 
@@ -245,6 +279,10 @@ export async function updateRespondentProfileAction(_prevState: ProfileState, fo
         city: rest.city,
         income: rest.income,
         education: rest.education,
+        hasChildren: rest.hasChildren,
+        employmentStatus: rest.employmentStatus,
+        industry: rest.industry,
+        maritalStatus: rest.maritalStatus,
         interests: rest.interests,
         isVerified,
       });

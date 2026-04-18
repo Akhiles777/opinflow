@@ -38,6 +38,10 @@ export type SurveyDraft = {
   targetCities: string[]
   targetIncomes: string[]
   targetInterests: string[]
+  targetHasChildren: 'any' | 'yes' | 'no'
+  targetEmploymentStatuses: string[]
+  targetIndustries: string[]
+  targetMaritalStatuses: string[]
   maxResponses: number
   reward: number
   startsAt: string
@@ -55,6 +59,10 @@ export const EMPTY_DRAFT: SurveyDraft = {
   targetCities: [],
   targetIncomes: [],
   targetInterests: [],
+  targetHasChildren: 'any',
+  targetEmploymentStatuses: [],
+  targetIndustries: [],
+  targetMaritalStatuses: [],
   maxResponses: 50,
   reward: 50,
   startsAt: new Date().toISOString().split('T')[0],

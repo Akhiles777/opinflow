@@ -13,12 +13,20 @@ function getMatchScore(
     targetCities: string[];
     targetIncomes: string[];
     targetInterests: string[];
+    targetHasChildren: string | null;
+    targetEmploymentStatuses: string[];
+    targetIndustries: string[];
+    targetMaritalStatuses: string[];
   },
   profile: {
     gender: string | null;
     city: string | null;
     income: string | null;
     interests: string[];
+    hasChildren?: string | null;
+    employmentStatus?: string | null;
+    industry?: string | null;
+    maritalStatus?: string | null;
   } | null,
   age: number,
 ) {
@@ -55,6 +63,30 @@ function getMatchScore(
     score += 2;
   }
 
+  if (!survey.targetHasChildren || survey.targetHasChildren === "any") {
+    score += 1;
+  } else if (survey.targetHasChildren === profile?.hasChildren) {
+    score += 2;
+  }
+
+  if (survey.targetEmploymentStatuses.length === 0) {
+    score += 1;
+  } else if (profile?.employmentStatus && survey.targetEmploymentStatuses.includes(profile.employmentStatus)) {
+    score += 2;
+  }
+
+  if (survey.targetIndustries.length === 0) {
+    score += 1;
+  } else if (profile?.industry && survey.targetIndustries.includes(profile.industry)) {
+    score += 2;
+  }
+
+  if (survey.targetMaritalStatuses.length === 0) {
+    score += 1;
+  } else if (profile?.maritalStatus && survey.targetMaritalStatuses.includes(profile.maritalStatus)) {
+    score += 2;
+  }
+
   return score;
 }
 
@@ -73,7 +105,20 @@ function getCreatorRating(statuses: string[]) {
 }
 
 export async function getSurveyFeed(userId: string) {
-  const profile = await prisma.respondentProfile.findUnique({ where: { userId } });
+  const profile = await prisma.respondentProfile.findUnique({
+    where: { userId },
+    select: {
+      birthDate: true,
+      gender: true,
+      city: true,
+      income: true,
+      interests: true,
+      hasChildren: true,
+      employmentStatus: true,
+      industry: true,
+      maritalStatus: true,
+    },
+  });
   const sessions = await prisma.surveySession.findMany({ where: { userId }, select: { surveyId: true } });
   const exclude = sessions.map((session) => session.surveyId);
   const age = getAge(profile?.birthDate);

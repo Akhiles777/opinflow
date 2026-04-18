@@ -25,6 +25,10 @@ export default async function RespondentProfilePage() {
     city: string | null;
     income: string | null;
     education: string | null;
+    hasChildren: string | null;
+    employmentStatus: string | null;
+    industry: string | null;
+    maritalStatus: string | null;
     interests: string[];
     image: string | null;
     userName: string | null;
@@ -41,6 +45,10 @@ export default async function RespondentProfilePage() {
           city: true,
           income: true,
           education: true,
+          hasChildren: true,
+          employmentStatus: true,
+          industry: true,
+          maritalStatus: true,
           interests: true,
         },
       }),
@@ -60,6 +68,10 @@ export default async function RespondentProfilePage() {
       city: respondentProfile?.city ?? null,
       income: respondentProfile?.income ?? null,
       education: respondentProfile?.education ?? null,
+      hasChildren: respondentProfile?.hasChildren ?? null,
+      employmentStatus: respondentProfile?.employmentStatus ?? null,
+      industry: respondentProfile?.industry ?? null,
+      maritalStatus: respondentProfile?.maritalStatus ?? null,
       interests: respondentProfile?.interests ?? [],
       image: user?.image ?? null,
       userName: user?.name ?? session.user.name ?? null,
@@ -82,6 +94,10 @@ export default async function RespondentProfilePage() {
           city: profile?.city ?? null,
           income: profile?.income ?? null,
           education: profile?.education ?? null,
+          hasChildren: profile?.hasChildren ?? null,
+          employmentStatus: profile?.employmentStatus ?? null,
+          industry: profile?.industry ?? null,
+          maritalStatus: profile?.maritalStatus ?? null,
           interests: profile?.interests ?? [],
           userName: profile?.userName ?? session.user.name ?? null,
           userEmail: profile?.userEmail ?? session.user.email ?? "",

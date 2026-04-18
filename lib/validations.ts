@@ -43,6 +43,10 @@ export const respondentProfileSchema = z.object({
   city: z.string().trim().max(120).nullable().optional(),
   income: z.enum(["under30k", "30-60k", "60-100k", "over100k"]).nullable().optional(),
   education: z.enum(["school", "college", "bachelor", "master", "phd"]).nullable().optional(),
+  hasChildren: z.enum(["yes", "no"]).nullable().optional(),
+  employmentStatus: z.enum(["working", "not_working"]).nullable().optional(),
+  industry: z.string().trim().max(120).nullable().optional(),
+  maritalStatus: z.enum(["single", "married"]).nullable().optional(),
   interests: z.array(z.string().min(1)).max(20),
 });
 
