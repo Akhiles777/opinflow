@@ -92,7 +92,7 @@ export default function SurveyIntroModal({ userId, openByDefault }: Props) {
             <h2 className="mt-4 font-display text-3xl font-bold text-white sm:text-4xl">
               Несколько правил перед стартом
             </h2>
-            <p className="mt-3 max-w-xl text-base leading-relaxed text-white/65">
+            <p className="mt-3 max-w-xl text-base leading-relaxed text-white/80">
               Здесь собраны короткие рекомендации, которые помогут проходить опросы быстрее,
               спокойнее и без отклонений со стороны антифрод-проверок.
             </p>
@@ -117,7 +117,7 @@ export default function SurveyIntroModal({ userId, openByDefault }: Props) {
               </div>
               <div className="text-lg font-semibold text-white">Отвечайте внимательно</div>
             </div>
-            <p className="mt-3 text-sm leading-relaxed text-white/60">
+            <p className="mt-3 text-sm leading-relaxed text-white/80">
               Не спешите. Если пропускать смысл вопросов или выбирать ответы случайно, такой
               проход может не засчитаться.
             </p>
@@ -130,7 +130,7 @@ export default function SurveyIntroModal({ userId, openByDefault }: Props) {
               </div>
               <div className="text-lg font-semibold text-white">Награда приходит автоматически</div>
             </div>
-            <p className="mt-3 text-sm leading-relaxed text-white/60">
+            <p className="mt-3 text-sm leading-relaxed text-white/80">
               Если ответы проходят проверку, вознаграждение сразу начисляется в кошелёк. Ничего
               дополнительно подтверждать не нужно.
             </p>
@@ -143,7 +143,7 @@ export default function SurveyIntroModal({ userId, openByDefault }: Props) {
               </div>
               <div className="text-lg font-semibold text-white">Что важно для корректного прохождения</div>
             </div>
-            <ul className="mt-4 grid gap-3 text-sm leading-relaxed text-white/65 sm:grid-cols-3">
+            <ul className="mt-4 grid gap-3 text-sm leading-relaxed text-white/80 sm:grid-cols-3">
               <li className="rounded-xl border border-white/6 bg-white/4 px-4 py-3">
                 Проходите опрос до конца, не закрывайте вкладку посередине без необходимости.
               </li>
@@ -159,7 +159,7 @@ export default function SurveyIntroModal({ userId, openByDefault }: Props) {
         </div>
 
         <div className="flex flex-col gap-3 border-t border-white/8 bg-white/[0.03] px-6 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8">
-          <p className="text-sm text-white/45">
+          <p className="text-sm text-white/70">
             Это окно показывается один раз для нового респондента. Его всегда можно закрыть крестиком.
           </p>
           <button

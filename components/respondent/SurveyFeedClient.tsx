@@ -142,11 +142,11 @@ function SurveyCard({
             <span className="rounded-full border border-brand/20 bg-brand/10 px-3 py-1 text-xs font-semibold text-brand">
               {badge}
             </span>
-            <span className="text-sm text-site-muted">{category || "Без категории"}</span>
+            <span className="text-sm text-site-body/80 dark:text-site-body">{category || "Без категории"}</span>
           </div>
           <h3 className="mt-3 font-display text-xl text-site-heading">{title}</h3>
           {creatorName ? (
-            <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-site-muted">
+            <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-site-body/80 dark:text-site-body">
               <span className="truncate">{creatorName}</span>
               {typeof creatorRating === "number" ? (
                 <span className="inline-flex items-center gap-1 rounded-full border border-site-border bg-site-section px-2.5 py-1 text-xs font-semibold text-site-heading">
@@ -159,11 +159,11 @@ function SurveyCard({
         </div>
         <div className="shrink-0 text-right">
           <div className="font-display text-3xl font-bold text-brand tabular-nums">{reward ? `${reward} ₽` : "—"}</div>
-          <div className="mt-1 text-sm text-site-muted">~{estimatedTime ?? Math.max(questionCount * 2, 3)} мин</div>
+          <div className="mt-1 text-sm text-site-body/80 dark:text-site-body">~{estimatedTime ?? Math.max(questionCount * 2, 3)} мин</div>
         </div>
       </div>
 
-      <div className="mt-5 flex items-center justify-between text-sm text-site-muted">
+      <div className="mt-5 flex items-center justify-between text-sm text-site-body/80 dark:text-site-body">
         <span>{questionCount} вопросов</span>
         <span>{completedCount} / {maxResponses ?? "∞"} ответов</span>
       </div>
@@ -300,13 +300,13 @@ export default function SurveyFeedClient({
                 "inline-flex items-center gap-3 rounded-2xl px-4 py-2.5 text-sm font-semibold transition-all",
                 active
                   ? "border border-site-border bg-site-card text-site-heading shadow-sm"
-                  : "text-site-muted hover:text-site-body",
+                  : "text-site-body/75 hover:text-site-heading dark:text-site-muted dark:hover:text-site-body",
               ].join(" ")}
             >
               <span>{item.label}</span>
               <span className={[
                 "rounded-full px-2.5 py-1 text-xs font-semibold",
-                active ? "bg-brand/15 text-brand" : "bg-site-section text-site-muted",
+                active ? "bg-brand/15 text-brand" : "bg-site-section text-site-body/70 dark:text-site-muted",
               ].join(" ")}>
                 {item.count}
               </span>
@@ -317,7 +317,7 @@ export default function SurveyFeedClient({
 
       {tab === "available" ? (
         <div className="flex flex-wrap items-center gap-2">
-          <span className="mr-2 text-sm font-semibold uppercase tracking-[0.18em] text-site-muted">Сортировка</span>
+          <span className="mr-2 text-sm font-semibold uppercase tracking-[0.18em] text-site-body/80 dark:text-site-body">Сортировка</span>
           {[
             { value: "recommended" as const, label: "Подходящие сначала" },
             { value: "date" as const, label: "По дате" },
@@ -334,7 +334,7 @@ export default function SurveyFeedClient({
                   "rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
                   active
                     ? "border-brand/30 bg-brand/10 text-brand"
-                    : "border-site-border bg-site-card text-site-muted hover:border-brand/20 hover:text-site-heading",
+                    : "border-site-border bg-site-card text-site-body/75 hover:border-brand/20 hover:text-site-heading dark:text-site-muted",
                 ].join(" ")}
               >
                 {item.label}
@@ -392,7 +392,7 @@ export default function SurveyFeedClient({
                       <InProgressTimer startedAt={session.startedAt} />
                     </div>
                     <h3 className="mt-3 font-display text-xl text-site-heading">{session.survey.title}</h3>
-                    <div className="mt-2 text-sm text-site-muted">
+                    <div className="mt-2 text-sm text-site-body/80 dark:text-site-body">
                       {session.survey.category || "Без категории"} · ~{session.survey.estimatedTime ?? Math.max(session.survey.questions.length * 2, 3)} мин
                     </div>
                   </div>
@@ -401,7 +401,7 @@ export default function SurveyFeedClient({
                     <div className="font-display text-3xl font-bold text-brand tabular-nums">
                       {session.survey.reward ? `${Number(session.survey.reward)} ₽` : "—"}
                     </div>
-                    <div className="mt-1 text-sm text-site-muted">
+                    <div className="mt-1 text-sm text-site-body/80 dark:text-site-body">
                       {session.survey._count?.sessions ?? 0} / {session.survey.maxResponses ?? "∞"} ответов
                     </div>
                   </div>
@@ -431,12 +431,12 @@ export default function SurveyFeedClient({
                 <div key={item.id} className="flex flex-col gap-3 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <div className="font-semibold text-site-heading">{item.survey.title}</div>
-                    <div className="mt-1 text-sm text-site-muted">{formatDate(item.completedAt)}</div>
+                    <div className="mt-1 text-sm text-site-body/80 dark:text-site-body">{formatDate(item.completedAt)}</div>
                   </div>
                   <div className="flex flex-wrap items-center gap-3 sm:justify-end">
                     <div className={[
                       "text-base font-semibold tabular-nums",
-                      item.status === "COMPLETED" && item.isValid ? "text-green-600 dark:text-green-400" : "text-site-muted",
+                      item.status === "COMPLETED" && item.isValid ? "text-green-600 dark:text-green-400" : "text-site-body/75 dark:text-site-muted",
                     ].join(" ")}>
                       {item.status === "COMPLETED" && item.isValid
                         ? `+${Number(item.survey.reward ?? 0)} ₽`
@@ -494,12 +494,12 @@ export default function SurveyFeedClient({
         }
       >
         <div className="space-y-4">
-          <div className="text-sm text-site-muted">
+          <div className="text-sm text-site-body/80 dark:text-site-body">
             {complaintTarget ? `Опрос: ${complaintTarget.survey.title}` : "Опишите проблему с прохождением"}
           </div>
 
           <label className="grid gap-2">
-            <span className="text-sm font-medium text-site-muted">Причина</span>
+            <span className="text-sm font-medium text-site-body/80 dark:text-site-body">Причина</span>
             <select
               value={complaintReason}
               onChange={(event) => setComplaintReason(event.target.value)}
@@ -514,7 +514,7 @@ export default function SurveyFeedClient({
           </label>
 
           <label className="grid gap-2">
-            <span className="text-sm font-medium text-site-muted">Подробности</span>
+            <span className="text-sm font-medium text-site-body/80 dark:text-site-body">Подробности</span>
             <textarea
               value={complaintDetails}
               onChange={(event) => setComplaintDetails(event.target.value)}

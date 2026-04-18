@@ -252,7 +252,7 @@ export default function SurveyPlayer({ survey, existingSessionId }: Props) {
       <div className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center bg-site-bg px-6 py-12 text-site-body">
         <div className="flex flex-col items-center gap-4 text-center">
           <div className="h-12 w-12 animate-spin rounded-full border-2 border-site-border border-t-brand" />
-          <p className="text-base text-site-muted">Загрузка опроса...</p>
+          <p className="text-base text-site-body/85 dark:text-site-body">Загрузка опроса...</p>
         </div>
       </div>
     );
@@ -266,7 +266,7 @@ export default function SurveyPlayer({ survey, existingSessionId }: Props) {
             ⚠️
           </div>
           <h1 className="mt-5 font-display text-3xl font-bold text-site-heading">Не удалось открыть опрос</h1>
-          <p className="mt-3 text-base leading-relaxed text-site-muted">{error ?? "Попробуйте открыть другой опрос или вернитесь к ленте."}</p>
+          <p className="mt-3 text-base leading-relaxed text-site-body/85 dark:text-site-body">{error ?? "Попробуйте открыть другой опрос или вернитесь к ленте."}</p>
           <Link
             href="/surveys"
             className="mt-7 inline-flex items-center justify-center rounded-2xl border border-site-border bg-site-section px-6 py-3 text-sm font-semibold text-site-heading transition-colors hover:bg-site-card"
@@ -283,7 +283,7 @@ export default function SurveyPlayer({ survey, existingSessionId }: Props) {
       <div className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center bg-site-bg px-6 py-12 text-site-body">
         <div className="w-full max-w-xl rounded-3xl border border-site-border bg-site-card p-8 text-center shadow-2xl">
           <h1 className="font-display text-3xl font-bold text-site-heading">Вопросы не найдены</h1>
-          <p className="mt-3 text-base text-site-muted">У этого опроса пока нет доступных вопросов для прохождения.</p>
+          <p className="mt-3 text-base text-site-body/85 dark:text-site-body">У этого опроса пока нет доступных вопросов для прохождения.</p>
           <Link href="/surveys" className="mt-7 inline-flex rounded-2xl border border-site-border bg-site-section px-6 py-3 text-sm font-semibold text-site-heading transition-colors hover:bg-site-card">
             Вернуться к ленте
           </Link>
@@ -306,10 +306,10 @@ export default function SurveyPlayer({ survey, existingSessionId }: Props) {
       <div className="mx-auto flex min-h-[calc(100vh-3.5rem)] max-w-4xl flex-col px-6 pb-10 pt-8 lg:px-8 lg:pb-12 lg:pt-9">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-sm uppercase tracking-[0.18em] text-site-muted">ПотокМнений</p>
+            <p className="text-sm uppercase tracking-[0.18em] text-site-body/80 dark:text-site-body">ПотокМнений</p>
             <h1 className="mt-2 font-display text-2xl font-bold text-site-heading lg:text-3xl">{survey.title}</h1>
           </div>
-          <div className="rounded-full border border-site-border bg-site-card px-4 py-2 text-sm font-semibold text-site-muted">
+          <div className="rounded-full border border-site-border bg-site-card px-4 py-2 text-sm font-semibold text-site-body/80 dark:text-site-body">
             {currentIndex + 1} / {visibleQuestions.length}
           </div>
         </div>
@@ -326,7 +326,7 @@ export default function SurveyPlayer({ survey, existingSessionId }: Props) {
           <div className="max-w-3xl">
             <h2 className="font-display text-2xl font-bold text-site-heading lg:text-3xl">{currentQuestion.title}</h2>
             {currentQuestion.description ? (
-              <p className="mt-3 text-base leading-relaxed text-site-muted">{currentQuestion.description}</p>
+              <p className="mt-3 text-base leading-relaxed text-site-body/85 dark:text-site-body">{currentQuestion.description}</p>
             ) : null}
 
             <div className="mt-8">

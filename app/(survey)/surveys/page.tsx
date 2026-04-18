@@ -57,15 +57,15 @@ export default async function SurveysFeedPage({
   const showIntro = inProgress.length === 0 && completed.length === 0;
 
   return (
-    <div className="min-h-[calc(100vh-3.5rem)] bg-site-bg px-6 pb-10 pt-4 text-site-body lg:px-8 lg:pb-12 lg:pt-5">
+    <div className="min-h-[calc(100vh-3.5rem)] bg-site-bg px-6 pb-10  text-site-body lg:px-8 lg:pb-12 ">
       <div className="mx-auto max-w-6xl">
         <div className="flex flex-col gap-5 border-b border-site-border pb-6 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-3xl">
-            <div className="text-sm font-semibold uppercase tracking-[0.22em] text-site-muted">Лента опросов</div>
+            <div className="text-sm font-semibold uppercase tracking-[0.22em] text-site-body/80 dark:text-site-body">Лента опросов</div>
             <h1 className="mt-3 font-display text-4xl font-bold text-site-heading sm:text-5xl">
               Выбирайте исследования и проходите их в удобном темпе
             </h1>
-            <p className="mt-4 text-base leading-relaxed text-site-muted">
+            <p className="mt-4 text-base leading-relaxed text-site-body/85 dark:text-site-body">
               Здесь собраны все доступные исследования, незавершённые прохождения и история завершённых опросов
               без лишних элементов кабинета.
             </p>
