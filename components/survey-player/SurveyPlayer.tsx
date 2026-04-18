@@ -303,7 +303,7 @@ export default function SurveyPlayer({ survey, existingSessionId }: Props) {
         ))}
       </div>
 
-      <div className="mx-auto flex min-h-[calc(100vh-3.5rem)] max-w-4xl flex-col px-6 pb-12 pt-10 lg:px-8">
+      <div className="mx-auto flex min-h-[calc(100vh-3.5rem)] max-w-4xl flex-col px-6 pb-10 pt-8 lg:px-8 lg:pb-12 lg:pt-9">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-sm uppercase tracking-[0.18em] text-site-muted">ПотокМнений</p>
@@ -314,7 +314,7 @@ export default function SurveyPlayer({ survey, existingSessionId }: Props) {
           </div>
         </div>
 
-        <div className="mt-10 flex-1">
+        <div className="mt-8">
           {currentQuestion.mediaUrl ? (
             <img
               src={currentQuestion.mediaUrl}
@@ -345,7 +345,7 @@ export default function SurveyPlayer({ survey, existingSessionId }: Props) {
           </div>
         </div>
 
-        <div className="mt-5 flex items-center justify-between gap-3 border-t border-site-border pt-6">
+        <div className="mt-8 flex items-center justify-between gap-3 border-t border-site-border pt-5">
           <button
             type="button"
             onClick={handlePrev}
