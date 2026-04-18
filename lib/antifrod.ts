@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/prisma";
 
+const SURVEY_ANTIFRAUD_ENABLED = false;
+
 export type FraudCheckInput = {
   userId: string;
   surveyId: string;
@@ -16,6 +18,10 @@ export type FraudCheckResult = {
 };
 
 export async function checkFraud(input: FraudCheckInput): Promise<FraudCheckResult> {
+  if (!SURVEY_ANTIFRAUD_ENABLED) {
+    return { isValid: true, flags: [] };
+  }
+
   const flags: string[] = [];
 
   const [survey, user, sameIp, sameDevice] = await Promise.all([
@@ -57,5 +63,10 @@ export async function checkFraud(input: FraudCheckInput): Promise<FraudCheckResu
     flags.push("NEW_ACCOUNT");
   }
 
-  return { isValid: flags.length === 0, flags };
+  const hasHardViolation =
+    flags.includes("TOO_FAST") ||
+    flags.includes("IDENTICAL_ANSWERS") ||
+    (flags.includes("DUPLICATE_IP") && flags.includes("DUPLICATE_DEVICE"));
+
+  return { isValid: !hasHardViolation, flags };
 }

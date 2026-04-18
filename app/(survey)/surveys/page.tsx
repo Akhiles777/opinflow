@@ -57,9 +57,9 @@ export default async function SurveysFeedPage({
   const showIntro = inProgress.length === 0 && completed.length === 0;
 
   return (
-    <div className="min-h-[calc(100vh-3.5rem)] bg-site-bg px-6 py-10 text-site-body lg:px-8">
+    <div className="min-h-[calc(100vh-3.5rem)] bg-site-bg px-6 pb-10 pt-4 text-site-body lg:px-8 lg:pb-12 lg:pt-5">
       <div className="mx-auto max-w-6xl">
-        <div className="flex flex-col gap-5 border-b border-site-border pb-8 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex flex-col gap-5 border-b border-site-border pb-6 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-3xl">
             <div className="text-sm font-semibold uppercase tracking-[0.22em] text-site-muted">Лента опросов</div>
             <h1 className="mt-3 font-display text-4xl font-bold text-site-heading sm:text-5xl">
@@ -79,17 +79,17 @@ export default async function SurveysFeedPage({
           </Link>
         </div>
 
-        <div className="mt-8">
+        <div className="mt-6">
           <SurveyFeedClient
             userId={session.user.id}
-          available={available}
-          inProgress={inProgress}
-          completed={completed}
-          initialTab={initialTab}
-          showIntro={showIntro}
-          mode="feed"
-        />
-      </div>
+            available={available}
+            inProgress={inProgress}
+            completed={completed}
+            initialTab={initialTab}
+            showIntro={showIntro}
+            mode="feed"
+          />
+        </div>
       </div>
     </div>
   );

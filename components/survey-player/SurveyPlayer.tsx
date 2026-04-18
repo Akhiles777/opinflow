@@ -345,7 +345,7 @@ export default function SurveyPlayer({ survey, existingSessionId }: Props) {
           </div>
         </div>
 
-        <div className="mt-10 flex items-center justify-between gap-3 border-t border-site-border pt-6">
+        <div className="mt-5 flex items-center justify-between gap-3 border-t border-site-border pt-6">
           <button
             type="button"
             onClick={handlePrev}
