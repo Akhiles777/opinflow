@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition, useEffect, useRef } from "react";
 import { DndContext, PointerSensor, closestCenter, type DragEndEvent, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { uploadSurveyMediaAction } from "@/actions/surveys";
+import { uploadSurveyMediaAction, saveDraftAction } from "@/actions/surveys";
 import {
   createEmptyQuestion,
   QUESTION_TYPE_LABELS,
@@ -12,10 +12,12 @@ import {
   type Question,
   type QuestionType,
 } from "@/types/survey";
+import type { SurveyDraft } from "@/types/survey";
 
 type Props = {
   questions: Question[];
   onChange: (questions: Question[]) => void;
+  draft: SurveyDraft;
 };
 
 const QUESTION_TYPES: QuestionType[] = [
@@ -58,11 +60,7 @@ function normalizeLogicOrder(questions: Question[]) {
 
 function getQuestionValueSuggestions(question: Question | undefined) {
   if (!question) return [] as string[];
-
-  if (question.type === "MATRIX") {
-    return trimEmpty(question.matrixCols);
-  }
-
+  if (question.type === "MATRIX") return trimEmpty(question.matrixCols);
   return trimEmpty(question.options);
 }
 
@@ -557,9 +555,39 @@ function SortableQuestionCard({
   );
 }
 
-export default function StepQuestions({ questions, onChange }: Props) {
+export default function StepQuestions({ questions, onChange, draft }: Props) {
   const [expandedId, setExpandedId] = useState<string | null>(questions[0]?.id ?? null);
   const [showTypeMenu, setShowTypeMenu] = useState(false);
+
+  // — автосохранение черновика —
+  const [draftId, setDraftId] = useState<string | undefined>(undefined);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isFirstRender = useRef(true);
+
+  useEffect(() => {
+    // Пропускаем первый рендер, чтобы не сохранять при монтировании
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    setSaveStatus("saving");
+
+    debounceTimer.current = setTimeout(async () => {
+      const result = await saveDraftAction({ ...draft, questions }, draftId);
+      if (result.success && result.surveyId) {
+        setDraftId(result.surveyId);
+        setSaveStatus("saved");
+      }
+    }, 1500);
+
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    };
+  }, [questions, draft]);
+  // — конец автосохранения —
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
   const ids = useMemo(() => questions.map((question) => question.id), [questions]);
@@ -588,6 +616,15 @@ export default function StepQuestions({ questions, onChange }: Props) {
 
   return (
     <div className="space-y-4">
+      {/* Индикатор автосохранения */}
+      {saveStatus !== "idle" && (
+        <div className="flex justify-end">
+          <span className="text-xs font-medium text-dash-muted">
+            {saveStatus === "saving" ? "Сохраняем черновик..." : "Черновик сохранён ✓"}
+          </span>
+        </div>
+      )}
+
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={ids} strategy={verticalListSortingStrategy}>
           <div className="space-y-4">

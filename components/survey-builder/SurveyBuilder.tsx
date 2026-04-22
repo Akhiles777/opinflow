@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createSurveyAction } from "@/actions/surveys";
 import StepAudience from "@/components/survey-builder/StepAudience";
@@ -20,18 +20,122 @@ const steps = [
   { id: 4, title: "Бюджет" },
 ] as const;
 
+const DRAFT_STORAGE_KEY = "opinflow:client-survey-draft:v1";
+
+type PersistedDraftState = {
+  step: number;
+  draft: SurveyDraft;
+};
+
+function normalizeDraft(value: unknown): SurveyDraft | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+
+  const raw = value as Partial<SurveyDraft>;
+
+  return {
+    ...EMPTY_DRAFT,
+    ...raw,
+    questions: Array.isArray(raw.questions) ? raw.questions : EMPTY_DRAFT.questions,
+    targetCities: Array.isArray(raw.targetCities) ? raw.targetCities : EMPTY_DRAFT.targetCities,
+    targetIncomes: Array.isArray(raw.targetIncomes) ? raw.targetIncomes : EMPTY_DRAFT.targetIncomes,
+    targetInterests: Array.isArray(raw.targetInterests) ? raw.targetInterests : EMPTY_DRAFT.targetInterests,
+    targetEmploymentStatuses: Array.isArray(raw.targetEmploymentStatuses)
+      ? raw.targetEmploymentStatuses
+      : EMPTY_DRAFT.targetEmploymentStatuses,
+    targetIndustries: Array.isArray(raw.targetIndustries) ? raw.targetIndustries : EMPTY_DRAFT.targetIndustries,
+    targetMaritalStatuses: Array.isArray(raw.targetMaritalStatuses)
+      ? raw.targetMaritalStatuses
+      : EMPTY_DRAFT.targetMaritalStatuses,
+    title: typeof raw.title === "string" ? raw.title : EMPTY_DRAFT.title,
+    description: typeof raw.description === "string" ? raw.description : EMPTY_DRAFT.description,
+    category: typeof raw.category === "string" ? raw.category : EMPTY_DRAFT.category,
+    targetGender:
+      raw.targetGender === "male" || raw.targetGender === "female" || raw.targetGender === "any"
+        ? raw.targetGender
+        : EMPTY_DRAFT.targetGender,
+    targetAgeMin: typeof raw.targetAgeMin === "number" ? raw.targetAgeMin : EMPTY_DRAFT.targetAgeMin,
+    targetAgeMax: typeof raw.targetAgeMax === "number" ? raw.targetAgeMax : EMPTY_DRAFT.targetAgeMax,
+    targetHasChildren:
+      raw.targetHasChildren === "yes" || raw.targetHasChildren === "no" || raw.targetHasChildren === "any"
+        ? raw.targetHasChildren
+        : EMPTY_DRAFT.targetHasChildren,
+    maxResponses: typeof raw.maxResponses === "number" ? raw.maxResponses : EMPTY_DRAFT.maxResponses,
+    reward: typeof raw.reward === "number" ? raw.reward : EMPTY_DRAFT.reward,
+    startsAt: typeof raw.startsAt === "string" ? raw.startsAt : EMPTY_DRAFT.startsAt,
+    endsAt: typeof raw.endsAt === "string" ? raw.endsAt : EMPTY_DRAFT.endsAt,
+  };
+}
+
 export default function SurveyBuilder({ balance }: Props) {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [draft, setDraft] = useState<SurveyDraft>(EMPTY_DRAFT);
   const [error, setError] = useState<string | null>(null);
+  const [draftStatus, setDraftStatus] = useState<string | null>(null);
+  const [hydrated, setHydrated] = useState(false);
   const [isSubmitting, startTransition] = useTransition();
 
   const totalBudget = useMemo(() => draft.maxResponses * draft.reward * 1.15, [draft.maxResponses, draft.reward]);
 
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(DRAFT_STORAGE_KEY);
+      if (!raw) {
+        setHydrated(true);
+        return;
+      }
+
+      const parsed = JSON.parse(raw) as Partial<PersistedDraftState>;
+      const restoredDraft = normalizeDraft(parsed.draft);
+      const restoredStep =
+        typeof parsed.step === "number" && parsed.step >= 1 && parsed.step <= 4 ? parsed.step : 1;
+
+      if (restoredDraft) {
+        setDraft(restoredDraft);
+        setStep(restoredStep);
+        setDraftStatus("Черновик восстановлен");
+      }
+    } catch {
+      window.localStorage.removeItem(DRAFT_STORAGE_KEY);
+    } finally {
+      setHydrated(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) {
+      return;
+    }
+
+    const saveTimer = window.setTimeout(() => {
+      window.localStorage.setItem(
+        DRAFT_STORAGE_KEY,
+        JSON.stringify({
+          step,
+          draft,
+        } satisfies PersistedDraftState),
+      );
+      setDraftStatus((current) => (current === "Черновик восстановлен" ? current : "Черновик сохранён"));
+    }, 300);
+
+    return () => {
+      window.clearTimeout(saveTimer);
+    };
+  }, [draft, step, hydrated]);
+
   function updateDraft(patch: Partial<SurveyDraft>) {
     setDraft((prev) => ({ ...prev, ...patch }));
     setError(null);
+  }
+
+  function clearDraft() {
+    window.localStorage.removeItem(DRAFT_STORAGE_KEY);
+    setDraft(EMPTY_DRAFT);
+    setStep(1);
+    setError(null);
+    setDraftStatus("Черновик очищен");
   }
 
   function validateStep(currentStep: number) {
@@ -101,6 +205,8 @@ export default function SurveyBuilder({ balance }: Props) {
           return;
         }
 
+        window.localStorage.removeItem(DRAFT_STORAGE_KEY);
+        setDraftStatus(null);
         router.push(`/client/surveys/${result.surveyId}`);
       } catch {
         setError("Не удалось создать опрос. Попробуйте ещё раз.");
@@ -111,40 +217,53 @@ export default function SurveyBuilder({ balance }: Props) {
   return (
     <div className="space-y-6">
       <div className="rounded-2xl border border-dash-border bg-dash-card p-6">
-        <div className="grid gap-4 md:grid-cols-4">
-          {steps.map((item, index) => {
-            const active = item.id === step;
-            const done = item.id < step;
-            return (
-              <div key={item.id} className="flex items-center gap-3">
-                <div className={[
-                  "flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold",
-                  active
-                    ? "bg-brand text-white"
-                    : done
-                      ? "bg-brand/20 text-brand"
-                      : "bg-dash-border text-dash-muted",
-                ].join(" ")}>
-                  {done ? "✓" : item.id}
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="grid flex-1 gap-4 md:grid-cols-4">
+            {steps.map((item, index) => {
+              const active = item.id === step;
+              const done = item.id < step;
+              return (
+                <div key={item.id} className="flex items-center gap-3">
+                  <div className={[
+                    "flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold",
+                    active
+                      ? "bg-brand text-white"
+                      : done
+                        ? "bg-brand/20 text-brand"
+                        : "bg-dash-border text-dash-muted",
+                  ].join(" ")}>
+                    {done ? "✓" : item.id}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-semibold text-dash-heading">{item.title}</div>
+                    {index < steps.length - 1 ? (
+                      <div className={[
+                        "mt-2 h-1 rounded-full",
+                        done ? "bg-brand/30" : "bg-dash-border",
+                      ].join(" ")} />
+                    ) : null}
+                  </div>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <div className="text-sm font-semibold text-dash-heading">{item.title}</div>
-                  {index < steps.length - 1 ? (
-                    <div className={[
-                      "mt-2 h-1 rounded-full",
-                      done ? "bg-brand/30" : "bg-dash-border",
-                    ].join(" ")} />
-                  ) : null}
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 lg:justify-end">
+            {draftStatus ? <div className="text-sm font-medium text-dash-muted">{draftStatus}</div> : null}
+            <button
+              type="button"
+              onClick={clearDraft}
+              className="rounded-xl border border-dash-border bg-dash-bg px-4 py-2 text-sm font-semibold text-dash-heading transition-colors hover:border-brand/30 hover:text-brand"
+            >
+              Очистить черновик
+            </button>
+          </div>
         </div>
       </div>
 
       <div className="rounded-2xl border border-dash-border bg-dash-card p-6 sm:p-8">
         {step === 1 ? <StepBasic draft={draft} onChange={updateDraft} /> : null}
-        {step === 2 ? <StepQuestions questions={draft.questions} onChange={(questions) => updateDraft({ questions })} /> : null}
+        {step === 2 ? <StepQuestions draft={draft} questions={draft.questions} onChange={(questions) => updateDraft({ questions })} /> : null}
         {step === 3 ? <StepAudience draft={draft} onChange={updateDraft} /> : null}
         {step === 4 ? <StepBudget draft={draft} balance={balance} onChange={updateDraft} /> : null}
       </div>

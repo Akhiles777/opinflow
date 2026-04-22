@@ -657,3 +657,120 @@ export async function createComplaintAction(params: {
 
   return { success: true };
 }
+
+export async function saveDraftAction(draft: SurveyDraft, surveyId?: string) {
+  const session = await requireRole("CLIENT");
+
+  const questions = draft.questions.map((question, index) => ({
+    surveyId: "", // заполнится ниже
+    order: index,
+    type: question.type,
+    title: question.title.trim(),
+    description: question.description.trim() || null,
+    required: question.required,
+    mediaUrl: question.mediaUrl,
+    options: toJsonValue(toQuestionOptions(question)),
+    settings: toJsonValue(Object.keys(question.settings).length > 0 ? question.settings : null),
+    logic: toJsonValue(question.logic.length > 0 ? question.logic : null),
+  }));
+
+  if (surveyId) {
+    // Обновляем существующий черновик
+    const existing = await prisma.survey.findUnique({
+      where: { id: surveyId },
+      select: { creatorId: true, status: true },
+    });
+
+    if (!existing || existing.creatorId !== session.user.id || existing.status !== "DRAFT") {
+      return { error: "Черновик не найден" };
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.survey.update({
+        where: { id: surveyId },
+        data: {
+          title: draft.title.trim() || "Без названия",
+          description: draft.description || null,
+          category: draft.category || null,
+          maxResponses: draft.maxResponses,
+          reward: draft.reward ? new Prisma.Decimal(draft.reward) : null,
+          targetGender: draft.targetGender,
+          targetAgeMin: draft.targetAgeMin,
+          targetAgeMax: draft.targetAgeMax,
+          targetCities: draft.targetCities,
+          targetIncomes: draft.targetIncomes,
+          targetInterests: draft.targetInterests,
+          targetHasChildren: draft.targetHasChildren,
+          targetEmploymentStatuses: draft.targetEmploymentStatuses,
+          targetIndustries: draft.targetIndustries,
+          targetMaritalStatuses: draft.targetMaritalStatuses,
+          startsAt: toDate(draft.startsAt),
+          endsAt: toDate(draft.endsAt),
+        },
+      });
+
+      await tx.surveyQuestion.deleteMany({ where: { surveyId } });
+
+      if (questions.length > 0) {
+        await tx.surveyQuestion.createMany({
+          data: questions.map((q) => ({ ...q, surveyId })),
+        });
+      }
+    });
+
+    return { success: true, surveyId };
+  }
+
+  // Создаём новый черновик
+  const survey = await prisma.$transaction(async (tx) => {
+    const created = await tx.survey.create({
+      data: {
+        creatorId: session.user.id,
+        title: draft.title.trim() || "Без названия",
+        description: draft.description || null,
+        category: draft.category || null,
+        status: "DRAFT",
+        maxResponses: draft.maxResponses,
+        reward: draft.reward ? new Prisma.Decimal(draft.reward) : null,
+        targetGender: draft.targetGender,
+        targetAgeMin: draft.targetAgeMin,
+        targetAgeMax: draft.targetAgeMax,
+        targetCities: draft.targetCities,
+        targetIncomes: draft.targetIncomes,
+        targetInterests: draft.targetInterests,
+        targetHasChildren: draft.targetHasChildren,
+        targetEmploymentStatuses: draft.targetEmploymentStatuses,
+        targetIndustries: draft.targetIndustries,
+        targetMaritalStatuses: draft.targetMaritalStatuses,
+        startsAt: toDate(draft.startsAt),
+        endsAt: toDate(draft.endsAt),
+      },
+    });
+
+    if (questions.length > 0) {
+      await tx.surveyQuestion.createMany({
+        data: questions.map((q) => ({ ...q, surveyId: created.id })),
+      });
+    }
+
+    return created;
+  });
+
+  revalidatePath("/client/surveys");
+  return { success: true, surveyId: survey.id };
+}
+
+export async function loadDraftAction(surveyId: string) {
+  const session = await requireRole("CLIENT");
+
+  const survey = await prisma.survey.findUnique({
+    where: { id: surveyId },
+    include: { questions: { orderBy: { order: "asc" } } },
+  });
+
+  if (!survey || survey.creatorId !== session.user.id || survey.status !== "DRAFT") {
+    return { error: "Черновик не найден" };
+  }
+
+  return { success: true, survey };
+}
