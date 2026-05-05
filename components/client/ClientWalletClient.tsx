@@ -1,5 +1,4 @@
 "use client";
-
 import { useMemo, useState, useTransition } from "react";
 import Modal from "@/components/dashboard/Modal";
 import Badge from "@/components/dashboard/Badge";
@@ -62,7 +61,7 @@ export default function ClientWalletClient({ balance, transactions, payments, pa
     <div className="space-y-8">
       {paymentSuccess ? (
         <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-sm font-medium text-emerald-600 dark:text-emerald-300">
-          Платёж вернулся успешно. Баланс обновится автоматически после подтверждения webhook от ЮKassa.
+          Платёж вернулся успешно. Баланс обновится автоматически после подтверждения платежа платёжной системой, обычно это занимает несколько минут.
         </div>
       ) : null}
 
