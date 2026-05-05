@@ -1,100 +1,111 @@
-import * as React from "react";
 import PageHeader from "@/components/dashboard/PageHeader";
-import DataTable, { Column } from "@/components/dashboard/DataTable";
-import Badge from "@/components/dashboard/Badge";
-import EmptyState from "@/components/dashboard/EmptyState";
-import {
-  formatRub,
-  getWalletData,
-  mapTransactionStatus,
-  mapTransactionTypeForRespondent,
-} from "@/lib/dashboard-data";
+import RespondentWalletClient from "@/components/respondent/RespondentWalletClient";
 import { requireRole } from "@/lib/auth-utils";
+import { prisma } from "@/lib/prisma";
 
-type Row = {
-  date: string;
-  type: string;
-  description: string;
-  amount: string;
-  status: "completed" | "pending" | "rejected" | "draft";
-};
+function formatDate(date: Date) {
+  return new Intl.DateTimeFormat("ru-RU", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
 
-const columns: Column<Row>[] = [
-  { key: "date", header: "Дата", cell: (r) => r.date },
-  { key: "type", header: "Тип", cell: (r) => r.type },
-  { key: "desc", header: "Описание", cell: (r) => r.description },
-  { key: "amount", header: "Сумма", cell: (r) => <span className="tabular-nums font-semibold">{r.amount}</span> },
-  {
-    key: "status",
-    header: "Статус",
-    cell: (r) => <Badge variant={r.status}>{mapTransactionStatusText(r.status)}</Badge>,
-  },
-];
+function maskRequisites(method: "CARD" | "SBP" | "WALLET", requisites: unknown) {
+  const data = requisites && typeof requisites === "object" ? (requisites as Record<string, string>) : {};
 
-function mapTransactionStatusText(status: Row["status"]) {
-  return status === "completed" ? "Завершено" : status === "pending" ? "Ожидание" : status === "rejected" ? "Ошибка" : "Отменено";
+  if (method === "CARD") {
+    const digits = (data.cardNumber || "").replace(/\D/g, "");
+    return digits ? `**** **** **** ${digits.slice(-4)}` : "Карта";
+  }
+
+  if (method === "SBP") {
+    const phone = data.phone || "";
+    return phone ? `${phone.slice(0, 2)}***${phone.slice(-4)}` : "СБП";
+  }
+
+  const walletNumber = data.walletNumber || "";
+  return walletNumber ? `ЮMoney •••${walletNumber.slice(-4)}` : "ЮMoney";
 }
 
 export default async function RespondentWalletPage() {
   const session = await requireRole("RESPONDENT");
-  const wallet = await getWalletData(session.user.id);
-  const rows: Row[] = wallet.transactions.map((item) => ({
-    date: item.date,
-    type: mapTransactionTypeForRespondent(item.type),
-    description: item.description,
-    amount: `${item.type === "WITHDRAWAL" ? "-" : "+"}${formatRub(Math.abs(item.amount))}`,
-    status: mapTransactionStatus(item.status).v,
-  }));
+
+  const [wallet, withdrawalRequests] = await Promise.all([
+    prisma.wallet.findUnique({
+      where: { userId: session.user.id },
+      select: {
+        balance: true,
+        totalEarned: true,
+        totalSpent: true,
+        transactions: {
+          orderBy: { createdAt: "desc" },
+          take: 40,
+          select: {
+            id: true,
+            createdAt: true,
+            type: true,
+            description: true,
+            amount: true,
+            status: true,
+          },
+        },
+      },
+    }),
+    prisma.withdrawalRequest.findMany({
+      where: { userId: session.user.id },
+      orderBy: { createdAt: "desc" },
+      take: 20,
+      select: {
+        id: true,
+        amount: true,
+        method: true,
+        status: true,
+        adminNote: true,
+        requisites: true,
+        createdAt: true,
+      },
+    }),
+  ]);
 
   return (
     <div>
-      <PageHeader
-        title="Кошелёк"
-        subtitle="Баланс, вывод средств и история транзакций."
-      />
+      <PageHeader title="Кошелёк" subtitle="Баланс, заявки на вывод и история начислений." />
 
-      <div className="mt-8 grid grid-cols-1 gap-5 xl:grid-cols-2 xl:items-start">
-        <div className="rounded-2xl border border-dash-border bg-dash-card p-8">
-          <p className="mb-2 text-sm font-body text-dash-muted">Доступный баланс</p>
-          <p className="mb-6 font-display text-4xl font-bold tabular-nums text-dash-heading sm:text-5xl">{formatRub(wallet.balance)}</p>
-          <button
-            type="button"
-            className="inline-flex items-center justify-center rounded-xl bg-brand px-7 py-3.5 text-base font-semibold text-white hover:bg-brand-mid transition-colors"
-          >
-            Вывести средства
-          </button>
-          <p className="mt-3 text-xs font-body text-dash-muted">Модал вывода подключим на Этапе 4.</p>
-        </div>
-
-        <div className="bg-dash-card border border-dash-border rounded-2xl p-6">
-          <p className="text-sm font-semibold text-dash-heading font-body">Статистика</p>
-          <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {[
-              { label: "Заработано", value: formatRub(wallet.totalEarned) },
-              { label: "В кошельке", value: formatRub(wallet.balance) },
-              { label: "Выведено", value: formatRub(wallet.totalSpent) },
-            ].map((i) => (
-              <div key={i.label} className="rounded-xl border border-dash-border bg-dash-bg p-4">
-                <p className="text-xs text-dash-muted font-body">{i.label}</p>
-                <p className="mt-2 text-lg font-semibold text-dash-heading tabular-nums">{i.value}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-10">
-        <p className="text-sm font-semibold text-dash-heading mb-4 font-body">
-          История транзакций
-        </p>
-        {rows.length > 0 ? (
-          <DataTable columns={columns} rows={rows} keyForRow={(r) => r.date + r.description} />
-        ) : (
-          <EmptyState
-            title="История пока пуста"
-            description="Пройдите первый опрос или дождитесь начисления, чтобы здесь появились операции."
-          />
-        )}
+      <div className="mt-6">
+        <RespondentWalletClient
+          balance={Number(wallet?.balance ?? 0)}
+          totalEarned={Number(wallet?.totalEarned ?? 0)}
+          totalSpent={Number(wallet?.totalSpent ?? 0)}
+          transactions={
+            wallet?.transactions.map((item) => ({
+              id: item.id,
+              date: formatDate(item.createdAt),
+              type: item.type === "WITHDRAWAL" ? "Вывод" : "Начисление",
+              description: item.description ?? "Операция",
+              amount: item.type === "WITHDRAWAL" ? -Math.abs(Number(item.amount)) : Number(item.amount),
+              status:
+                item.status === "COMPLETED"
+                  ? "completed"
+                  : item.status === "PENDING"
+                    ? "pending"
+                    : item.status === "CANCELLED"
+                      ? "draft"
+                      : "rejected",
+            })) ?? []
+          }
+          withdrawalRequests={withdrawalRequests.map((item) => ({
+            id: item.id,
+            date: formatDate(item.createdAt),
+            method: item.method,
+            amount: Number(item.amount),
+            status: item.status,
+            adminNote: item.adminNote,
+            requisitesMasked: maskRequisites(item.method, item.requisites),
+          }))}
+        />
       </div>
     </div>
   );

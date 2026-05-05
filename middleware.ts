@@ -8,6 +8,10 @@ export default auth((req) => {
   const role = session?.user?.role;
   const path = nextUrl.pathname;
 
+  if (path.startsWith("/api/payments")) {
+    return NextResponse.next();
+  }
+
   if (!isLoggedIn) {
     const loginUrl = new URL("/login", nextUrl);
     loginUrl.searchParams.set("callbackUrl", path);
@@ -30,5 +34,5 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/respondent/:path*", "/client/:path*", "/admin/:path*"],
+  matcher: ["/dashboard/:path*", "/respondent/:path*", "/client/:path*", "/admin/:path*", "/api/payments/:path*"],
 };

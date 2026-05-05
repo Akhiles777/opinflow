@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Badge from "@/components/dashboard/Badge";
+import ClientSurveyAnalysis from "@/components/dashboard/ClientSurveyAnalysis";
 import ClientSurveyActions from "@/components/dashboard/ClientSurveyActions";
 import PageHeader from "@/components/dashboard/PageHeader";
 import StatCard from "@/components/dashboard/StatCard";
@@ -172,6 +173,18 @@ export default async function ClientSurveyDetailPage({ params }: { params: Promi
           },
         },
       },
+      analysis: {
+        select: {
+          status: true,
+          themes: true,
+          sentimentData: true,
+          wordCloud: true,
+          summary: true,
+          keyInsights: true,
+          pdfUrl: true,
+          error: true,
+        },
+      },
     },
   });
 
@@ -299,6 +312,25 @@ export default async function ClientSurveyDetailPage({ params }: { params: Promi
   });
 
   const latestValidCompletion = getLatestValidCompletion(survey.sessions);
+  const analysis = survey.analysis
+    ? {
+        status: survey.analysis.status,
+        error: survey.analysis.error,
+        pdfUrl: survey.analysis.pdfUrl,
+        themes: Array.isArray(survey.analysis.themes) ? survey.analysis.themes as Array<{
+          theme: string;
+          count: number;
+          sentiment: "positive" | "negative" | "neutral";
+          examples: string[];
+        }> : [],
+        sentiment:
+          survey.analysis.sentimentData && typeof survey.analysis.sentimentData === "object" && !Array.isArray(survey.analysis.sentimentData)
+            ? survey.analysis.sentimentData as { positive: number; neutral: number; negative: number }
+            : { positive: 0, neutral: 100, negative: 0 },
+        summary: survey.analysis.summary,
+        keyInsights: Array.isArray(survey.analysis.keyInsights) ? survey.analysis.keyInsights as string[] : [],
+      }
+    : null;
 
   return (
     <div className="space-y-8">
@@ -406,6 +438,8 @@ export default async function ClientSurveyDetailPage({ params }: { params: Promi
           <div className="mt-2 text-base text-red-600 dark:text-red-300">{survey.moderationNote}</div>
         </div>
       ) : null}
+
+      <ClientSurveyAnalysis surveyId={survey.id} analysis={analysis} />
 
       <div className="rounded-2xl border border-dash-border bg-dash-card p-6">
         <div className="text-sm font-semibold text-dash-heading">Ответы по вопросам</div>

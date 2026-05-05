@@ -1,74 +1,113 @@
-import * as React from "react";
-import { Banknote, Percent, Wallet2, TrendingUp } from "lucide-react";
 import PageHeader from "@/components/dashboard/PageHeader";
-import StatCard from "@/components/dashboard/StatCard";
-import DataTable, { Column } from "@/components/dashboard/DataTable";
-import Badge from "@/components/dashboard/Badge";
-import EmptyState from "@/components/dashboard/EmptyState";
-import AdminFinanceExportButton from "@/components/dashboard/AdminFinanceExportButton";
-import { formatRub, getAdminFinanceData } from "@/lib/dashboard-data";
+import AdminFinanceClient from "@/components/dashboard/AdminFinanceClient";
 import { requireRole } from "@/lib/auth-utils";
+import { prisma } from "@/lib/prisma";
+import { mapTransactionStatus } from "@/lib/dashboard-data";
 
-type Row = Awaited<ReturnType<typeof getAdminFinanceData>>["rows"][number];
+function formatDate(date: Date) {
+  return new Intl.DateTimeFormat("ru-RU", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
+
+function maskRequisites(method: "CARD" | "SBP" | "WALLET", requisites: unknown) {
+  const data = requisites && typeof requisites === "object" ? (requisites as Record<string, string>) : {};
+
+  if (method === "CARD") {
+    const digits = (data.cardNumber || "").replace(/\D/g, "");
+    return digits ? `**** **** **** ${digits.slice(-4)}` : "Карта";
+  }
+
+  if (method === "SBP") {
+    const phone = data.phone || "";
+    return phone ? `${phone.slice(0, 2)}***${phone.slice(-4)}` : "СБП";
+  }
+
+  const walletNumber = data.walletNumber || "";
+  return walletNumber ? `ЮMoney •••${walletNumber.slice(-4)}` : "ЮMoney";
+}
 
 export default async function AdminFinancePage() {
   await requireRole("ADMIN");
-  const data = await getAdminFinanceData();
 
-  const stats = [
-    { label: "Оборот за месяц", value: formatRub(data.turnover), icon: <TrendingUp className="w-5 h-5" /> },
-    { label: "Комиссия платформы", value: formatRub(data.commission), icon: <Percent className="w-5 h-5" /> },
-    { label: "Выплачено респондентам", value: formatRub(data.paidOut), icon: <Wallet2 className="w-5 h-5" /> },
-    { label: "Пополнений", value: String(data.depositCount), icon: <Banknote className="w-5 h-5" /> },
-  ];
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  const columns: Column<Row>[] = [
-    { key: "date", header: "Дата", cell: (r) => r.date },
-    { key: "type", header: "Тип", cell: (r) => r.type },
-    { key: "user", header: "Пользователь", cell: (r) => r.user },
-    { key: "amount", header: "Сумма", cell: (r) => <span className="tabular-nums font-semibold">{formatRub(r.amount)}</span> },
-    { key: "fee", header: "Комиссия", cell: (r) => <span className="tabular-nums">{r.fee > 0 ? formatRub(r.fee) : "—"}</span> },
-    {
-      key: "status",
-      header: "Статус",
-      cell: (r) => <Badge variant={r.status.v}>{r.status.t}</Badge>,
-    },
-  ];
+  const [transactions, withdrawals] = await Promise.all([
+    prisma.transaction.findMany({
+      where: { createdAt: { gte: monthStart } },
+      orderBy: { createdAt: "desc" },
+      include: {
+        wallet: {
+          select: {
+            user: {
+              select: { email: true },
+            },
+          },
+        },
+      },
+      take: 100,
+    }),
+    prisma.withdrawalRequest.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 100,
+      select: {
+        id: true,
+        amount: true,
+        method: true,
+        requisites: true,
+        status: true,
+        adminNote: true,
+        createdAt: true,
+        user: {
+          select: { email: true },
+        },
+      },
+    }),
+  ]);
+
+  const turnover = transactions
+    .filter((item) => item.status === "COMPLETED")
+    .reduce((sum, item) => sum + Math.abs(Number(item.amount)), 0);
+  const commission = transactions
+    .filter((item) => item.type === "SPENDING")
+    .reduce((sum, item) => sum + Math.abs(Number(item.amount)) * 0.15, 0);
+  const paidOut = transactions
+    .filter((item) => item.type === "WITHDRAWAL" && item.status === "COMPLETED")
+    .reduce((sum, item) => sum + Math.abs(Number(item.amount)), 0);
 
   return (
     <div>
-      <PageHeader title="Финансы" subtitle="Реальные транзакции, оборот и комиссии из базы данных." />
+      <PageHeader title="Финансы" subtitle="Транзакции платформы и заявки на вывод средств респондентов." />
 
-      <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
-        {stats.map((s) => (
-          <StatCard key={s.label} icon={s.icon} label={s.label} value={s.value} />
-        ))}
-      </div>
-
-      <div className="mt-10 rounded-2xl border border-dash-border bg-dash-card p-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-[15px] font-semibold text-dash-heading font-body">Транзакции</p>
-          <AdminFinanceExportButton rows={data.rows} />
-        </div>
-        <div className="mt-5">
-          {data.rows.length > 0 ? (
-            <DataTable columns={columns} users={data.rows} keyForRow={(r) => r.id} />
-          ) : (
-            <EmptyState title="Транзакций пока нет" description="Как только пользователи начнут пополнять кошельки и выводить средства, операции появятся здесь." />
-          )}
-        </div>
-      </div>
-
-      <div className="mt-10 rounded-2xl border border-dash-border bg-dash-card p-6">
-        <p className="text-[15px] font-semibold text-dash-heading font-body">Настройка комиссии</p>
-        <p className="mt-2 text-[15px] text-dash-muted font-body">
-          В рамках Этапа 2 комиссия пока только отображается. Управление значением подключим в следующем этапе.
-        </p>
-        <div className="mt-5">
-          <span className="inline-flex rounded-xl border border-dash-border bg-dash-bg px-4 py-3 text-[15px] font-semibold text-dash-heading">
-            Текущая расчётная комиссия: 15%
-          </span>
-        </div>
+      <div className="mt-8">
+        <AdminFinanceClient
+          stats={{ turnover, commission, paidOut }}
+          transactions={transactions.map((item) => ({
+            id: item.id,
+            date: formatDate(item.createdAt),
+            type: item.type,
+            user: item.wallet.user.email,
+            amount: Number(item.amount),
+            fee: item.type === "SPENDING" ? Math.abs(Number(item.amount)) * 0.15 : 0,
+            status: mapTransactionStatus(item.status),
+          }))}
+          withdrawals={withdrawals.map((item) => ({
+            id: item.id,
+            user: item.user.email,
+            method: item.method,
+            methodLabel: item.method === "CARD" ? "Банковская карта" : item.method === "SBP" ? "СБП" : "ЮMoney",
+            amount: Number(item.amount),
+            requisitesMasked: maskRequisites(item.method, item.requisites),
+            date: formatDate(item.createdAt),
+            status: item.status,
+            adminNote: item.adminNote,
+          }))}
+        />
       </div>
     </div>
   );

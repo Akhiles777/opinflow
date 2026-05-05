@@ -31,6 +31,8 @@ model User {
   emailTokens       EmailToken[]
   surveySessions    SurveySession[]
   complaintsSent    Complaint[]
+  payments          Payment[]
+  withdrawalRequests WithdrawalRequest[]
 
   @@map("users")
 }
@@ -216,6 +218,7 @@ model Survey {
   questions  SurveyQuestion[]
   sessions   SurveySession[]
   complaints Complaint[]
+  analysis   SurveyAnalysis?
 
   @@map("surveys")
 }
@@ -348,4 +351,93 @@ model Referral {
   receiver User @relation("ReferralReceiver", fields: [receiverId], references: [id])
 
   @@map("referrals")
+}
+
+model Payment {
+  id              String        @id @default(cuid())
+  userId          String
+  yukassaId       String?       @unique
+  type            PaymentType
+  amount          Decimal       @db.Decimal(10, 2)
+  status          PaymentStatus @default(PENDING)
+  description     String?
+  metadata        Json?
+  confirmationUrl String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("payments")
+}
+
+enum PaymentType {
+  DEPOSIT
+  PAYOUT
+}
+
+enum PaymentStatus {
+  PENDING
+  WAITING
+  SUCCEEDED
+  CANCELED
+  FAILED
+}
+
+model WithdrawalRequest {
+  id              String           @id @default(cuid())
+  userId          String
+  amount          Decimal          @db.Decimal(10, 2)
+  method          WithdrawalMethod
+  requisites      Json
+  status          WithdrawalStatus @default(PENDING)
+  yukassaPayoutId String?
+  adminNote       String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("withdrawal_requests")
+}
+
+enum WithdrawalMethod {
+  CARD
+  SBP
+  WALLET
+}
+
+enum WithdrawalStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  REJECTED
+  FAILED
+}
+
+model SurveyAnalysis {
+  id            String         @id @default(cuid())
+  surveyId      String         @unique
+  status        AnalysisStatus @default(PENDING)
+  themes        Json?
+  sentimentData Json?
+  wordCloud     Json?
+  summary       String?
+  keyInsights   Json?
+  pdfUrl        String?
+  generatedAt   DateTime?
+  error         String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  survey Survey @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+
+  @@map("survey_analyses")
+}
+
+enum AnalysisStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
 }

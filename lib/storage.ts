@@ -1,6 +1,7 @@
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const SUPABASE_SURVEY_MEDIA_BUCKET = process.env.SUPABASE_SURVEY_MEDIA_BUCKET || "survey-media";
+const SUPABASE_REPORTS_BUCKET = process.env.SUPABASE_REPORTS_BUCKET || "opinflow-media";
 
 function getAuthHeaders(contentType?: string) {
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
@@ -22,8 +23,12 @@ function getFileExtension(file: File) {
   return "jpg";
 }
 
-async function ensureBucketExists() {
-  const response = await fetch(`${SUPABASE_URL}/storage/v1/bucket/${SUPABASE_SURVEY_MEDIA_BUCKET}`, {
+async function ensureBucketExists(params: {
+  bucket: string;
+  fileSizeLimit: string;
+  mimeTypes: string[];
+}) {
+  const response = await fetch(`${SUPABASE_URL}/storage/v1/bucket/${params.bucket}`, {
     method: "GET",
     headers: getAuthHeaders(),
     cache: "no-store",
@@ -37,11 +42,11 @@ async function ensureBucketExists() {
     method: "POST",
     headers: getAuthHeaders("application/json"),
     body: JSON.stringify({
-      id: SUPABASE_SURVEY_MEDIA_BUCKET,
-      name: SUPABASE_SURVEY_MEDIA_BUCKET,
+      id: params.bucket,
+      name: params.bucket,
       public: true,
-      file_size_limit: "5242880",
-      allowed_mime_types: ["image/jpeg", "image/png", "image/webp"],
+      file_size_limit: params.fileSizeLimit,
+      allowed_mime_types: params.mimeTypes,
     }),
   });
 
@@ -66,7 +71,11 @@ export async function uploadSurveyMedia(ownerId: string, file: File) {
     throw new Error("MEDIA_TOO_LARGE");
   }
 
-  await ensureBucketExists();
+  await ensureBucketExists({
+    bucket: SUPABASE_SURVEY_MEDIA_BUCKET,
+    fileSizeLimit: "5242880",
+    mimeTypes: ["image/jpeg", "image/png", "image/webp"],
+  });
 
   const extension = getFileExtension(file);
   const filePath = `survey-media/${ownerId}/${Date.now()}-${crypto.randomUUID()}.${extension}`;
@@ -87,4 +96,34 @@ export async function uploadSurveyMedia(ownerId: string, file: File) {
   }
 
   return `${SUPABASE_URL}/storage/v1/object/public/${SUPABASE_SURVEY_MEDIA_BUCKET}/${filePath}`;
+}
+
+export async function uploadSurveyReport(surveyId: string, buffer: Buffer) {
+  if (!buffer || buffer.length === 0) {
+    throw new Error("EMPTY_REPORT_BUFFER");
+  }
+
+  await ensureBucketExists({
+    bucket: SUPABASE_REPORTS_BUCKET,
+    fileSizeLimit: "52428800",
+    mimeTypes: ["application/pdf"],
+  });
+
+  const filePath = `reports/${surveyId}-${Date.now()}.pdf`;
+
+  const response = await fetch(`${SUPABASE_URL}/storage/v1/object/${SUPABASE_REPORTS_BUCKET}/${filePath}`, {
+    method: "POST",
+    headers: {
+      ...getAuthHeaders("application/pdf"),
+      "x-upsert": "true",
+    },
+    body: new Uint8Array(buffer),
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`SUPABASE_REPORT_UPLOAD_FAILED: ${text}`);
+  }
+
+  return `${SUPABASE_URL}/storage/v1/object/public/${SUPABASE_REPORTS_BUCKET}/${filePath}`;
 }
