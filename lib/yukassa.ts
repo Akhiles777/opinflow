@@ -78,6 +78,28 @@ export async function createDepositPayment(params: {
   };
 }
 
+export async function getDepositPaymentStatus(yukassaId: string): Promise<{
+  id: string;
+  status: string;
+  paid?: boolean;
+}> {
+  ensureYukassaConfigured();
+
+  const auth = Buffer.from(`${shopId}:${secretKey}`).toString("base64");
+  const response = await fetch(`https://api.yookassa.ru/v3/payments/${yukassaId}`, {
+    headers: {
+      Authorization: `Basic ${auth}`,
+    },
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`YUKASSA_PAYMENT_STATUS_FAILED: ${response.status} ${text}`);
+  }
+
+  return (await response.json()) as { id: string; status: string; paid?: boolean };
+}
+
 function getPayoutDestinationData(params: {
   method: "card" | "sbp" | "wallet";
   requisites: Record<string, string>;

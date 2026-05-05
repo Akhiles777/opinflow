@@ -1,6 +1,7 @@
 import PageHeader from "@/components/dashboard/PageHeader";
 import ClientWalletClient from "@/components/client/ClientWalletClient";
 import { requireRole } from "@/lib/auth-utils";
+import { syncWaitingDepositPayments } from "@/lib/payment-processing";
 import { prisma } from "@/lib/prisma";
 
 function formatDate(date: Date) {
@@ -20,6 +21,8 @@ export default async function ClientWalletPage({
 }) {
   const session = await requireRole("CLIENT");
   const params = (await searchParams) ?? {};
+
+  await syncWaitingDepositPayments(session.user.id);
 
   const [wallet, payments] = await Promise.all([
     prisma.wallet.findUnique({

@@ -31,8 +31,20 @@ function formatRub(amount: number) {
 }
 
 function mapStatus(status: string) {
-  if (status === "SUCCEEDED" || status === "COMPLETED") return { v: "completed" as const, t: "Успешно" };
-  if (status === "WAITING" || status === "PENDING") return { v: "pending" as const, t: "Ожидание" };
+  const normalized = status.toUpperCase();
+
+  if (normalized === "SUCCEEDED" || normalized === "COMPLETED") {
+    return { v: "completed" as const, t: "Успешно" };
+  }
+
+  if (normalized === "WAITING" || normalized === "PENDING") {
+    return { v: "pending" as const, t: "Ожидание" };
+  }
+
+  if (normalized === "CANCELED" || normalized === "CANCELLED" || normalized === "DRAFT") {
+    return { v: "draft" as const, t: "Отменено" };
+  }
+
   return { v: "rejected" as const, t: "Ошибка" };
 }
 
@@ -58,29 +70,32 @@ export default function ClientWalletClient({ balance, transactions, payments, pa
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {paymentSuccess ? (
         <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-sm font-medium text-emerald-600 dark:text-emerald-300">
           Платёж вернулся успешно. Баланс обновится автоматически после подтверждения платежа платёжной системой, обычно это занимает несколько минут.
         </div>
       ) : null}
 
-      <div className="rounded-2xl bg-surface-900 p-8 text-white">
+      <section className="rounded-3xl border border-dash-border bg-dash-card p-6 sm:p-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <div className="text-sm uppercase tracking-[0.22em] text-white/45">Текущий баланс</div>
-            <div className="mt-4 font-display text-5xl font-bold">{formatRub(balance)}</div>
+          <div className="min-w-0">
+            <div className="text-xs uppercase tracking-[0.2em] text-dash-muted">Текущий баланс</div>
+            <div className="mt-3 font-display text-4xl text-dash-heading sm:text-5xl">{formatRub(balance)}</div>
+            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-dash-muted">
+              Средства используются для запуска опросов и резервируются при отправке опроса на модерацию.
+            </p>
           </div>
 
           <button
             type="button"
             onClick={() => setShowDepositModal(true)}
-            className="inline-flex items-center justify-center rounded-2xl bg-brand px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-mid"
+            className="inline-flex w-full items-center justify-center rounded-2xl bg-brand px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-mid lg:w-auto"
           >
             Пополнить баланс
           </button>
         </div>
-      </div>
+      </section>
 
       <div className="grid gap-6 xl:grid-cols-2">
         <div className="rounded-2xl border border-dash-border bg-dash-card p-6">
@@ -99,7 +114,7 @@ export default function ClientWalletClient({ balance, transactions, payments, pa
                         {item.amount >= 0 ? "+" : "-"}{formatRub(Math.abs(item.amount))}
                       </div>
                       <div className="mt-2">
-                        <Badge variant={item.status}>{mapStatus(item.status).t}</Badge>
+                        <Badge variant={mapStatus(item.status).v}>{mapStatus(item.status).t}</Badge>
                       </div>
                     </div>
                   </div>
@@ -128,7 +143,7 @@ export default function ClientWalletClient({ balance, transactions, payments, pa
                       </div>
                       <div className="flex items-center gap-3">
                         <Badge variant={status.v}>{status.t}</Badge>
-                        {payment.status === "WAITING" && payment.confirmationUrl ? (
+                        {payment.status.toUpperCase() === "WAITING" && payment.confirmationUrl ? (
                           <button
                             type="button"
                             onClick={() => window.open(payment.confirmationUrl!, "_blank", "noopener,noreferrer")}

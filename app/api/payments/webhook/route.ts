@@ -1,66 +1,31 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { creditDepositPaymentByYukassaId } from "@/lib/payment-processing";
 
 export async function POST(request: Request) {
   try {
     const text = await request.text();
     const event = JSON.parse(text) as {
       type?: string;
+      event?: string;
       object?: {
         id?: string;
         amount?: { value?: string };
         metadata?: { userId?: string };
       };
     };
+    const eventName = event.event ?? event.type;
 
-    if (event.type === "payment.succeeded") {
+    if (eventName === "payment.succeeded") {
       const yukassaId = event.object?.id;
-      const amount = Number(event.object?.amount?.value ?? 0);
-      const userId = event.object?.metadata?.userId;
 
-      if (yukassaId && userId) {
-        const payment = await prisma.payment.findUnique({
-          where: { yukassaId },
-          select: { id: true, userId: true, status: true },
-        });
-
-        if (payment && payment.status !== "SUCCEEDED") {
-          const wallet = await prisma.wallet.findUnique({
-            where: { userId: payment.userId },
-            select: { id: true },
-          });
-
-          if (wallet) {
-            await prisma.$transaction(async (tx) => {
-              await tx.payment.update({
-                where: { id: payment.id },
-                data: { status: "SUCCEEDED" },
-              });
-
-              await tx.wallet.update({
-                where: { id: wallet.id },
-                data: {
-                  balance: { increment: new Prisma.Decimal(amount) },
-                },
-              });
-
-              await tx.transaction.create({
-                data: {
-                  walletId: wallet.id,
-                  type: "DEPOSIT",
-                  amount: new Prisma.Decimal(amount),
-                  description: `Пополнение баланса через ЮKassa (${yukassaId})`,
-                  status: "COMPLETED",
-                },
-              });
-            });
-          }
-        }
+      if (yukassaId) {
+        await creditDepositPaymentByYukassaId(yukassaId);
       }
     }
 
-    if (event.type === "payment.canceled") {
+    if (eventName === "payment.canceled") {
       const yukassaId = event.object?.id;
       if (yukassaId) {
         await prisma.payment.updateMany({
@@ -70,7 +35,7 @@ export async function POST(request: Request) {
       }
     }
 
-    if (event.type === "payout.succeeded") {
+    if (eventName === "payout.succeeded") {
       const payoutId = event.object?.id;
       if (payoutId) {
         const requestRecord = await prisma.withdrawalRequest.findFirst({
@@ -113,7 +78,7 @@ export async function POST(request: Request) {
       }
     }
 
-    if (event.type === "payout.failed") {
+    if (eventName === "payout.failed") {
       const payoutId = event.object?.id;
       if (payoutId) {
         const requestRecord = await prisma.withdrawalRequest.findFirst({
