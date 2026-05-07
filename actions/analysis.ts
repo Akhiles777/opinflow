@@ -73,7 +73,7 @@ export async function runAnalysisAction(surveyId: string) {
     const openTextQuestions = survey.questions.filter((question) => question.type === "OPEN_TEXT");
     const openAnswers = openTextQuestions
       .map((question) => ({
-        question: question.title,
+        questionTitle: question.title,
         answers: survey.sessions
           .flatMap((sessionItem) => sessionItem.answers)
           .filter((answer) => answer.questionId === question.id)
@@ -83,8 +83,8 @@ export async function runAnalysisAction(surveyId: string) {
       .filter((group) => group.answers.length > 0);
 
     const result = await analyzeSurveyResponses({
-      title: survey.title,
-      category: survey.category,
+      surveyTitle: survey.title,
+      surveyCategory: survey.category,
       openAnswers,
     });
 

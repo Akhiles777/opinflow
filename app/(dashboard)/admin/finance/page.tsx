@@ -1,6 +1,7 @@
 import PageHeader from "@/components/dashboard/PageHeader";
 import AdminFinanceClient from "@/components/dashboard/AdminFinanceClient";
 import { requireRole } from "@/lib/auth-utils";
+import { getCommissionRate } from "@/lib/platform-settings";
 import { prisma } from "@/lib/prisma";
 import { mapTransactionStatus } from "@/lib/dashboard-data";
 
@@ -37,7 +38,7 @@ export default async function AdminFinancePage() {
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  const [transactions, withdrawals] = await Promise.all([
+  const [transactions, withdrawals, commissionRate] = await Promise.all([
     prisma.transaction.findMany({
       where: { createdAt: { gte: monthStart } },
       orderBy: { createdAt: "desc" },
@@ -68,6 +69,7 @@ export default async function AdminFinancePage() {
         },
       },
     }),
+    getCommissionRate(),
   ]);
 
   const turnover = transactions
@@ -75,7 +77,7 @@ export default async function AdminFinancePage() {
     .reduce((sum, item) => sum + Math.abs(Number(item.amount)), 0);
   const commission = transactions
     .filter((item) => item.type === "SPENDING")
-    .reduce((sum, item) => sum + Math.abs(Number(item.amount)) * 0.15, 0);
+    .reduce((sum, item) => sum + Math.abs(Number(item.amount)) * commissionRate, 0);
   const paidOut = transactions
     .filter((item) => item.type === "WITHDRAWAL" && item.status === "COMPLETED")
     .reduce((sum, item) => sum + Math.abs(Number(item.amount)), 0);
@@ -87,13 +89,14 @@ export default async function AdminFinancePage() {
       <div className="mt-8">
         <AdminFinanceClient
           stats={{ turnover, commission, paidOut }}
+          commissionRate={commissionRate}
           transactions={transactions.map((item) => ({
             id: item.id,
             date: formatDate(item.createdAt),
             type: item.type,
             user: item.wallet.user.email,
             amount: Number(item.amount),
-            fee: item.type === "SPENDING" ? Math.abs(Number(item.amount)) * 0.15 : 0,
+            fee: item.type === "SPENDING" ? Math.abs(Number(item.amount)) * commissionRate : 0,
             status: mapTransactionStatus(item.status),
           }))}
           withdrawals={withdrawals.map((item) => ({

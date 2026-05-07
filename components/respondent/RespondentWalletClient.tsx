@@ -147,7 +147,7 @@ export default function RespondentWalletClient({
       }
 
       resetModal();
-      setSuccessMessage("Заявка на вывод отправлена и ожидает проверки администратором.");
+      setSuccessMessage("Заявка на вывод создана. Статус выплаты обновится автоматически.");
       router.refresh();
     });
   }

@@ -6,6 +6,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth-utils";
 import { checkFraud } from "@/lib/antifrod";
+import { getCommissionRate } from "@/lib/platform-settings";
 import { mapSurveyQuestion } from "@/lib/survey-mappers";
 import { uploadSurveyMedia } from "@/lib/storage";
 import type { SurveyDraft } from "@/types/survey";
@@ -199,7 +200,7 @@ export async function createSurveyAction(draft: SurveyDraft) {
   }
 
   const estimatedTime = estimateSurveyTime(draft.questions);
-  const commissionRate = Number(process.env.NEXT_PUBLIC_COMMISSION_RATE || 0.15);
+  const commissionRate = await getCommissionRate();
   const budget = roundMoney(draft.maxResponses * draft.reward * (1 + commissionRate));
   const wallet = await prisma.wallet.findUnique({ where: { userId: session.user.id } });
   if (!wallet) return { error: "Кошелёк не найден" };

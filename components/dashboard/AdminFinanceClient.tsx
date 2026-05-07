@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Badge from "@/components/dashboard/Badge";
 import Modal from "@/components/dashboard/Modal";
 import AdminFinanceExportButton from "@/components/dashboard/AdminFinanceExportButton";
+import { updateCommissionRateAction } from "@/actions/admin-settings";
 import { approveWithdrawalAction, rejectWithdrawalAction } from "@/actions/payments";
 
 type TransactionRow = {
@@ -35,6 +36,7 @@ type Props = {
     commission: number;
     paidOut: number;
   };
+  commissionRate: number;
   transactions: TransactionRow[];
   withdrawals: WithdrawalRow[];
 };
@@ -53,13 +55,14 @@ function mapWithdrawalStatus(status: WithdrawalRow["status"]) {
         : { v: "rejected" as const, t: status === "REJECTED" ? "Отклонено" : "Ошибка" };
 }
 
-export default function AdminFinanceClient({ stats, transactions, withdrawals }: Props) {
+export default function AdminFinanceClient({ stats, commissionRate, transactions, withdrawals }: Props) {
   const router = useRouter();
   const [tab, setTab] = useState<"transactions" | "withdrawals">("transactions");
   const [statusFilter, setStatusFilter] = useState<"ALL" | WithdrawalRow["status"]>("ALL");
   const [rejectTarget, setRejectTarget] = useState<WithdrawalRow | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [commissionPercent, setCommissionPercent] = useState(String(Math.round(commissionRate * 1000) / 10));
   const [isPending, startTransition] = useTransition();
 
   const filteredWithdrawals = useMemo(
@@ -95,8 +98,49 @@ export default function AdminFinanceClient({ stats, transactions, withdrawals }:
     });
   }
 
+  function handleSaveCommission() {
+    setError(null);
+    startTransition(async () => {
+      const value = Number(commissionPercent.replace(",", "."));
+      const result = await updateCommissionRateAction(value);
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+      router.refresh();
+    });
+  }
+
   return (
     <div className="space-y-8">
+      <div className="rounded-2xl border border-dash-border bg-dash-card p-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <div className="text-sm font-semibold text-dash-heading">Комиссия платформы</div>
+            <div className="mt-1 text-sm text-dash-muted">Используется при расчёте бюджета новых опросов.</div>
+          </div>
+          <div className="flex w-full gap-3 lg:w-auto">
+            <input
+              type="number"
+              min={0}
+              max={100}
+              step={0.1}
+              value={commissionPercent}
+              onChange={(event) => setCommissionPercent(event.target.value)}
+              className="h-11 w-full rounded-xl border border-dash-border bg-dash-bg px-4 text-sm text-dash-body outline-none focus:border-brand/40 lg:w-40"
+            />
+            <button
+              type="button"
+              onClick={handleSaveCommission}
+              disabled={isPending}
+              className="rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-mid disabled:opacity-60"
+            >
+              Сохранить
+            </button>
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
         {[
           { label: "Оборот за месяц", value: formatRub(stats.turnover) },
@@ -136,7 +180,7 @@ export default function AdminFinanceClient({ stats, transactions, withdrawals }:
             }))} />
           ) : (
             <div className="flex flex-wrap gap-2">
-              {(["ALL", "PENDING", "PROCESSING", "COMPLETED"] as const).map((item) => (
+              {(["ALL", "PENDING", "PROCESSING", "COMPLETED", "REJECTED", "FAILED"] as const).map((item) => (
                 <button
                   key={item}
                   type="button"
@@ -149,7 +193,11 @@ export default function AdminFinanceClient({ stats, transactions, withdrawals }:
                       ? "Ожидают"
                       : item === "PROCESSING"
                         ? "В обработке"
-                        : "Завершённые"}
+                        : item === "COMPLETED"
+                          ? "Завершённые"
+                          : item === "REJECTED"
+                            ? "Отклонённые"
+                            : "С ошибкой"}
                 </button>
               ))}
             </div>

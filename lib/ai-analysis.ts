@@ -25,7 +25,7 @@ export type AnalysisResult = {
 };
 
 type OpenAnswerGroup = {
-  question: string;
+  questionTitle: string;
   answers: string[];
 };
 
@@ -44,8 +44,8 @@ function stripMarkdownFence(value: string) {
 }
 
 export async function analyzeSurveyResponses(params: {
-  title: string;
-  category?: string | null;
+  surveyTitle: string;
+  surveyCategory?: string | null;
   openAnswers: OpenAnswerGroup[];
 }): Promise<AnalysisResult> {
   if (!params.openAnswers.length) {
@@ -57,13 +57,13 @@ export async function analyzeSurveyResponses(params: {
   }
 
   const answersText = params.openAnswers
-    .map((group) => `Вопрос: "${group.question}"\nОтветы:\n${group.answers.map((answer, index) => `${index + 1}. ${answer}`).join("\n")}`)
+    .map((group) => `Вопрос: "${group.questionTitle}"\nОтветы:\n${group.answers.map((answer, index) => `${index + 1}. ${answer}`).join("\n")}`)
     .join("\n\n");
 
   const prompt = [
     "Ты — аналитик маркетинговых исследований.",
-    `Проанализируй ответы на опрос: ${params.title}`,
-    params.category ? `Категория: ${params.category}` : null,
+    `Проанализируй ответы на опрос: ${params.surveyTitle}`,
+    params.surveyCategory ? `Категория: ${params.surveyCategory}` : null,
     answersText,
     "Верни ТОЛЬКО валидный JSON без markdown-блоков:",
     "{ themes: [...], sentiment: { positive, neutral, negative }, wordCloud: [...], summary: \"...\", keyInsights: [...] }",

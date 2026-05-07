@@ -1,24 +1,29 @@
-import { Buffer } from "node:buffer";
 import { YooCheckout } from "@a2seven/yoo-checkout";
 
-const shopId = process.env.YUKASSA_SHOP_ID;
-const secretKey = process.env.YUKASSA_SECRET_KEY;
-const payoutShopId = process.env.YUKASSA_PAYOUT_AGENT_ID || shopId;
-const payoutSecretKey = process.env.YUKASSA_PAYOUT_SECRET_KEY || secretKey;
+const paymentsShopId = process.env.YUKASSA_SHOP_ID;
+const paymentsSecretKey = process.env.YUKASSA_SECRET_KEY;
+const payoutShopId = process.env.YUKASSA_PAYOUT_SHOP_ID;
+const payoutSecretKey = process.env.YUKASSA_PAYOUT_SECRET_KEY;
 
-export const yukassa = new YooCheckout({
-  shopId: shopId || "",
-  secretKey: secretKey || "",
+const yukassaPayments = new YooCheckout({
+  shopId: paymentsShopId || "",
+  secretKey: paymentsSecretKey || "",
 });
 
-function ensureYukassaConfigured() {
-  if (!shopId || !secretKey) {
+function toMoneyString(amount: number) {
+  return amount.toFixed(2);
+}
+
+function ensurePaymentsConfigured() {
+  if (!paymentsShopId || !paymentsSecretKey) {
     throw new Error("YUKASSA_NOT_CONFIGURED");
   }
 }
 
-function toMoneyString(amount: number) {
-  return amount.toFixed(2);
+function ensurePayoutsConfigured() {
+  if (!payoutShopId || !payoutSecretKey) {
+    throw new Error("YUKASSA_PAYOUT_NOT_CONFIGURED");
+  }
 }
 
 export async function createDepositPayment(params: {
@@ -31,9 +36,9 @@ export async function createDepositPayment(params: {
   status: string;
   confirmation?: { confirmation_url?: string | null } | null;
 }> {
-  ensureYukassaConfigured();
+  ensurePaymentsConfigured();
 
-  const payment = await yukassa.createPayment(
+  const payment = await yukassaPayments.createPayment(
     {
       amount: {
         value: toMoneyString(params.amount),
@@ -83,9 +88,9 @@ export async function getDepositPaymentStatus(yukassaId: string): Promise<{
   status: string;
   paid?: boolean;
 }> {
-  ensureYukassaConfigured();
+  ensurePaymentsConfigured();
 
-  const auth = Buffer.from(`${shopId}:${secretKey}`).toString("base64");
+  const auth = Buffer.from(`${paymentsShopId}:${paymentsSecretKey}`).toString("base64");
   const response = await fetch(`https://api.yookassa.ru/v3/payments/${yukassaId}`, {
     headers: {
       Authorization: `Basic ${auth}`,
@@ -133,14 +138,10 @@ export async function createPayout(params: {
   requisites: Record<string, string>;
   description: string;
 }): Promise<{ id: string; status: string }> {
-  ensureYukassaConfigured();
-
-  if (!payoutShopId || !payoutSecretKey) {
-    throw new Error("YUKASSA_NOT_CONFIGURED");
-  }
+  ensurePayoutsConfigured();
 
   const auth = Buffer.from(`${payoutShopId}:${payoutSecretKey}`).toString("base64");
-  const response = await fetch("https://api.yookassa.ru/v3/payouts", {
+  const response = await fetch("https://yookassa.ru/api/v3/payouts", {
     method: "POST",
     headers: {
       Authorization: `Basic ${auth}`,
@@ -154,6 +155,7 @@ export async function createPayout(params: {
       },
       payout_destination_data: getPayoutDestinationData(params),
       description: params.description,
+      metadata: { type: "payout" },
     }),
   });
 

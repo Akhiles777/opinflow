@@ -6,12 +6,12 @@ import type { SurveyDraft } from "@/types/survey";
 type Props = {
   draft: SurveyDraft;
   balance: number;
+  commissionRate: number;
   onChange: (patch: Partial<SurveyDraft>) => void;
 };
 
-export default function StepBudget({ draft, balance, onChange }: Props) {
+export default function StepBudget({ draft, balance, commissionRate, onChange }: Props) {
   const total = draft.maxResponses * draft.reward;
-  const commissionRate = Number(process.env.NEXT_PUBLIC_COMMISSION_RATE || 0.15);
   const commission = total * commissionRate;
   const budget = total + commission;
   const hasEnough = balance >= budget;

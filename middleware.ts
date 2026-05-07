@@ -7,8 +7,9 @@ export default auth((req) => {
   const isLoggedIn = Boolean(session?.user);
   const role = session?.user?.role;
   const path = nextUrl.pathname;
+  const publicPaths = ["/api/payments"];
 
-  if (path.startsWith("/api/payments")) {
+  if (publicPaths.some((prefix) => path.startsWith(prefix))) {
     return NextResponse.next();
   }
 

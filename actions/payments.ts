@@ -14,6 +14,9 @@ function getPaymentErrorMessage(error: unknown, fallback: string) {
   if (error.message.includes("YUKASSA_NOT_CONFIGURED")) {
     return "Платёжный сервис пока не настроен.";
   }
+  if (error.message.includes("YUKASSA_PAYOUT_NOT_CONFIGURED")) {
+    return "Сервис выплат пока не настроен.";
+  }
 
   return fallback;
 }
@@ -88,7 +91,7 @@ export async function createWithdrawalAction(params: {
 
   try {
     let payoutId: string | null = null;
-    let requestStatus = "PENDING";
+    let requestStatus: "PENDING" | "PROCESSING" = "PENDING";
 
     // Автоматическая выплата
     const payout = await createPayout({
@@ -115,7 +118,7 @@ export async function createWithdrawalAction(params: {
           amount: new Prisma.Decimal(params.amount),
           method: params.method,
           requisites: params.requisites,
-          status: requestStatus as any,
+          status: requestStatus,
           yukassaPayoutId: payoutId,
         },
       });
@@ -126,7 +129,7 @@ export async function createWithdrawalAction(params: {
           type: "WITHDRAWAL",
           amount: new Prisma.Decimal(params.amount),
           description: `Заявка на вывод #${requestRecord.id}`,
-          status: requestStatus as any,
+          status: "PENDING",
         },
       });
     });
@@ -222,15 +225,13 @@ export async function rejectWithdrawalAction(requestId: string, reason: string) 
       },
     });
 
-    await tx.transaction.updateMany({
-      where: {
-        walletId: wallet.id,
-        type: "WITHDRAWAL",
-        status: "PENDING",
-        description: { contains: requestRecord.id },
-      },
+    await tx.transaction.create({
       data: {
-        status: "CANCELLED",
+        walletId: wallet.id,
+        type: "REFUND",
+        amount: requestRecord.amount,
+        description: `Возврат по отклонённой заявке #${requestRecord.id}`,
+        status: "COMPLETED",
       },
     });
 

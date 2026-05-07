@@ -1,4 +1,5 @@
 import type { Role, SurveyStatus, TransactionStatus, TransactionType, UserStatus } from "@prisma/client";
+import { getCommissionRate } from "@/lib/platform-settings";
 import { prisma } from "@/lib/prisma";
 
 export type DashboardViewer = {
@@ -445,7 +446,8 @@ export async function getAdminFinanceData() {
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  const transactions = await prisma.transaction.findMany({
+  const [transactions, commissionRate] = await Promise.all([
+    prisma.transaction.findMany({
     where: { createdAt: { gte: monthStart } },
     orderBy: { createdAt: "desc" },
     include: {
@@ -457,7 +459,9 @@ export async function getAdminFinanceData() {
         },
       },
     },
-  });
+    }),
+    getCommissionRate(),
+  ]);
 
   const turnover = transactions
     .filter((item) => item.status === "COMPLETED")
@@ -465,7 +469,7 @@ export async function getAdminFinanceData() {
   // Комиссия платформы рассчитывается как 15% от списаний
   const commission = transactions
     .filter((item) => item.type === "SPENDING")
-    .reduce((sum, item) => sum + Math.abs(Number(item.amount)) * 0.15, 0);
+    .reduce((sum, item) => sum + Math.abs(Number(item.amount)) * commissionRate, 0);
   const paidOut = transactions
     .filter((item) => item.type === "WITHDRAWAL" && item.status === "COMPLETED")
     .reduce((sum, item) => sum + Math.abs(Number(item.amount)), 0);
@@ -482,7 +486,7 @@ export async function getAdminFinanceData() {
       type: item.type,
       user: item.wallet.user.email,
       amount: Number(item.amount),
-      fee: item.type === "SPENDING" ? Number(item.amount) * 0.15 : 0,
+      fee: item.type === "SPENDING" ? Number(item.amount) * commissionRate : 0,
       status: mapTransactionStatus(item.status),
     })),
   };

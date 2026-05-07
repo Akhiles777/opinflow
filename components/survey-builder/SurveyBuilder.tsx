@@ -11,6 +11,7 @@ import { EMPTY_DRAFT, type SurveyDraft } from "@/types/survey";
 
 type Props = {
   balance: number;
+  commissionRate: number;
 };
 
 const steps = [
@@ -68,7 +69,7 @@ function normalizeDraft(value: unknown): SurveyDraft | null {
   };
 }
 
-export default function SurveyBuilder({ balance }: Props) {
+export default function SurveyBuilder({ balance, commissionRate }: Props) {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [draft, setDraft] = useState<SurveyDraft>(EMPTY_DRAFT);
@@ -77,7 +78,10 @@ export default function SurveyBuilder({ balance }: Props) {
   const [hydrated, setHydrated] = useState(false);
   const [isSubmitting, startTransition] = useTransition();
 
-  const totalBudget = useMemo(() => draft.maxResponses * draft.reward * 1.15, [draft.maxResponses, draft.reward]);
+  const totalBudget = useMemo(
+    () => draft.maxResponses * draft.reward * (1 + commissionRate),
+    [commissionRate, draft.maxResponses, draft.reward],
+  );
 
   useEffect(() => {
     try {
@@ -265,7 +269,7 @@ export default function SurveyBuilder({ balance }: Props) {
         {step === 1 ? <StepBasic draft={draft} onChange={updateDraft} /> : null}
         {step === 2 ? <StepQuestions draft={draft} questions={draft.questions} onChange={(questions) => updateDraft({ questions })} /> : null}
         {step === 3 ? <StepAudience draft={draft} onChange={updateDraft} /> : null}
-        {step === 4 ? <StepBudget draft={draft} balance={balance} onChange={updateDraft} /> : null}
+        {step === 4 ? <StepBudget draft={draft} balance={balance} commissionRate={commissionRate} onChange={updateDraft} /> : null}
       </div>
 
       {error ? (
