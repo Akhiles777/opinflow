@@ -199,7 +199,8 @@ export async function createSurveyAction(draft: SurveyDraft) {
   }
 
   const estimatedTime = estimateSurveyTime(draft.questions);
-  const budget = roundMoney(draft.maxResponses * draft.reward * 1.15);
+  const commissionRate = Number(process.env.NEXT_PUBLIC_COMMISSION_RATE || 0.15);
+  const budget = roundMoney(draft.maxResponses * draft.reward * (1 + commissionRate));
   const wallet = await prisma.wallet.findUnique({ where: { userId: session.user.id } });
   if (!wallet) return { error: "Кошелёк не найден" };
   if (Number(wallet.balance) < budget) {

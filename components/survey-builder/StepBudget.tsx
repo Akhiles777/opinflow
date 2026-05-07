@@ -11,7 +11,8 @@ type Props = {
 
 export default function StepBudget({ draft, balance, onChange }: Props) {
   const total = draft.maxResponses * draft.reward;
-  const commission = total * 0.15;
+  const commissionRate = Number(process.env.NEXT_PUBLIC_COMMISSION_RATE || 0.15);
+  const commission = total * commissionRate;
   const budget = total + commission;
   const hasEnough = balance >= budget;
   const today = new Date().toISOString().split("T")[0];
@@ -85,7 +86,7 @@ export default function StepBudget({ draft, balance, onChange }: Props) {
             <span>{total.toLocaleString("ru-RU")} ₽</span>
           </div>
           <div className="flex justify-between gap-4 text-white/40">
-            <span>Комиссия платформы (15%)</span>
+            <span>Комиссия платформы ({commissionRate * 100}%)</span>
             <span>{commission.toLocaleString("ru-RU")} ₽</span>
           </div>
           <div className="my-2 border-t border-white/10" />

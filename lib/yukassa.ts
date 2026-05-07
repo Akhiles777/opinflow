@@ -3,7 +3,7 @@ import { YooCheckout } from "@a2seven/yoo-checkout";
 
 const shopId = process.env.YUKASSA_SHOP_ID;
 const secretKey = process.env.YUKASSA_SECRET_KEY;
-const payoutShopId = process.env.YUKASSA_PAYOUT_SHOP_ID || shopId;
+const payoutShopId = process.env.YUKASSA_PAYOUT_AGENT_ID || shopId;
 const payoutSecretKey = process.env.YUKASSA_PAYOUT_SECRET_KEY || secretKey;
 
 export const yukassa = new YooCheckout({

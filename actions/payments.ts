@@ -86,38 +86,58 @@ export async function createWithdrawalAction(params: {
     return { error: "Недостаточно средств для вывода" };
   }
 
-  await prisma.$transaction(async (tx) => {
-    await tx.wallet.update({
-      where: { id: wallet.id },
-      data: {
-        balance: { decrement: new Prisma.Decimal(params.amount) },
-      },
+  try {
+    let payoutId: string | null = null;
+    let requestStatus = "PENDING";
+
+    // Автоматическая выплата
+    const payout = await createPayout({
+      amount: params.amount,
+      method: params.method.toLowerCase() as "card" | "sbp" | "wallet",
+      requisites: params.requisites,
+      description: `Выплата респонденту ${session.user.id}`,
+    });
+    
+    payoutId = payout.id;
+    requestStatus = "PROCESSING";
+
+    await prisma.$transaction(async (tx) => {
+      await tx.wallet.update({
+        where: { id: wallet.id },
+        data: {
+          balance: { decrement: new Prisma.Decimal(params.amount) },
+        },
+      });
+
+      const requestRecord = await tx.withdrawalRequest.create({
+        data: {
+          userId: session.user.id,
+          amount: new Prisma.Decimal(params.amount),
+          method: params.method,
+          requisites: params.requisites,
+          status: requestStatus as any,
+          yukassaPayoutId: payoutId,
+        },
+      });
+
+      await tx.transaction.create({
+        data: {
+          walletId: wallet.id,
+          type: "WITHDRAWAL",
+          amount: new Prisma.Decimal(params.amount),
+          description: `Заявка на вывод #${requestRecord.id}`,
+          status: requestStatus as any,
+        },
+      });
     });
 
-    const requestRecord = await tx.withdrawalRequest.create({
-      data: {
-        userId: session.user.id,
-        amount: new Prisma.Decimal(params.amount),
-        method: params.method,
-        requisites: params.requisites,
-        status: "PENDING",
-      },
-    });
-
-    await tx.transaction.create({
-      data: {
-        walletId: wallet.id,
-        type: "WITHDRAWAL",
-        amount: new Prisma.Decimal(params.amount),
-        description: `Заявка на вывод #${requestRecord.id}`,
-        status: "PENDING",
-      },
-    });
-  });
-
-  revalidatePath("/respondent/wallet");
-  revalidatePath("/admin/finance");
-  return { success: true };
+    revalidatePath("/respondent/wallet");
+    revalidatePath("/admin/finance");
+    return { success: true };
+  } catch (error) {
+    console.error("[payments][create-withdrawal-error]", error);
+    return { error: getPaymentErrorMessage(error, "Не удалось выполнить автоматическую выплату. Пожалуйста, обратитесь в поддержку.") };
+  }
 }
 
 export async function approveWithdrawalAction(requestId: string) {

@@ -462,6 +462,7 @@ export async function getAdminFinanceData() {
   const turnover = transactions
     .filter((item) => item.status === "COMPLETED")
     .reduce((sum, item) => sum + Math.abs(Number(item.amount)), 0);
+  // Комиссия платформы рассчитывается как 15% от списаний
   const commission = transactions
     .filter((item) => item.type === "SPENDING")
     .reduce((sum, item) => sum + Math.abs(Number(item.amount)) * 0.15, 0);
