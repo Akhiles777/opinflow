@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth-utils";
 import { analyzeSurveyResponses } from "@/lib/ai-analysis";
-import { generateSurveyPDF } from "@/lib/pdf-generator";
 import type { AnalysisResult, ThemeItem } from "@/lib/ai-analysis";
 
 function parseJsonArray<T>(value: unknown, fallback: T[] = []) {
@@ -119,104 +118,8 @@ export async function runAnalysisAction(surveyId: string) {
 }
 
 export async function generatePDFAction(surveyId: string) {
-  const session = await requireRole("CLIENT");
-
-  const survey = await prisma.survey.findUnique({
-    where: { id: surveyId },
-    select: {
-      id: true,
-      creatorId: true,
-      title: true,
-      category: true,
-      questions: {
-        select: { id: true },
-      },
-      sessions: {
-        where: {
-          status: "COMPLETED",
-          isValid: true,
-        },
-        select: {
-          timeSpent: true,
-        },
-      },
-      analysis: {
-        select: {
-          themes: true,
-          sentimentData: true,
-          wordCloud: true,
-          summary: true,
-          keyInsights: true,
-        },
-      },
-    },
-  });
-
-  if (!survey || survey.creatorId !== session.user.id) {
-    return { error: "Опрос не найден" };
-  }
-
-  const totalResponses = survey.sessions.length;
-  const avgTimeMinutes =
-    totalResponses > 0
-      ? Math.max(
-          1,
-          Math.round(
-            survey.sessions.reduce((sum, sessionItem) => sum + Number(sessionItem.timeSpent ?? 0), 0) /
-              totalResponses /
-              60,
-          ),
-        )
-      : 0;
-
-  const analysis: AnalysisResult | null = survey.analysis
-    ? {
-        themes: parseJsonArray<ThemeItem>(survey.analysis.themes),
-        sentiment: parseJsonObject(survey.analysis.sentimentData, {
-          positive: 0,
-          neutral: 100,
-          negative: 0,
-        }),
-        wordCloud: parseJsonArray<{ word: string; weight: number }>(survey.analysis.wordCloud),
-        summary: survey.analysis.summary || "ИИ-анализ не запускался.",
-        keyInsights: parseJsonArray<string>(survey.analysis.keyInsights),
-      }
-    : null;
-
-  try {
-    const pdfUrl = await generateSurveyPDF({
-      survey: {
-        id: survey.id,
-        title: survey.title,
-        category: survey.category,
-      },
-      analysis,
-      stats: {
-        totalResponses,
-        completionRate: totalResponses > 0 ? 100 : 0,
-        avgTimeMinutes,
-        questionCount: survey.questions.length,
-      },
-    });
-
-    if (survey.analysis) {
-      await prisma.surveyAnalysis.update({
-        where: { surveyId },
-        data: { pdfUrl },
-      });
-    }
-
-    revalidatePath(`/client/surveys/${surveyId}`);
-    return { success: true, pdfUrl };
-  } catch (error) {
-    console.error("[analysis][pdf-error]", error);
-    const message = error instanceof Error ? error.message : "PDF_GENERATION_FAILED";
-    if (message.includes("SUPABASE_STORAGE_NOT_CONFIGURED")) {
-      return { error: "PDF не сохранён: не настроены переменные Supabase Storage." };
-    }
-    if (message.includes("SUPABASE_REPORT_UPLOAD_FAILED")) {
-      return { error: "PDF сгенерирован, но не загрузился в Storage. Проверьте bucket и service role key." };
-    }
-    return { error: "Не удалось сформировать PDF-отчёт" };
-  }
+  await requireRole("CLIENT");
+  return {
+    error: `Скачивание PDF перенесено на прямой endpoint /api/reports/${surveyId}/download`,
+  };
 }

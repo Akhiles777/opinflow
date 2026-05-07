@@ -1,4 +1,3 @@
-import { uploadSurveyReport } from "@/lib/storage";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import type { AnalysisResult } from "@/lib/ai-analysis";
 
@@ -162,7 +161,7 @@ export async function generateSurveyPDF(params: {
   survey: { id: string; title: string; category?: string | null };
   analysis: AnalysisResult | null;
   stats: { totalResponses: number; completionRate: number; avgTimeMinutes: number; questionCount: number };
-}) {
+}): Promise<Buffer> {
   try {
     const pdf = await PDFDocument.create();
     const fontRegular = await pdf.embedFont(StandardFonts.Helvetica);
@@ -270,7 +269,7 @@ export async function generateSurveyPDF(params: {
     });
 
     const bytes = await pdf.save();
-    return await uploadSurveyReport(params.survey.id, Buffer.from(bytes));
+    return Buffer.from(bytes);
   } catch (error) {
     if (error instanceof Error) throw error;
     throw new Error("PDF_GENERATION_FAILED");

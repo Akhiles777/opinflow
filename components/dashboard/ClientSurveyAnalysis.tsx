@@ -3,7 +3,7 @@
 import { useEffect, useTransition } from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { generatePDFAction, runAnalysisAction } from "@/actions/analysis";
+import { runAnalysisAction } from "@/actions/analysis";
 
 type Props = {
   surveyId: string;
@@ -36,7 +36,7 @@ export default function ClientSurveyAnalysis({ surveyId, analysis }: Props) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isRunning, startRunTransition] = useTransition();
-  const [isGeneratingPdf, startPdfTransition] = useTransition();
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   useEffect(() => {
     if (analysis?.status !== "PROCESSING") {
@@ -65,17 +65,14 @@ export default function ClientSurveyAnalysis({ surveyId, analysis }: Props) {
 
   function handleGeneratePdf() {
     setError(null);
-    startPdfTransition(async () => {
-      const result = await generatePDFAction(surveyId);
-      if (result.error) {
-        setError(result.error);
-        return;
-      }
-      if (result.pdfUrl) {
-        window.open(result.pdfUrl, "_blank", "noopener,noreferrer");
-        router.refresh();
-      }
-    });
+    setIsGeneratingPdf(true);
+    try {
+      window.location.href = `/api/reports/${surveyId}/download`;
+    } catch {
+      setError("Не удалось скачать PDF-отчёт");
+    } finally {
+      setIsGeneratingPdf(false);
+    }
   }
 
   if (!analysis || analysis.status === "PENDING" || analysis.status === "FAILED") {
