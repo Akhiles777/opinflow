@@ -14,6 +14,14 @@ function sentimentColor(sentiment: "positive" | "negative" | "neutral") {
   return sentiment === "positive" ? "#22C55E" : sentiment === "negative" ? "#EF4444" : "#94A3B8";
 }
 
+function toAsciiSafe(input: string) {
+  return input
+    .normalize("NFKD")
+    .replace(/[^\x20-\x7E]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function buildReportHTML(params: {
   survey: { id: string; title: string; category?: string | null };
   analysis: AnalysisResult | null;
@@ -171,7 +179,7 @@ export async function generateSurveyPDF(params: {
     const marginX = 42;
     let cursorY = height - 40;
 
-    const title = `Отчёт: ${params.survey.title}`;
+    const title = toAsciiSafe(`Report: ${params.survey.title || "Survey"}`);
     page.drawText(title.slice(0, 90), {
       x: marginX,
       y: cursorY,
@@ -181,7 +189,12 @@ export async function generateSurveyPDF(params: {
     });
     cursorY -= 28;
 
-    const subtitle = `${params.survey.category || "Маркетинговое исследование"} | ${new Intl.DateTimeFormat("ru-RU", { dateStyle: "medium", timeStyle: "short" }).format(new Date())}`;
+    const subtitle = toAsciiSafe(
+      `${params.survey.category || "Marketing research"} | ${new Intl.DateTimeFormat("en-GB", {
+        dateStyle: "medium",
+        timeStyle: "short",
+      }).format(new Date())}`,
+    );
     page.drawText(subtitle.slice(0, 110), {
       x: marginX,
       y: cursorY,
@@ -192,13 +205,13 @@ export async function generateSurveyPDF(params: {
     cursorY -= 30;
 
     const statLines = [
-      `Ответов: ${params.stats.totalResponses}`,
-      `Завершили: ${params.stats.completionRate}%`,
-      `Среднее время: ${params.stats.avgTimeMinutes} мин`,
-      `Вопросов: ${params.stats.questionCount}`,
+      `Responses: ${params.stats.totalResponses}`,
+      `Completion: ${params.stats.completionRate}%`,
+      `Avg time: ${params.stats.avgTimeMinutes} min`,
+      `Questions: ${params.stats.questionCount}`,
     ];
 
-    page.drawText("Ключевые показатели", { x: marginX, y: cursorY, size: 13, font: fontBold });
+    page.drawText("Key metrics", { x: marginX, y: cursorY, size: 13, font: fontBold });
     cursorY -= 18;
     for (const line of statLines) {
       page.drawText(line, { x: marginX, y: cursorY, size: 11, font: fontRegular });
@@ -207,11 +220,11 @@ export async function generateSurveyPDF(params: {
     cursorY -= 8;
 
     const analysis = params.analysis;
-    page.drawText("ИИ-аналитика", { x: marginX, y: cursorY, size: 13, font: fontBold });
+    page.drawText("AI analysis", { x: marginX, y: cursorY, size: 13, font: fontBold });
     cursorY -= 18;
 
     if (!analysis) {
-      page.drawText("ИИ-анализ не запускался.", {
+      page.drawText("AI analysis was not started.", {
         x: marginX,
         y: cursorY,
         size: 11,
@@ -221,32 +234,32 @@ export async function generateSurveyPDF(params: {
       cursorY -= 18;
     } else {
       page.drawText(
-        `Тональность: +${analysis.sentiment.positive}% / ~${analysis.sentiment.neutral}% / -${analysis.sentiment.negative}%`,
+        `Sentiment: +${analysis.sentiment.positive}% / ~${analysis.sentiment.neutral}% / -${analysis.sentiment.negative}%`,
         { x: marginX, y: cursorY, size: 11, font: fontRegular },
       );
       cursorY -= 20;
 
-      page.drawText("Ключевые инсайты:", { x: marginX, y: cursorY, size: 12, font: fontBold });
+      page.drawText("Key insights:", { x: marginX, y: cursorY, size: 12, font: fontBold });
       cursorY -= 16;
       for (const [index, insight] of analysis.keyInsights.slice(0, 6).entries()) {
-        const line = `${index + 1}. ${insight}`.slice(0, 115);
+        const line = toAsciiSafe(`${index + 1}. ${insight}`).slice(0, 115);
         page.drawText(line, { x: marginX, y: cursorY, size: 10, font: fontRegular });
         cursorY -= 14;
       }
       cursorY -= 4;
 
-      page.drawText("Топ-темы:", { x: marginX, y: cursorY, size: 12, font: fontBold });
+      page.drawText("Top themes:", { x: marginX, y: cursorY, size: 12, font: fontBold });
       cursorY -= 16;
       for (const theme of analysis.themes.slice(0, 6)) {
-        const line = `${theme.theme} (${theme.count}) [${theme.sentiment}]`.slice(0, 115);
+        const line = toAsciiSafe(`${theme.theme} (${theme.count}) [${theme.sentiment}]`).slice(0, 115);
         page.drawText(line, { x: marginX, y: cursorY, size: 10, font: fontRegular });
         cursorY -= 14;
       }
       cursorY -= 6;
 
-      page.drawText("Общий вывод:", { x: marginX, y: cursorY, size: 12, font: fontBold });
+      page.drawText("Summary:", { x: marginX, y: cursorY, size: 12, font: fontBold });
       cursorY -= 16;
-      const summary = (analysis.summary || "ИИ ещё не сформировал вывод.").replace(/\s+/g, " ");
+      const summary = toAsciiSafe((analysis.summary || "AI summary is not available yet.").replace(/\s+/g, " "));
       const summaryChunks = summary.match(/.{1,115}(\s|$)/g) || [summary.slice(0, 115)];
       for (const chunk of summaryChunks.slice(0, 8)) {
         page.drawText(chunk.trim(), { x: marginX, y: cursorY, size: 10, font: fontRegular });
@@ -260,7 +273,7 @@ export async function generateSurveyPDF(params: {
       thickness: 1,
       color: rgb(0.9, 0.91, 0.92),
     });
-    page.drawText("ПотокМнений", {
+    page.drawText("OpinionFlow", {
       x: marginX,
       y: 22,
       size: 9,
