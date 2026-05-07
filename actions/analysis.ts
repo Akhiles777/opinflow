@@ -210,6 +210,13 @@ export async function generatePDFAction(surveyId: string) {
     return { success: true, pdfUrl };
   } catch (error) {
     console.error("[analysis][pdf-error]", error);
+    const message = error instanceof Error ? error.message : "PDF_GENERATION_FAILED";
+    if (message.includes("SUPABASE_STORAGE_NOT_CONFIGURED")) {
+      return { error: "PDF не сохранён: не настроены переменные Supabase Storage." };
+    }
+    if (message.includes("SUPABASE_REPORT_UPLOAD_FAILED")) {
+      return { error: "PDF сгенерирован, но не загрузился в Storage. Проверьте bucket и service role key." };
+    }
     return { error: "Не удалось сформировать PDF-отчёт" };
   }
 }

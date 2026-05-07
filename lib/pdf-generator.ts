@@ -1,4 +1,5 @@
 import { uploadSurveyReport } from "@/lib/storage";
+import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import type { AnalysisResult } from "@/lib/ai-analysis";
 
 function escapeHtml(value: string) {
@@ -162,38 +163,116 @@ export async function generateSurveyPDF(params: {
   analysis: AnalysisResult | null;
   stats: { totalResponses: number; completionRate: number; avgTimeMinutes: number; questionCount: number };
 }) {
-  const puppeteer = await import("puppeteer-core");
-  const chromium = (await import("@sparticuz/chromium")).default;
-
-  let browser: Awaited<ReturnType<typeof puppeteer.default.launch>> | null = null;
-
   try {
-    browser = await puppeteer.default.launch({
-      args: chromium.args,
-      defaultViewport: { width: 1440, height: 1024, deviceScaleFactor: 1 },
-      executablePath: await chromium.executablePath(),
-      headless: true,
+    const pdf = await PDFDocument.create();
+    const fontRegular = await pdf.embedFont(StandardFonts.Helvetica);
+    const fontBold = await pdf.embedFont(StandardFonts.HelveticaBold);
+    const page = pdf.addPage([595.28, 841.89]); // A4
+    const { width, height } = page.getSize();
+    const marginX = 42;
+    let cursorY = height - 40;
+
+    const title = `Отчёт: ${params.survey.title}`;
+    page.drawText(title.slice(0, 90), {
+      x: marginX,
+      y: cursorY,
+      size: 20,
+      font: fontBold,
+      color: rgb(0.06, 0.07, 0.1),
+    });
+    cursorY -= 28;
+
+    const subtitle = `${params.survey.category || "Маркетинговое исследование"} | ${new Intl.DateTimeFormat("ru-RU", { dateStyle: "medium", timeStyle: "short" }).format(new Date())}`;
+    page.drawText(subtitle.slice(0, 110), {
+      x: marginX,
+      y: cursorY,
+      size: 10,
+      font: fontRegular,
+      color: rgb(0.35, 0.4, 0.46),
+    });
+    cursorY -= 30;
+
+    const statLines = [
+      `Ответов: ${params.stats.totalResponses}`,
+      `Завершили: ${params.stats.completionRate}%`,
+      `Среднее время: ${params.stats.avgTimeMinutes} мин`,
+      `Вопросов: ${params.stats.questionCount}`,
+    ];
+
+    page.drawText("Ключевые показатели", { x: marginX, y: cursorY, size: 13, font: fontBold });
+    cursorY -= 18;
+    for (const line of statLines) {
+      page.drawText(line, { x: marginX, y: cursorY, size: 11, font: fontRegular });
+      cursorY -= 15;
+    }
+    cursorY -= 8;
+
+    const analysis = params.analysis;
+    page.drawText("ИИ-аналитика", { x: marginX, y: cursorY, size: 13, font: fontBold });
+    cursorY -= 18;
+
+    if (!analysis) {
+      page.drawText("ИИ-анализ не запускался.", {
+        x: marginX,
+        y: cursorY,
+        size: 11,
+        font: fontRegular,
+        color: rgb(0.35, 0.4, 0.46),
+      });
+      cursorY -= 18;
+    } else {
+      page.drawText(
+        `Тональность: +${analysis.sentiment.positive}% / ~${analysis.sentiment.neutral}% / -${analysis.sentiment.negative}%`,
+        { x: marginX, y: cursorY, size: 11, font: fontRegular },
+      );
+      cursorY -= 20;
+
+      page.drawText("Ключевые инсайты:", { x: marginX, y: cursorY, size: 12, font: fontBold });
+      cursorY -= 16;
+      for (const [index, insight] of analysis.keyInsights.slice(0, 6).entries()) {
+        const line = `${index + 1}. ${insight}`.slice(0, 115);
+        page.drawText(line, { x: marginX, y: cursorY, size: 10, font: fontRegular });
+        cursorY -= 14;
+      }
+      cursorY -= 4;
+
+      page.drawText("Топ-темы:", { x: marginX, y: cursorY, size: 12, font: fontBold });
+      cursorY -= 16;
+      for (const theme of analysis.themes.slice(0, 6)) {
+        const line = `${theme.theme} (${theme.count}) [${theme.sentiment}]`.slice(0, 115);
+        page.drawText(line, { x: marginX, y: cursorY, size: 10, font: fontRegular });
+        cursorY -= 14;
+      }
+      cursorY -= 6;
+
+      page.drawText("Общий вывод:", { x: marginX, y: cursorY, size: 12, font: fontBold });
+      cursorY -= 16;
+      const summary = (analysis.summary || "ИИ ещё не сформировал вывод.").replace(/\s+/g, " ");
+      const summaryChunks = summary.match(/.{1,115}(\s|$)/g) || [summary.slice(0, 115)];
+      for (const chunk of summaryChunks.slice(0, 8)) {
+        page.drawText(chunk.trim(), { x: marginX, y: cursorY, size: 10, font: fontRegular });
+        cursorY -= 14;
+      }
+    }
+
+    page.drawLine({
+      start: { x: marginX, y: 36 },
+      end: { x: width - marginX, y: 36 },
+      thickness: 1,
+      color: rgb(0.9, 0.91, 0.92),
+    });
+    page.drawText("ПотокМнений", {
+      x: marginX,
+      y: 22,
+      size: 9,
+      font: fontRegular,
+      color: rgb(0.45, 0.49, 0.54),
     });
 
-    const page = await browser.newPage();
-    await page.setContent(buildReportHTML(params), { waitUntil: "networkidle0" });
-    const pdfBuffer = Buffer.from(
-      await page.pdf({
-        format: "A4",
-        printBackground: true,
-        margin: {
-          top: "20mm",
-          bottom: "20mm",
-          left: "15mm",
-          right: "15mm",
-        },
-      }),
-    );
-
-    return await uploadSurveyReport(params.survey.id, pdfBuffer);
-  } finally {
-    if (browser) {
-      await browser.close();
-    }
+    const bytes = await pdf.save();
+    return await uploadSurveyReport(params.survey.id, Buffer.from(bytes));
+  } catch (error) {
+    if (error instanceof Error) throw error;
+    throw new Error("PDF_GENERATION_FAILED");
   }
 }
