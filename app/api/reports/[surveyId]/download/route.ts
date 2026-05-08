@@ -103,8 +103,14 @@ export async function GET(
       },
     });
 
-    const safeTitle = survey.title.replace(/[^\p{L}\p{N}\-_ ]/gu, "").trim().replace(/\s+/g, "_") || "report";
-    const filename = `${safeTitle}.pdf`;
+    const safeTitle = survey.title
+      .normalize("NFKD")
+      .replace(/[^\x20-\x7E]/g, "")
+      .replace(/[^A-Za-z0-9\-_ ]/g, "")
+      .trim()
+      .replace(/\s+/g, "_")
+      .slice(0, 64);
+    const filename = `${safeTitle || `report_${survey.id}`}.pdf`;
 
     return new NextResponse(new Uint8Array(pdfBuffer), {
       status: 200,
