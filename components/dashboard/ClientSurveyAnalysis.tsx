@@ -198,7 +198,7 @@ export default function ClientSurveyAnalysis({ surveyId, analysis }: Props) {
         <button
           type="button"
           onClick={handleGeneratePdf}
-          disabled={isGeneratingPdf || isRunning || analysis?.status === "PROCESSING" || !analysisReady}
+          disabled={isGeneratingPdf || isRunning || !analysisReady}
           className="rounded-xl border border-dash-border bg-dash-bg px-5 py-3 text-sm font-semibold text-dash-heading transition-colors hover:border-brand/30 hover:text-brand disabled:opacity-60"
         >
           {isGeneratingPdf ? "Загрузка..." : "Скачать PDF отчёт"}
