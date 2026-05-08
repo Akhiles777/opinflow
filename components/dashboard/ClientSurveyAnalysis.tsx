@@ -122,6 +122,7 @@ export default function ClientSurveyAnalysis({ surveyId, analysis }: Props) {
     analysis?.status === "COMPLETED" &&
     isMeaningful(analysis.summary) &&
     analysis.keyInsights.some((item) => isMeaningful(item));
+  const analysisCompletedButWeak = analysis?.status === "COMPLETED" && !analysisReady;
 
   if (!analysis || analysis.status === "PENDING" || analysis.status === "FAILED") {
     return (
@@ -197,13 +198,18 @@ export default function ClientSurveyAnalysis({ surveyId, analysis }: Props) {
         <button
           type="button"
           onClick={handleGeneratePdf}
-          disabled={isGeneratingPdf || isRunning || !analysisReady}
+          disabled={isGeneratingPdf || isRunning || analysis?.status === "PROCESSING" || !analysisReady}
           className="rounded-xl border border-dash-border bg-dash-bg px-5 py-3 text-sm font-semibold text-dash-heading transition-colors hover:border-brand/30 hover:text-brand disabled:opacity-60"
         >
-          {!analysisReady ? "Загрузка..." : isGeneratingPdf ? "Загрузка..." : "Скачать PDF отчёт"}
+          {isGeneratingPdf ? "Загрузка..." : "Скачать PDF отчёт"}
         </button>
       </div>
       {error ? <div className="mt-4 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-500">{error}</div> : null}
+      {analysisCompletedButWeak ? (
+        <div className="mt-4 rounded-xl border border-amber-500/25 bg-amber-500/10 p-3 text-sm text-amber-600 dark:text-amber-300">
+          Анализ завершился, но результат недостаточно содержательный. Нажмите «Запустить анализ заново».
+        </div>
+      ) : null}
 
       <div className="mt-8 space-y-8">
         <div>
