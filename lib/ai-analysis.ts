@@ -226,6 +226,22 @@ async function requestAnalysisFromModel(params: {
   return stripMarkdownFence(rawText);
 }
 
+async function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_, reject) => {
+        timer = setTimeout(() => {
+          reject(new Error(`${label}_TIMEOUT`));
+        }, ms);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 export async function analyzeSurveyResponses(params: {
   surveyTitle: string;
   surveyCategory?: string | null;
@@ -246,21 +262,27 @@ export async function analyzeSurveyResponses(params: {
 
   for (const model of modelsToTry) {
     try {
-      const cleaned = await requestAnalysisFromModel({
-        model,
-        surveyTitle: params.surveyTitle,
-        surveyCategory: params.surveyCategory,
-        openAnswers: normalizedOpenAnswers,
-      });
+      const cleaned = await withTimeout(
+        requestAnalysisFromModel({
+          model,
+          surveyTitle: params.surveyTitle,
+          surveyCategory: params.surveyCategory,
+          openAnswers: normalizedOpenAnswers,
+        }),
+        25000,
+        "AI_ANALYSIS",
+      );
       const parsed = analysisResultSchema.parse(JSON.parse(cleaned)) as AnalysisResult;
       if (!isLowQuality(parsed)) {
         return parsed;
       }
+      console.warn("[ai-analysis] low-quality result, trying fallback model", { model });
     } catch (error) {
       const message = error instanceof Error ? error.message : "AI_ANALYSIS_FAILED";
       if (message.includes("OPENROUTER_NOT_CONFIGURED")) {
         throw error;
       }
+      console.warn("[ai-analysis] model attempt failed", { model, message });
     }
   }
 

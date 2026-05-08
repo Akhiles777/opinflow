@@ -59,7 +59,7 @@ export default function ClientSurveyAnalysis({ surveyId, analysis }: Props) {
         return;
       }
       router.refresh();
-      window.setTimeout(() => router.refresh(), 15000);
+      window.setTimeout(() => router.refresh(), 4000);
     });
   }
 
