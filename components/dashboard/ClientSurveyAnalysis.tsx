@@ -3,7 +3,6 @@
 import { useEffect, useTransition } from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { runAnalysisAction } from "@/actions/analysis";
 
 type Props = {
   surveyId: string;
@@ -53,11 +52,26 @@ export default function ClientSurveyAnalysis({ surveyId, analysis }: Props) {
   function handleRunAnalysis() {
     setError(null);
     startRunTransition(async () => {
-      const result = await runAnalysisAction(surveyId);
-      if (result.error) {
-        setError(result.error);
+      const response = await fetch("/api/analysis/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ surveyId }),
+      });
+
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as
+          | { error?: string; details?: string }
+          | null;
+        if (payload?.details) {
+          setError(`Ошибка анализа: ${payload.details}`);
+        } else if (payload?.error === "NO_DATA_FOR_ANALYSIS") {
+          setError("Для анализа пока нет завершённых валидных ответов.");
+        } else {
+          setError("Не удалось завершить ИИ-анализ.");
+        }
         return;
       }
+
       router.refresh();
       window.setTimeout(() => router.refresh(), 4000);
     });
