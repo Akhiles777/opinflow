@@ -81,13 +81,8 @@ export default function ClientSurveyAnalysis({ surveyId, analysis }: Props) {
     setError(null);
     setIsGeneratingPdf(true);
     (async () => {
-      const controller = new AbortController();
-      const timer = window.setTimeout(() => controller.abort(), 25000);
       try {
-        const response = await fetch(`/api/reports/${surveyId}/download`, {
-          method: "GET",
-          signal: controller.signal,
-        });
+        const response = await fetch(`/api/reports/${surveyId}/download`, { method: "GET" });
         if (!response.ok) {
           const payload = (await response.json().catch(() => null)) as
             | { error?: string; message?: string }
@@ -120,14 +115,9 @@ export default function ClientSurveyAnalysis({ surveyId, analysis }: Props) {
         link.click();
         link.remove();
         URL.revokeObjectURL(url);
-      } catch (downloadError) {
-        if (downloadError instanceof DOMException && downloadError.name === "AbortError") {
-          setError("Скачивание PDF превысило лимит ожидания. Повторите попытку.");
-        } else {
-          setError("Не удалось скачать PDF-отчёт");
-        }
+      } catch {
+        setError("Не удалось скачать PDF-отчёт");
       } finally {
-        window.clearTimeout(timer);
         setIsGeneratingPdf(false);
       }
     })().catch(() => {

@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { generateSurveyPDF } from "@/lib/pdf-generator";
 import type { AnalysisResult, ThemeItem } from "@/lib/ai-analysis";
 
+export const maxDuration = 60;
+
 function parseJsonArray<T>(value: unknown, fallback: T[] = []) {
   return Array.isArray(value) ? (value as T[]) : fallback;
 }
