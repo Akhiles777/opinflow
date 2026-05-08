@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { PDFDocument, rgb } from "pdf-lib";
-import fontkit from "fontkit";
+import * as fontkit from "fontkit";
 import type { AnalysisResult } from "@/lib/ai-analysis";
 
 let cachedFontBytes: Uint8Array | null = null;
