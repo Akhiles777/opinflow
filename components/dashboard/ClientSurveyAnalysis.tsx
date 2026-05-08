@@ -31,6 +31,12 @@ function getFilledSegments(value: number, total: number, segments = 12) {
   return Math.max(0, Math.min(segments, Math.round((value / total) * segments)));
 }
 
+function isMeaningful(value: string | null | undefined) {
+  if (!value) return false;
+  const trimmed = value.trim();
+  return trimmed.length >= 10 && /[A-Za-zА-Яа-я0-9]/.test(trimmed) && !/^[\W_]+$/.test(trimmed);
+}
+
 export default function ClientSurveyAnalysis({ surveyId, analysis }: Props) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -112,6 +118,11 @@ export default function ClientSurveyAnalysis({ surveyId, analysis }: Props) {
     });
   }
 
+  const analysisReady =
+    analysis?.status === "COMPLETED" &&
+    isMeaningful(analysis.summary) &&
+    analysis.keyInsights.some((item) => isMeaningful(item));
+
   if (!analysis || analysis.status === "PENDING" || analysis.status === "FAILED") {
     return (
       <div className="rounded-2xl border border-dash-border bg-dash-card p-6">
@@ -130,7 +141,7 @@ export default function ClientSurveyAnalysis({ surveyId, analysis }: Props) {
             disabled={isRunning}
             className="rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-mid disabled:opacity-60"
           >
-            {isRunning ? "Запускаем..." : analysis?.status === "FAILED" ? "Попробовать снова" : "Запустить ИИ-анализ"}
+            {isRunning ? "Загрузка..." : analysis?.status === "FAILED" ? "Попробовать снова" : "Запустить ИИ-анализ"}
           </button>
         </div>
         {error ? <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-500">{error}</div> : null}
@@ -141,10 +152,21 @@ export default function ClientSurveyAnalysis({ surveyId, analysis }: Props) {
   if (analysis.status === "PROCESSING") {
     return (
       <div className="rounded-2xl border border-dash-border bg-dash-card p-6">
-        <div className="text-sm font-semibold text-dash-heading">ИИ-аналитика</div>
-        <div className="mt-4 flex items-center gap-3 text-sm text-dash-muted">
-          <div className="h-4 w-4 animate-spin rounded-full border-2 border-dash-border border-t-brand" />
-          ИИ анализирует ответы...
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <div className="text-sm font-semibold text-dash-heading">ИИ-аналитика</div>
+            <div className="mt-4 flex items-center gap-3 text-sm text-dash-muted">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-dash-border border-t-brand" />
+              ИИ анализирует ответы...
+            </div>
+          </div>
+          <button
+            type="button"
+            disabled
+            className="rounded-xl border border-dash-border bg-dash-bg px-5 py-3 text-sm font-semibold text-dash-muted opacity-80"
+          >
+            Загрузка...
+          </button>
         </div>
         {error ? <div className="mt-4 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-500">{error}</div> : null}
       </div>
@@ -170,15 +192,15 @@ export default function ClientSurveyAnalysis({ surveyId, analysis }: Props) {
           disabled={isRunning || isGeneratingPdf}
           className="rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-mid disabled:opacity-60"
         >
-          {isRunning ? "Перезапускаем..." : "Запустить анализ заново"}
+          {isRunning ? "Загрузка..." : "Запустить анализ заново"}
         </button>
         <button
           type="button"
           onClick={handleGeneratePdf}
-          disabled={isGeneratingPdf || isRunning}
+          disabled={isGeneratingPdf || isRunning || !analysisReady}
           className="rounded-xl border border-dash-border bg-dash-bg px-5 py-3 text-sm font-semibold text-dash-heading transition-colors hover:border-brand/30 hover:text-brand disabled:opacity-60"
         >
-          {isGeneratingPdf ? "Генерируем PDF..." : "Скачать PDF отчёт"}
+          {!analysisReady ? "Загрузка..." : isGeneratingPdf ? "Загрузка..." : "Скачать PDF отчёт"}
         </button>
       </div>
       {error ? <div className="mt-4 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-500">{error}</div> : null}
