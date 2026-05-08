@@ -116,6 +116,7 @@ export async function GET(
     });
   } catch (error) {
     console.error("[reports][download-pdf-error]", error);
-    return NextResponse.json({ error: "PDF_GENERATION_FAILED" }, { status: 500 });
+    const message = error instanceof Error ? error.message : "PDF_GENERATION_FAILED";
+    return NextResponse.json({ error: "PDF_GENERATION_FAILED", message }, { status: 500 });
   }
 }

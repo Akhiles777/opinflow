@@ -81,11 +81,27 @@ export default function ClientSurveyAnalysis({ surveyId, analysis }: Props) {
     setError(null);
     setIsGeneratingPdf(true);
     (async () => {
+      const controller = new AbortController();
+      const timer = window.setTimeout(() => controller.abort(), 25000);
       try {
-        const response = await fetch(`/api/reports/${surveyId}/download`, { method: "GET" });
+        const response = await fetch(`/api/reports/${surveyId}/download`, {
+          method: "GET",
+          signal: controller.signal,
+        });
         if (!response.ok) {
+          const payload = (await response.json().catch(() => null)) as
+            | { error?: string; message?: string }
+            | null;
+          if (response.status === 401) {
+            setError("Сессия истекла. Обновите страницу и войдите снова.");
+            return;
+          }
           if (response.status === 409) {
             setError("Сначала запустите и дождитесь завершения ИИ-анализа.");
+            return;
+          }
+          if (payload?.message) {
+            setError(`Ошибка PDF: ${payload.message}`);
             return;
           }
           setError("Не удалось скачать PDF-отчёт");
@@ -93,17 +109,25 @@ export default function ClientSurveyAnalysis({ surveyId, analysis }: Props) {
         }
 
         const blob = await response.blob();
+        const contentDisposition = response.headers.get("content-disposition");
+        const fileNameMatch = contentDisposition?.match(/filename=\"?([^\";]+)\"?/i);
+        const fileName = fileNameMatch?.[1] || `${surveyId}.pdf`;
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
-        link.download = `${surveyId}.pdf`;
+        link.download = fileName;
         document.body.appendChild(link);
         link.click();
         link.remove();
         URL.revokeObjectURL(url);
-      } catch {
-        setError("Не удалось скачать PDF-отчёт");
+      } catch (downloadError) {
+        if (downloadError instanceof DOMException && downloadError.name === "AbortError") {
+          setError("Скачивание PDF превысило лимит ожидания. Повторите попытку.");
+        } else {
+          setError("Не удалось скачать PDF-отчёт");
+        }
       } finally {
+        window.clearTimeout(timer);
         setIsGeneratingPdf(false);
       }
     })().catch(() => {
