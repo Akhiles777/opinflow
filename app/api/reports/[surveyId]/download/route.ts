@@ -12,12 +12,6 @@ function parseJsonObject<T>(value: unknown, fallback: T) {
   return value && typeof value === "object" && !Array.isArray(value) ? (value as T) : fallback;
 }
 
-function isMeaningful(value: string | null | undefined) {
-  if (!value) return false;
-  const trimmed = value.trim();
-  return trimmed.length >= 10 && /[A-Za-zА-Яа-я0-9]/.test(trimmed) && !/^[\W_]+$/.test(trimmed);
-}
-
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ surveyId: string }> },
@@ -85,11 +79,7 @@ export async function GET(
       }
     : null;
 
-  const analysisReady =
-    survey.analysis?.status === "COMPLETED" &&
-    analysis !== null &&
-    isMeaningful(analysis.summary) &&
-    analysis.keyInsights.some((item) => isMeaningful(item));
+  const analysisReady = survey.analysis?.status === "COMPLETED" && analysis !== null;
 
   if (!analysisReady) {
     return NextResponse.json(

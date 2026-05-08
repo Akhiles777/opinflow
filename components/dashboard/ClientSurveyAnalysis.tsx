@@ -31,12 +31,6 @@ function getFilledSegments(value: number, total: number, segments = 12) {
   return Math.max(0, Math.min(segments, Math.round((value / total) * segments)));
 }
 
-function isMeaningful(value: string | null | undefined) {
-  if (!value) return false;
-  const trimmed = value.trim();
-  return trimmed.length >= 10 && /[A-Za-zА-Яа-я0-9]/.test(trimmed) && !/^[\W_]+$/.test(trimmed);
-}
-
 export default function ClientSurveyAnalysis({ surveyId, analysis }: Props) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -118,11 +112,7 @@ export default function ClientSurveyAnalysis({ surveyId, analysis }: Props) {
     });
   }
 
-  const analysisReady =
-    analysis?.status === "COMPLETED" &&
-    isMeaningful(analysis.summary) &&
-    analysis.keyInsights.some((item) => isMeaningful(item));
-  const analysisCompletedButWeak = analysis?.status === "COMPLETED" && !analysisReady;
+  const analysisReady = analysis?.status === "COMPLETED";
 
   if (!analysis || analysis.status === "PENDING" || analysis.status === "FAILED") {
     return (
@@ -205,11 +195,6 @@ export default function ClientSurveyAnalysis({ surveyId, analysis }: Props) {
         </button>
       </div>
       {error ? <div className="mt-4 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-500">{error}</div> : null}
-      {analysisCompletedButWeak ? (
-        <div className="mt-4 rounded-xl border border-amber-500/25 bg-amber-500/10 p-3 text-sm text-amber-600 dark:text-amber-300">
-          Анализ завершился, но результат недостаточно содержательный. Нажмите «Запустить анализ заново».
-        </div>
-      ) : null}
 
       <div className="mt-8 space-y-8">
         <div>
