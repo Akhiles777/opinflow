@@ -66,13 +66,36 @@ export default function ClientSurveyAnalysis({ surveyId, analysis }: Props) {
   function handleGeneratePdf() {
     setError(null);
     setIsGeneratingPdf(true);
-    try {
-      window.location.href = `/api/reports/${surveyId}/download`;
-    } catch {
+    (async () => {
+      try {
+        const response = await fetch(`/api/reports/${surveyId}/download`, { method: "GET" });
+        if (!response.ok) {
+          if (response.status === 409) {
+            setError("Сначала запустите и дождитесь завершения ИИ-анализа.");
+            return;
+          }
+          setError("Не удалось скачать PDF-отчёт");
+          return;
+        }
+
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `${surveyId}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+      } catch {
+        setError("Не удалось скачать PDF-отчёт");
+      } finally {
+        setIsGeneratingPdf(false);
+      }
+    })().catch(() => {
       setError("Не удалось скачать PDF-отчёт");
-    } finally {
       setIsGeneratingPdf(false);
-    }
+    });
   }
 
   if (!analysis || analysis.status === "PENDING" || analysis.status === "FAILED") {
@@ -129,8 +152,16 @@ export default function ClientSurveyAnalysis({ surveyId, analysis }: Props) {
         </div>
         <button
           type="button"
+          onClick={handleRunAnalysis}
+          disabled={isRunning || isGeneratingPdf}
+          className="rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-mid disabled:opacity-60"
+        >
+          {isRunning ? "Перезапускаем..." : "Запустить анализ заново"}
+        </button>
+        <button
+          type="button"
           onClick={handleGeneratePdf}
-          disabled={isGeneratingPdf}
+          disabled={isGeneratingPdf || isRunning}
           className="rounded-xl border border-dash-border bg-dash-bg px-5 py-3 text-sm font-semibold text-dash-heading transition-colors hover:border-brand/30 hover:text-brand disabled:opacity-60"
         >
           {isGeneratingPdf ? "Генерируем PDF..." : "Скачать PDF отчёт"}

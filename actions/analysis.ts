@@ -64,6 +64,7 @@ export async function runAnalysisAction(surveyId: string) {
     },
     update: {
       status: "PROCESSING",
+      summary: null,
       error: null,
     },
   });
