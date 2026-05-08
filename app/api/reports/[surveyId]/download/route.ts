@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { generateSurveyPDF } from "@/lib/pdf-generator";
@@ -12,6 +13,39 @@ function parseJsonArray<T>(value: unknown, fallback: T[] = []) {
 
 function parseJsonObject<T>(value: unknown, fallback: T) {
   return value && typeof value === "object" && !Array.isArray(value) ? (value as T) : fallback;
+}
+
+async function buildEmergencyPdf(params: {
+  title: string;
+  status: string;
+  totalResponses: number;
+  errorText?: string;
+}) {
+  const pdf = await PDFDocument.create();
+  const regular = await pdf.embedFont(StandardFonts.Helvetica);
+  const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
+  const page = pdf.addPage([595.28, 841.89]);
+  let y = 800;
+  const x = 40;
+
+  page.drawText("OpinionFlow Report Fallback", { x, y, size: 18, font: bold, color: rgb(0.09, 0.1, 0.15) });
+  y -= 28;
+  page.drawText(`Survey: ${params.title.slice(0, 80)}`, { x, y, size: 11, font: regular });
+  y -= 18;
+  page.drawText(`Analysis status: ${params.status}`, { x, y, size: 11, font: regular });
+  y -= 18;
+  page.drawText(`Responses: ${params.totalResponses}`, { x, y, size: 11, font: regular });
+  y -= 24;
+  page.drawText("The main PDF engine returned an error.", { x, y, size: 11, font: regular });
+  y -= 16;
+  page.drawText("This fallback file was generated to avoid download failure.", { x, y, size: 11, font: regular });
+  y -= 20;
+  if (params.errorText) {
+    const line = params.errorText.replace(/[^\x20-\x7E]/g, " ").slice(0, 110);
+    page.drawText(`Error: ${line}`, { x, y, size: 10, font: regular, color: rgb(0.42, 0.1, 0.1) });
+  }
+
+  return Buffer.from(await pdf.save());
 }
 
 export async function GET(
@@ -125,6 +159,20 @@ export async function GET(
   } catch (error) {
     console.error("[reports][download-pdf-error]", error);
     const message = error instanceof Error ? error.message : "PDF_GENERATION_FAILED";
-    return NextResponse.json({ error: "PDF_GENERATION_FAILED", message }, { status: 500 });
+    const emergencyBuffer = await buildEmergencyPdf({
+      title: survey.title || survey.id,
+      status: survey.analysis?.status || "UNKNOWN",
+      totalResponses,
+      errorText: message,
+    });
+    return new NextResponse(new Uint8Array(emergencyBuffer), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="report_${survey.id}_fallback.pdf"`,
+        "Cache-Control": "no-store",
+        "X-Report-Fallback": "1",
+      },
+    });
   }
 }

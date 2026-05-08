@@ -3,7 +3,7 @@ import { PrismaClient, Prisma } from "@prisma/client";
 const prisma = new PrismaClient();
 
 const TARGET_EMAIL = "gasan07.03.2009@icloud.com";
-const RESPONDENT_COUNT = 60;
+const RESPONDENT_COUNT = 30;
 
 const OPEN_ANSWERS = [
   "В целом сервис удобный, но хотелось бы быстрее получать уведомления.",

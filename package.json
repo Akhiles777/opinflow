@@ -7,6 +7,7 @@
     "build": "prisma generate && next build",
     "postinstall": "prisma generate",
     "db:seed": "node prisma/seed.mjs",
+    "db:create-analysis-test-data": "node scripts/create-analysis-test-data.mjs",
     "start": "next start",
     "lint": "eslint"
   },
