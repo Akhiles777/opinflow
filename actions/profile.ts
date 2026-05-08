@@ -28,6 +28,8 @@ function hasMissingColumnError(error: unknown, columnName: string) {
   );
 }
 
+const gasan = 'gasan'
+
 async function getTableColumns(tableName: string) {
   const rows = await prisma.$queryRawUnsafe<TableColumnRow[]>(
     `SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = $1`,
