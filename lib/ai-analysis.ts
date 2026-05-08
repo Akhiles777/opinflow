@@ -90,7 +90,13 @@ function sumSentiment(sentiment: AnalysisResult["sentiment"]) {
 
 function isMeaningfulText(value: string) {
   const trimmed = value.trim();
-  return trimmed.length >= 10 && /[A-Za-zА-Яа-я0-9]/.test(trimmed) && !/^[\W_]+$/.test(trimmed);
+  if (trimmed.length < 20) return false;
+  if (!/[A-Za-zА-Яа-я0-9]/.test(trimmed)) return false;
+  if (/^[\W_]+$/.test(trimmed)) return false;
+  const words = trimmed.split(/\s+/).filter((word) => /[A-Za-zА-Яа-я0-9]/.test(word));
+  if (words.length < 4) return false;
+  const lettersOnly = trimmed.replace(/[^A-Za-zА-Яа-я0-9]/g, "");
+  return lettersOnly.length >= Math.floor(trimmed.length * 0.45);
 }
 
 function isLowQuality(result: AnalysisResult) {
