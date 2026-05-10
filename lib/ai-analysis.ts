@@ -419,6 +419,7 @@ export async function analyzeSurveyResponses(params: {
 
   // Список моделей от лучшей к более простым
   const modelsToTry = [
+    "google/gemini-3.1-pro-preview",
     "anthropic/claude-3.5-sonnet",
     "anthropic/claude-3-haiku-20240307",
     "google/gemini-2.0-flash-001",
