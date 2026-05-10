@@ -68,6 +68,8 @@ export default function RespondentWalletClient({
   const [bankId, setBankId] = useState("");
   const [sbpBanksList, setSbpBanksList] = useState<Array<{ bank_id: string; name: string }>>([]);
   const [sbpBanksHint, setSbpBanksHint] = useState<string | null>(null);
+  const [sbpListLoading, setSbpListLoading] = useState(false);
+  const [sbpContractForbidden, setSbpContractForbidden] = useState(false);
   const [walletNumber, setWalletNumber] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -76,13 +78,32 @@ export default function RespondentWalletClient({
   const numericAmount = useMemo(() => Number(amount.replace(/[^\d]/g, "")), [amount]);
   const earningTransactions = transactions.filter((item) => item.type === "Начисление");
 
+  function clearSbpPrefetchState() {
+    setSbpBanksList([]);
+    setSbpBanksHint(null);
+    setSbpListLoading(false);
+    setSbpContractForbidden(false);
+    setBankId("");
+  }
+
+  function chooseWithdrawMethod(next: WithdrawalMethod) {
+    if (method === "SBP" && next !== "SBP") {
+      clearSbpPrefetchState();
+    }
+    setMethod(next);
+  }
+
   useEffect(() => {
-    if (!showWithdrawModal || step !== 2 || method !== "SBP") {
+    if (!showWithdrawModal || method !== "SBP") {
       return;
     }
+
     let cancelled = false;
+
     (async () => {
       setSbpBanksHint(null);
+      setSbpContractForbidden(false);
+      setSbpListLoading(true);
       const res = await fetch("/api/payments/sbp-banks", {
         credentials: "include",
         cache: "no-store",
@@ -92,8 +113,26 @@ export default function RespondentWalletClient({
         error?: string;
         detail?: string | null;
         yukassaCode?: string | null;
+        sbpAvailability?: string;
+        userMessage?: string;
+        merchantHint?: string;
+        technical?: string;
       };
       if (cancelled) return;
+      setSbpListLoading(false);
+
+      if (data.sbpAvailability === "contract_forbidden") {
+        setSbpBanksList([]);
+        setBankId("");
+        setSbpContractForbidden(true);
+        const msg =
+          typeof data.userMessage === "string" && data.userMessage.trim()
+            ? data.userMessage.trim()
+            : "Вывод через СБП сейчас недоступен. Выберите карту или ЮMoney.";
+        setSbpBanksHint(msg);
+        return;
+      }
+
       if (Array.isArray(data.banks) && data.banks.length > 0) {
         setSbpBanksList(data.banks);
         setBankId((previous) =>
@@ -101,28 +140,32 @@ export default function RespondentWalletClient({
             ? previous
             : data.banks![0].bank_id,
         );
-      } else {
-        setSbpBanksList([]);
-        setBankId("");
-        const fallback =
-          data.error === "PAYOUTS_NOT_CONFIGURED"
-            ? "Список банков СБП недоступен: на сервере не настроены YUKASSA_PAYOUT_AGENT_ID и YUKASSA_PAYOUT_SECRET_KEY (шлюз выплат, не магазин оплаты)."
-            : data.error === "UNAUTHORIZED"
-              ? "Сессия недействительна. Обновите страницу и войдите снова."
-              : "Не удалось загрузить список банков ЮKassa для СБП.";
-        const tail =
-          typeof data.detail === "string" && data.detail.trim()
-            ? ` Технически: ${data.detail.trim()}`
-            : res.status === 401
-              ? " Проверьте авторизацию."
-              : "";
-        setSbpBanksHint(`${fallback}${tail}`);
+        return;
       }
+
+      setSbpBanksList([]);
+      setBankId("");
+      const fallback =
+        data.error === "PAYOUTS_NOT_CONFIGURED"
+          ? "Список банков СБП недоступен: на сервере не настроены YUKASSA_PAYOUT_AGENT_ID и YUKASSA_PAYOUT_SECRET_KEY (шлюз выплат, не магазин оплаты)."
+          : data.error === "UNAUTHORIZED"
+            ? "Сессия недействительна. Обновите страницу и войдите снова."
+            : res.ok && data.sbpAvailability === "available"
+              ? "Список банков СБП пока пуст. Проверьте выплаты в ЮKassa или повторите позже."
+              : "Не удалось загрузить список банков ЮKassa для СБП.";
+      const tail =
+        typeof data.detail === "string" && data.detail.trim()
+          ? ` Технически: ${data.detail.trim()}`
+          : res.status === 401
+            ? " Проверьте авторизацию."
+            : "";
+      setSbpBanksHint(`${fallback}${tail}`);
     })();
+
     return () => {
       cancelled = true;
     };
-  }, [showWithdrawModal, step, method]);
+  }, [showWithdrawModal, method]);
 
   function resetModal() {
     setShowWithdrawModal(false);
@@ -131,9 +174,7 @@ export default function RespondentWalletClient({
     setAmount("100");
     setCardNumber("");
     setPhone("");
-    setBankId("");
-    setSbpBanksList([]);
-    setSbpBanksHint(null);
+    clearSbpPrefetchState();
     setWalletNumber("");
     setError(null);
   }
@@ -172,6 +213,13 @@ export default function RespondentWalletClient({
 
     if (method === "SBP" && phone.trim().length < 10) {
       setError("Введите номер телефона для СБП");
+      return;
+    }
+
+    if (method === "SBP" && sbpContractForbidden) {
+      setError(
+        "СБП для вывода на этой площадке отключён на стороне ЮKassa. Выберите «Банковская карту» или «ЮMoney» на первом шаге.",
+      );
       return;
     }
 
@@ -343,7 +391,13 @@ export default function RespondentWalletClient({
               <button
                 type="button"
                 onClick={() => setStep(2)}
-                className="rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-mid"
+                disabled={method === "SBP" && (sbpListLoading || sbpContractForbidden)}
+                title={
+                  method === "SBP" && sbpContractForbidden
+                    ? "СБП временно недоступен для этой платформы"
+                    : undefined
+                }
+                className="rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-mid disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Далее →
               </button>
@@ -361,30 +415,55 @@ export default function RespondentWalletClient({
         }
       >
         {step === 1 ? (
-          <div className="grid gap-3 md:grid-cols-3">
-            {[
-              { value: "CARD" as const, title: "Банковская карта", text: "Перевод на карту российского банка" },
-              { value: "SBP" as const, title: "СБП", text: "Перевод по номеру телефона" },
-              { value: "WALLET" as const, title: "ЮMoney", text: "Перевод на кошелёк" },
-            ].map((item) => {
-              const active = method === item.value;
-              return (
-                <button
-                  key={item.value}
-                  type="button"
-                  onClick={() => setMethod(item.value)}
-                  className={[
-                    "rounded-2xl border p-4 text-left transition-colors",
-                    active
-                      ? "border-brand bg-brand/10"
-                      : "border-dash-border bg-dash-bg hover:border-brand/30",
-                  ].join(" ")}
-                >
-                  <div className="text-sm font-semibold text-dash-heading">{item.title}</div>
-                  <div className="mt-2 text-sm text-dash-muted">{item.text}</div>
-                </button>
-              );
-            })}
+          <div className="grid gap-3">
+            <div className="grid gap-3 md:grid-cols-3">
+              {[
+                { value: "CARD" as const, title: "Банковская карта", text: "Перевод на карту российского банка" },
+                { value: "SBP" as const, title: "СБП", text: "Перевод по номеру телефона" },
+                { value: "WALLET" as const, title: "ЮMoney", text: "Перевод на кошелёк" },
+              ].map((item) => {
+                const active = method === item.value;
+                return (
+                  <button
+                    key={item.value}
+                    type="button"
+                    onClick={() => chooseWithdrawMethod(item.value)}
+                    className={[
+                      "rounded-2xl border p-4 text-left transition-colors",
+                      active
+                        ? "border-brand bg-brand/10"
+                        : "border-dash-border bg-dash-bg hover:border-brand/30",
+                    ].join(" ")}
+                  >
+                    <div className="text-sm font-semibold text-dash-heading">{item.title}</div>
+                    <div className="mt-2 text-sm text-dash-muted">{item.text}</div>
+                  </button>
+                );
+              })}
+            </div>
+            {method === "SBP" ? (
+              <div
+                className={[
+                  "rounded-xl border px-4 py-3 text-sm",
+                  sbpContractForbidden || (sbpBanksHint && !sbpListLoading)
+                    ? "border-amber-500/25 bg-amber-500/10 text-amber-900 dark:text-amber-100"
+                    : "border-dash-border bg-dash-bg text-dash-muted",
+                ].join(" ")}
+              >
+                {sbpBanksHint ? (
+                  sbpBanksHint
+                ) : sbpListLoading ? (
+                  "Проверяем доступность выплат через СБП…"
+                ) : sbpBanksList.length > 0 ? (
+                  <>
+                    Списки участников СБП получены от ЮKassa ({sbpBanksList.length}&nbsp;
+                    банков). Перейдите дальше, чтобы указать телефон и сумму.
+                  </>
+                ) : (
+                  "Не удалось получить участников СБП. Выберите другой способ вывода или повторите позже."
+                )}
+              </div>
+            ) : null}
           </div>
         ) : (
           <div className="space-y-4">
@@ -431,9 +510,9 @@ export default function RespondentWalletClient({
                         </option>
                       ))}
                     </select>
-                  ) : !sbpBanksHint ? (
+                  ) : sbpContractForbidden ? null : sbpListLoading || !sbpBanksHint ? (
                     <div className="rounded-xl border border-dash-border bg-dash-bg px-4 py-3 text-sm text-dash-muted">
-                      Загружаем список банков ЮKassa…
+                      {sbpListLoading ? "Загружаем список банков ЮKassa…" : "Не удалось показать банки. См. сообщение выше."}
                     </div>
                   ) : null}
                 </label>

@@ -226,9 +226,17 @@ function getPayoutDestinationForRequest(params: {
   return buildPayoutDestinationForApi(params.method, params.requisites);
 }
 
-/** Кэш списка СБП: снижает нагрузку и улучшает UX при повторном открытии модалки */
-let sbpBanksCache: { expiresMs: number; banks: Array<{ bank_id: string; name: string }> } | null = null;
-const SBP_BANKS_CACHE_TTL_MS = 20 * 60 * 1000;
+type SbpBankRow = { bank_id: string; name: string };
+
+const SBP_BANKS_CACHE_OK_TTL_MS = 20 * 60 * 1000;
+/** Не дёргать sbp_banks при стабильном «продукт не подключён» от ЮKassa */
+const SBP_BANKS_CACHE_FORBIDDEN_TTL_MS = 30 * 60 * 1000;
+
+type SbpBanksFetchCache =
+  | { kind: "ok"; expiresMs: number; banks: SbpBankRow[] }
+  | { kind: "forbidden"; expiresMs: number };
+
+let sbpBanksFetchCache: SbpBanksFetchCache | null = null;
 
 function parseSbpBankItems(payload: unknown): Array<{ bank_id: string; name: string }> {
   if (!payload || typeof payload !== "object") {
@@ -261,12 +269,76 @@ function parseSbpBankItems(payload: unknown): Array<{ bank_id: string; name: str
   return out;
 }
 
-export async function listSbpParticipantBanks(): Promise<Array<{ bank_id: string; name: string }>> {
+export type FetchSbpBanksForPayoutsResult =
+  | { ok: true; banks: SbpBankRow[] }
+  | {
+      ok: false;
+      httpStatus: number;
+      yukassaCode: string | null;
+      /** ЮKassa явно сообщила о запрете операции (договор/продукт), не обязательно HTTP 403 */
+      contractForbidden: boolean;
+      rawSnippet: string;
+    };
+
+function parseYukassaErrorFields(text: string): { code: string | null; description: string | null } {
+  const jsonStart = text.indexOf("{");
+  if (jsonStart < 0) {
+    return { code: null, description: null };
+  }
+  try {
+    const parsed = JSON.parse(text.slice(jsonStart)) as Record<string, unknown>;
+    const code = typeof parsed.code === "string" ? parsed.code : null;
+    const description =
+      typeof parsed.description === "string" ? parsed.description : null;
+    return { code, description };
+  } catch {
+    return { code: null, description: null };
+  }
+}
+
+function isSbpContractForbiddenResponse(httpStatus: number, code: string | null, description: string | null) {
+  if (httpStatus === 403 && code === "forbidden") {
+    return true;
+  }
+  const d = description ?? "";
+  if (/\bTransaction forbidden\b/i.test(d)) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Получает список банков-участников СБП для выплат (credentials шлюза выплат).
+ * Возвращает структуру без throw — включая случай «СБП не подключён в ЛК ЮKassa».
+ */
+export async function fetchSbpBanksForPayouts(): Promise<FetchSbpBanksForPayoutsResult> {
   ensurePayoutsConfigured();
 
-  if (sbpBanksCache && Date.now() < sbpBanksCache.expiresMs) {
-    return sbpBanksCache.banks;
+  const sbpDisabled = process.env.YUKASSA_DISABLE_SBP_PAYOUTS;
+  if (sbpDisabled === "1" || /^true$/i.test((sbpDisabled ?? "").trim())) {
+    return {
+      ok: false,
+      httpStatus: 403,
+      yukassaCode: "disabled_by_env",
+      contractForbidden: true,
+      rawSnippet: "YUKASSA_DISABLE_SBP_PAYOUTS",
+    };
   }
+
+  if (sbpBanksFetchCache && Date.now() < sbpBanksFetchCache.expiresMs) {
+    if (sbpBanksFetchCache.kind === "ok") {
+      return { ok: true, banks: sbpBanksFetchCache.banks };
+    }
+    return {
+      ok: false,
+      httpStatus: 403,
+      yukassaCode: "forbidden",
+      contractForbidden: true,
+      rawSnippet: "CACHED_CONTRACT_FORBIDDEN",
+    };
+  }
+
+  sbpBanksFetchCache = null;
 
   const agentId = getPayoutAgentId();
   const secret = getPayoutSecretKey();
@@ -280,26 +352,50 @@ export async function listSbpParticipantBanks(): Promise<Array<{ bank_id: string
     },
   });
 
+  const text = await response.text();
+  const { code, description } = parseYukassaErrorFields(text);
+  const contractForbidden = !response.ok
+    ? isSbpContractForbiddenResponse(response.status, code, description)
+    : false;
+
   if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`YUKASSA_SBP_BANKS_FAILED: ${response.status} ${text}`);
+    if (contractForbidden) {
+      sbpBanksFetchCache = {
+        kind: "forbidden",
+        expiresMs: Date.now() + SBP_BANKS_CACHE_FORBIDDEN_TTL_MS,
+      };
+    }
+    return {
+      ok: false,
+      httpStatus: response.status,
+      yukassaCode: code,
+      contractForbidden,
+      rawSnippet: text.trim().slice(0, 400),
+    };
   }
 
   let payload: unknown;
   try {
-    payload = await response.json();
+    payload = JSON.parse(text) as unknown;
   } catch {
-    throw new Error("YUKASSA_SBP_BANKS_FAILED: INVALID_JSON_BODY");
+    return {
+      ok: false,
+      httpStatus: response.status,
+      yukassaCode: null,
+      contractForbidden: false,
+      rawSnippet: text.trim().slice(0, 400) || "INVALID_JSON_BODY",
+    };
   }
 
   const banks = parseSbpBankItems(payload);
 
-  sbpBanksCache = {
+  sbpBanksFetchCache = {
+    kind: "ok",
     banks,
-    expiresMs: Date.now() + SBP_BANKS_CACHE_TTL_MS,
+    expiresMs: Date.now() + SBP_BANKS_CACHE_OK_TTL_MS,
   };
 
-  return banks;
+  return { ok: true, banks };
 }
 
 export async function createPayout(params: {

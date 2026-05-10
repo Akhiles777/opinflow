@@ -5,12 +5,32 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth-utils";
 import { assertPayoutRequisitesValid, normalizeWithdrawalRequisitesForStorage } from "@/lib/yukassa-payout-requisites";
-import { createDepositPayment, createPayout } from "@/lib/yukassa";
+import { YUKASSA_PAYOUT_HTTP_403_RU, YUKASSA_SBP_CONTRACT_FORBIDDEN_RESPONDENT_RU } from "@/lib/yukassa-payout-copy";
+import { createDepositPayment, createPayout, fetchSbpBanksForPayouts } from "@/lib/yukassa";
 
 function withdrawalMethodToPayoutApi(method: "CARD" | "SBP" | "WALLET"): "card" | "sbp" | "wallet" {
   if (method === "CARD") return "card";
   if (method === "SBP") return "sbp";
   return "wallet";
+}
+
+function parseYukassaPayoutHttpFailure(message: string): { status: number; rawBody: string } | null {
+  const prefix = "YUKASSA_PAYOUT_FAILED:";
+  if (!message.startsWith(prefix)) {
+    return null;
+  }
+  const tail = message.slice(prefix.length).trimStart();
+  const delimiterIdx = tail.search(/\s/);
+  if (delimiterIdx <= 0) {
+    return null;
+  }
+  const statusStr = tail.slice(0, delimiterIdx).trim();
+  const rawBody = tail.slice(delimiterIdx).trimStart();
+  const status = Number(statusStr);
+  if (!Number.isFinite(status)) {
+    return null;
+  }
+  return { status, rawBody };
 }
 
 function yukassaPayoutDescription(message: string): string | null {
@@ -48,6 +68,11 @@ function getPaymentErrorMessage(error: unknown, fallback: string) {
 
   if (error.message.startsWith("PAYOUT_REQUISITES:")) {
     return error.message.replace(/^PAYOUT_REQUISITES:\s*/, "").trim();
+  }
+
+  const payoutHttp = parseYukassaPayoutHttpFailure(error.message);
+  if (payoutHttp?.status === 403) {
+    return YUKASSA_PAYOUT_HTTP_403_RU;
   }
 
   const payoutHuman = yukassaPayoutDescription(error.message);
@@ -133,6 +158,17 @@ export async function createWithdrawalAction(params: {
   }
 
   const cleanedRequisites = normalizeWithdrawalRequisitesForStorage(params.method, params.requisites);
+
+  if (params.method === "SBP") {
+    try {
+      const gate = await fetchSbpBanksForPayouts();
+      if (!gate.ok && gate.contractForbidden) {
+        return { error: YUKASSA_SBP_CONTRACT_FORBIDDEN_RESPONDENT_RU };
+      }
+    } catch {
+      /** fetchSbpBanksForPayouts оборачивает ensurePayoutsConfigured; ошибки уже отражены ниже через createPayout */
+    }
+  }
 
   const reserve = await prisma.$transaction(async (tx) => {
     const walletRow = await tx.wallet.findUnique({
@@ -280,6 +316,20 @@ export async function approveWithdrawalAction(requestId: string) {
   }
 
   const cleanedRequisites = normalizeWithdrawalRequisitesForStorage(requestRecord.method, storedRequisites);
+
+  if (requestRecord.method === "SBP") {
+    try {
+      const gate = await fetchSbpBanksForPayouts();
+      if (!gate.ok && gate.contractForbidden) {
+        return {
+          error:
+            "ЮKassa не разрешает выплаты по СБП для этого шлюза (forbidden по API). Подключите СБП в личном кабинете именно для шлюза выплат или отклоните заявку.",
+        };
+      }
+    } catch {
+      /** далее createPayout покажет причину */
+    }
+  }
 
   try {
     const payout = await createPayout({
