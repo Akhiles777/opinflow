@@ -336,7 +336,12 @@ export default async function ClientSurveyDetailPage({ params }: { params: Promi
     const riskFactors = arr("riskFactors");
     const metricsToWatch = arr("metricsToWatch");
     if (!recommendations.length && !hypotheses.length) return null;
-    return { recommendations, hypotheses, riskFactors, metricsToWatch };
+    return {
+      recommendations,
+      hypotheses,
+      riskFactors,
+      metricsToWatch,
+    };
   }
 
   const analysis = survey.analysis

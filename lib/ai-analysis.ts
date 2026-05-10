@@ -23,12 +23,12 @@ export type AnalysisDiagnostics = {
   hypotheses: string[];
   riskFactors: string[];
   metricsToWatch: string[];
-  actionPlan: {
+  actionPlan?: {
     immediate: string[];
     shortTerm: string[];
     longTerm: string[];
   };
-  segmentsAnalysis: {
+  segmentsAnalysis?: {
     segment: string;
     insight: string;
     action: string;
@@ -42,8 +42,8 @@ export type AnalysisResult = {
   summary: string;
   keyInsights: string[];
   diagnostics?: AnalysisDiagnostics;
-  businessImplications: string[];
-  confidenceScore: number;
+  businessImplications?: string[];
+  confidenceScore?: number;
 };
 
 const diagnosticsSchema = z.object({
@@ -55,14 +55,14 @@ const diagnosticsSchema = z.object({
     immediate: z.array(z.string().min(30).max(400)).min(2).max(5),
     shortTerm: z.array(z.string().min(30).max(400)).min(2).max(5),
     longTerm: z.array(z.string().min(30).max(400)).min(2).max(4),
-  }),
+  }).optional(),
   segmentsAnalysis: z.array(
     z.object({
       segment: z.string().min(5).max(200),
       insight: z.string().min(20).max(400),
       action: z.string().min(20).max(400),
     })
-  ).min(0).max(6),
+  ).min(0).max(6).optional(),
 });
 
 const analysisResultSchema = z.object({
@@ -89,8 +89,8 @@ const analysisResultSchema = z.object({
   summary: z.string().min(100).max(4000),
   keyInsights: z.array(z.string().min(30).max(500)).min(4).max(10),
   diagnostics: diagnosticsSchema,
-  businessImplications: z.array(z.string().min(30).max(500)).min(3).max(8),
-  confidenceScore: z.number().min(0).max(100),
+  businessImplications: z.array(z.string().min(30).max(500)).min(3).max(8).optional(),
+  confidenceScore: z.number().min(0).max(100).optional(),
 });
 
 type OpenAnswerGroup = {
@@ -214,7 +214,6 @@ function isMeaningfulText(value: string) {
   const words = trimmed.split(/\s+/).filter((word) => /[A-Za-zА-Яа-я0-9]/.test(word));
   if (words.length < 5) return false;
   
-  // Проверка на шаблонные фразы
   const genericPhrases = [
     "всё хорошо", "всё плохо", "нормально", "всё устраивает",
     "нет комментариев", "без комментариев", "не знаю", "затрудняюсь ответить",
@@ -229,32 +228,23 @@ function isMeaningfulText(value: string) {
 }
 
 function isLowQuality(result: AnalysisResult) {
-  // Проверка ключевых текстовых полей
   if (!isMeaningfulText(result.summary)) return true;
   
-  // Проверка инсайтов - минимум 3 осмысленных
   const meaningfulInsights = result.keyInsights.filter(isMeaningfulText);
   if (meaningfulInsights.length < 3) return true;
   
-  // Проверка тем
   const meaningfulThemes = result.themes.filter(
     (theme) => isMeaningfulText(theme.theme) && isMeaningfulText(theme.actionableInsight)
   );
   if (meaningfulThemes.length < 1) return true;
   
-  // Проверка сентимента
   const sentimentTotal = sumSentiment(result.sentiment);
   if (sentimentTotal < 98 || sentimentTotal > 102) return true;
   
-  // Проверка диагностики
   const diag = result.diagnostics;
   if (!diag) return true;
   if (diag.recommendations.filter(isMeaningfulText).length < 2) return true;
   if (diag.hypotheses.filter(isMeaningfulText).length < 2) return true;
-  if (!diag.actionPlan || diag.actionPlan.immediate.filter(isMeaningfulText).length < 1) return true;
-  
-  // Проверка бизнес-импликаций
-  if (result.businessImplications.filter(isMeaningfulText).length < 2) return true;
   
   return false;
 }
@@ -262,6 +252,32 @@ function isLowQuality(result: AnalysisResult) {
 function clampPercent(value: number) {
   if (!Number.isFinite(value)) return 0;
   return Math.max(0, Math.min(100, Math.round(value)));
+}
+
+function normalizeSentiment(sentiment: { positive: number; neutral: number; negative: number }): {
+  positive: number;
+  neutral: number;
+  negative: number;
+} {
+  const total = sentiment.positive + sentiment.neutral + sentiment.negative;
+  
+  if (total === 100) return sentiment;
+  if (total === 0) return { positive: 0, neutral: 100, negative: 0 };
+  
+  const positive = clampPercent(Math.round((sentiment.positive / total) * 100));
+  const negative = clampPercent(Math.round((sentiment.negative / total) * 100));
+  let neutral = clampPercent(Math.round((sentiment.neutral / total) * 100));
+  
+  const sum = positive + neutral + negative;
+  if (sum !== 100) {
+    neutral += (100 - sum);
+  }
+  
+  return {
+    positive,
+    neutral: Math.max(0, neutral),
+    negative,
+  };
 }
 
 function buildHeuristicFallback(params: {
@@ -272,7 +288,6 @@ function buildHeuristicFallback(params: {
   const allAnswers = params.openAnswers.flatMap((group) => group.answers);
   const total = allAnswers.length || 1;
 
-  // Расширенные словари для анализа тональности
   const positiveWords = [
     "хорош", "отлич", "прекрас", "замечатель", "удоб", "быстр", "качеств",
     "нрав", "супер", "понят", "легк", "прост", "интуитив", "полез", "эффектив",
@@ -290,7 +305,6 @@ function buildHeuristicFallback(params: {
   const bigramFreq = new Map<string, number>();
   const questionThemes: Map<string, { answers: string[]; sentiment: "positive" | "negative" | "neutral" }> = new Map();
 
-  // Анализ по вопросам и ответам
   for (const group of params.openAnswers) {
     const questionSentimentCounts = { positive: 0, negative: 0, neutral: 0 };
     
@@ -303,21 +317,18 @@ function buildHeuristicFallback(params: {
       else if (hasNegative && !hasPositive) questionSentimentCounts.negative++;
       else questionSentimentCounts.neutral++;
       
-      // Биграммы для лучшего контекста
       const words = lower.split(/[^a-zа-я0-9]+/i).filter((w) => w.length >= 3);
       for (let i = 0; i < words.length - 1; i++) {
         const bigram = `${words[i]} ${words[i + 1]}`;
         bigramFreq.set(bigram, (bigramFreq.get(bigram) ?? 0) + 1);
       }
       
-      // Отдельные слова
       for (const word of words) {
         if (word.length < 4) continue;
         freq.set(word, (freq.get(word) ?? 0) + 1);
       }
     }
     
-    // Определяем доминирующую тональность для вопроса
     const maxCount = Math.max(
       questionSentimentCounts.positive,
       questionSentimentCounts.negative,
@@ -348,7 +359,6 @@ function buildHeuristicFallback(params: {
     neutral = Math.max(0, 100 - positive - negative);
   }
 
-  // Комбинированные темы из биграмм и слов
   const topBigrams = Array.from(bigramFreq.entries())
     .sort((a, b) => b[1] - a[1])
     .slice(0, 10);
@@ -383,7 +393,6 @@ function buildHeuristicFallback(params: {
     "Рекомендуется провести сегментный анализ для выявления различий в восприятии продукта разными группами пользователей",
   ];
 
-  // Бизнес-импликации на основе данных
   const businessImplications: string[] = [];
   if (negative > 30) {
     businessImplications.push(
@@ -624,7 +633,6 @@ async function requestAnalysisFromModelWithRetry(params: {
       console.warn(`[ai-analysis] Attempt ${attempt}/${params.maxRetries} failed for model ${params.model}:`, lastError.message);
       
       if (attempt < params.maxRetries) {
-        // Экспоненциальная задержка между попытками
         const delay = Math.min(1000 * Math.pow(2, attempt - 1), 8000);
         await new Promise(resolve => setTimeout(resolve, delay));
       }
@@ -670,7 +678,6 @@ export async function analyzeSurveyResponses(params: {
 
   const quantitativeSummary = params.quantitativeSummary?.trim() ?? "";
 
-  // Основная модель и фолбэк
   const primaryModel = process.env.OPENROUTER_MODEL || "google/gemini-2.0-flash-001";
   const fallbackModels = [
     "anthropic/claude-3-haiku-20240307",
@@ -713,32 +720,23 @@ export async function analyzeSurveyResponses(params: {
       try {
         const parsed = analysisResultSchema.parse(JSON.parse(cleaned)) as AnalysisResult;
         
-        // Проверка качества
         const qualityIssues: string[] = [];
         
         if (isLowQuality(parsed)) {
           qualityIssues.push("Low quality check failed");
         }
         
-        // Дополнительные проверки качества
         if (parsed.keyInsights.length < 4) {
           qualityIssues.push("Too few keyInsights");
         }
         if (parsed.themes.length < 1) {
           qualityIssues.push("No themes");
         }
-        if (parsed.businessImplications.length < 2) {
-          qualityIssues.push("Too few business implications");
-        }
-        if (parsed.confidenceScore < 0 || parsed.confidenceScore > 100) {
-          qualityIssues.push("Invalid confidence score");
-        }
         
         if (qualityIssues.length === 0) {
           console.log(`[ai-analysis] Analysis successful with model ${model} (attempt ${attempt})`);
           return {
             ...parsed,
-            // Гарантируем, что сумма sentiment = 100
             sentiment: normalizeSentiment(parsed.sentiment),
           };
         } else {
@@ -759,7 +757,6 @@ export async function analyzeSurveyResponses(params: {
     }
   }
 
-  // Если все модели не дали качественный результат, используем эвристику
   console.log(`[ai-analysis] All models failed or produced low-quality results. Last attempted: ${lastAttemptedModel}. Using heuristic fallback.`);
   
   return buildHeuristicFallback({
@@ -767,33 +764,4 @@ export async function analyzeSurveyResponses(params: {
     openAnswers: normalizedOpenAnswers,
     quantitativeSummary,
   });
-}
-
-// Вспомогательная функция для нормализации sentiment
-function normalizeSentiment(sentiment: { positive: number; neutral: number; negative: number }): {
-  positive: number;
-  neutral: number;
-  negative: number;
-} {
-  const total = sentiment.positive + sentiment.neutral + sentiment.negative;
-  
-  if (total === 100) return sentiment;
-  if (total === 0) return { positive: 0, neutral: 100, negative: 0 };
-  
-  // Нормализуем до 100%
-  const positive = clampPercent(Math.round((sentiment.positive / total) * 100));
-  const negative = clampPercent(Math.round((sentiment.negative / total) * 100));
-  let neutral = clampPercent(Math.round((sentiment.neutral / total) * 100));
-  
-  // Корректируем neutral для точной суммы 100
-  const sum = positive + neutral + negative;
-  if (sum !== 100) {
-    neutral += (100 - sum);
-  }
-  
-  return {
-    positive,
-    neutral: Math.max(0, neutral),
-    negative,
-  };
 }
