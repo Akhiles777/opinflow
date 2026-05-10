@@ -1,5 +1,5 @@
 // ===============================
-// ТЕСТ 3 — Игровая платформа
+// ТЕСТ 1 — Онлайн-банк
 // ===============================
 
 import { PrismaClient, Prisma } from "@prisma/client";
@@ -7,20 +7,27 @@ import { PrismaClient, Prisma } from "@prisma/client";
 const prisma = new PrismaClient();
 
 const TARGET_EMAIL = "gasan07.03.2009@icloud.com";
+const RESPONDENT_COUNT = 40;
 
-const GAME_FEEDBACK = [
-  "Подбор игроков работает отлично.",
-  "Слишком долго ищет матч.",
-  "Хотелось бы больше наград за сезон.",
-  "Иногда бывают лаги на серверах.",
-  "Боевой пропуск выглядит интересно.",
-  "Матчи стали более сбалансированными.",
-  "Не хватает новых игровых режимов.",
-  "Графика после обновления стала лучше.",
+const OPEN_ANSWERS = [
+  "Мобильное приложение работает стабильно.",
+  "Хотелось бы быстрее переводить деньги между банками.",
+  "Поддержка помогла решить проблему за 10 минут.",
+  "Иногда push-уведомления приходят с задержкой.",
+  "Интерфейс очень удобный даже для новичков.",
+  "Не хватает категории расходов по подпискам.",
+  "Процент по кэшбеку хотелось бы выше.",
+  "Регистрация карты прошла без проблем.",
+  "Было бы полезно добавить виртуальные карты.",
+  "Часто использую аналитику расходов — удобно.",
 ];
 
-function randomItem(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
+function randomItem(items) {
+  return items[Math.floor(Math.random() * items.length)];
+}
+
+function randomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 async function main() {
@@ -32,16 +39,16 @@ async function main() {
   const survey = await prisma.survey.create({
     data: {
       creatorId: owner.id,
-      title: "Опрос игровой платформы",
-      description: "Тест для анализа игровых отзывов",
-      category: "Gaming",
+      title: "Оценка мобильного банка",
+      description: "Тестовый банковский опрос",
+      category: "Finance",
       status: "ACTIVE",
-      maxResponses: 50,
-      reward: new Prisma.Decimal(25),
-      estimatedTime: 2,
-      budget: new Prisma.Decimal(1500),
+      maxResponses: RESPONDENT_COUNT,
+      reward: new Prisma.Decimal(70),
+      estimatedTime: 5,
+      budget: new Prisma.Decimal(RESPONDENT_COUNT * 70 * 1.15),
       startsAt: new Date(),
-      endsAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
+      endsAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     },
   });
 
@@ -50,15 +57,10 @@ async function main() {
       surveyId: survey.id,
       order: 0,
       type: "SINGLE_CHOICE",
-      title: "Как часто вы играете?",
+      title: "Как вы оцениваете удобство приложения?",
       required: true,
       options: {
-        options: [
-          "Каждый день",
-          "Несколько раз в неделю",
-          "Редко",
-          "Практически не играю",
-        ],
+        options: ["Очень удобно", "Удобно", "Средне", "Неудобно"],
       },
     },
   });
@@ -68,15 +70,15 @@ async function main() {
       surveyId: survey.id,
       order: 1,
       type: "OPEN_TEXT",
-      title: "Что вам нравится или не нравится?",
+      title: "Что стоит улучшить в банковском приложении?",
       required: true,
     },
   });
 
-  for (let i = 0; i < 50; i++) {
-    const user = await prisma.user.create({
+  for (let i = 0; i < RESPONDENT_COUNT; i++) {
+    const respondent = await prisma.user.create({
       data: {
-        email: `gamer-${Date.now()}-${i}@example.com`,
+        email: `bank-test-${Date.now()}-${i}@example.com`,
         role: "RESPONDENT",
         status: "ACTIVE",
         emailVerified: new Date(),
@@ -86,12 +88,12 @@ async function main() {
     const session = await prisma.surveySession.create({
       data: {
         surveyId: survey.id,
-        userId: user.id,
+        userId: respondent.id,
         status: "COMPLETED",
         isValid: true,
-        startedAt: new Date(Date.now() - 100000),
+        startedAt: new Date(Date.now() - 300000),
         completedAt: new Date(),
-        timeSpent: 140,
+        timeSpent: randomInt(100, 500),
       },
     });
 
@@ -101,22 +103,22 @@ async function main() {
           sessionId: session.id,
           questionId: q1.id,
           value: randomItem([
-            "Каждый день",
-            "Несколько раз в неделю",
-            "Редко",
-            "Практически не играю",
+            "Очень удобно",
+            "Удобно",
+            "Средне",
+            "Неудобно",
           ]),
         },
         {
           sessionId: session.id,
           questionId: q2.id,
-          value: randomItem(GAME_FEEDBACK),
+          value: randomItem(OPEN_ANSWERS),
         },
       ],
     });
   }
 
-  console.log("Gaming survey created:", survey.id);
+  console.log("Bank survey created:", survey.id);
 }
 
 main()

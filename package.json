@@ -12,7 +12,8 @@
     "lint": "eslint"
   },
   "prisma": {
-    "seed": "node prisma/seed.mjs"
+    "seed": "node prisma/seed.mjs",
+    "create-analysis-test-data": "node prisma/create-analysis-test-data.mjs"
   },
   "dependencies": {
     "@a2seven/yoo-checkout": "^1.1.4",
