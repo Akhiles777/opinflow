@@ -26,25 +26,38 @@ function stripCredentialOuter(raw: string): string {
   return s;
 }
 
-/** Gateway agentId (логин Basic Auth для выплат) — без пробелов и переводов строк внутри */
+/** Невидимые символы и «особые» пробелы при копировании из ЛК/PDF — ломали нашу валидацию */
+const CREDENTIAL_INVISIBLE = /[\uFEFF\u200B-\u200D\u2060\u00A0]/g;
+/** Юникод‑дефисы в интерфейсах ЮKassa/браузера — не совпадают с ASCII "-" в regex */
+const UNICODE_TO_ASCII_HYPHEN = /[\u2010\u2011\u2012\u2013\u2014\u2212\uFF0D]/g;
+
+/** Gateway agentId (логин Basic Auth для выплат): только сам id, без пробелов/невидимых символов */
 function normalizePayoutAgentId(raw: string): string {
-  return stripCredentialOuter(raw).replace(/\s+/g, "");
+  let s = stripCredentialOuter(raw);
+  s = s.replace(CREDENTIAL_INVISIBLE, "");
+  s = s.replace(UNICODE_TO_ASCII_HYPHEN, "-");
+  s = s.replace(/\s+/g, "");
+  return s;
 }
 
-/** Секрет шлюза выплат — одна строка, без переносов */
+/** Секрет шлюза выплат — одна строка */
 function normalizePayoutSecretKey(raw: string): string {
-  return stripCredentialOuter(raw).replace(/[\r\n\t]+/g, "").trim();
+  let s = stripCredentialOuter(raw);
+  s = s.replace(CREDENTIAL_INVISIBLE, "");
+  s = s.replace(/[\r\n\t]+/g, "");
+  return s.trim();
 }
 
 /**
  * Идентификатор шлюза выплат (agentId) — НЕ shopId магазина для приёма платежей.
- * @see https://yookassa.ru/developers/using-api/interaction-format — раздел «For those who make payouts»
+ * Сначала явные имена (часто в .env остаётся старое YUKASSA_PAYOUT_SHOP_ID с неверным значением).
+ * @see https://yookassa.ru/developers/using-api/interaction-format — «For those who make payouts»
  */
 function getPayoutAgentId(): string {
   const raw =
-    process.env.YUKASSA_PAYOUT_SHOP_ID ||
     process.env.YUKASSA_PAYOUT_AGENT_ID ||
     process.env.YUKASSA_GATEWAY_ID ||
+    process.env.YUKASSA_PAYOUT_SHOP_ID ||
     "";
   return normalizePayoutAgentId(raw);
 }
@@ -86,21 +99,40 @@ function ensurePayoutsConfigured() {
     );
   }
 
-  if (!/^[A-Za-z0-9_.-]+$/.test(agentId)) {
+  if (/[\u0000-\u001F\u007F]/.test(agentId)) {
     throw new Error(
-      "YUKASSA_PAYOUT_AGENT_FORMAT: agentId шлюза выплат содержит недопустимые символы. Скопируйте идентификатор из «Настройки выплат» без кавычек и пробелов.",
+      "YUKASSA_PAYOUT_AGENT_FORMAT: В agentId есть управляющие символы. Скопируйте значение заново из личного кабинета (только строка идентификатора шлюза).",
     );
   }
 
-  if (secret.includes(" ") || secret.includes("\n")) {
+  if (agentId.length > 256) {
+    throw new Error(
+      "YUKASSA_PAYOUT_AGENT_FORMAT: Слишком длинное значение agentId. Вероятно, в переменную попал не тот текст — нужен только идентификатор шлюза из «Настройки выплат».",
+    );
+  }
+
+  // Частая ошибка: в буфер попала подпись поля или пояснение на русском
+  if (/[а-яА-ЯёЁ]/.test(agentId)) {
+    throw new Error(
+      "YUKASSA_PAYOUT_AGENT_FORMAT: В agentId есть кириллица — обычно скопирована не та часть текста. Нужен только идентификатор шлюза (латиница/цифры), из раздела «Настройки выплат» / API шлюза.",
+    );
+  }
+
+  if (secret.includes(" ") || secret.includes("\n") || secret.includes("\r") || secret.includes("\t")) {
     throw new Error(
       "YUKASSA_PAYOUT_SECRET_FORMAT: Секретный ключ шлюза не должен содержать пробелов или переносов. Вставьте ключ одной строкой.",
     );
   }
 
-  if (!/^[\x21-\x7E]+$/.test(secret)) {
+  if (/[\u0000-\u001F\u007F]/.test(secret)) {
     throw new Error(
-      "YUKASSA_PAYOUT_SECRET_FORMAT: Секретный ключ должен быть в видимых ASCII-символах. Проверьте .env на невидимые символы.",
+      "YUKASSA_PAYOUT_SECRET_FORMAT: В секретном ключе есть управляющие символы. Скопируйте ключ целиком из «Интеграция → API» шлюза выплат.",
+    );
+  }
+
+  if (secret.length < 10 || secret.length > 512) {
+    throw new Error(
+      "YUKASSA_PAYOUT_SECRET_FORMAT: Некорректная длина секретного ключа. Возьмите актуальный ключ в личном кабинете шлюза выплат (ЮKassa → интеграция API шлюза, не магазина приёма платежей).",
     );
   }
 }
