@@ -9,6 +9,7 @@ import { prisma } from "@/lib/prisma";
 import { getSurveyStatusMeta, mapSurveyQuestion } from "@/lib/survey-mappers";
 import { buildQuantitativeBlocks } from "@/lib/survey-quantitative";
 import type { AnalysisDiagnostics } from "@/lib/ai-analysis";
+import { fetchSurveyAnalysisDiagnostics } from "@/lib/analysis-diagnostics-db";
 
 function formatDateTime(date: Date | null) {
   if (!date) return "—";
@@ -181,7 +182,6 @@ export default async function ClientSurveyDetailPage({ params }: { params: Promi
           themes: true,
           sentimentData: true,
           wordCloud: true,
-          diagnostics: true,
           summary: true,
           keyInsights: true,
           pdfUrl: true,
@@ -194,6 +194,10 @@ export default async function ClientSurveyDetailPage({ params }: { params: Promi
   if (!survey || survey.creatorId !== session.user.id) {
     notFound();
   }
+
+  const analysisDiagnosticsJson = survey.analysis
+    ? await fetchSurveyAnalysisDiagnostics(survey.id)
+    : null;
 
   const statusMeta = getSurveyStatusMeta(survey.status);
   const completedSessions = survey.sessions.filter((item) => item.status === "COMPLETED" && item.isValid);
@@ -215,8 +219,8 @@ export default async function ClientSurveyDetailPage({ params }: { params: Promi
   const ageMap: Record<string, number> = {};
 
   for (const sessionItem of completedSessions) {
-    incrementCount(genderMap, sessionItem.user.respondentProfile?.gender || "Не указан");
-    incrementCount(ageMap, getAgeGroup(sessionItem.user.respondentProfile?.birthDate));
+    incrementCount(genderMap, sessionItem.user?.respondentProfile?.gender || "Не указан");
+    incrementCount(ageMap, getAgeGroup(sessionItem.user?.respondentProfile?.birthDate));
   }
 
   const analytics = survey.questions.map((rawQuestion) => {
@@ -352,7 +356,7 @@ export default async function ClientSurveyDetailPage({ params }: { params: Promi
             : { positive: 0, neutral: 100, negative: 0 },
         summary: survey.analysis.summary,
         keyInsights: Array.isArray(survey.analysis.keyInsights) ? survey.analysis.keyInsights as string[] : [],
-        diagnostics: parseDiagnostics(survey.analysis.diagnostics),
+        diagnostics: parseDiagnostics(analysisDiagnosticsJson),
       }
     : null;
 

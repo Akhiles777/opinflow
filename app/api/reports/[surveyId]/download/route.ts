@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { generateSurveyPDF } from "@/lib/pdf-generator";
 import type { AnalysisDiagnostics, AnalysisResult, ThemeItem } from "@/lib/ai-analysis";
 import { buildQuantitativeBlocks } from "@/lib/survey-quantitative";
+import { fetchSurveyAnalysisDiagnostics } from "@/lib/analysis-diagnostics-db";
 
 export const maxDuration = 60;
 
@@ -113,7 +114,6 @@ export async function GET(
           themes: true,
           sentimentData: true,
           wordCloud: true,
-          diagnostics: true,
           summary: true,
           keyInsights: true,
         },
@@ -155,7 +155,8 @@ export async function GET(
   const analysisReady = survey.analysis?.status === "COMPLETED" && analysis !== null;
 
   const quantitative = buildQuantitativeBlocks(survey.questions);
-  const diagnostics = parseDiagnostics(survey.analysis?.diagnostics);
+  const diagnosticsJson = survey.analysis ? await fetchSurveyAnalysisDiagnostics(surveyId) : null;
+  const diagnostics = parseDiagnostics(diagnosticsJson);
 
   if (!analysisReady) {
     return NextResponse.json(

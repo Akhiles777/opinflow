@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { analyzeSurveyResponses } from "@/lib/ai-analysis";
 import { buildQuantitativeBlocks, quantitativeSummaryForPrompt } from "@/lib/survey-quantitative";
+import { updateSurveyAnalysisWithDiagnosticsFallback } from "@/lib/analysis-diagnostics-db";
 
 export const maxDuration = 60;
 
@@ -107,18 +108,18 @@ export async function POST(request: Request) {
       quantitativeSummary,
     });
 
-    await prisma.surveyAnalysis.update({
-      where: { surveyId },
+    await updateSurveyAnalysisWithDiagnosticsFallback({
+      surveyId,
       data: {
         status: "COMPLETED",
-        themes: result.themes,
-        sentimentData: result.sentiment,
-        wordCloud: result.wordCloud,
+        themes: result.themes as unknown as Prisma.InputJsonValue,
+        sentimentData: result.sentiment as unknown as Prisma.InputJsonValue,
+        wordCloud: result.wordCloud as unknown as Prisma.InputJsonValue,
         diagnostics: result.diagnostics
           ? (result.diagnostics as unknown as Prisma.InputJsonValue)
           : Prisma.DbNull,
         summary: result.summary,
-        keyInsights: result.keyInsights,
+        keyInsights: result.keyInsights as unknown as Prisma.InputJsonValue,
         generatedAt: new Date(),
         error: null,
       },
