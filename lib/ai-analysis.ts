@@ -17,13 +17,28 @@ export type ThemeItem = {
   examples: string[];
 };
 
+export type AnalysisDiagnostics = {
+  recommendations: string[];
+  hypotheses: string[];
+  riskFactors: string[];
+  metricsToWatch: string[];
+};
+
 export type AnalysisResult = {
   themes: ThemeItem[];
   sentiment: { positive: number; neutral: number; negative: number };
   wordCloud: { word: string; weight: number }[];
   summary: string;
   keyInsights: string[];
+  diagnostics?: AnalysisDiagnostics;
 };
+
+const diagnosticsSchema = z.object({
+  recommendations: z.array(z.string().min(18).max(450)).min(2).max(6),
+  hypotheses: z.array(z.string().min(18).max(380)).min(2).max(5),
+  riskFactors: z.array(z.string().min(14).max(340)).min(2).max(5),
+  metricsToWatch: z.array(z.string().min(12).max(300)).min(2).max(5),
+});
 
 const analysisResultSchema = z.object({
   themes: z.array(
@@ -45,8 +60,9 @@ const analysisResultSchema = z.object({
       weight: z.number().int().min(1).max(100),
     }),
   ),
-  summary: z.string().min(30).max(2000),
-  keyInsights: z.array(z.string().min(10).max(300)).min(1).max(8),
+  summary: z.string().min(45).max(3200),
+  keyInsights: z.array(z.string().min(12).max(360)).min(4).max(8),
+  diagnostics: diagnosticsSchema,
 });
 
 type OpenAnswerGroup = {
@@ -60,7 +76,12 @@ function getFallbackAnalysis(): AnalysisResult {
     sentiment: { positive: 0, neutral: 100, negative: 0 },
     wordCloud: [],
     summary: "Недостаточно открытых ответов для ИИ-аналитики.",
-    keyInsights: ["Открытые ответы отсутствуют или пусты."],
+    keyInsights: [
+      "Открытые ответы отсутствуют или слишком короткие.",
+      "Добавьте открытый вопрос или увеличьте выборку — так ИИ сможет выделить темы и тональность.",
+      "Закрытые вопросы при этом можно анализировать по графикам распределения на странице опроса.",
+      "Повторите анализ после накопления более развёрнутых комментариев респондентов.",
+    ],
   };
 }
 
@@ -101,10 +122,18 @@ function isMeaningfulText(value: string) {
 
 function isLowQuality(result: AnalysisResult) {
   if (!isMeaningfulText(result.summary)) return true;
-  if (result.keyInsights.filter(isMeaningfulText).length < 2) return true;
+  if (result.keyInsights.filter(isMeaningfulText).length < 3) return true;
   if (result.themes.filter((theme) => isMeaningfulText(theme.theme)).length < 1) return true;
   const sentimentTotal = sumSentiment(result.sentiment);
   if (sentimentTotal < 95 || sentimentTotal > 105) return true;
+  const diag = result.diagnostics;
+  if (
+    !diag ||
+    diag.recommendations.filter(isMeaningfulText).length < 2 ||
+    diag.hypotheses.filter(isMeaningfulText).length < 2
+  ) {
+    return true;
+  }
   return false;
 }
 
@@ -170,6 +199,7 @@ function buildHeuristicFallback(params: {
       ? `Чаще всего респонденты упоминали: ${topTerms.slice(0, 4).map(([word]) => word).join(", ")}.`
       : "В ответах мало повторяющихся терминов, аудитория описывает опыт более свободно.",
     "Рекомендуется сегментировать ответы по профилям респондентов и сравнить темы между сегментами.",
+    "Сопоставьте частотные темы с закрытыми вопросами опроса и проверьте, не доминирует ли одна узкая группа респондентов.",
   ];
 
   return {
@@ -179,6 +209,24 @@ function buildHeuristicFallback(params: {
     summary:
       "Автоматический анализ построен на базовой эвристике из-за низкого качества ответа модели. Для более точной интерпретации рекомендуется повторный запуск на более сильной модели.",
     keyInsights,
+    diagnostics: {
+      recommendations: [
+        "Провести качественные интервью с 5–8 респондентами из доминирующих сегментов, чтобы объяснить причины найденных формулировок.",
+        "Запустить уточняющий мини-опрос с масштабом согласия по ключевым утверждениям, выведенным из открытых ответов.",
+      ],
+      hypotheses: [
+        "Негативные формулировки чаще связаны с конкретным этапом клиентского пути, а не с продуктом в целом.",
+        "Позитивные отклики коррелируют с простотой онбординга и скоростью получения результата.",
+      ],
+      riskFactors: [
+        "Выборка может не отражать редкие, но критичные мнения из-за ограниченного объёма открытых комментариев.",
+        "Эвристическая тональность не заменяет ручную верификацию спорных ответов.",
+      ],
+      metricsToWatch: [
+        "Долю ответов с явным негативом по ключевым словам при следующем туре сбора.",
+        "Конверсию завершения опроса после изменения формулировок открытых вопросов.",
+      ],
+    },
   };
 }
 
@@ -187,6 +235,7 @@ async function requestAnalysisFromModel(params: {
   surveyTitle: string;
   surveyCategory?: string | null;
   openAnswers: OpenAnswerGroup[];
+  quantitativeSummary: string;
 }) {
   const answersText = params.openAnswers
     .map(
@@ -197,19 +246,30 @@ async function requestAnalysisFromModel(params: {
     )
     .join("\n\n");
 
+  const quantBlock = params.quantitativeSummary.trim()
+    ? `Сводка по закрытым вопросам (распределения, доли):\n${params.quantitativeSummary}`
+    : null;
+
   const prompt = [
-    "Ты senior-аналитик маркетинговых исследований.",
+    "Ты ведущий аналитик CX/маркетинга. Персонализируй выводы под название и контекст опроса; опирайся на факты из данных, не используй общие фразы вроде «всё хорошо» без привязки к формулировкам респондентов.",
     `Опрос: ${params.surveyTitle}`,
     params.surveyCategory ? `Категория: ${params.surveyCategory}` : null,
-    "Сделай качественный и расширенный анализ открытых ответов. Пиши только содержательные выводы.",
-    "Нельзя возвращать пустые строки, точки, заглушки, markdown и пояснения вне JSON.",
-    "Верни ТОЛЬКО валидный JSON этой структуры:",
+    quantBlock,
+    "Проанализируй открытые ответы. Свяжи тональность и темы с распределениями по закрытым вопросам, если они даны.",
+    "Нельзя возвращать пустые строки, заглушки, markdown и текст вне JSON.",
+    "Верни ТОЛЬКО валидный JSON:",
     `{
-  "themes": [{"theme":"...", "count":12, "sentiment":"positive|negative|neutral", "examples":["...", "..."]}],
+  "themes": [{"theme":"...", "count":12, "sentiment":"positive|negative|neutral", "examples":["короткая цитата", "..."]}],
   "sentiment": {"positive": 0-100, "neutral": 0-100, "negative": 0-100},
   "wordCloud": [{"word":"...", "weight": 1-100}],
-  "summary": "минимум 2-3 содержательных предложения",
-  "keyInsights": ["минимум 3 содержательных инсайта"]
+  "summary": "4-6 предложений: выводы, сегменты, неочевидные паттерны",
+  "keyInsights": ["4-8 конкретных инсайтов с цифрами/фактами из данных"],
+  "diagnostics": {
+    "recommendations": ["2-6 прикладных шагов для продукта/коммуникаций/исследования"],
+    "hypotheses": ["2-5 проверяемых гипотез, почему аудитория отвечает именно так"],
+    "riskFactors": ["2-5 рисков интерпретации или данных"],
+    "metricsToWatch": ["2-5 метрик/KPI для следующего цикла"]
+  }
 }`,
     answersText,
   ]
@@ -218,9 +278,16 @@ async function requestAnalysisFromModel(params: {
 
   const completion = await openrouter.chat.completions.create({
     model: params.model,
-    temperature: 0.2,
-    max_tokens: 2200,
-    messages: [{ role: "user", content: prompt }],
+    temperature: 0.28,
+    max_tokens: 4000,
+    messages: [
+      {
+        role: "system",
+        content:
+          "Ты возвращаешь только компактный JSON на русском. Сумма sentiment должна быть 100±2. Пиши как для руководителя продукта: конкретно, с причинами и действиями.",
+      },
+      { role: "user", content: prompt },
+    ],
   });
 
   const content = completion.choices[0]?.message?.content;
@@ -252,6 +319,7 @@ export async function analyzeSurveyResponses(params: {
   surveyTitle: string;
   surveyCategory?: string | null;
   openAnswers: OpenAnswerGroup[];
+  quantitativeSummary?: string;
 }): Promise<AnalysisResult> {
   const normalizedOpenAnswers = normalizeOpenAnswers(params.openAnswers);
   if (!normalizedOpenAnswers.length) {
@@ -261,6 +329,8 @@ export async function analyzeSurveyResponses(params: {
   if (!process.env.OPENROUTER_API_KEY) {
     throw new Error("OPENROUTER_NOT_CONFIGURED");
   }
+
+  const quantitativeSummary = params.quantitativeSummary?.trim() ?? "";
 
   const primaryModel = process.env.OPENROUTER_MODEL || "google/gemini-2.0-flash-001";
   const fallbackModel = "google/gemini-2.0-flash-001";
@@ -274,8 +344,9 @@ export async function analyzeSurveyResponses(params: {
           surveyTitle: params.surveyTitle,
           surveyCategory: params.surveyCategory,
           openAnswers: normalizedOpenAnswers,
+          quantitativeSummary,
         }),
-        25000,
+        45000,
         "AI_ANALYSIS",
       );
       const parsed = analysisResultSchema.parse(JSON.parse(cleaned)) as AnalysisResult;

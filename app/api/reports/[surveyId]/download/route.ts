@@ -3,7 +3,8 @@ import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { generateSurveyPDF } from "@/lib/pdf-generator";
-import type { AnalysisResult, ThemeItem } from "@/lib/ai-analysis";
+import type { AnalysisDiagnostics, AnalysisResult, ThemeItem } from "@/lib/ai-analysis";
+import { buildQuantitativeBlocks } from "@/lib/survey-quantitative";
 
 export const maxDuration = 60;
 
@@ -13,6 +14,22 @@ function parseJsonArray<T>(value: unknown, fallback: T[] = []) {
 
 function parseJsonObject<T>(value: unknown, fallback: T) {
   return value && typeof value === "object" && !Array.isArray(value) ? (value as T) : fallback;
+}
+
+function parseDiagnostics(value: unknown): AnalysisDiagnostics | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const record = value as Record<string, unknown>;
+  const arr = (key: string): string[] =>
+    Array.isArray(record[key]) ? record[key].filter((item): item is string => typeof item === "string") : [];
+  const recommendations = arr("recommendations");
+  const hypotheses = arr("hypotheses");
+  if (!recommendations.length && !hypotheses.length) return null;
+  return {
+    recommendations,
+    hypotheses,
+    riskFactors: arr("riskFactors"),
+    metricsToWatch: arr("metricsToWatch"),
+  };
 }
 
 async function buildEmergencyPdf(params: {
@@ -66,7 +83,26 @@ export async function GET(
       creatorId: true,
       title: true,
       category: true,
-      questions: { select: { id: true } },
+      questions: {
+        orderBy: { order: "asc" },
+        select: {
+          id: true,
+          type: true,
+          title: true,
+          description: true,
+          required: true,
+          mediaUrl: true,
+          options: true,
+          settings: true,
+          logic: true,
+          answers: {
+            where: {
+              session: { status: "COMPLETED", isValid: true },
+            },
+            select: { value: true },
+          },
+        },
+      },
       sessions: {
         where: { status: "COMPLETED", isValid: true },
         select: { timeSpent: true },
@@ -77,6 +113,7 @@ export async function GET(
           themes: true,
           sentimentData: true,
           wordCloud: true,
+          diagnostics: true,
           summary: true,
           keyInsights: true,
         },
@@ -117,6 +154,9 @@ export async function GET(
 
   const analysisReady = survey.analysis?.status === "COMPLETED" && analysis !== null;
 
+  const quantitative = buildQuantitativeBlocks(survey.questions);
+  const diagnostics = parseDiagnostics(survey.analysis?.diagnostics);
+
   if (!analysisReady) {
     return NextResponse.json(
       {
@@ -131,6 +171,8 @@ export async function GET(
     const pdfBuffer = await generateSurveyPDF({
       survey: { id: survey.id, title: survey.title, category: survey.category },
       analysis,
+      quantitative,
+      diagnostics,
       stats: {
         totalResponses,
         completionRate: totalResponses > 0 ? 100 : 0,

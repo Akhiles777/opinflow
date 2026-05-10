@@ -422,6 +422,7 @@ model SurveyAnalysis {
   themes        Json?
   sentimentData Json?
   wordCloud     Json?
+  diagnostics   Json?
   summary       String?
   keyInsights   Json?
   pdfUrl        String?

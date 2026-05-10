@@ -7,6 +7,8 @@ import StatCard from "@/components/dashboard/StatCard";
 import { requireRole } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import { getSurveyStatusMeta, mapSurveyQuestion } from "@/lib/survey-mappers";
+import { buildQuantitativeBlocks } from "@/lib/survey-quantitative";
+import type { AnalysisDiagnostics } from "@/lib/ai-analysis";
 
 function formatDateTime(date: Date | null) {
   if (!date) return "—";
@@ -179,6 +181,7 @@ export default async function ClientSurveyDetailPage({ params }: { params: Promi
           themes: true,
           sentimentData: true,
           wordCloud: true,
+          diagnostics: true,
           summary: true,
           keyInsights: true,
           pdfUrl: true,
@@ -312,6 +315,26 @@ export default async function ClientSurveyDetailPage({ params }: { params: Promi
   });
 
   const latestValidCompletion = getLatestValidCompletion(survey.sessions);
+  const quantBlocks = buildQuantitativeBlocks(
+    survey.questions.map((rawQuestion) => ({
+      ...rawQuestion,
+      answers: rawQuestion.answers.map((answer) => ({ value: answer.value })),
+    })),
+  );
+
+  function parseDiagnostics(value: unknown): AnalysisDiagnostics | null {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+    const record = value as Record<string, unknown>;
+    const arr = (key: string): string[] =>
+      Array.isArray(record[key]) ? record[key].filter((item): item is string => typeof item === "string") : [];
+    const recommendations = arr("recommendations");
+    const hypotheses = arr("hypotheses");
+    const riskFactors = arr("riskFactors");
+    const metricsToWatch = arr("metricsToWatch");
+    if (!recommendations.length && !hypotheses.length) return null;
+    return { recommendations, hypotheses, riskFactors, metricsToWatch };
+  }
+
   const analysis = survey.analysis
     ? {
         status: survey.analysis.status,
@@ -329,6 +352,7 @@ export default async function ClientSurveyDetailPage({ params }: { params: Promi
             : { positive: 0, neutral: 100, negative: 0 },
         summary: survey.analysis.summary,
         keyInsights: Array.isArray(survey.analysis.keyInsights) ? survey.analysis.keyInsights as string[] : [],
+        diagnostics: parseDiagnostics(survey.analysis.diagnostics),
       }
     : null;
 
@@ -439,7 +463,7 @@ export default async function ClientSurveyDetailPage({ params }: { params: Promi
         </div>
       ) : null}
 
-      <ClientSurveyAnalysis surveyId={survey.id} analysis={analysis} />
+      <ClientSurveyAnalysis surveyId={survey.id} analysis={analysis} quantitative={quantBlocks} />
 
       <div className="rounded-2xl border border-dash-border bg-dash-card p-6">
         <div className="text-sm font-semibold text-dash-heading">Ответы по вопросам</div>

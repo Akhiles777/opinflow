@@ -105,6 +105,18 @@ export async function getDepositPaymentStatus(yukassaId: string): Promise<{
   return (await response.json()) as { id: string; status: string; paid?: boolean };
 }
 
+/** E.164-style 11 digits for RU mobile, as expected by YooMoney SBP payouts */
+export function normalizeRuPhoneForYukassa(phone: string): string {
+  let digits = phone.replace(/\D/g, "");
+  if (digits.length === 10 && digits.startsWith("9")) {
+    digits = `7${digits}`;
+  }
+  if (digits.length === 11 && digits.startsWith("8")) {
+    digits = `7${digits.slice(1)}`;
+  }
+  return digits;
+}
+
 function getPayoutDestinationData(params: {
   method: "card" | "sbp" | "wallet";
   requisites: Record<string, string>;
@@ -121,7 +133,7 @@ function getPayoutDestinationData(params: {
   if (params.method === "sbp") {
     return {
       type: "sbp",
-      phone: params.requisites.phone,
+      phone: normalizeRuPhoneForYukassa(params.requisites.phone),
       bank_id: params.requisites.bankId,
     };
   }
@@ -132,21 +144,51 @@ function getPayoutDestinationData(params: {
   };
 }
 
+export async function listSbpParticipantBanks(): Promise<Array<{ bank_id: string; name: string }>> {
+  ensurePayoutsConfigured();
+
+  const auth = Buffer.from(`${payoutShopId}:${payoutSecretKey}`).toString("base64");
+  const response = await fetch("https://api.yookassa.ru/v3/sbp_banks", {
+    method: "GET",
+    headers: {
+      Authorization: `Basic ${auth}`,
+    },
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`YUKASSA_SBP_BANKS_FAILED: ${response.status} ${text}`);
+  }
+
+  const payload = (await response.json()) as {
+    items?: Array<{ bank_id?: string; name?: string }>;
+  };
+  const items = payload.items ?? [];
+  return items
+    .filter((row) => typeof row.bank_id === "string" && typeof row.name === "string")
+    .map((row) => ({ bank_id: row.bank_id as string, name: row.name as string }));
+}
+
 export async function createPayout(params: {
   amount: number;
   method: "card" | "sbp" | "wallet";
   requisites: Record<string, string>;
   description: string;
+  metadata?: Record<string, string>;
+  idempotenceKey?: string;
 }): Promise<{ id: string; status: string }> {
   ensurePayoutsConfigured();
 
   const auth = Buffer.from(`${payoutShopId}:${payoutSecretKey}`).toString("base64");
-  const response = await fetch("https://yookassa.ru/api/v3/payouts", {
+  const idempotenceKey = params.idempotenceKey ?? `payout-${Date.now()}-${crypto.randomUUID()}`;
+  const metadata = { type: "payout", ...params.metadata };
+
+  const response = await fetch("https://api.yookassa.ru/v3/payouts", {
     method: "POST",
     headers: {
       Authorization: `Basic ${auth}`,
       "Content-Type": "application/json",
-      "Idempotence-Key": `payout-${Date.now()}-${crypto.randomUUID()}`,
+      "Idempotence-Key": idempotenceKey,
     },
     body: JSON.stringify({
       amount: {
@@ -155,7 +197,7 @@ export async function createPayout(params: {
       },
       payout_destination_data: getPayoutDestinationData(params),
       description: params.description,
-      metadata: { type: "payout" },
+      metadata,
     }),
   });
 

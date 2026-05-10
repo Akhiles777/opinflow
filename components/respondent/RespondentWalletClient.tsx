@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Modal from "@/components/dashboard/Modal";
 import Badge from "@/components/dashboard/Badge";
@@ -30,14 +30,6 @@ type Props = {
     requisitesMasked: string;
   }>;
 };
-
-const sbpBanks = [
-  { value: "sberbank", label: "Сбербанк" },
-  { value: "tinkoff", label: "Т-Банк" },
-  { value: "vtb", label: "ВТБ" },
-  { value: "alfabank", label: "Альфа-Банк" },
-  { value: "gazprombank", label: "Газпромбанк" },
-];
 
 function formatRub(amount: number) {
   return `${new Intl.NumberFormat("ru-RU").format(amount)} ₽`;
@@ -72,7 +64,9 @@ export default function RespondentWalletClient({
   const [amount, setAmount] = useState("100");
   const [cardNumber, setCardNumber] = useState("");
   const [phone, setPhone] = useState("");
-  const [bankId, setBankId] = useState(sbpBanks[0].value);
+  const [bankId, setBankId] = useState("");
+  const [sbpBanksList, setSbpBanksList] = useState<Array<{ bank_id: string; name: string }>>([]);
+  const [sbpBanksHint, setSbpBanksHint] = useState<string | null>(null);
   const [walletNumber, setWalletNumber] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -81,6 +75,41 @@ export default function RespondentWalletClient({
   const numericAmount = useMemo(() => Number(amount.replace(/[^\d]/g, "")), [amount]);
   const earningTransactions = transactions.filter((item) => item.type === "Начисление");
 
+  useEffect(() => {
+    if (!showWithdrawModal || step !== 2 || method !== "SBP") {
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      setSbpBanksHint(null);
+      const res = await fetch("/api/payments/sbp-banks");
+      const data = (await res.json().catch(() => ({}))) as {
+        banks?: Array<{ bank_id: string; name: string }>;
+        error?: string;
+      };
+      if (cancelled) return;
+      if (Array.isArray(data.banks) && data.banks.length > 0) {
+        setSbpBanksList(data.banks);
+        setBankId((previous) =>
+          previous && data.banks!.some((bank) => bank.bank_id === previous)
+            ? previous
+            : data.banks![0].bank_id,
+        );
+      } else {
+        setSbpBanksList([]);
+        setBankId("");
+        setSbpBanksHint(
+          data.error === "PAYOUTS_NOT_CONFIGURED"
+            ? "Список банков СБП недоступен: на сервере не настроены реквизиты шлюза выплат ЮKassa."
+            : "Не удалось загрузить участников СБП. Попробуйте позже или выберите вывод на карту.",
+        );
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [showWithdrawModal, step, method]);
+
   function resetModal() {
     setShowWithdrawModal(false);
     setStep(1);
@@ -88,7 +117,9 @@ export default function RespondentWalletClient({
     setAmount("100");
     setCardNumber("");
     setPhone("");
-    setBankId(sbpBanks[0].value);
+    setBankId("");
+    setSbpBanksList([]);
+    setSbpBanksHint(null);
     setWalletNumber("");
     setError(null);
   }
@@ -126,6 +157,11 @@ export default function RespondentWalletClient({
 
     if (method === "SBP" && phone.trim().length < 10) {
       setError("Введите номер телефона для СБП");
+      return;
+    }
+
+    if (method === "SBP" && !bankId) {
+      setError("Выберите банк из списка ЮKassa (список подгружается автоматически)");
       return;
     }
 
@@ -361,16 +397,29 @@ export default function RespondentWalletClient({
                 </label>
 
                 <label className="grid gap-2">
-                  <span className="text-sm font-medium text-dash-heading">Банк</span>
-                  <select
-                    value={bankId}
-                    onChange={(event) => setBankId(event.target.value)}
-                    className="h-12 rounded-xl border border-dash-border bg-dash-bg px-4 text-base text-dash-body outline-none focus:border-brand/40"
-                  >
-                    {sbpBanks.map((bank) => (
-                      <option key={bank.value} value={bank.value}>{bank.label}</option>
-                    ))}
-                  </select>
+                  <span className="text-sm font-medium text-dash-heading">Банк (участник СБП)</span>
+                  {sbpBanksHint ? (
+                    <div className="rounded-xl border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-200">
+                      {sbpBanksHint}
+                    </div>
+                  ) : null}
+                  {sbpBanksList.length > 0 ? (
+                    <select
+                      value={bankId}
+                      onChange={(event) => setBankId(event.target.value)}
+                      className="h-12 rounded-xl border border-dash-border bg-dash-bg px-4 text-base text-dash-body outline-none focus:border-brand/40"
+                    >
+                      {sbpBanksList.map((bank) => (
+                        <option key={bank.bank_id} value={bank.bank_id}>
+                          {bank.name}
+                        </option>
+                      ))}
+                    </select>
+                  ) : !sbpBanksHint ? (
+                    <div className="rounded-xl border border-dash-border bg-dash-bg px-4 py-3 text-sm text-dash-muted">
+                      Загружаем список банков ЮKassa…
+                    </div>
+                  ) : null}
                 </label>
               </>
             ) : null}

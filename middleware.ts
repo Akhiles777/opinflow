@@ -7,9 +7,9 @@ export default auth((req) => {
   const isLoggedIn = Boolean(session?.user);
   const role = session?.user?.role;
   const path = nextUrl.pathname;
-  const publicPaths = ["/api/payments"];
+  const publicPaths = ["/api/payments/webhook"];
 
-  if (publicPaths.some((prefix) => path.startsWith(prefix))) {
+  if (publicPaths.some((exact) => path === exact || path.startsWith(`${exact}/`))) {
     return NextResponse.next();
   }
 

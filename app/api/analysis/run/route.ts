@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { analyzeSurveyResponses } from "@/lib/ai-analysis";
+import { buildQuantitativeBlocks, quantitativeSummaryForPrompt } from "@/lib/survey-quantitative";
 
 export const maxDuration = 60;
 
@@ -25,10 +27,23 @@ export async function POST(request: Request) {
       title: true,
       category: true,
       questions: {
+        orderBy: { order: "asc" },
         select: {
           id: true,
-          title: true,
           type: true,
+          title: true,
+          description: true,
+          required: true,
+          mediaUrl: true,
+          options: true,
+          settings: true,
+          logic: true,
+          answers: {
+            where: {
+              session: { status: "COMPLETED", isValid: true },
+            },
+            select: { value: true },
+          },
         },
       },
       sessions: {
@@ -82,10 +97,14 @@ export async function POST(request: Request) {
       }))
       .filter((group) => group.answers.length > 0);
 
+    const quantBlocks = buildQuantitativeBlocks(survey.questions);
+    const quantitativeSummary = quantitativeSummaryForPrompt(quantBlocks);
+
     const result = await analyzeSurveyResponses({
       surveyTitle: survey.title,
       surveyCategory: survey.category,
       openAnswers,
+      quantitativeSummary,
     });
 
     await prisma.surveyAnalysis.update({
@@ -95,6 +114,9 @@ export async function POST(request: Request) {
         themes: result.themes,
         sentimentData: result.sentiment,
         wordCloud: result.wordCloud,
+        diagnostics: result.diagnostics
+          ? (result.diagnostics as unknown as Prisma.InputJsonValue)
+          : Prisma.DbNull,
         summary: result.summary,
         keyInsights: result.keyInsights,
         generatedAt: new Date(),

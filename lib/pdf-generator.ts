@@ -2,7 +2,8 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { PDFDocument, rgb } from "pdf-lib";
 import * as fontkit from "fontkit";
-import type { AnalysisResult } from "@/lib/ai-analysis";
+import type { AnalysisDiagnostics, AnalysisResult } from "@/lib/ai-analysis";
+import type { QuantQuestionBlock } from "@/lib/survey-quantitative";
 
 let cachedFontBytes: Uint8Array | null = null;
 
@@ -49,6 +50,8 @@ export async function generateSurveyPDF(params: {
   survey: { id: string; title: string; category?: string | null };
   analysis: AnalysisResult | null;
   stats: { totalResponses: number; completionRate: number; avgTimeMinutes: number; questionCount: number };
+  quantitative?: QuantQuestionBlock[];
+  diagnostics?: AnalysisDiagnostics | null;
 }): Promise<Buffer> {
   try {
     const pdf = await PDFDocument.create();
@@ -57,11 +60,18 @@ export async function generateSurveyPDF(params: {
     const fontBytes = await getCyrillicFontBytes();
     const regular = await pdf.embedFont(fontBytes);
     const bold = regular;
-    const page = pdf.addPage([595.28, 841.89]); // A4
+    let page = pdf.addPage([595.28, 841.89]); // A4
     const { width } = page.getSize();
     const x = 36;
     let y = 805;
     const line = 16;
+    const barTrackW = width - 2 * x - 200;
+    const barH = 5;
+
+    const newPage = () => {
+      page = pdf.addPage([595.28, 841.89]);
+      y = 805;
+    };
 
     const drawLines = (lines: string[], options?: { size?: number; color?: [number, number, number]; gap?: number }) => {
       const size = options?.size ?? 11;
@@ -101,6 +111,53 @@ export async function generateSurveyPDF(params: {
       { size: 11, gap: 15 },
     );
     y -= 6;
+
+    const quantitative = params.quantitative ?? [];
+    if (quantitative.length > 0) {
+      page.drawText("Количественные распределения", { x, y, size: 14, font: bold, color: rgb(0.1, 0.11, 0.14) });
+      y -= 18;
+
+      for (const block of quantitative.slice(0, 6)) {
+        if (y < 100) {
+          newPage();
+        }
+        drawLines([`«${block.title.slice(0, 72)}» (${block.type}, n=${block.totalAnswers})`], {
+          size: 11,
+          gap: 13,
+          color: [0.12, 0.13, 0.16],
+        });
+        const maxCount = Math.max(1, ...block.distribution.map((row) => row.count));
+        for (const row of block.distribution.slice(0, 10)) {
+          if (y < 52) {
+            newPage();
+          }
+          const share = row.count / maxCount;
+          const pct = block.totalAnswers > 0 ? Math.round((row.count / block.totalAnswers) * 100) : 0;
+          const label = `${row.label.slice(0, 36)} · ${row.count} (${pct}%)`;
+          page.drawText(label, { x, y, size: 9, font: regular, color: rgb(0.36, 0.4, 0.46) });
+          page.drawRectangle({
+            x: x + 220,
+            y: y - 1,
+            width: barTrackW,
+            height: barH,
+            color: rgb(0.91, 0.92, 0.94),
+          });
+          page.drawRectangle({
+            x: x + 220,
+            y: y - 1,
+            width: Math.max(1, barTrackW * share),
+            height: barH,
+            color: rgb(0.22, 0.42, 0.88),
+          });
+          y -= 14;
+        }
+        y -= 6;
+      }
+    }
+
+    if (y < 120) {
+      newPage();
+    }
 
     page.drawText("Тональность", { x, y, size: 14, font: bold, color: rgb(0.1, 0.11, 0.14) });
     y -= 18;
@@ -142,6 +199,40 @@ export async function generateSurveyPDF(params: {
       drawLines(["Ключевые инсайты отсутствуют."], { size: 11, color: [0.4, 0.44, 0.5] });
     }
     y -= 6;
+
+    const diagnostics = params.diagnostics;
+    if (diagnostics && (diagnostics.recommendations.length || diagnostics.hypotheses.length)) {
+      if (y < 140) {
+        newPage();
+      }
+      page.drawText("Стратегический блок", { x, y, size: 14, font: bold, color: rgb(0.1, 0.11, 0.14) });
+      y -= 18;
+
+      const drawBullets = (title: string, items: string[]) => {
+        if (!items.length) return;
+        if (y < 70) {
+          newPage();
+        }
+        page.drawText(title, { x, y, size: 12, font: bold, color: rgb(0.14, 0.15, 0.18) });
+        y -= 15;
+        for (const item of items.slice(0, 6)) {
+          if (y < 48) {
+            newPage();
+          }
+          drawLines(wrapText(`• ${item}`, 92), { size: 10, gap: 12, color: [0.22, 0.24, 0.28] });
+        }
+        y -= 6;
+      };
+
+      drawBullets("Рекомендации", diagnostics.recommendations);
+      drawBullets("Гипотезы", diagnostics.hypotheses);
+      drawBullets("Риски", diagnostics.riskFactors);
+      drawBullets("Метрики", diagnostics.metricsToWatch);
+    }
+
+    if (y < 100) {
+      newPage();
+    }
 
     page.drawText("Общий вывод", { x, y, size: 14, font: bold, color: rgb(0.1, 0.11, 0.14) });
     y -= 18;

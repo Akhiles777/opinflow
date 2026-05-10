@@ -3,6 +3,39 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { creditDepositPaymentByYukassaId } from "@/lib/payment-processing";
 
+type PayoutWebhookObject = {
+  id?: string;
+  metadata?: { withdrawalRequestId?: string };
+};
+
+async function findWithdrawalForPayout(object: PayoutWebhookObject | undefined) {
+  if (!object) {
+    return null;
+  }
+
+  const payoutId = object.id;
+  const metaId = object.metadata?.withdrawalRequestId;
+
+  if (payoutId) {
+    const byPayout = await prisma.withdrawalRequest.findFirst({
+      where: { yukassaPayoutId: payoutId },
+      select: { id: true, userId: true, amount: true, status: true, yukassaPayoutId: true },
+    });
+    if (byPayout) {
+      return byPayout;
+    }
+  }
+
+  if (metaId) {
+    return prisma.withdrawalRequest.findUnique({
+      where: { id: metaId },
+      select: { id: true, userId: true, amount: true, status: true, yukassaPayoutId: true },
+    });
+  }
+
+  return null;
+}
+
 export async function POST(request: Request) {
   try {
     const text = await request.text();
@@ -12,7 +45,7 @@ export async function POST(request: Request) {
       object?: {
         id?: string;
         amount?: { value?: string };
-        metadata?: { userId?: string };
+        metadata?: { userId?: string; withdrawalRequestId?: string };
       };
     };
     const eventName = event.event ?? event.type;
@@ -36,97 +69,94 @@ export async function POST(request: Request) {
     }
 
     if (eventName === "payout.succeeded") {
-      const payoutId = event.object?.id;
-      if (payoutId) {
-        const requestRecord = await prisma.withdrawalRequest.findFirst({
-          where: { yukassaPayoutId: payoutId },
-          select: { id: true, userId: true, amount: true, status: true },
+      const payoutObject = event.object as PayoutWebhookObject | undefined;
+      const payoutId = payoutObject?.id;
+      const requestRecord = await findWithdrawalForPayout(payoutObject);
+
+      if (requestRecord && requestRecord.status !== "COMPLETED") {
+        const wallet = await prisma.wallet.findUnique({
+          where: { userId: requestRecord.userId },
+          select: { id: true },
         });
 
-        if (requestRecord && requestRecord.status !== "COMPLETED") {
-          const wallet = await prisma.wallet.findUnique({
-            where: { userId: requestRecord.userId },
-            select: { id: true },
+        await prisma.$transaction(async (tx) => {
+          await tx.withdrawalRequest.update({
+            where: { id: requestRecord.id },
+            data: {
+              status: "COMPLETED",
+              ...(payoutId ? { yukassaPayoutId: payoutId } : {}),
+            },
           });
 
-          await prisma.$transaction(async (tx) => {
-            await tx.withdrawalRequest.update({
-              where: { id: requestRecord.id },
-              data: { status: "COMPLETED" },
+          if (wallet) {
+            await tx.wallet.update({
+              where: { id: wallet.id },
+              data: {
+                totalSpent: { increment: requestRecord.amount as Prisma.Decimal },
+              },
             });
 
-            if (wallet) {
-              await tx.wallet.update({
-                where: { id: wallet.id },
-                data: {
-                  totalSpent: { increment: requestRecord.amount as Prisma.Decimal },
-                },
-              });
-
-              await tx.transaction.updateMany({
-                where: {
-                  walletId: wallet.id,
-                  type: "WITHDRAWAL",
-                  status: "PENDING",
-                  description: { contains: requestRecord.id },
-                },
-                data: { status: "COMPLETED" },
-              });
-            }
-          });
-        }
+            await tx.transaction.updateMany({
+              where: {
+                walletId: wallet.id,
+                type: "WITHDRAWAL",
+                status: "PENDING",
+                description: { contains: requestRecord.id },
+              },
+              data: { status: "COMPLETED" },
+            });
+          }
+        });
       }
     }
 
     if (eventName === "payout.failed") {
-      const payoutId = event.object?.id;
-      if (payoutId) {
-        const requestRecord = await prisma.withdrawalRequest.findFirst({
-          where: { yukassaPayoutId: payoutId },
-          select: { id: true, userId: true, amount: true, status: true },
+      const payoutObject = event.object as PayoutWebhookObject | undefined;
+      const requestRecord = await findWithdrawalForPayout(payoutObject);
+
+      if (requestRecord && requestRecord.status !== "FAILED" && requestRecord.status !== "COMPLETED") {
+        const wallet = await prisma.wallet.findUnique({
+          where: { userId: requestRecord.userId },
+          select: { id: true },
         });
 
-        if (requestRecord && requestRecord.status !== "FAILED" && requestRecord.status !== "COMPLETED") {
-          const wallet = await prisma.wallet.findUnique({
-            where: { userId: requestRecord.userId },
-            select: { id: true },
-          });
-
-          if (wallet) {
-            await prisma.$transaction(async (tx) => {
-              await tx.withdrawalRequest.update({
-                where: { id: requestRecord.id },
-                data: { status: "FAILED" },
-              });
-
-              await tx.wallet.update({
-                where: { id: wallet.id },
-                data: {
-                  balance: { increment: requestRecord.amount },
-                },
-              });
-
-              await tx.transaction.updateMany({
-                where: {
-                  walletId: wallet.id,
-                  type: "WITHDRAWAL",
-                  status: "PENDING",
-                  description: { contains: requestRecord.id },
-                },
-                data: { status: "FAILED" },
-              });
-
-              await tx.transaction.create({
-                data: {
-                  walletId: wallet.id,
-                  type: "REFUND",
-                  amount: requestRecord.amount,
-                  description: `Возврат по неуспешной выплате (${requestRecord.id})`,
-                  status: "COMPLETED",
-                },
-              });
+        if (wallet) {
+          await prisma.$transaction(async (tx) => {
+            await tx.withdrawalRequest.update({
+              where: { id: requestRecord.id },
+              data: {
+                status: "FAILED",
+                ...(payoutObject?.id ? { yukassaPayoutId: payoutObject.id } : {}),
+              },
             });
-          }
+
+            await tx.wallet.update({
+              where: { id: wallet.id },
+              data: {
+                balance: { increment: requestRecord.amount },
+              },
+            });
+
+            await tx.transaction.updateMany({
+              where: {
+                walletId: wallet.id,
+                type: "WITHDRAWAL",
+                status: "PENDING",
+                description: { contains: requestRecord.id },
+              },
+              data: { status: "FAILED" },
+            });
+
+            await tx.transaction.create({
+              data: {
+                walletId: wallet.id,
+                type: "REFUND",
+                amount: requestRecord.amount,
+                description: `Возврат по неуспешной выплате (${requestRecord.id})`,
+                status: "COMPLETED",
+              },
+            });
+          });
         }
       }
     }
