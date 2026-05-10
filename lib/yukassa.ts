@@ -1,9 +1,8 @@
+import { createHash, randomUUID } from "node:crypto";
 import { YooCheckout } from "@a2seven/yoo-checkout";
 
 const paymentsShopId = process.env.YUKASSA_SHOP_ID;
 const paymentsSecretKey = process.env.YUKASSA_SECRET_KEY;
-const payoutShopId = process.env.YUKASSA_PAYOUT_SHOP_ID;
-const payoutSecretKey = process.env.YUKASSA_PAYOUT_SECRET_KEY;
 
 const yukassaPayments = new YooCheckout({
   shopId: paymentsShopId || "",
@@ -14,6 +13,59 @@ function toMoneyString(amount: number) {
   return amount.toFixed(2);
 }
 
+/** Trim, strip BOM, strip wrapping quotes (typical .env / Vercel paste issues) */
+function stripCredentialOuter(raw: string): string {
+  let s = (raw ?? "").toString();
+  if (s.charCodeAt(0) === 0xfeff) {
+    s = s.slice(1);
+  }
+  s = s.trim();
+  if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+    s = s.slice(1, -1).trim();
+  }
+  return s;
+}
+
+/** Gateway agentId (логин Basic Auth для выплат) — без пробелов и переводов строк внутри */
+function normalizePayoutAgentId(raw: string): string {
+  return stripCredentialOuter(raw).replace(/\s+/g, "");
+}
+
+/** Секрет шлюза выплат — одна строка, без переносов */
+function normalizePayoutSecretKey(raw: string): string {
+  return stripCredentialOuter(raw).replace(/[\r\n\t]+/g, "").trim();
+}
+
+/**
+ * Идентификатор шлюза выплат (agentId) — НЕ shopId магазина для приёма платежей.
+ * @see https://yookassa.ru/developers/using-api/interaction-format — раздел «For those who make payouts»
+ */
+function getPayoutAgentId(): string {
+  const raw =
+    process.env.YUKASSA_PAYOUT_SHOP_ID ||
+    process.env.YUKASSA_PAYOUT_AGENT_ID ||
+    process.env.YUKASSA_GATEWAY_ID ||
+    "";
+  return normalizePayoutAgentId(raw);
+}
+
+function getPayoutSecretKey(): string {
+  const raw =
+    process.env.YUKASSA_PAYOUT_SECRET_KEY ||
+    process.env.YUKASSA_GATEWAY_SECRET_KEY ||
+    "";
+  return normalizePayoutSecretKey(raw);
+}
+
+/** ЮKassa: длина ключа идемпотентности не более 64 символов */
+function toYukassaIdempotenceKey(key: string): string {
+  const trimmed = stripCredentialOuter(key);
+  if (trimmed.length <= 64) {
+    return trimmed;
+  }
+  return createHash("sha256").update(trimmed, "utf8").digest("hex");
+}
+
 function ensurePaymentsConfigured() {
   if (!paymentsShopId || !paymentsSecretKey) {
     throw new Error("YUKASSA_NOT_CONFIGURED");
@@ -21,8 +73,35 @@ function ensurePaymentsConfigured() {
 }
 
 function ensurePayoutsConfigured() {
-  if (!payoutShopId || !payoutSecretKey) {
+  const agentId = getPayoutAgentId();
+  const secret = getPayoutSecretKey();
+
+  if (!agentId || !secret) {
     throw new Error("YUKASSA_PAYOUT_NOT_CONFIGURED");
+  }
+
+  if (agentId.includes(":")) {
+    throw new Error(
+      "YUKASSA_PAYOUT_AGENT_FORMAT: В логин Basic Auth попало значение с «:». Укажите отдельно только agentId шлюза (поле в кабинете ЮKassa), без секретного ключа. Секрет — только в YUKASSA_PAYOUT_SECRET_KEY.",
+    );
+  }
+
+  if (!/^[A-Za-z0-9_.-]+$/.test(agentId)) {
+    throw new Error(
+      "YUKASSA_PAYOUT_AGENT_FORMAT: agentId шлюза выплат содержит недопустимые символы. Скопируйте идентификатор из «Настройки выплат» без кавычек и пробелов.",
+    );
+  }
+
+  if (secret.includes(" ") || secret.includes("\n")) {
+    throw new Error(
+      "YUKASSA_PAYOUT_SECRET_FORMAT: Секретный ключ шлюза не должен содержать пробелов или переносов. Вставьте ключ одной строкой.",
+    );
+  }
+
+  if (!/^[\x21-\x7E]+$/.test(secret)) {
+    throw new Error(
+      "YUKASSA_PAYOUT_SECRET_FORMAT: Секретный ключ должен быть в видимых ASCII-символах. Проверьте .env на невидимые символы.",
+    );
   }
 }
 
@@ -90,7 +169,7 @@ export async function getDepositPaymentStatus(yukassaId: string): Promise<{
 }> {
   ensurePaymentsConfigured();
 
-  const auth = Buffer.from(`${paymentsShopId}:${paymentsSecretKey}`).toString("base64");
+  const auth = Buffer.from(`${paymentsShopId}:${paymentsSecretKey}`, "utf8").toString("base64");
   const response = await fetch(`https://api.yookassa.ru/v3/payments/${yukassaId}`, {
     headers: {
       Authorization: `Basic ${auth}`,
@@ -147,7 +226,9 @@ function getPayoutDestinationData(params: {
 export async function listSbpParticipantBanks(): Promise<Array<{ bank_id: string; name: string }>> {
   ensurePayoutsConfigured();
 
-  const auth = Buffer.from(`${payoutShopId}:${payoutSecretKey}`).toString("base64");
+  const agentId = getPayoutAgentId();
+  const secret = getPayoutSecretKey();
+  const auth = Buffer.from(`${agentId}:${secret}`, "utf8").toString("base64");
   const response = await fetch("https://api.yookassa.ru/v3/sbp_banks", {
     method: "GET",
     headers: {
@@ -179,8 +260,10 @@ export async function createPayout(params: {
 }): Promise<{ id: string; status: string }> {
   ensurePayoutsConfigured();
 
-  const auth = Buffer.from(`${payoutShopId}:${payoutSecretKey}`).toString("base64");
-  const idempotenceKey = params.idempotenceKey ?? `payout-${Date.now()}-${crypto.randomUUID()}`;
+  const agentId = getPayoutAgentId();
+  const secret = getPayoutSecretKey();
+  const auth = Buffer.from(`${agentId}:${secret}`, "utf8").toString("base64");
+  const idempotenceKey = toYukassaIdempotenceKey(params.idempotenceKey ?? randomUUID());
   const metadata = { type: "payout", ...params.metadata };
 
   const response = await fetch("https://api.yookassa.ru/v3/payouts", {

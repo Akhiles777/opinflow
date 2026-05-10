@@ -31,10 +31,18 @@ function getPaymentErrorMessage(error: unknown, fallback: string) {
     return "Платёжный сервис пока не настроен.";
   }
   if (error.message.includes("YUKASSA_PAYOUT_NOT_CONFIGURED")) {
-    return "Сервис выплат пока не настроен. Нужны YUKASSA_PAYOUT_SHOP_ID и YUKASSA_PAYOUT_SECRET_KEY (идентификатор и секрет шлюза выплат в личном кабинете ЮKassa).";
+    return "Сервис выплат не настроен. В .env укажите agentId шлюза выплат и секрет: YUKASSA_PAYOUT_AGENT_ID (или YUKASSA_PAYOUT_SHOP_ID / YUKASSA_GATEWAY_ID) и YUKASSA_PAYOUT_SECRET_KEY — из раздела «Интеграция → API» именно шлюза выплат, не магазина приёма платежей. Подробнее: https://yookassa.ru/developers/using-api/interaction-format";
+  }
+
+  if (error.message.includes("YUKASSA_PAYOUT_AGENT_FORMAT") || error.message.includes("YUKASSA_PAYOUT_SECRET_FORMAT")) {
+    const trimmed = error.message.replace(/^[^:]+:\s*/, "").trim();
+    return trimmed.length > 0 ? trimmed : "Проверьте переменные выплат в .env: логин — только agentId шлюза, секрет — отдельной строкой, без пробелов и кавычек.";
   }
 
   const payoutHuman = yukassaPayoutDescription(error.message);
+  if (payoutHuman && /login.*illegal format|illegal format.*login/i.test(payoutHuman)) {
+    return "ЮKassa: неверный логин (agentId) или секрет для Basic Auth. Для выплат нужен идентификатор шлюза из «Настройки выплат» и секрет из «Интеграция → API» этого шлюза — не shopId магазина и не ключ приёма платежей. Уберите пробелы, кавычки и переносы в переменных окружения.";
+  }
   if (payoutHuman) {
     return `ЮKassa отклонила выплату: ${payoutHuman}`;
   }
