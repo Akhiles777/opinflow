@@ -7,6 +7,7 @@ import { requireRole } from "@/lib/auth-utils";
 import { assertPayoutRequisitesValid, normalizeWithdrawalRequisitesForStorage } from "@/lib/yukassa-payout-requisites";
 import { YUKASSA_PAYOUT_HTTP_403_RU, YUKASSA_SBP_CONTRACT_FORBIDDEN_RESPONDENT_RU } from "@/lib/yukassa-payout-copy";
 import { createDepositPayment, createPayout, fetchSbpBanksForPayouts } from "@/lib/yukassa";
+import { syncProcessingWithdrawals } from "@/lib/payment-processing";
 
 function withdrawalMethodToPayoutApi(method: "CARD" | "SBP" | "WALLET"): "card" | "sbp" | "wallet" {
   if (method === "CARD") return "card";
@@ -355,6 +356,19 @@ export async function approveWithdrawalAction(requestId: string) {
   } catch (error) {
     console.error("[payments][approve-withdrawal-error]", error);
     return { error: getPaymentErrorMessage(error, "Не удалось отправить выплату") };
+  }
+}
+
+export async function syncPayoutStatusesAction(params?: { limit?: number }) {
+  await requireRole("ADMIN");
+  try {
+    const result = await syncProcessingWithdrawals({ limit: params?.limit ?? 50 });
+    revalidatePath("/admin/finance");
+    revalidatePath("/respondent/wallet");
+    return { success: true as const, ...result };
+  } catch (error) {
+    console.error("[payments][sync-payout-statuses-error]", error);
+    return { error: "Не удалось обновить статусы выплат. Проверьте логи сервера." };
   }
 }
 

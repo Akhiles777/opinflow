@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
+import { createHmac } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { creditDepositPaymentByYukassaId } from "@/lib/payment-processing";
 
@@ -7,6 +8,27 @@ type PayoutWebhookObject = {
   id?: string;
   metadata?: { withdrawalRequestId?: string };
 };
+
+function normalizeWebhookSignatureHeader(raw: string | null) {
+  const s = (raw ?? "").trim();
+  if (!s) return "";
+  // allow "sha256=<hex>" or plain "<hex>"
+  const m = /^sha256\s*=\s*([0-9a-f]+)$/i.exec(s);
+  return (m?.[1] ?? s).toLowerCase();
+}
+
+function verifyWebhookSignature(body: string, signatureHex: string) {
+  const enabled = process.env.YUKASSA_WEBHOOK_VERIFY === "1" || /^true$/i.test((process.env.YUKASSA_WEBHOOK_VERIFY ?? "").trim());
+  if (!enabled) {
+    return true;
+  }
+  const secret = (process.env.YUKASSA_WEBHOOK_SECRET ?? process.env.YUKASSA_SECRET_KEY ?? "").trim();
+  if (!secret) {
+    return false;
+  }
+  const expected = createHmac("sha256", secret).update(body).digest("hex").toLowerCase();
+  return expected === signatureHex;
+}
 
 async function findWithdrawalForPayout(object: PayoutWebhookObject | undefined) {
   if (!object) {
@@ -39,6 +61,10 @@ async function findWithdrawalForPayout(object: PayoutWebhookObject | undefined) 
 export async function POST(request: Request) {
   try {
     const text = await request.text();
+    const signatureHex = normalizeWebhookSignatureHeader(request.headers.get("authorization"));
+    if (!verifyWebhookSignature(text, signatureHex)) {
+      return NextResponse.json({ error: "INVALID_SIGNATURE" }, { status: 401 });
+    }
     const event = JSON.parse(text) as {
       type?: string;
       event?: string;
@@ -153,6 +179,57 @@ export async function POST(request: Request) {
                 type: "REFUND",
                 amount: requestRecord.amount,
                 description: `Возврат по неуспешной выплате (${requestRecord.id})`,
+                status: "COMPLETED",
+              },
+            });
+          });
+        }
+      }
+    }
+
+    if (eventName === "payout.canceled") {
+      const payoutObject = event.object as PayoutWebhookObject | undefined;
+      const requestRecord = await findWithdrawalForPayout(payoutObject);
+
+      if (requestRecord && requestRecord.status !== "FAILED" && requestRecord.status !== "COMPLETED") {
+        const wallet = await prisma.wallet.findUnique({
+          where: { userId: requestRecord.userId },
+          select: { id: true },
+        });
+
+        if (wallet) {
+          await prisma.$transaction(async (tx) => {
+            await tx.withdrawalRequest.update({
+              where: { id: requestRecord.id },
+              data: {
+                status: "FAILED",
+                ...(payoutObject?.id ? { yukassaPayoutId: payoutObject.id } : {}),
+              },
+            });
+
+            await tx.wallet.update({
+              where: { id: wallet.id },
+              data: {
+                balance: { increment: requestRecord.amount },
+              },
+            });
+
+            await tx.transaction.updateMany({
+              where: {
+                walletId: wallet.id,
+                type: "WITHDRAWAL",
+                status: "PENDING",
+                description: { contains: requestRecord.id },
+              },
+              data: { status: "FAILED" },
+            });
+
+            await tx.transaction.create({
+              data: {
+                walletId: wallet.id,
+                type: "REFUND",
+                amount: requestRecord.amount,
+                description: `Возврат по отменённой выплате (${requestRecord.id})`,
                 status: "COMPLETED",
               },
             });

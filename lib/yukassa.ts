@@ -439,3 +439,36 @@ export async function createPayout(params: {
 
   return (await response.json()) as { id: string; status: string };
 }
+
+export async function getPayoutStatus(payoutId: string): Promise<{
+  id: string;
+  status: string;
+  amount?: { value?: string; currency?: string };
+  metadata?: Record<string, unknown>;
+}> {
+  ensurePayoutsConfigured();
+
+  const agentId = getPayoutAgentId();
+  const secret = getPayoutSecretKey();
+  const auth = Buffer.from(`${agentId}:${secret}`, "utf8").toString("base64");
+  const response = await fetch(`https://api.yookassa.ru/v3/payouts/${encodeURIComponent(payoutId)}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Basic ${auth}`,
+      Accept: "application/json",
+      "Accept-Charset": "utf-8",
+    },
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`YUKASSA_PAYOUT_STATUS_FAILED: ${response.status} ${text}`);
+  }
+
+  return (await response.json()) as {
+    id: string;
+    status: string;
+    amount?: { value?: string; currency?: string };
+    metadata?: Record<string, unknown>;
+  };
+}

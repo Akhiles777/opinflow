@@ -6,7 +6,7 @@ import Badge from "@/components/dashboard/Badge";
 import Modal from "@/components/dashboard/Modal";
 import AdminFinanceExportButton from "@/components/dashboard/AdminFinanceExportButton";
 import { updateCommissionRateAction } from "@/actions/admin-settings";
-import { approveWithdrawalAction, rejectWithdrawalAction } from "@/actions/payments";
+import { approveWithdrawalAction, rejectWithdrawalAction, syncPayoutStatusesAction } from "@/actions/payments";
 
 type TransactionRow = {
   id: string;
@@ -64,6 +64,7 @@ export default function AdminFinanceClient({ stats, commissionRate, transactions
   const [error, setError] = useState<string | null>(null);
   const [commissionPercent, setCommissionPercent] = useState(String(Math.round(commissionRate * 1000) / 10));
   const [isPending, startTransition] = useTransition();
+  const [syncInfo, setSyncInfo] = useState<string | null>(null);
 
   const filteredWithdrawals = useMemo(
     () => withdrawals.filter((item) => statusFilter === "ALL" || item.status === statusFilter),
@@ -106,6 +107,22 @@ export default function AdminFinanceClient({ stats, commissionRate, transactions
       if (result.error) {
         setError(result.error);
         return;
+      }
+      router.refresh();
+    });
+  }
+
+  function handleSyncPayoutStatuses() {
+    setError(null);
+    setSyncInfo(null);
+    startTransition(async () => {
+      const result = await syncPayoutStatusesAction({ limit: 100 });
+      if ("error" in result && result.error) {
+        setError(result.error);
+        return;
+      }
+      if ("success" in result && result.success) {
+        setSyncInfo(`Проверено: ${result.checked}, завершено: ${result.completed}, с ошибкой: ${result.failed}.`);
       }
       router.refresh();
     });
@@ -180,6 +197,14 @@ export default function AdminFinanceClient({ stats, commissionRate, transactions
             }))} />
           ) : (
             <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={handleSyncPayoutStatuses}
+                disabled={isPending}
+                className="rounded-full border border-dash-border bg-dash-bg px-4 py-2 text-sm font-semibold text-dash-heading transition-colors hover:border-brand/30 disabled:opacity-60"
+              >
+                Обновить статусы выплат
+              </button>
               {(["ALL", "PENDING", "PROCESSING", "COMPLETED", "REJECTED", "FAILED"] as const).map((item) => (
                 <button
                   key={item}
@@ -205,6 +230,11 @@ export default function AdminFinanceClient({ stats, commissionRate, transactions
         </div>
 
         {error ? <div className="mt-4 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-500">{error}</div> : null}
+        {syncInfo ? (
+          <div className="mt-4 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm text-emerald-700 dark:text-emerald-200">
+            {syncInfo}
+          </div>
+        ) : null}
 
         {tab === "transactions" ? (
           <div className="mt-6 grid gap-3">
