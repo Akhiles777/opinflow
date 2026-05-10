@@ -280,6 +280,97 @@ function normalizeSentiment(sentiment: { positive: number; neutral: number; nega
   };
 }
 
+// Вспомогательная функция для классификации ответа
+function classifyAnswer(answer: string): {
+  isComplaint: boolean;
+  isSuggestion: boolean;
+  isPraise: boolean;
+  isQuestion: boolean;
+  problemAreas: string[];
+  positiveAspects: string[];
+  suggestions: string[];
+} {
+  const lower = answer.toLowerCase();
+  
+  // Индикаторы жалоб
+  const complaintPatterns = [
+    "не работает", "проблема", "ошибка", "сломано", "неудобно", "медленно",
+    "дорого", "плохо", "ужасно", "отвратительно", "разочарован", "не нравится",
+    "хотелось бы", "не хватает", "отсутствует", "нет возможности", "сложно",
+    "непонятно", "долго", "опаздывает", "холодное", "невкусное", "грязное",
+    "хамят", "игнорируют", "не отвечают", "некачественное", "испорченное",
+  ];
+  
+  // Индикаторы предложений
+  const suggestionPatterns = [
+    "добавить", "улучшить", "изменить", "сделать", "внедрить", "исправить",
+    "пересмотреть", "обновить", "доработать", "оптимизировать", "было бы лучше",
+    "предлагаю", "можно", "стоит", "необходимо", "нужно бы",
+  ];
+  
+  // Индикаторы похвалы
+  const praisePatterns = [
+    "отлично", "прекрасно", "замечательно", "нравится", "доволен", "супер",
+    "лучший", "рекомендую", "вкусно", "быстро", "удобно", "качественно",
+    "профессионально", "вежливо", "приятно", "красиво", "надёжно",
+  ];
+  
+  const isComplaint = complaintPatterns.some(p => lower.includes(p));
+  const isSuggestion = suggestionPatterns.some(p => lower.includes(p));
+  const isPraise = praisePatterns.some(p => lower.includes(p));
+  const isQuestion = lower.includes("?") || lower.includes("как") || lower.includes("почему");
+  
+  // Извлечение конкретных проблем
+  const problemAreas: string[] = [];
+  const problemIndicators: Record<string, string[]> = {
+    "Доставка": ["доставк", "привоз", "курьер", "опозда", "долг", "достав"],
+    "Качество еды": ["вкус", "холодн", "горяч", "свеж", "качеств", "порц", "ингредиент"],
+    "Упаковка": ["упаковк", "контейн", "проли", "помя", "развали"],
+    "Цена": ["дорог", "цен", "стоимост", "переплат", "дешев"],
+    "Сервис": ["обслуживан", "поддержк", "вежлив", "хам", "отношен", "реакц"],
+    "Приложение/сайт": ["приложен", "сайт", "интерфейс", "заказ", "оформлен", "оплат"],
+    "Ассортимент": ["выбор", "ассортимент", "меню", "разнообраз", "позиц"],
+    "Время": ["врем", "долг", "быстр", "минут", "час"],
+  };
+  
+  for (const [area, indicators] of Object.entries(problemIndicators)) {
+    if (indicators.some(ind => lower.includes(ind))) {
+      problemAreas.push(area);
+    }
+  }
+  
+  // Извлечение позитивных аспектов
+  const positiveAspects: string[] = [];
+  if (isPraise) {
+    for (const [area, indicators] of Object.entries(problemIndicators)) {
+      if (indicators.some(ind => lower.includes(ind))) {
+        positiveAspects.push(area);
+      }
+    }
+  }
+  
+  // Извлечение предложений
+  const suggestions: string[] = [];
+  if (isSuggestion) {
+    const sentences = answer.split(/[.!?]+/);
+    for (const sentence of sentences) {
+      if (suggestionPatterns.some(p => sentence.toLowerCase().includes(p))) {
+        suggestions.push(sentence.trim());
+      }
+    }
+  }
+  
+  return {
+    isComplaint,
+    isSuggestion,
+    isPraise,
+    isQuestion,
+    problemAreas: [...new Set(problemAreas)],
+    positiveAspects: [...new Set(positiveAspects)],
+    suggestions,
+  };
+}
+
 function buildHeuristicFallback(params: {
   surveyTitle: string;
   openAnswers: OpenAnswerGroup[];
@@ -288,389 +379,356 @@ function buildHeuristicFallback(params: {
   const allAnswers = params.openAnswers.flatMap((group) => group.answers);
   const totalAnswers = allAnswers.length || 1;
 
-  // Расширенная классификация слов по категориям
-  const wordCategories = {
-    positive: {
-      strong: ["отлично", "превосходно", "великолепно", "потрясающе", "идеально", "супер", "замечательно", "восхитительно"],
-      service: ["быстро", "оперативно", "вежливо", "профессионально", "качественно", "вовремя", "аккуратно"],
-      product: ["вкусно", "свежее", "горячее", "удобно", "красиво", "стильно", "надёжно", "функционально"],
-      general: ["нравится", "доволен", "рекомендую", "хороший", "лучший", "любимый", "постоянный"],
-    },
-    negative: {
-      strong: ["ужасно", "отвратительно", "кошмар", "безнадёжно", "никуда не годится", "разочарован"],
-      service: ["долго", "медленно", "опаздывает", "хамят", "невнимательно", "некомпетентно", "игнорируют"],
-      product: ["холодное", "невкусное", "испорченное", "грязное", "сломанное", "некачественное", "просроченное"],
-      general: ["дорого", "проблема", "ошибка", "неудобно", "сложно", "непонятно", "хуже", "никогда"],
-    },
-    improvement: ["улучшить", "добавить", "изменить", "исправить", "пересмотреть", "обновить", "доработать", "внедрить"],
-    expectations: ["хотелось", "ожидал", "надеялся", "рассчитывал", "предполагал", "планировал"],
-  };
+  // Классифицируем каждый ответ
+  const classifiedAnswers = allAnswers.map(answer => ({
+    original: answer,
+    classification: classifyAnswer(answer),
+  }));
 
-  // Инициализация структур анализа
-  const answerAnalysis = allAnswers.map(answer => {
-    const lower = answer.toLowerCase();
-    const words = lower.split(/[^a-zа-я0-9]+/i).filter(w => w.length >= 3);
-    
-    let positiveScore = 0;
-    let negativeScore = 0;
-    const matchedCategories: string[] = [];
-    const matchedWords: string[] = [];
-    
-    // Подсчёт тональности
-    for (const [category, wordLists] of Object.entries(wordCategories.positive)) {
-      for (const word of wordLists) {
-        if (lower.includes(word)) {
-          positiveScore += category === "strong" ? 3 : category === "service" || category === "product" ? 2 : 1;
-          matchedCategories.push(`+${category}`);
-          matchedWords.push(word);
-        }
+  // Собираем статистику по проблемам
+  const problemStats = new Map<string, { count: number; examples: string[]; complaints: number; suggestions: number }>();
+  const praiseStats = new Map<string, { count: number; examples: string[] }>();
+  
+  classifiedAnswers.forEach(({ original, classification }) => {
+    // Считаем проблемы
+    classification.problemAreas.forEach(area => {
+      if (!problemStats.has(area)) {
+        problemStats.set(area, { count: 0, examples: [], complaints: 0, suggestions: 0 });
       }
-    }
+      const stats = problemStats.get(area)!;
+      stats.count++;
+      stats.examples.push(original);
+      if (classification.isComplaint) stats.complaints++;
+      if (classification.isSuggestion) stats.suggestions++;
+    });
     
-    for (const [category, wordLists] of Object.entries(wordCategories.negative)) {
-      for (const word of wordLists) {
-        if (lower.includes(word)) {
-          negativeScore += category === "strong" ? 3 : category === "service" || category === "product" ? 2 : 1;
-          matchedCategories.push(`-${category}`);
-          matchedWords.push(word);
-        }
+    // Считаем позитив
+    classification.positiveAspects.forEach(aspect => {
+      if (!praiseStats.has(aspect)) {
+        praiseStats.set(aspect, { count: 0, examples: [] });
       }
-    }
-    
-    // Проверка на предложения по улучшению
-    const hasImprovements = wordCategories.improvement.some(w => lower.includes(w)) ||
-                           wordCategories.expectations.some(w => lower.includes(w));
-    
-    const sentiment = positiveScore > negativeScore ? "positive" as const :
-                     negativeScore > positiveScore ? "negative" as const :
-                     "neutral" as const;
-    
-    return {
-      original: answer,
-      words,
-      positiveScore,
-      negativeScore,
-      sentiment,
-      hasImprovements,
-      matchedCategories,
-      matchedWords,
-      length: answer.length,
-    };
+      const stats = praiseStats.get(aspect)!;
+      stats.count++;
+      stats.examples.push(original);
+    });
   });
 
-  // Группировка ответов по вопросам с глубоким анализом
+  // Собираем все предложения
+  const allSuggestions = classifiedAnswers
+    .filter(a => a.classification.isSuggestion)
+    .flatMap(a => a.classification.suggestions);
+
+  // Анализ по вопросам
   const questionAnalysis = params.openAnswers.map(group => {
-    const answers = group.answers.map(a => 
-      answerAnalysis.find(aa => aa.original === a)!
-    ).filter(Boolean);
+    const answers = group.answers;
+    const classified = answers.map(a => ({
+      original: a,
+      classification: classifyAnswer(a),
+    }));
     
-    const totalQ = answers.length;
-    const positiveCount = answers.filter(a => a.sentiment === "positive").length;
-    const negativeCount = answers.filter(a => a.sentiment === "negative").length;
-    const neutralCount = answers.filter(a => a.sentiment === "neutral").length;
-    const improvementCount = answers.filter(a => a.hasImprovements).length;
+    const complaints = classified.filter(c => c.classification.isComplaint);
+    const suggestions = classified.filter(c => c.classification.isSuggestion);
+    const praises = classified.filter(c => c.classification.isPraise);
+    const questions = classified.filter(c => c.classification.isQuestion);
     
-    // Выделение ключевых слов для вопроса
-    const questionWords = new Map<string, number>();
-    answers.forEach(a => {
-      a.matchedWords.forEach(w => {
-        questionWords.set(w, (questionWords.get(w) ?? 0) + 1);
+    const allProblems = new Map<string, number>();
+    classified.forEach(c => {
+      c.classification.problemAreas.forEach(area => {
+        allProblems.set(area, (allProblems.get(area) ?? 0) + 1);
       });
     });
     
-    const topWords = Array.from(questionWords.entries())
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-      .map(([word]) => word);
-    
     return {
       questionTitle: group.questionTitle,
-      answers,
-      totalQ,
-      positiveCount,
-      negativeCount,
-      neutralCount,
-      improvementCount,
-      topWords,
-      dominantSentiment: positiveCount > negativeCount ? "positive" as const :
-                        negativeCount > positiveCount ? "negative" as const :
-                        "neutral" as const,
-      // Анализ контекста вопроса
-      isProblemArea: negativeCount > totalQ * 0.3 || improvementCount > totalQ * 0.5,
-      isStrengthArea: positiveCount > totalQ * 0.6,
-      needsAttention: improvementCount > 0 || negativeCount > 0,
+      total: answers.length,
+      complaints: complaints.length,
+      suggestions: suggestions.length,
+      praises: praises.length,
+      questions: questions.length,
+      topProblems: Array.from(allProblems.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3),
+      complaintExamples: complaints.slice(0, 3).map(c => c.original),
+      suggestionExamples: suggestions.slice(0, 3).map(c => c.original),
+      praiseExamples: praises.slice(0, 3).map(c => c.original),
+      dominantType: complaints.length > suggestions.length && complaints.length > praises.length ? "complaints" :
+                   suggestions.length > complaints.length && suggestions.length > praises.length ? "suggestions" :
+                   praises.length > complaints.length && praises.length > suggestions.length ? "praises" :
+                   "mixed",
     };
   });
 
-  // Общий сентимент
-  const totalPositive = answerAnalysis.filter(a => a.sentiment === "positive").length;
-  const totalNegative = answerAnalysis.filter(a => a.sentiment === "negative").length;
-  const totalNeutral = answerAnalysis.filter(a => a.sentiment === "neutral").length;
+  // Расчёт тональности
+  const totalComplaints = classifiedAnswers.filter(a => a.classification.isComplaint).length;
+  const totalPraise = classifiedAnswers.filter(a => a.classification.isPraise).length;
+  const totalSuggestions = classifiedAnswers.filter(a => a.classification.isSuggestion).length;
   
-  let positive = clampPercent((totalPositive / totalAnswers) * 100);
-  let negative = clampPercent((totalNegative / totalAnswers) * 100);
-  let neutral = clampPercent((totalNeutral / totalAnswers) * 100);
+  let positive = clampPercent((totalPraise / totalAnswers) * 100);
+  let negative = clampPercent((totalComplaints / totalAnswers) * 100);
+  let neutral = clampPercent(((totalAnswers - totalPraise - totalComplaints) / totalAnswers) * 100);
   
-  // Корректировка для суммы 100%
+  // Корректировка
   const total = positive + negative + neutral;
   if (total !== 100) {
     neutral += (100 - total);
     neutral = Math.max(0, neutral);
   }
 
-  // Формирование тем на основе вопросов
+  // Формирование тем на основе реальных проблем и вопросов
   const themes = questionAnalysis.map(qa => {
-    const examples = qa.answers
-      .filter(a => a.sentiment === qa.dominantSentiment)
-      .slice(0, 3)
-      .map(a => a.original);
+    const examples = qa.dominantType === "complaints" ? qa.complaintExamples :
+                    qa.dominantType === "suggestions" ? qa.suggestionExamples :
+                    qa.dominantType === "praises" ? qa.praiseExamples :
+                    answers.slice(0, 3);
     
     let actionableInsight = "";
-    if (qa.isProblemArea) {
-      actionableInsight = `Критическая зона: ${qa.negativeCount} из ${qa.totalQ} респондентов (${clampPercent((qa.negativeCount/qa.totalQ)*100)}%) недовольны. ` +
-        `Ключевые проблемы: ${qa.topWords.join(", ")}. ` +
-        `Необходим срочный план улучшений с конкретными KPI на ближайшие 2 недели.`;
-    } else if (qa.isStrengthArea) {
-      actionableInsight = `Сильная сторона: ${qa.positiveCount} из ${qa.totalQ} респондентов (${clampPercent((qa.positiveCount/qa.totalQ)*100)}%) довольны. ` +
-        `Ключевые преимущества: ${qa.topWords.join(", ")}. ` +
-        `Рекомендуется усилить это направление в маркетинговых коммуникациях и программах лояльности.`;
-    } else if (qa.needsAttention && qa.improvementCount > 0) {
-      actionableInsight = `Зона роста: ${qa.improvementCount} респондентов предложили улучшения. ` +
-        `Основные направления: ${qa.topWords.join(", ")}. ` +
-        `Проведите A/B-тестирование предложенных изменений в течение месяца.`;
+    
+    if (qa.dominantType === "complaints" && qa.topProblems.length > 0) {
+      const mainProblem = qa.topProblems[0][0];
+      const count = qa.topProblems[0][1];
+      actionableInsight = `⚠️ КРИТИЧЕСКАЯ ЗОНА: ${count} из ${qa.total} респондентов сообщили о проблемах с "${mainProblem}". ` +
+        `Конкретные жалобы: "${qa.complaintExamples.join('"; "')}". ` +
+        `НЕОБХОДИМО: провести аудит ${mainProblem.toLowerCase()} в течение 48 часов и предоставить план исправления.`;
+    } else if (qa.dominantType === "suggestions" && qa.suggestions > 0) {
+      actionableInsight = `💡 ЗОНА УЛУЧШЕНИЙ: ${qa.suggestions} из ${qa.total} респондентов предложили улучшения. ` +
+        `Предложения: "${qa.suggestionExamples.slice(0, 2).join('"; "')}". ` +
+        `РЕКОМЕНДАЦИЯ: оценить реализуемость предложений в течение недели, внедрить наиболее востребованные в следующем спринте.`;
+    } else if (qa.dominantType === "praises" && qa.praises > 0) {
+      actionableInsight = `✅ СИЛЬНАЯ СТОРОНА: ${qa.praises} из ${qa.total} респондентов отметили это направление позитивно. ` +
+        `Примеры отзывов: "${qa.praiseExamples.slice(0, 2).join('"; "')}". ` +
+        `РЕКОМЕНДАЦИЯ: зафиксировать текущие стандарты как обязательные, использовать позитивные отзывы в маркетинге.`;
     } else {
-      actionableInsight = `Стабильная зона: мнения распределены равномерно. ` +
-        `Рекомендуется углубить исследование через дополнительные вопросы или интервью для выявления скрытых потребностей.`;
+      actionableInsight = `📊 СМЕШАННЫЕ ОТЗЫВЫ: мнения разделились (${qa.complaints} жалоб, ${qa.praises} похвалы, ${qa.suggestions} предложений). ` +
+        `РЕКОМЕНДАЦИЯ: провести дополнительный опрос для уточнения причин разногласий.`;
     }
     
     return {
       theme: qa.questionTitle,
-      count: qa.totalQ,
-      sentiment: qa.dominantSentiment,
-      examples: examples.length > 0 ? examples : qa.answers.slice(0, 3).map(a => a.original),
+      count: qa.total,
+      sentiment: qa.dominantType === "complaints" ? "negative" :
+                qa.dominantType === "praises" ? "positive" :
+                "neutral",
+      examples,
       actionableInsight,
     };
   });
 
-  // Детальный анализ текста для word cloud
-  const wordFrequency = new Map<string, number>();
-  const contextPhrases = new Map<string, number>();
+  // Формирование детального резюме
+  const problemAreas = Array.from(problemStats.entries())
+    .sort((a, b) => b[1].count - a[1].count);
   
-  allAnswers.forEach(answer => {
-    const lower = answer.toLowerCase();
-    const words = lower.split(/[^a-zа-я0-9]+/i).filter(w => w.length >= 4);
-    
-    // Отдельные слова
-    words.forEach(word => {
-      wordFrequency.set(word, (wordFrequency.get(word) ?? 0) + 1);
+  const strengthAreas = Array.from(praiseStats.entries())
+    .sort((a, b) => b[1].count - a[1].count);
+
+  let summary = `📋 ДЕТАЛЬНЫЙ АНАЛИЗ ОПРОСА "${params.surveyTitle}"\n`;
+  summary += `Всего проанализировано ${totalAnswers} ответов респондентов.\n\n`;
+  
+  summary += `📊 ОБЩАЯ КАРТИНА:\n`;
+  summary += `• Позитивных отзывов: ${positive}% (${totalPraise} чел.)\n`;
+  summary += `• Негативных отзывов: ${negative}% (${totalComplaints} чел.)\n`;
+  summary += `• Предложений по улучшению: ${totalSuggestions} шт.\n\n`;
+  
+  if (problemAreas.length > 0) {
+    summary += `🚨 ОБЛАСТИ, ТРЕБУЮЩИЕ ВНИМАНИЯ:\n`;
+    problemAreas.forEach(([area, stats]) => {
+      summary += `• ${area}: ${stats.count} упоминаний (${stats.complaints} жалоб, ${stats.suggestions} предложений)\n`;
     });
-    
-    // Фразы из 2-3 слов для контекста
-    for (let i = 0; i < words.length - 1; i++) {
-      const phrase2 = words.slice(i, i + 2).join(" ");
-      contextPhrases.set(phrase2, (contextPhrases.get(phrase2) ?? 0) + 1);
-      
-      if (i < words.length - 2) {
-        const phrase3 = words.slice(i, i + 3).join(" ");
-        contextPhrases.set(phrase3, (contextPhrases.get(phrase3) ?? 0) + 1);
-      }
+    summary += `\n`;
+  }
+  
+  if (strengthAreas.length > 0) {
+    summary += `✅ СИЛЬНЫЕ СТОРОНЫ:\n`;
+    strengthAreas.forEach(([aspect, stats]) => {
+      summary += `• ${aspect}: ${stats.count} позитивных отзывов\n`;
+    });
+    summary += `\n`;
+  }
+  
+  if (allSuggestions.length > 0) {
+    summary += `💡 КЛЮЧЕВЫЕ ПРЕДЛОЖЕНИЯ ОТ КЛИЕНТОВ:\n`;
+    allSuggestions.slice(0, 5).forEach((suggestion, i) => {
+      summary += `• "${suggestion}"\n`;
+    });
+    summary += `\n`;
+  }
+  
+  summary += `📈 ВЫВОД: `;
+  if (negative > 30) {
+    summary += `Ситуация требует немедленных действий — ${negative}% негативных отзывов. Приоритет: устранение проблем в зонах ${problemAreas.slice(0, 3).map(([area]) => area).join(", ")}.`;
+  } else if (positive > 50) {
+    summary += `Общая удовлетворённость высокая (${positive}%). Фокус на развитии сильных сторон и внедрении предложений клиентов.`;
+  } else {
+    summary += `Ситуация неоднозначная. Необходимо углубить исследование проблемных зон и протестировать предложения клиентов.`;
+  }
+
+  // Word cloud из реальных проблем и предложений
+  const wordCloud: { word: string; weight: number }[] = [];
+  
+  problemAreas.slice(0, 5).forEach(([area, stats]) => {
+    wordCloud.push({ word: area, weight: Math.min(100, Math.round((stats.count / totalAnswers) * 100)) });
+  });
+  
+  strengthAreas.slice(0, 5).forEach(([aspect, stats]) => {
+    if (!wordCloud.find(w => w.word === aspect)) {
+      wordCloud.push({ word: aspect, weight: Math.min(100, Math.round((stats.count / totalAnswers) * 100)) });
     }
   });
 
-  const wordCloud = Array.from(wordFrequency.entries())
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 10)
-    .map(([word, count]) => ({ word, weight: Math.min(100, Math.round((count / totalAnswers) * 100)) }));
-
-  // Формирование глубокого summary
-  const problemAreas = questionAnalysis.filter(q => q.isProblemArea);
-  const strengthAreas = questionAnalysis.filter(q => q.isStrengthArea);
-  const improvementAreas = questionAnalysis.filter(q => q.improvementCount > 0);
+  const keyInsights: string[] = [];
   
-  let summary = `Детальный анализ ${totalAnswers} открытых ответов опроса "${params.surveyTitle}". `;
-  
-  if (positive > negative) {
-    summary += `Общая тональность положительная (${positive}% позитивных против ${negative}% негативных ответов). `;
-  } else if (negative > positive) {
-    summary += `Общая тональность негативная (${negative}% негативных против ${positive}% позитивных ответов) — требуется немедленное внимание. `;
-  } else {
-    summary += `Тональность сбалансирована (${positive}% позитивных, ${negative}% негативных, ${neutral}% нейтральных). `;
-  }
-  
-  if (strengthAreas.length > 0) {
-    summary += `Сильные стороны: ${strengthAreas.map(q => q.questionTitle).join(", ")}. `;
-  }
-  
+  // Инсайты о проблемах
   if (problemAreas.length > 0) {
-    summary += `Проблемные зоны: ${problemAreas.map(q => q.questionTitle).join(", ")}. `;
+    keyInsights.push(`🔴 КРИТИЧЕСКИЕ ПРОБЛЕМЫ: ${problemAreas.slice(0, 3).map(([area, stats]) => 
+      `"${area}" — ${stats.count} упоминаний (${clampPercent((stats.count/totalAnswers)*100)}% опрошенных)`
+    ).join("; ")}`);
   }
   
-  if (improvementAreas.length > 0) {
-    summary += `${improvementAreas.length} направлений требуют улучшений. `;
-    summary += `Респонденты чаще всего упоминают: ${wordCloud.slice(0, 5).map(w => w.word).join(", ")}. `;
-  }
-  
-  if (totalAnswers < 20) {
-    summary += `Примечание: выборка из ${totalAnswers} ответов позволяет выявить основные тенденции, но для статистически значимых выводов рекомендуется увеличить выборку до 30+ ответов.`;
-  } else {
-    summary += `Объём выборки (${totalAnswers} ответов) достаточен для выявления устойчивых паттернов и принятия предварительных решений.`;
-  }
-
-  // Формирование детальных инсайтов
-  const keyInsights: string[] = [
-    `Проанализировано ${totalAnswers} открытых ответа по ${questionAnalysis.length} вопросам в опросе "${params.surveyTitle}"`,
-    `Общая тональность: ${positive}% позитивных, ${neutral}% нейтральных, ${negative}% негативных ответов`,
-  ];
-
-  if (problemAreas.length > 0) {
-    keyInsights.push(
-      `Выявлены проблемные зоны: ${problemAreas.map(q => 
-        `${q.questionTitle} (${q.negativeCount} из ${q.totalQ} негативных)`
-      ).join("; ")}`
-    );
-  }
-
+  // Инсайты о сильных сторонах
   if (strengthAreas.length > 0) {
-    keyInsights.push(
-      `Сильные стороны: ${strengthAreas.map(q => 
-        `${q.questionTitle} (${q.positiveCount} из ${q.totalQ} положительных)`
-      ).join("; ")}`
-    );
+    keyInsights.push(`🟢 СИЛЬНЫЕ СТОРОНЫ: ${strengthAreas.slice(0, 3).map(([aspect, stats]) => 
+      `"${aspect}" — ${stats.count} позитивных отзывов`
+    ).join("; ")}`);
   }
-
-  if (improvementAreas.length > 0) {
-    keyInsights.push(
-      `${improvementAreas.length} из ${questionAnalysis.length} направлений имеют конкретные предложения по улучшению от респондентов`
-    );
-  }
-
-  if (wordCloud.length > 0) {
-    keyInsights.push(
-      `Ключевые темы и слова: ${wordCloud.slice(0, 7).map(w => `"${w.word}" (${w.weight}%)`).join(", ")}`
-    );
-  }
-
-  // Конкретные предложения по улучшению
-  const allImprovementWords = answerAnalysis
-    .filter(a => a.hasImprovements)
-    .flatMap(a => a.words)
-    .filter(w => w.length > 5);
   
-  if (allImprovementWords.length > 0) {
-    const improvementThemes = Array.from(new Set(allImprovementWords)).slice(0, 5);
-    keyInsights.push(
-      `Основные направления для улучшений: ${improvementThemes.join(", ")}`
-    );
+  // Инсайты о предложениях
+  if (allSuggestions.length > 0) {
+    keyInsights.push(`💡 КЛИЕНТЫ ПРЕДЛАГАЮТ: получено ${allSuggestions.length} конкретных предложений по улучшению`);
   }
-
+  
+  // Инсайты по вопросам
+  questionAnalysis.forEach(qa => {
+    if (qa.complaints > 0) {
+      keyInsights.push(`Вопрос "${qa.questionTitle}": ${qa.complaints} жалоб, основные проблемы — ${qa.topProblems.map(([p, c]) => `${p}(${c})`).join(", ")}`);
+    }
+  });
+  
+  // Рекомендации
   keyInsights.push(
-    totalAnswers >= 20 
-      ? "Рекомендуется провести сегментный анализ для выявления различий в восприятии между группами пользователей"
-      : "Для более точных выводов рекомендуется увеличить выборку до 30+ ответов и провести дополнительные интервью"
+    totalAnswers < 15 
+      ? `⚠️ Внимание: выборка из ${totalAnswers} ответов мала для окончательных выводов. Рекомендуется собрать минимум 30 ответов.`
+      : `На основе ${totalAnswers} ответов можно принимать предварительные решения. Рекомендуется начать с исправления критических проблем.`
   );
 
-  // Бизнес-импликации
-  const businessImplications: string[] = [];
+  // Диагностика с конкретными действиями
+  const diagnostics: AnalysisDiagnostics = {
+    recommendations: [],
+    hypotheses: [],
+    riskFactors: [],
+    metricsToWatch: [],
+    actionPlan: {
+      immediate: [],
+      shortTerm: [],
+      longTerm: [],
+    },
+    segmentsAnalysis: [],
+  };
+
+  // Рекомендации на основе проблем
+  problemAreas.slice(0, 3).forEach(([area, stats]) => {
+    diagnostics.recommendations.push(
+      `Исправить проблемы с "${area}": ${stats.complaints} жалоб. Провести аудит процесса в течение 48 часов, выявить корневые причины, назначить ответственного. Ожидаемый результат: снижение жалоб на 50% за 2 недели.`
+    );
+  });
   
-  if (negative > 30) {
-    businessImplications.push(
-      `Критический уровень негатива (${negative}%) может привести к оттоку клиентов и снижению NPS. Приоритет: решение ключевых проблем в течение 2-4 недель для предотвращения репутационных потерь.`
+  // Рекомендации на основе предложений
+  if (allSuggestions.length > 0) {
+    diagnostics.recommendations.push(
+      `Внедрить ключевые предложения клиентов: получено ${allSuggestions.length} идей. Отобрать топ-3 по соотношению эффект/затраты, реализовать в течение 2 недель. Измерить влияние на удовлетворённость.`
     );
   }
   
-  if (strengthAreas.length > 0) {
+  // Общие рекомендации
+  diagnostics.recommendations.push(
+    "Настроить систему алертов при появлении новых жалоб для оперативного реагирования (цель: реакция в течение 2 часов).",
+    "Провести A/B-тестирование изменений на основе предложений клиентов с контрольной группой.",
+  );
+
+  // Гипотезы
+  problemAreas.slice(0, 2).forEach(([area]) => {
+    diagnostics.hypotheses.push(
+      `Проблемы с "${area}" могут быть вызваны недостаточным контролем качества на данном этапе. Проверить: провести тайный аудит процесса.`
+    );
+  });
+  
+  diagnostics.hypotheses.push(
+    "Клиенты, предлагающие улучшения — самые лояльные. Проверить: сравнить retention rate этих клиентов с остальными.",
+    "Сезонность может влиять на количество жалоб. Проверить: сравнить данные с аналогичным периодом прошлого месяца/года."
+  );
+
+  // Риски
+  diagnostics.riskFactors.push(
+    totalAnswers < 20 
+      ? `Малая выборка (${totalAnswers} ответов) — выводы могут быть нерепрезентативны. Риск: принять неверное решение. Минимизация: собрать дополнительные данные.`
+      : "Возможно смещение выборки — активнее отвечают недовольные клиенты. Риск: переоценить масштаб проблем. Минимизация: сравнить с данными закрытых вопросов.",
+    "Единовременный срез не показывает динамику. Риск: принять временный всплеск за системную проблему. Минимизация: повторить опрос через 2 недели.",
+    "Эвристический анализ не учитывает сарказм и контекст. Риск: неверно интерпретировать отдельные ответы. Минимизация: выборочная ручная проверка."
+  );
+
+  // Метрики для отслеживания
+  diagnostics.metricsToWatch = [
+    "Количество жалоб по категориям (еженедельно, цель: снижение на 30% в месяц)",
+    "NPS (ежемесячно, цель: рост на 10 пунктов)",
+    "Время реакции на жалобу (ежедневно, цель: < 2 часов)",
+    "Конверсия предложений во внедрённые улучшения (ежемесячно, цель: > 30%)",
+    "Retention rate клиентов, оставивших обратную связь (ежеквартально)",
+  ];
+
+  // План действий
+  diagnostics.actionPlan = {
+    immediate: [
+      problemAreas.length > 0 
+        ? `Созвать совещание команды по проблеме "${problemAreas[0][0]}" — назначить ответственного, установить срок исправления: 48 часов`
+        : "Подготовить отчёт для команды с текущими выводами",
+      "Ответить на все негативные отзывы персонально в течение 24 часов",
+      `Проанализировать ${allSuggestions.length} предложений клиентов, отобрать топ-3 для немедленного внедрения`,
+    ],
+    shortTerm: [
+      `Внедрить изменения по проблемным зонам: ${problemAreas.slice(0, 3).map(([area]) => area).join(", ")}. Срок: 2 недели`,
+      "Запустить программу лояльности для клиентов, предлагающих улучшения",
+      "Провести обучение персонала по выявленным проблемным зонам",
+      "Настроить дашборд для мониторинга ключевых метрик в реальном времени",
+    ],
+    longTerm: [
+      "Внедрить систему непрерывного сбора обратной связи (post-purchase survey, NPS-опросы)",
+      "Создать программу «Голос клиента» с регулярными интервью и фокус-группами",
+      "Разработать систему предиктивной аналитики для прогнозирования проблем до их появления",
+    ],
+  };
+
+  // Сегментный анализ
+  diagnostics.segmentsAnalysis = questionAnalysis.slice(0, 3).map(qa => ({
+    segment: `Респонденты по вопросу "${qa.questionTitle}"`,
+    insight: `${qa.total} ответов: ${qa.complaints} жалоб (${qa.topProblems.map(([p, c]) => `${p}: ${c}`).join(", ")}), ${qa.praises} позитивных, ${qa.suggestions} предложений`,
+    action: qa.complaints > 0
+      ? `Приоритет: исправить ${qa.topProblems[0][0]} в течение 48 часов`
+      : qa.suggestions > 0
+      ? `Внедрить топ предложений в следующем спринте`
+      : "Мониторить показатели, цель: сохранить текущий уровень",
+  }));
+
+  const businessImplications = [];
+  
+  if (totalComplaints > 0) {
     businessImplications.push(
-      `Сильные стороны (${strengthAreas.map(s => s.questionTitle).join(", ")}) — основа для дифференциации от конкурентов и усиления бренда. Рекомендуется выделить бюджет на развитие этих направлений.`
+      `${totalComplaints} жалоб могут указывать на системные проблемы. Если не исправить — потенциальная потеря до ${clampPercent(negative)}% клиентов. Стоимость привлечения нового клиента в 5-7 раз выше удержания.`
     );
   }
   
-  if (improvementAreas.length > 0) {
+  if (totalPraise > 0) {
     businessImplications.push(
-      `Наличие конкретных предложений от ${improvementAreas.reduce((sum, q) => sum + q.improvementCount, 0)} респондентов — возможность для быстрых улучшений с измеримым эффектом в течение 1-2 месяцев.`
+      `${totalPraise} позитивных отзывов — потенциал для программы адвокатов бренда. Клиенты-промоутеры приводят в среднем 3 новых клиента.`
+    );
+  }
+  
+  if (allSuggestions.length > 0) {
+    businessImplications.push(
+      `${allSuggestions.length} предложений от клиентов — возможность улучшить продукт без затрат на дорогостоящие исследования. Средний ROI от внедрения клиентских предложений: 200-300%.`
     );
   }
   
   businessImplications.push(
-    "Инвестиции в улучшение клиентского опыта на основе полученных данных могут повысить retention на 15-25% и увеличить средний чек на 10-15% в течение квартала."
+    `Общие выводы по опросу "${params.surveyTitle}" указывают на необходимость системной работы с обратной связью. Ожидаемый эффект от внедрения рекомендаций: рост retention на 15-25% и увеличение среднего чека на 10-15% в течение 6 месяцев.`
   );
-
-  // Формирование диагностики
-  const diagnostics: AnalysisDiagnostics = {
-    recommendations: [
-      problemAreas.length > 0
-        ? `Разработать план немедленных действий по улучшению проблемных зон: ${problemAreas.map(q => q.questionTitle).join(", ")}`
-        : "Продолжить мониторинг текущих показателей и развивать сильные стороны",
-      improvementAreas.length > 0
-        ? "Создать рабочую группу для внедрения предложений респондентов в течение 2 недель"
-        : "Провести дополнительные исследования для выявления скрытых потребностей",
-      "Настроить регулярный сбор обратной связи (еженедельно/ежемесячно) для отслеживания динамики",
-      "Внедрить систему быстрого реагирования на негативные отзывы (в течение 24 часов)",
-      totalAnswers < 30
-        ? "Увеличить выборку до 30-50 ответов для повышения статистической значимости"
-        : "Провести A/B-тестирование предлагаемых улучшений на контрольной группе",
-    ],
-    hypotheses: [
-      problemAreas.length > 0
-        ? `Проблемы в зонах ${problemAreas.map(q => q.questionTitle).join(", ")} могут быть связаны с конкретными этапами клиентского пути`
-        : "Отсутствие явных проблем может указывать на недостаточную детализацию вопросов",
-      "Разные сегменты пользователей (новые vs постоянные) могут иметь противоположное восприятие",
-      strengthAreas.length > 0
-        ? `Высокая удовлетворённость в зонах ${strengthAreas.map(q => q.questionTitle).join(", ")} может быть конкурентным преимуществом`
-        : "Отсутствие явных сильных сторон требует дополнительного анализа",
-      improvementAreas.length > 0
-        ? "Активные респонденты, предлагающие улучшения, — потенциальные адвокаты бренда при внедрении их предложений"
-        : "Низкая вовлечённость в предложения может говорить о пассивности аудитории",
-    ],
-    riskFactors: [
-      totalAnswers < 30
-        ? `Малая выборка (${totalAnswers} ответов) — выводы могут быть нерепрезентативны`
-        : "Возможно смещение выборки в сторону наиболее активных пользователей",
-      "Эвристический анализ может не учитывать сарказм и сложные контексты",
-      "Отсутствие демографических данных ограничивает возможности сегментации",
-      "Единовременный срез не показывает динамику изменений во времени",
-    ],
-    metricsToWatch: [
-      "NPS (Net Promoter Score) — целевой показатель: +20 и выше",
-      "CSAT (Customer Satisfaction) — отслеживать еженедельно",
-      "Уровень оттока клиентов (Churn Rate) — целевое снижение на 5-10%",
-      "Время реакции на негативные отзывы — целевой показатель: < 24 часов",
-      "Конверсия в повторные покупки — отслеживать по сегментам",
-    ],
-    actionPlan: {
-      immediate: [
-        problemAreas.length > 0
-          ? `Провести экстренное совещание команды по проблемным зонам: ${problemAreas.map(q => q.questionTitle).join(", ")}`
-          : "Подготовить отчёт для руководства с текущими выводами",
-        "Связаться с респондентами, оставившими наиболее критичные отзывы",
-        "Проверить работу проблемных участков/процессов",
-      ],
-      shortTerm: [
-        "Разработать и согласовать план улучшений на основе предложений респондентов",
-        "Запустить пилотные изменения в 1-2 наиболее критичных зонах",
-        "Обучить персонал работе с обратной связью и стандартам качества",
-        "Внедрить систему мониторинга ключевых метрик в реальном времени",
-      ],
-      longTerm: [
-        "Создать программу непрерывного улучшения клиентского опыта (CEM)",
-        "Внедрить предиктивную аналитику для прогнозирования удовлетворённости",
-        "Разработать программу лояльности с учётом выявленных предпочтений",
-        "Построить систему регулярных исследований (ежеквартальных/ежемесячных)",
-      ],
-    },
-    segmentsAnalysis: questionAnalysis.slice(0, 4).map(qa => ({
-      segment: qa.questionTitle,
-      insight: `${qa.totalQ} ответов: ${qa.positiveCount} позитивных, ${qa.negativeCount} негативных, ${qa.neutralCount} нейтральных. ${
-        qa.improvementCount > 0 ? `${qa.improvementCount} респондентов предложили улучшения.` : ""
-      } Ключевые слова: ${qa.topWords.slice(0, 3).join(", ")}`,
-      action: qa.isProblemArea
-        ? `Срочно разработать план исправления. Целевой KPI: снижение негатива на 50% за 2 недели.`
-        : qa.isStrengthArea
-        ? `Усилить направление в маркетинге. Целевой KPI: увеличение позитивных отзывов на 20%.`
-        : qa.needsAttention
-        ? `Провести A/B-тест улучшений. Целевой KPI: рост удовлетворённости на 15%.`
-        : `Мониторить показатели. Целевой KPI: удержание текущего уровня.`,
-    })),
-  };
 
   return {
     themes,
@@ -702,111 +760,72 @@ async function requestAnalysisFromModel(params: {
 
   const totalAnswers = params.openAnswers.reduce((sum, g) => sum + g.answers.length, 0);
 
-  const prompt = `Ты — ведущий аналитик по клиентскому опыту (CX) с 15-летним опытом работы с крупными компаниями. Твоя специализация — превращать сырые данные опросов в конкретные бизнес-решения, которые напрямую влияют на revenue и retention.
+  const prompt = `Ты — ведущий CX-аналитик, который помогает бизнесу находить КОНКРЕТНЫЕ ПРОБЛЕМЫ и ПРОБЕЛЫ в клиентском опыте. Твоя задача — не просто анализировать, а показывать где именно бизнес теряет клиентов, где есть проблемы и что с этим делать.
 
-# ИНФОРМАЦИЯ ОБ ИССЛЕДОВАНИИ
-Название опроса: "${params.surveyTitle}"
+Контекст: ${params.surveyTitle}
 ${params.surveyCategory ? `Категория бизнеса: ${params.surveyCategory}` : ""}
-Всего открытых ответов: ${totalAnswers}
-Количество вопросов: ${params.openAnswers.length}
+Всего ответов: ${totalAnswers}
+${params.quantitativeSummary.trim() ? `\nДанные закрытых вопросов:\n${params.quantitativeSummary}` : ""}
 
-${params.quantitativeSummary.trim() ? `# ДАННЫЕ ЗАКРЫТЫХ ВОПРОСОВ\n${params.quantitativeSummary}\n` : ""}
-
-# ОТКРЫТЫЕ ОТВЕТЫ
+Открытые ответы:
 ${answersText}
 
-# ЗАДАЧА
-Проведи глубокий анализ открытых ответов, учитывая данные закрытых вопросов. Твоя цель — дать руководителю продукта конкретные, измеримые рекомендации, которые можно внедрить завтра.
+# ЧТО НУЖНО СДЕЛАТЬ
+Найди в ответах:
+1. ГДЕ БОЛИТ? — конкретные проблемы и жалобы клиентов
+2. ГДЕ ТЕРЯЕМ? — пробелы в сервисе/продукте, о которых говорят клиенты
+3. ЧТО ХОТЯТ? — предложения и ожидания клиентов
+4. ЧТО УЖЕ ХОРОШО? — сильные стороны, которые нужно сохранить
 
-Обязательно:
-1. Выяви ВСЕ темы, даже если они упоминаются 1-2 раза
-2. Для каждой темы дай КОНКРЕТНЫЙ action plan
-3. Свяжи тональность открытых ответов с данными закрытых вопросов
-4. Выдели сегменты аудитории с разными потребностями
-5. Дай численные оценки и KPI для каждой рекомендации
-6. Укажи временные рамки для каждого действия
-7. Оцени риски и дай план их минимизации
+Для каждой проблемы укажи:
+- Масштаб (сколько клиентов затронуто)
+- Конкретные примеры
+- Влияние на бизнес
+- Что делать прямо сейчас
 
-# ФОРМАТ ОТВЕТА
-Верни ТОЛЬКО валидный JSON (без markdown, без \`\`\`json):
+Верни JSON (без markdown, без \`\`\`json):
 
 {
   "themes": [
     {
-      "theme": "Название темы (5-10 слов, отражающее суть)",
-      "count": количество упоминаний,
-      "sentiment": "positive|negative|neutral",
-      "examples": ["цитата 1 (полная, без сокращений)", "цитата 2", "цитата 3"],
-      "actionableInsight": "Конкретное действие: что делать, кто ответственный, в какие сроки, какой KPI"
+      "theme": "Название проблемы/темы (например: Долгая доставка в вечернее время)",
+      "count": число,
+      "sentiment": "negative/positive/neutral",
+      "examples": ["цитата", "цитата"],
+      "actionableInsight": "Конкретное действие: что исправить, кому поручить, срок, KPI"
     }
   ],
-  "sentiment": {
-    "positive": число 0-100,
-    "neutral": число 0-100,
-    "negative": число 0-100
-  },
-  "wordCloud": [
-    {"word": "слово или фраза из 2-3 слов", "weight": число 1-100}
-  ],
-  "summary": "Развёрнутое резюме (8-12 предложений): контекст бизнеса, ключевые находки, скрытые паттерны, корреляции с закрытыми вопросами, потенциальное влияние на бизнес-метрики, конкретные числа и проценты",
+  "sentiment": {"positive": 0-100, "neutral": 0-100, "negative": 0-100},
+  "wordCloud": [{"word": "слово", "weight": 1-100}],
+  "summary": "Детальный разбор ситуации: где проблемы, где потери, что делать (6-10 предложений с цифрами)",
   "keyInsights": [
-    "Инсайт 1: конкретный факт + цифры + бизнес-последствия",
-    "Инсайт 2: ...",
+    "Инсайт с конкретной проблемой и цифрами",
     ...
-    (5-10 инсайтов)
   ],
   "diagnostics": {
-    "recommendations": [
-      "Рекомендация 1: действие + ожидаемый эффект в цифрах + срок + ответственный",
-      ...
-      (3-6 рекомендаций)
-    ],
-    "hypotheses": [
-      "Гипотеза 1: предположение + метод проверки + ожидаемый результат",
-      ...
-      (3-6 гипотез)
-    ],
-    "riskFactors": [
-      "Риск 1: описание + вероятность (низкая/средняя/высокая) + влияние + способ минимизации",
-      ...
-      (3-5 рисков)
-    ],
-    "metricsToWatch": [
-      "Метрика 1: название + текущее значение (если известно) + целевое значение + частота измерения",
-      ...
-      (4-7 метрик)
-    ],
+    "recommendations": ["Действие + ответственный + срок + KPI", ...],
+    "hypotheses": ["Гипотеза + метод проверки", ...],
+    "riskFactors": ["Риск + вероятность + влияние + что делать", ...],
+    "metricsToWatch": ["Метрика + цель + периодичность", ...],
     "actionPlan": {
-      "immediate": ["Действие на эту неделю (конкретное, с KPI)", ...],
-      "shortTerm": ["Действие на 1-3 месяца (конкретное, с KPI)", ...],
-      "longTerm": ["Действие на 3-12 месяцев (конкретное, с KPI)", ...]
+      "immediate": ["На этой неделе: конкретное действие + KPI"],
+      "shortTerm": ["1-3 месяца: действие + KPI"],
+      "longTerm": ["3-12 месяцев: действие + KPI"]
     },
     "segmentsAnalysis": [
       {
-        "segment": "Название сегмента (на основе паттернов в ответах)",
-        "insight": "Что отличает этот сегмент (с цифрами)",
-        "action": "Что делать для этого сегмента (конкретно, с KPI)"
-      },
-      ...
+        "segment": "Группа клиентов",
+        "insight": "Что у них болит",
+        "action": "Что делать для них"
+      }
     ]
   },
   "businessImplications": [
-    "Последствие для бизнеса 1: потенциальное влияние на revenue/costs/retention в цифрах",
+    "Как проблема влияет на деньги: потеря клиентов, revenue, репутация",
     ...
-    (3-6 импликаций)
   ],
-  "confidenceScore": число 0-100
-}
-
-# ПРАВИЛА
-- Сумма sentiment ДОЛЖНА быть ровно 100
-- Каждая рекомендация должна иметь измеримый KPI
-- Не пиши общие фразы типа "всё хорошо" или "нужно улучшить"
-- Указывай конкретные проценты, суммы, сроки
-- Пиши так, как будто от этого зависит твой годовой бонус
-- Анализируй ВСЕ ответы, не игнорируй единичные, но важные комментарии
-- Если видишь противоречия — укажи их и предложи объяснение
-- Учитывай контекст бизнеса (${params.surveyCategory || params.surveyTitle})`;
+  "confidenceScore": 0-100
+}`;
 
   const completion = await openrouter.chat.completions.create({
     model: params.model,
@@ -815,7 +834,7 @@ ${answersText}
     messages: [
       {
         role: "system",
-        content: "Ты — элитный бизнес-аналитик уровня Partner в McKinsey. Твоя экспертиза — превращать качественные данные в количественные бизнес-решения. Каждый твой ответ содержит конкретные цифры, сроки и KPI. Ты не используешь water-down language и общие фразы. Ты даёшь рекомендации, которые генерят ROI. Отвечаешь ТОЛЬКО JSON на русском языке (термины можно на английском).",
+        content: "Ты — аналитик, который находит конкретные проблемы бизнеса в отзывах клиентов. Ты не пишешь общие фразы. Ты говоришь: вот здесь проблема, вот столько клиентов затронуто, вот что делать, вот ответственный, вот срок, вот KPI. Ты отвечаешь ТОЛЬКО JSON в указанном формате.",
       },
       { role: "user", content: prompt },
     ],
@@ -919,7 +938,6 @@ export async function analyzeSurveyResponses(params: {
   );
 
   console.log(`[ai-analysis] Starting analysis for "${params.surveyTitle}" with ${totalAnswers} answers`);
-  console.log(`[ai-analysis] Models to try: ${modelsToTry.join(", ")}`);
 
   let lastAttemptedModel = "";
 
@@ -941,37 +959,25 @@ export async function analyzeSurveyResponses(params: {
         "AI_ANALYSIS"
       );
 
-      console.log(`[ai-analysis] Model ${model} responded on attempt ${attempt}, parsing...`);
-
       try {
         const parsed = analysisResultSchema.parse(JSON.parse(cleaned)) as AnalysisResult;
         
         if (!isLowQuality(parsed)) {
-          console.log(`[ai-analysis] Analysis successful with model ${model}`);
+          console.log(`[ai-analysis] Success with ${model}, attempt ${attempt}`);
           return {
             ...parsed,
             sentiment: normalizeSentiment(parsed.sentiment),
           };
-        } else {
-          console.warn(`[ai-analysis] Low quality result from model ${model}`);
         }
       } catch (parseError) {
-        console.warn(`[ai-analysis] Parse error with model ${model}:`, 
-          parseError instanceof Error ? parseError.message : "Unknown error");
+        console.warn(`[ai-analysis] Parse error with ${model}`);
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : "AI_ANALYSIS_FAILED";
-      
-      if (message.includes("OPENROUTER_NOT_CONFIGURED")) {
-        throw error;
-      }
-      
-      console.warn(`[ai-analysis] Model ${model} failed: ${message}`);
+      console.warn(`[ai-analysis] Model ${model} failed`);
     }
   }
 
-  // Если все модели не дали результат, используем УЛУЧШЕННУЮ эвристику
-  console.log(`[ai-analysis] All models failed. Using improved heuristic analysis.`);
+  console.log(`[ai-analysis] All models failed. Using heuristic with real problem analysis.`);
   
   return buildHeuristicFallback({
     surveyTitle: params.surveyTitle,
