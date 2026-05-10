@@ -109,7 +109,7 @@ export async function syncWaitingDepositPayments(userId: string) {
   }
 }
 
-async function completeWithdrawalRequest(params: { requestId: string; payoutId?: string | null }) {
+export async function completeWithdrawalRequest(params: { requestId: string; payoutId?: string | null }) {
   const requestRecord = await prisma.withdrawalRequest.findUnique({
     where: { id: params.requestId },
     select: { id: true, userId: true, amount: true, status: true },
@@ -156,7 +156,7 @@ async function completeWithdrawalRequest(params: { requestId: string; payoutId?:
   return true;
 }
 
-async function failWithdrawalRequest(params: { requestId: string; payoutId?: string | null }) {
+export async function failWithdrawalRequest(params: { requestId: string; payoutId?: string | null }) {
   const requestRecord = await prisma.withdrawalRequest.findUnique({
     where: { id: params.requestId },
     select: { id: true, userId: true, amount: true, status: true },

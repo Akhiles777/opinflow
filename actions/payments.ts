@@ -7,7 +7,7 @@ import { requireRole } from "@/lib/auth-utils";
 import { assertPayoutRequisitesValid, normalizeWithdrawalRequisitesForStorage } from "@/lib/yukassa-payout-requisites";
 import { YUKASSA_PAYOUT_HTTP_403_RU, YUKASSA_SBP_CONTRACT_FORBIDDEN_RESPONDENT_RU } from "@/lib/yukassa-payout-copy";
 import { createDepositPayment, createPayout, fetchSbpBanksForPayouts } from "@/lib/yukassa";
-import { syncProcessingWithdrawals } from "@/lib/payment-processing";
+import { syncProcessingWithdrawals, completeWithdrawalRequest, failWithdrawalRequest } from "@/lib/payment-processing";
 
 function withdrawalMethodToPayoutApi(method: "CARD" | "SBP" | "WALLET"): "card" | "sbp" | "wallet" {
   if (method === "CARD") return "card";
@@ -226,13 +226,20 @@ export async function createWithdrawalAction(params: {
       idempotenceKey: `wd-req-${reserve.requestId}`,
     });
 
-    await prisma.withdrawalRequest.update({
-      where: { id: reserve.requestId },
-      data: {
-        status: "PROCESSING",
-        yukassaPayoutId: payout.id,
-      },
-    });
+    const payoutStatusLower = (payout.status ?? "").toLowerCase();
+    if (payoutStatusLower === "succeeded") {
+      await completeWithdrawalRequest({ requestId: reserve.requestId, payoutId: payout.id });
+    } else if (payoutStatusLower === "canceled" || payoutStatusLower === "failed") {
+      await failWithdrawalRequest({ requestId: reserve.requestId, payoutId: payout.id });
+    } else {
+      await prisma.withdrawalRequest.update({
+        where: { id: reserve.requestId },
+        data: {
+          status: "PROCESSING",
+          yukassaPayoutId: payout.id,
+        },
+      });
+    }
 
     revalidatePath("/respondent/wallet");
     revalidatePath("/admin/finance");
@@ -342,13 +349,23 @@ export async function approveWithdrawalAction(requestId: string) {
       idempotenceKey: `admin-approve-${requestId}`,
     });
 
-    await prisma.withdrawalRequest.update({
-      where: { id: requestId },
-      data: {
-        status: "PROCESSING",
-        yukassaPayoutId: payout.id,
-      },
-    });
+    // If the payout API already returned a final status, apply it immediately.
+    const payoutStatusLower = (payout.status ?? "").toLowerCase();
+
+    if (payoutStatusLower === "succeeded") {
+      // Mark completed including yukassa payout id when available
+      await completeWithdrawalRequest({ requestId, payoutId: payout.id });
+    } else if (payoutStatusLower === "canceled" || payoutStatusLower === "failed") {
+      await failWithdrawalRequest({ requestId, payoutId: payout.id });
+    } else {
+      await prisma.withdrawalRequest.update({
+        where: { id: requestId },
+        data: {
+          status: "PROCESSING",
+          yukassaPayoutId: payout.id,
+        },
+      });
+    }
 
     revalidatePath("/admin/finance");
     revalidatePath("/respondent/wallet");
