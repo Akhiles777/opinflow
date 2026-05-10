@@ -1,5 +1,8 @@
 import { createHash, randomUUID } from "node:crypto";
 import { YooCheckout } from "@a2seven/yoo-checkout";
+import { buildPayoutDestinationForApi, isValidSbpBankId } from "@/lib/yukassa-payout-requisites";
+
+export { normalizeRuPhoneForYukassa } from "@/lib/yukassa-payout-requisites";
 
 const paymentsShopId = process.env.YUKASSA_SHOP_ID;
 const paymentsSecretKey = process.env.YUKASSA_SECRET_KEY;
@@ -216,47 +219,54 @@ export async function getDepositPaymentStatus(yukassaId: string): Promise<{
   return (await response.json()) as { id: string; status: string; paid?: boolean };
 }
 
-/** E.164-style 11 digits for RU mobile, as expected by YooMoney SBP payouts */
-export function normalizeRuPhoneForYukassa(phone: string): string {
-  let digits = phone.replace(/\D/g, "");
-  if (digits.length === 10 && digits.startsWith("9")) {
-    digits = `7${digits}`;
-  }
-  if (digits.length === 11 && digits.startsWith("8")) {
-    digits = `7${digits.slice(1)}`;
-  }
-  return digits;
-}
-
-function getPayoutDestinationData(params: {
+function getPayoutDestinationForRequest(params: {
   method: "card" | "sbp" | "wallet";
   requisites: Record<string, string>;
 }) {
-  if (params.method === "card") {
-    return {
-      type: "bank_card",
-      card: {
-        number: params.requisites.cardNumber,
-      },
-    };
+  return buildPayoutDestinationForApi(params.method, params.requisites);
+}
+
+/** Кэш списка СБП: снижает нагрузку и улучшает UX при повторном открытии модалки */
+let sbpBanksCache: { expiresMs: number; banks: Array<{ bank_id: string; name: string }> } | null = null;
+const SBP_BANKS_CACHE_TTL_MS = 20 * 60 * 1000;
+
+function parseSbpBankItems(payload: unknown): Array<{ bank_id: string; name: string }> {
+  if (!payload || typeof payload !== "object") {
+    return [];
+  }
+  const root = payload as Record<string, unknown>;
+  let items = root.items;
+  if (!Array.isArray(items) && root.data && typeof root.data === "object") {
+    const data = root.data as Record<string, unknown>;
+    if (Array.isArray(data.items)) {
+      items = data.items;
+    }
+  }
+  if (!Array.isArray(items)) {
+    return [];
   }
 
-  if (params.method === "sbp") {
-    return {
-      type: "sbp",
-      phone: normalizeRuPhoneForYukassa(params.requisites.phone),
-      bank_id: params.requisites.bankId,
-    };
+  const out: Array<{ bank_id: string; name: string }> = [];
+  for (const row of items) {
+    if (!row || typeof row !== "object") continue;
+    const r = row as Record<string, unknown>;
+    const bank_id = typeof r.bank_id === "string" ? r.bank_id.trim() : "";
+    const name = typeof r.name === "string" ? r.name.trim() : "";
+    if (!bank_id || !name || !isValidSbpBankId(bank_id)) {
+      continue;
+    }
+    out.push({ bank_id, name });
   }
-
-  return {
-    type: "yoo_money",
-    account_number: params.requisites.walletNumber,
-  };
+  out.sort((a, b) => a.bank_id.localeCompare(b.bank_id));
+  return out;
 }
 
 export async function listSbpParticipantBanks(): Promise<Array<{ bank_id: string; name: string }>> {
   ensurePayoutsConfigured();
+
+  if (sbpBanksCache && Date.now() < sbpBanksCache.expiresMs) {
+    return sbpBanksCache.banks;
+  }
 
   const agentId = getPayoutAgentId();
   const secret = getPayoutSecretKey();
@@ -265,6 +275,8 @@ export async function listSbpParticipantBanks(): Promise<Array<{ bank_id: string
     method: "GET",
     headers: {
       Authorization: `Basic ${auth}`,
+      Accept: "application/json",
+      "Accept-Charset": "utf-8",
     },
   });
 
@@ -273,13 +285,21 @@ export async function listSbpParticipantBanks(): Promise<Array<{ bank_id: string
     throw new Error(`YUKASSA_SBP_BANKS_FAILED: ${response.status} ${text}`);
   }
 
-  const payload = (await response.json()) as {
-    items?: Array<{ bank_id?: string; name?: string }>;
+  let payload: unknown;
+  try {
+    payload = await response.json();
+  } catch {
+    throw new Error("YUKASSA_SBP_BANKS_FAILED: INVALID_JSON_BODY");
+  }
+
+  const banks = parseSbpBankItems(payload);
+
+  sbpBanksCache = {
+    banks,
+    expiresMs: Date.now() + SBP_BANKS_CACHE_TTL_MS,
   };
-  const items = payload.items ?? [];
-  return items
-    .filter((row) => typeof row.bank_id === "string" && typeof row.name === "string")
-    .map((row) => ({ bank_id: row.bank_id as string, name: row.name as string }));
+
+  return banks;
 }
 
 export async function createPayout(params: {
@@ -310,7 +330,7 @@ export async function createPayout(params: {
         value: toMoneyString(params.amount),
         currency: "RUB",
       },
-      payout_destination_data: getPayoutDestinationData(params),
+      payout_destination_data: getPayoutDestinationForRequest(params),
       description: params.description,
       metadata,
     }),

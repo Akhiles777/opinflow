@@ -4,7 +4,14 @@ import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth-utils";
+import { assertPayoutRequisitesValid, normalizeWithdrawalRequisitesForStorage } from "@/lib/yukassa-payout-requisites";
 import { createDepositPayment, createPayout } from "@/lib/yukassa";
+
+function withdrawalMethodToPayoutApi(method: "CARD" | "SBP" | "WALLET"): "card" | "sbp" | "wallet" {
+  if (method === "CARD") return "card";
+  if (method === "SBP") return "sbp";
+  return "wallet";
+}
 
 function yukassaPayoutDescription(message: string): string | null {
   if (!message.includes("YUKASSA_PAYOUT_FAILED:")) {
@@ -39,9 +46,16 @@ function getPaymentErrorMessage(error: unknown, fallback: string) {
     return trimmed.length > 0 ? trimmed : "Проверьте переменные выплат в .env: логин — только agentId шлюза, секрет — отдельной строкой, без пробелов и кавычек.";
   }
 
+  if (error.message.startsWith("PAYOUT_REQUISITES:")) {
+    return error.message.replace(/^PAYOUT_REQUISITES:\s*/, "").trim();
+  }
+
   const payoutHuman = yukassaPayoutDescription(error.message);
   if (payoutHuman && /login.*illegal format|illegal format.*login/i.test(payoutHuman)) {
     return "ЮKassa: неверный логин (agentId) или секрет для Basic Auth. Для выплат нужен идентификатор шлюза из «Настройки выплат» и секрет из «Интеграция → API» этого шлюза — не shopId магазина и не ключ приёма платежей. Уберите пробелы, кавычки и переносы в переменных окружения.";
+  }
+  if (payoutHuman && /illegal_account_number/i.test(payoutHuman)) {
+    return "ЮKassa отклонила выплату: неверный номер получателя. Номер кошелька ЮMoney — 11–33 цифры (не путайте с номером карты). Номер карты — 16–19 цифр; перевод на карту по номеру с вашей стороны допустим только при PCI DSS. По СБП: телефон 11 цифр с 7, банк — из списка ЮKassa (идентификатор 12 символов).";
   }
   if (payoutHuman) {
     return `ЮKassa отклонила выплату: ${payoutHuman}`;
@@ -109,15 +123,16 @@ export async function createWithdrawalAction(params: {
     return { error: "Минимальная сумма вывода — 100 ₽" };
   }
 
-  if (params.method === "SBP") {
-    const bankId = params.requisites.bankId?.trim() ?? "";
-    if (!/^\d{10,20}$/.test(bankId)) {
-      return {
-        error:
-          "Для СБП выберите банк из списка ЮKassa (нужен числовой bank_id участника СБП). Обновите страницу и подождите загрузки банков.",
-      };
+  try {
+    assertPayoutRequisitesValid(withdrawalMethodToPayoutApi(params.method), params.requisites);
+  } catch (validationError) {
+    if (validationError instanceof Error && validationError.message.startsWith("PAYOUT_REQUISITES:")) {
+      return { error: validationError.message.replace(/^PAYOUT_REQUISITES:\s*/, "").trim() };
     }
+    throw validationError;
   }
+
+  const cleanedRequisites = normalizeWithdrawalRequisitesForStorage(params.method, params.requisites);
 
   const reserve = await prisma.$transaction(async (tx) => {
     const walletRow = await tx.wallet.findUnique({
@@ -141,7 +156,7 @@ export async function createWithdrawalAction(params: {
         userId: session.user.id,
         amount: new Prisma.Decimal(params.amount),
         method: params.method,
-        requisites: params.requisites,
+        requisites: cleanedRequisites,
         status: "PENDING",
         yukassaPayoutId: null,
       },
@@ -167,8 +182,8 @@ export async function createWithdrawalAction(params: {
   try {
     const payout = await createPayout({
       amount: params.amount,
-      method: params.method.toLowerCase() as "card" | "sbp" | "wallet",
-      requisites: params.requisites,
+      method: withdrawalMethodToPayoutApi(params.method),
+      requisites: cleanedRequisites,
       description: `Выплата респонденту ${session.user.id}`,
       metadata: { withdrawalRequestId: reserve.requestId },
       idempotenceKey: `wd-req-${reserve.requestId}`,
@@ -253,11 +268,24 @@ export async function approveWithdrawalAction(requestId: string) {
     return { error: "Заявка не найдена или уже обработана" };
   }
 
+  const storedRequisites = (requestRecord.requisites ?? {}) as Record<string, string>;
+
+  try {
+    assertPayoutRequisitesValid(withdrawalMethodToPayoutApi(requestRecord.method), storedRequisites);
+  } catch (validationError) {
+    if (validationError instanceof Error && validationError.message.startsWith("PAYOUT_REQUISITES:")) {
+      return { error: validationError.message.replace(/^PAYOUT_REQUISITES:\s*/, "").trim() };
+    }
+    throw validationError;
+  }
+
+  const cleanedRequisites = normalizeWithdrawalRequisitesForStorage(requestRecord.method, storedRequisites);
+
   try {
     const payout = await createPayout({
       amount: Number(requestRecord.amount),
-      method: requestRecord.method.toLowerCase() as "card" | "sbp" | "wallet",
-      requisites: (requestRecord.requisites ?? {}) as Record<string, string>,
+      method: withdrawalMethodToPayoutApi(requestRecord.method),
+      requisites: cleanedRequisites,
       description: `Выплата респонденту ${requestRecord.userId}`,
       metadata: { withdrawalRequestId: requestId },
       idempotenceKey: `admin-approve-${requestId}`,

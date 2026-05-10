@@ -45,8 +45,9 @@ function mapRequestStatus(status: Props["withdrawalRequests"][number]["status"])
         : { v: "rejected" as const, t: status === "REJECTED" ? "Отклонено" : "Ошибка" };
 }
 
+/** OpenAPI ЮKassa: номер карты для выплаты — 16–19 цифр */
 function maskCard(value: string) {
-  const digits = value.replace(/\D/g, "").slice(0, 16);
+  const digits = value.replace(/\D/g, "").slice(0, 19);
   return digits.replace(/(\d{4})(?=\d)/g, "$1 ").trim();
 }
 
@@ -82,10 +83,15 @@ export default function RespondentWalletClient({
     let cancelled = false;
     (async () => {
       setSbpBanksHint(null);
-      const res = await fetch("/api/payments/sbp-banks");
+      const res = await fetch("/api/payments/sbp-banks", {
+        credentials: "include",
+        cache: "no-store",
+      });
       const data = (await res.json().catch(() => ({}))) as {
         banks?: Array<{ bank_id: string; name: string }>;
         error?: string;
+        detail?: string | null;
+        yukassaCode?: string | null;
       };
       if (cancelled) return;
       if (Array.isArray(data.banks) && data.banks.length > 0) {
@@ -98,11 +104,19 @@ export default function RespondentWalletClient({
       } else {
         setSbpBanksList([]);
         setBankId("");
-        setSbpBanksHint(
+        const fallback =
           data.error === "PAYOUTS_NOT_CONFIGURED"
-            ? "Список банков СБП недоступен: на сервере не настроены реквизиты шлюза выплат ЮKassa."
-            : "Не удалось загрузить участников СБП. Попробуйте позже или выберите вывод на карту.",
-        );
+            ? "Список банков СБП недоступен: на сервере не настроены YUKASSA_PAYOUT_AGENT_ID и YUKASSA_PAYOUT_SECRET_KEY (шлюз выплат, не магазин оплаты)."
+            : data.error === "UNAUTHORIZED"
+              ? "Сессия недействительна. Обновите страницу и войдите снова."
+              : "Не удалось загрузить список банков ЮKassa для СБП.";
+        const tail =
+          typeof data.detail === "string" && data.detail.trim()
+            ? ` Технически: ${data.detail.trim()}`
+            : res.status === 401
+              ? " Проверьте авторизацию."
+              : "";
+        setSbpBanksHint(`${fallback}${tail}`);
       }
     })();
     return () => {
@@ -150,8 +164,9 @@ export default function RespondentWalletClient({
       return;
     }
 
-    if (method === "CARD" && cardNumber.replace(/\D/g, "").length !== 16) {
-      setError("Введите полный номер карты");
+    const cardDigits = cardNumber.replace(/\D/g, "");
+    if ((method === "CARD" && (cardDigits.length < 16 || cardDigits.length > 19))) {
+      setError("Укажите номер карты 16–19 цифр (как принимает API ЮKassa). Для многих сценариев удобнее вывод через СБП или кошелёк ЮMoney.");
       return;
     }
 
@@ -165,8 +180,9 @@ export default function RespondentWalletClient({
       return;
     }
 
-    if (method === "WALLET" && walletNumber.trim().length < 5) {
-      setError("Введите номер кошелька");
+    const walletDigits = walletNumber.replace(/\D/g, "");
+    if (method === "WALLET" && (walletDigits.length < 11 || walletDigits.length > 33)) {
+      setError("Номер кошелька ЮMoney — от 11 до 33 цифр без пробелов. Это не номер банковской карты.");
       return;
     }
 
@@ -431,7 +447,7 @@ export default function RespondentWalletClient({
                   value={walletNumber}
                   onChange={(event) => setWalletNumber(event.target.value)}
                   className="h-12 rounded-xl border border-dash-border bg-dash-bg px-4 text-base text-dash-body outline-none focus:border-brand/40"
-                  placeholder="4100..."
+                  placeholder="11–33 цифр номера ЮMoney…"
                 />
               </label>
             ) : null}
