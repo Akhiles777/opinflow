@@ -1,5 +1,5 @@
 // ===============================
-// ТЕСТ 2 — Доставка еды
+// ТЕСТ 3 — Игровая платформа
 // ===============================
 
 import { PrismaClient, Prisma } from "@prisma/client";
@@ -7,21 +7,20 @@ import { PrismaClient, Prisma } from "@prisma/client";
 const prisma = new PrismaClient();
 
 const TARGET_EMAIL = "gasan07.03.2009@icloud.com";
-const RESPONDENT_COUNT = 25;
 
-const OPEN_ANSWERS = [
-  "Курьеры приезжают вовремя.",
-  "Иногда еда приезжает уже холодной.",
-  "Приложение удобное и быстрое.",
-  "Хотелось бы больше ресторанов.",
-  "Поддержка быстро возвращает деньги.",
-  "Цены на доставку слишком высокие.",
-  "Часто пользуюсь акциями и промокодами.",
-  "Иногда заказ долго ищет курьера.",
+const GAME_FEEDBACK = [
+  "Подбор игроков работает отлично.",
+  "Слишком долго ищет матч.",
+  "Хотелось бы больше наград за сезон.",
+  "Иногда бывают лаги на серверах.",
+  "Боевой пропуск выглядит интересно.",
+  "Матчи стали более сбалансированными.",
+  "Не хватает новых игровых режимов.",
+  "Графика после обновления стала лучше.",
 ];
 
-function randomItem(items) {
-  return items[Math.floor(Math.random() * items.length)];
+function randomItem(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
 }
 
 async function main() {
@@ -33,16 +32,16 @@ async function main() {
   const survey = await prisma.survey.create({
     data: {
       creatorId: owner.id,
-      title: "Опрос по доставке еды",
-      description: "Исследование пользовательского опыта",
-      category: "Food Delivery",
+      title: "Опрос игровой платформы",
+      description: "Тест для анализа игровых отзывов",
+      category: "Gaming",
       status: "ACTIVE",
-      maxResponses: RESPONDENT_COUNT,
-      reward: new Prisma.Decimal(40),
-      estimatedTime: 3,
-      budget: new Prisma.Decimal(RESPONDENT_COUNT * 40 * 1.15),
+      maxResponses: 50,
+      reward: new Prisma.Decimal(25),
+      estimatedTime: 2,
+      budget: new Prisma.Decimal(1500),
       startsAt: new Date(),
-      endsAt: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
+      endsAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
     },
   });
 
@@ -50,15 +49,15 @@ async function main() {
     data: {
       surveyId: survey.id,
       order: 0,
-      type: "MULTIPLE_CHOICE",
-      title: "Что для вас важнее всего?",
+      type: "SINGLE_CHOICE",
+      title: "Как часто вы играете?",
       required: true,
       options: {
         options: [
-          "Скорость доставки",
-          "Цена",
-          "Качество еды",
-          "Акции",
+          "Каждый день",
+          "Несколько раз в неделю",
+          "Редко",
+          "Практически не играю",
         ],
       },
     },
@@ -68,26 +67,16 @@ async function main() {
     data: {
       surveyId: survey.id,
       order: 1,
-      type: "SINGLE_CHOICE",
-      title: "Оцените качество сервиса",
-      required: true,
-    },
-  });
-
-  const q3 = await prisma.surveyQuestion.create({
-    data: {
-      surveyId: survey.id,
-      order: 2,
       type: "OPEN_TEXT",
-      title: "Что можно улучшить?",
+      title: "Что вам нравится или не нравится?",
       required: true,
     },
   });
 
-  for (let i = 0; i < RESPONDENT_COUNT; i++) {
-    const respondent = await prisma.user.create({
+  for (let i = 0; i < 50; i++) {
+    const user = await prisma.user.create({
       data: {
-        email: `food-test-${Date.now()}-${i}@example.com`,
+        email: `gamer-${Date.now()}-${i}@example.com`,
         role: "RESPONDENT",
         status: "ACTIVE",
         emailVerified: new Date(),
@@ -97,12 +86,12 @@ async function main() {
     const session = await prisma.surveySession.create({
       data: {
         surveyId: survey.id,
-        userId: respondent.id,
+        userId: user.id,
         status: "COMPLETED",
         isValid: true,
-        startedAt: new Date(Date.now() - 600000),
+        startedAt: new Date(Date.now() - 100000),
         completedAt: new Date(),
-        timeSpent: 180,
+        timeSpent: 140,
       },
     });
 
@@ -111,30 +100,23 @@ async function main() {
         {
           sessionId: session.id,
           questionId: q1.id,
-          value: JSON.stringify([
-            randomItem([
-              "Скорость доставки",
-              "Цена",
-              "Качество еды",
-              "Акции",
-            ]),
+          value: randomItem([
+            "Каждый день",
+            "Несколько раз в неделю",
+            "Редко",
+            "Практически не играю",
           ]),
         },
         {
           sessionId: session.id,
           questionId: q2.id,
-          value: String(Math.floor(Math.random() * 5) + 1),
-        },
-        {
-          sessionId: session.id,
-          questionId: q3.id,
-          value: randomItem(OPEN_ANSWERS),
+          value: randomItem(GAME_FEEDBACK),
         },
       ],
     });
   }
 
-  console.log("Food delivery survey created:", survey.id);
+  console.log("Gaming survey created:", survey.id);
 }
 
 main()
