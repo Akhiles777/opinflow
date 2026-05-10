@@ -6,7 +6,7 @@ const openrouter = new OpenAI({
   apiKey: process.env.OPENROUTER_API_KEY,
   defaultHeaders: {
     "HTTP-Referer": process.env.NEXTAUTH_URL || "http://localhost:3000",
-    "X-Title": "ПотокМнений Analytics",
+    "X-Title": "PotokMneniy Analytics",
   },
 });
 
@@ -47,20 +47,20 @@ export type AnalysisResult = {
 };
 
 const diagnosticsSchema = z.object({
-  recommendations: z.array(z.string().min(30).max(500)).min(3).max(8),
-  hypotheses: z.array(z.string().min(30).max(450)).min(3).max(6),
-  riskFactors: z.array(z.string().min(20).max(400)).min(3).max(6),
-  metricsToWatch: z.array(z.string().min(20).max(350)).min(3).max(6),
+  recommendations: z.array(z.string()).min(3).max(8),
+  hypotheses: z.array(z.string()).min(3).max(6),
+  riskFactors: z.array(z.string()).min(3).max(6),
+  metricsToWatch: z.array(z.string()).min(3).max(6),
   actionPlan: z.object({
-    immediate: z.array(z.string().min(30).max(400)).min(2).max(5),
-    shortTerm: z.array(z.string().min(30).max(400)).min(2).max(5),
-    longTerm: z.array(z.string().min(30).max(400)).min(2).max(4),
+    immediate: z.array(z.string()).min(2).max(5),
+    shortTerm: z.array(z.string()).min(2).max(5),
+    longTerm: z.array(z.string()).min(2).max(4),
   }).optional(),
   segmentsAnalysis: z.array(
     z.object({
-      segment: z.string().min(5).max(200),
-      insight: z.string().min(20).max(400),
-      action: z.string().min(20).max(400),
+      segment: z.string(),
+      insight: z.string(),
+      action: z.string(),
     })
   ).min(0).max(6).optional(),
 });
@@ -68,11 +68,11 @@ const diagnosticsSchema = z.object({
 const analysisResultSchema = z.object({
   themes: z.array(
     z.object({
-      theme: z.string().min(3).max(150),
+      theme: z.string().min(3).max(200),
       count: z.number().int().min(0).max(1_000_000),
       sentiment: z.enum(["positive", "negative", "neutral"]),
-      examples: z.array(z.string().min(3).max(300)).min(1).max(5),
-      actionableInsight: z.string().min(30).max(400),
+      examples: z.array(z.string().min(3).max(500)).min(1).max(5),
+      actionableInsight: z.string().min(30).max(600),
     }),
   ).min(1),
   sentiment: z.object({
@@ -85,11 +85,11 @@ const analysisResultSchema = z.object({
       word: z.string().min(2).max(50),
       weight: z.number().int().min(1).max(100),
     }),
-  ).min(3),
-  summary: z.string().min(100).max(4000),
-  keyInsights: z.array(z.string().min(30).max(500)).min(4).max(10),
+  ).min(1),
+  summary: z.string().min(50).max(5000),
+  keyInsights: z.array(z.string().min(20).max(600)).min(3).max(10),
   diagnostics: diagnosticsSchema,
-  businessImplications: z.array(z.string().min(30).max(500)).min(3).max(8).optional(),
+  businessImplications: z.array(z.string().min(20).max(600)).min(1).max(8).optional(),
   confidenceScore: z.number().min(0).max(100).optional(),
 });
 
@@ -98,7 +98,7 @@ type OpenAnswerGroup = {
   answers: string[];
 };
 
-function stripMarkdownFence(value: string) {
+function stripMarkdownFence(value: string): string {
   return value
     .replace(/```json\s*/gi, "")
     .replace(/```\s*/g, "")
@@ -106,7 +106,7 @@ function stripMarkdownFence(value: string) {
     .trim();
 }
 
-function normalizeOpenAnswers(groups: OpenAnswerGroup[]) {
+function normalizeOpenAnswers(groups: OpenAnswerGroup[]): OpenAnswerGroup[] {
   return groups
     .map((group) => ({
       questionTitle: group.questionTitle.trim(),
@@ -114,62 +114,15 @@ function normalizeOpenAnswers(groups: OpenAnswerGroup[]) {
         new Set(
           group.answers
             .map((answer) => answer.trim())
-            .filter((answer) => answer.length >= 5)
-            .slice(0, 200),
+            .filter((answer) => answer.length >= 3)
+            .slice(0, 150),
         ),
       ),
     }))
     .filter((group) => group.questionTitle.length > 0 && group.answers.length > 0);
 }
 
-function sumSentiment(sentiment: AnalysisResult["sentiment"]) {
-  return sentiment.positive + sentiment.neutral + sentiment.negative;
-}
-
-function isMeaningfulText(value: string) {
-  const trimmed = value.trim();
-  if (trimmed.length < 25) return false;
-  if (!/[A-Za-zА-Яа-я0-9]/.test(trimmed)) return false;
-  if (/^[\W_]+$/.test(trimmed)) return false;
-  const words = trimmed.split(/\s+/).filter((word) => /[A-Za-zА-Яа-я0-9]/.test(word));
-  if (words.length < 5) return false;
-
-  const genericPhrases = [
-    "всё хорошо", "всё плохо", "нормально", "всё устраивает",
-    "нет комментариев", "без комментариев", "не знаю", "затрудняюсь ответить",
-  ];
-  const lowerTrimmed = trimmed.toLowerCase();
-  if (genericPhrases.some((phrase) => lowerTrimmed.includes(phrase) && lowerTrimmed.length < 60)) {
-    return false;
-  }
-
-  const lettersOnly = trimmed.replace(/[^A-Za-zА-Яа-я0-9]/g, "");
-  return lettersOnly.length >= Math.floor(trimmed.length * 0.4);
-}
-
-function isLowQuality(result: AnalysisResult) {
-  if (!isMeaningfulText(result.summary)) return true;
-
-  const meaningfulInsights = result.keyInsights.filter(isMeaningfulText);
-  if (meaningfulInsights.length < 3) return true;
-
-  const meaningfulThemes = result.themes.filter(
-    (theme) => isMeaningfulText(theme.theme) && isMeaningfulText(theme.actionableInsight)
-  );
-  if (meaningfulThemes.length < 1) return true;
-
-  const sentimentTotal = sumSentiment(result.sentiment);
-  if (sentimentTotal < 98 || sentimentTotal > 102) return true;
-
-  const diag = result.diagnostics;
-  if (!diag) return true;
-  if (diag.recommendations.filter(isMeaningfulText).length < 2) return true;
-  if (diag.hypotheses.filter(isMeaningfulText).length < 2) return true;
-
-  return false;
-}
-
-function clampPercent(value: number) {
+function clampPercent(value: number): number {
   if (!Number.isFinite(value)) return 0;
   return Math.max(0, Math.min(100, Math.round(value)));
 }
@@ -200,202 +153,54 @@ function normalizeSentiment(sentiment: { positive: number; neutral: number; nega
   };
 }
 
-async function requestAnalysisFromModel(params: {
+async function callOpenRouterWithRetry(params: {
   model: string;
-  surveyTitle: string;
-  surveyCategory?: string | null;
-  openAnswers: OpenAnswerGroup[];
-  quantitativeSummary: string;
-}): Promise<{ content: string; attempt: number }> {
-  const answersText = params.openAnswers
-    .map(
-      (group) =>
-        `ВОПРОС: "${group.questionTitle}"\nКОЛИЧЕСТВО ОТВЕТОВ: ${group.answers.length}\nОТВЕТЫ:\n${group.answers
-          .map((answer, index) => `${index + 1}. "${answer}"`)
-          .join("\n")}`,
-    )
-    .join("\n\n---\n\n");
-
-  const totalAnswers = params.openAnswers.reduce((sum, g) => sum + g.answers.length, 0);
-
-  const prompt = `Ты — ведущий CX-аналитик и консультант по стратегии. Твоя задача — провести глубокий, персонализированный анализ ответов респондентов и дать владельцу бизнеса чёткое понимание: где у него пробелы, что требует немедленного внимания, какие есть скрытые проблемы и возможности.
-
-Контекст исследования:
-- Название: "${params.surveyTitle}"
-${params.surveyCategory ? `- Категория бизнеса: ${params.surveyCategory}` : ""}
-- Всего открытых ответов: ${totalAnswers}
-- Количество вопросов: ${params.openAnswers.length}
-
-${params.quantitativeSummary.trim() ? `ДАННЫЕ ЗАКРЫТЫХ ВОПРОСОВ (используй для кросс-анализа и поиска корреляций):\n${params.quantitativeSummary}\n` : ""}
-
-ОТКРЫТЫЕ ОТВЕТЫ:
-${answersText}
-
-# КЛЮЧЕВАЯ ЗАДАЧА
-Дай владельцу бизнеса КОНКРЕТНУЮ картину того, что происходит. Он должен после прочтения точно знать:
-1. Где у него САМЫЕ БОЛЬНЫЕ МЕСТА (конкретные проблемы с примерами)
-2. Где он ТЕРЯЕТ КЛИЕНТОВ/ДЕНЬГИ
-3. Что нужно СДЕЛАТЬ ПРЯМО СЕЙЧАС
-4. Какие есть СКРЫТЫЕ ВОЗМОЖНОСТИ, которые он не замечает
-5. Какие РИСКИ его ждут, если ничего не менять
-
-# ПРАВИЛА АНАЛИЗА
-- Анализируй КАЖДЫЙ ответ, даже если он один такой — единичные жалобы могут указывать на серьёзные системные проблемы
-- Сравнивай открытые ответы с данными закрытых вопросов, ищи противоречия и неочевидные паттерны
-- Если видишь, что респонденты говорят одно, а цифры показывают другое — укажи на это
-- Выделяй конкретные сегменты клиентов с их специфическими проблемами
-- Каждая твоя рекомендация должна иметь: ЧТО делать + КОМУ поручить + СРОК + КАКОЙ БУДЕТ РЕЗУЛЬТАТ
-- Пиши на русском языке живым, деловым языком, без канцеляризмов
-- НЕ ИСПОЛЬЗУЙ общие фразы вроде "нужно улучшить качество" — говори конкретно: что улучшить, как, зачем
-
-# ФОРМАТ ОТВЕТА
-Только валидный JSON, без markdown-обёрток:
-
-{
-  "themes": [
-    {
-      "theme": "КОНКРЕТНАЯ проблема или тема (например: «Холодная еда при доставке в центр города после 20:00»)",
-      "count": число упоминаний,
-      "sentiment": "negative/positive/neutral",
-      "examples": ["Точная цитата респондента", "Ещё цитата"],
-      "actionableInsight": "КОНКРЕТНОЕ действие: что сделать, кто отвечает, в какой срок, какой будет эффект (с цифрами)"
-    }
-  ],
-  "sentiment": {"positive": число 0-100, "neutral": число 0-100, "negative": число 0-100},
-  "wordCloud": [{"word": "ключевое слово или фраза из ответов", "weight": число 1-100}],
-  "summary": "РАЗВЁРНУТОЕ резюме (8-12 предложений):
-- Опиши общую картину с цифрами
-- Выдели 2-3 САМЫЕ КРИТИЧНЫЕ ПРОБЛЕМЫ
-- Покажи, где бизнес теряет деньги или клиентов
-- Укажи на скрытые возможности, которые ты увидел
-- Дай прогноз: что будет через 1-3-6 месяцев, если ничего не менять, и что будет, если внедрить твои рекомендации
-- Привяжи выводы к конкретным данным из ответов",
-  "keyInsights": [
-    "Инсайт 1: Конкретная находка с цифрами и влиянием на бизнес",
-    "Инсайт 2: ...",
-    ...(5-8 инсайтов)
-  ],
-  "diagnostics": {
-    "recommendations": [
-      "Рекомендация 1: действие + ответственный + срок + ожидаемый KPI + как измерить результат",
-      ...(3-6 рекомендаций)
-    ],
-    "hypotheses": [
-      "Гипотеза 1: «Мы думаем, что проблема в X, потому что...» + как проверить (A/B-тест, интервью, данные из CRM)",
-      ...(3-6 гипотез)
-    ],
-    "riskFactors": [
-      "Риск 1: описание + вероятность (низкая/средняя/высокая) + потенциальный ущерб в деньгах или клиентах + что делать для предотвращения",
-      ...(3-5 рисков)
-    ],
-    "metricsToWatch": [
-      "Метрика: название + текущее значение (если можно оценить) + целевое значение + как часто измерять",
-      ...(4-7 метрик)
-    ],
-    "actionPlan": {
-      "immediate": [
-        "На эту неделю: действие + конкретный результат (KPI) + ответственный",
-        ...(2-4 действия)
-      ],
-      "shortTerm": [
-        "На 1-3 месяца: действие + ожидаемый эффект (в цифрах) + как измерить",
-        ...(2-4 действия)
-      ],
-      "longTerm": [
-        "На 3-12 месяцев: стратегическое действие + как оно повлияет на бизнес",
-        ...(2-3 действия)
-      ]
-    },
-    "segmentsAnalysis": [
-      {
-        "segment": "Название сегмента клиентов (например: «Офисные сотрудники, заказывающие обеды»)",
-        "insight": "Что их беспокоит, что ценят, какие у них паттерны поведения (с примерами из ответов)",
-        "action": "Что делать для этого сегмента, чтобы повысить их лояльность и чек (конкретно)"
-      },
-      ...(1-4 сегмента)
-    ]
-  },
-  "businessImplications": [
-    "Как выявленная проблема/возможность влияет на: выручку, отток, репутацию, операционные расходы. С конкретными цифрами и прогнозом.",
-    ...(3-6 импликаций)
-  ],
-  "confidenceScore": число 0-100
-}`;
-
-  const completion = await openrouter.chat.completions.create({
-    model: params.model,
-    temperature: 0.4,
-    max_tokens: 6000,
-    messages: [
-      {
-        role: "system",
-        content: "Ты — элитный бизнес-консультант и CX-аналитик. Твоя специализация — находить конкретные проблемы и точки роста в клиентском опыте. Ты говоришь бизнесу правду: где они теряют деньги, где у них пробелы, что срочно исправлять. Ты не используешь общие фразы, каждое твоё утверждение подкреплено данными из ответов. Ты думаешь как предприниматель, для которого важен каждый рубль. Отвечаешь ТОЛЬКО JSON на русском языке.",
-      },
-      { role: "user", content: prompt },
-    ],
-  });
-
-  const content = completion.choices[0]?.message?.content;
-  const rawText = Array.isArray(content)
-    ? content
-        .map((part) => ("text" in part && typeof part.text === "string" ? part.text : ""))
-        .join("")
-    : (content ?? "");
-
-  return {
-    content: stripMarkdownFence(rawText),
-    attempt: 1,
-  };
-}
-
-async function requestAnalysisFromModelWithRetry(params: {
-  model: string;
-  surveyTitle: string;
-  surveyCategory?: string | null;
-  openAnswers: OpenAnswerGroup[];
-  quantitativeSummary: string;
+  systemPrompt: string;
+  userPrompt: string;
   maxRetries: number;
-}): Promise<{ content: string; attempt: number }> {
+}): Promise<string> {
   let lastError: Error | null = null;
 
   for (let attempt = 1; attempt <= params.maxRetries; attempt++) {
     try {
-      const result = await requestAnalysisFromModel({
+      console.log(`[ai-analysis] Attempt ${attempt}/${params.maxRetries} with model ${params.model}`);
+
+      const completion = await openrouter.chat.completions.create({
         model: params.model,
-        surveyTitle: params.surveyTitle,
-        surveyCategory: params.surveyCategory,
-        openAnswers: params.openAnswers,
-        quantitativeSummary: params.quantitativeSummary,
+        temperature: 0.4,
+        max_tokens: 4000,
+        messages: [
+          { role: "system", content: params.systemPrompt },
+          { role: "user", content: params.userPrompt },
+        ],
       });
-      return { ...result, attempt };
+
+      const content = completion.choices[0]?.message?.content;
+      
+      if (!content) {
+        throw new Error("Empty response from model");
+      }
+
+      const rawText = Array.isArray(content)
+        ? content
+            .map((part) => ("text" in part && typeof part.text === "string" ? part.text : ""))
+            .join("")
+        : content;
+
+      return stripMarkdownFence(rawText);
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
-      console.warn(`[ai-analysis] Attempt ${attempt}/${params.maxRetries} failed for model ${params.model}:`, lastError.message);
+      console.warn(`[ai-analysis] Attempt ${attempt} failed:`, lastError.message);
 
       if (attempt < params.maxRetries) {
-        const delay = Math.min(1000 * Math.pow(2, attempt - 1), 8000);
+        const delay = Math.min(1000 * Math.pow(2, attempt - 1), 10000);
+        console.log(`[ai-analysis] Waiting ${delay}ms before retry...`);
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
   }
 
-  throw lastError || new Error("AI_ANALYSIS_ALL_RETRIES_FAILED");
-}
-
-async function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
-  let timer: ReturnType<typeof setTimeout> | null = null;
-  try {
-    return await Promise.race([
-      promise,
-      new Promise<T>((_, reject) => {
-        timer = setTimeout(() => {
-          reject(new Error(`${label}_TIMEOUT`));
-        }, ms);
-      }),
-    ]);
-  } finally {
-    if (timer) clearTimeout(timer);
-  }
+  throw lastError || new Error("All retries failed");
 }
 
 export async function analyzeSurveyResponses(params: {
@@ -408,7 +213,7 @@ export async function analyzeSurveyResponses(params: {
   const totalAnswers = normalizedOpenAnswers.reduce((sum, g) => sum + g.answers.length, 0);
 
   if (!normalizedOpenAnswers.length || totalAnswers === 0) {
-    throw new Error("Нет открытых ответов для анализа. Добавьте открытые вопросы в опрос и соберите ответы респондентов.");
+    throw new Error("NO_OPEN_ANSWERS");
   }
 
   if (!process.env.OPENROUTER_API_KEY) {
@@ -417,84 +222,172 @@ export async function analyzeSurveyResponses(params: {
 
   const quantitativeSummary = params.quantitativeSummary?.trim() ?? "";
 
-  // Список моделей от лучшей к более простым
+  // Формируем текст ответов
+  const answersText = normalizedOpenAnswers
+    .map(
+      (group) =>
+        `Question: "${group.questionTitle}"\nAnswers count: ${group.answers.length}\nAnswers:\n${group.answers
+          .map((answer, index) => `${index + 1}. ${answer}`)
+          .join("\n")}`,
+    )
+    .join("\n\n---\n\n");
+
+  // Системный промпт
+  const systemPrompt = `You are an expert CX analyst and business consultant. Your task is to analyze survey responses and provide actionable, specific, personalized insights. You respond ONLY with valid JSON in Russian language. Every recommendation must include: WHAT to do, WHO is responsible, TIMELINE, and EXPECTED KPI. No generic phrases allowed.`;
+
+  // Пользовательский промпт
+  const userPrompt = `Analyze these survey responses and provide detailed, specific, actionable insights.
+
+Survey title: ${params.surveyTitle}
+${params.surveyCategory ? `Business category: ${params.surveyCategory}` : ""}
+Total open answers: ${totalAnswers}
+Number of questions: ${normalizedOpenAnswers.length}
+
+${quantitativeSummary ? `Quantitative data (use for cross-analysis):\n${quantitativeSummary}\n` : ""}
+
+Open answers:
+${answersText}
+
+Return ONLY valid JSON in this exact structure (no markdown, no code blocks):
+
+{
+  "themes": [
+    {
+      "theme": "Specific problem or topic with context (e.g., 'Cold food delivery in downtown area after 8 PM affecting office workers')",
+      "count": number_of_mentions,
+      "sentiment": "negative",
+      "examples": ["exact quote 1", "exact quote 2"],
+      "actionableInsight": "Specific action: what to do, who responsible, deadline, expected KPI with numbers"
+    }
+  ],
+  "sentiment": {"positive": 30, "neutral": 40, "negative": 30},
+  "wordCloud": [{"word": "keyword from answers", "weight": 85}],
+  "summary": "Detailed summary in Russian (8-12 sentences): overall picture with numbers, 2-3 most critical issues, where business loses money/clients, hidden opportunities, forecast for 1-3-6 months with and without changes",
+  "keyInsights": [
+    "Insight 1: specific finding with numbers and business impact",
+    "Insight 2: ...",
+    "Insight 3: ...",
+    "Insight 4: ..."
+  ],
+  "diagnostics": {
+    "recommendations": [
+      "Recommendation: action + responsible person/department + deadline + expected KPI + how to measure",
+      "..."
+    ],
+    "hypotheses": [
+      "Hypothesis: 'We think problem X exists because...' + how to verify (A/B test, interviews, CRM data)",
+      "..."
+    ],
+    "riskFactors": [
+      "Risk: description + probability (low/medium/high) + potential damage (money/clients) + mitigation plan",
+      "..."
+    ],
+    "metricsToWatch": [
+      "Metric: name + current value (if can estimate) + target value + measurement frequency",
+      "..."
+    ],
+    "actionPlan": {
+      "immediate": ["This week: specific action + concrete KPI + responsible person"],
+      "shortTerm": ["1-3 months: action + expected effect with numbers + how to measure"],
+      "longTerm": ["3-12 months: strategic action + business impact prediction"]
+    },
+    "segmentsAnalysis": [
+      {
+        "segment": "Customer segment name (e.g., 'Office workers ordering lunch')",
+        "insight": "What concerns them, what they value, behavior patterns (with examples from answers)",
+        "action": "What to do for this segment to increase loyalty and average check (specific)"
+      }
+    ]
+  },
+  "businessImplications": [
+    "How identified issue/opportunity affects: revenue, churn, reputation, operational costs. With specific numbers and forecast.",
+    "..."
+  ],
+  "confidenceScore": 75
+}
+
+IMPORTANT RULES:
+- Sum of sentiment values MUST be exactly 100
+- Every theme MUST have actionableInsight with specific actions
+- Write summary and keyInsights in Russian
+- Use specific numbers and percentages from the data
+- Don't use generic phrases like "improve quality" - say specifically what to improve, how, why
+- If you see contradictions between open answers and quantitative data, point them out
+- Identify hidden patterns and non-obvious connections`;
+
+  // Список моделей для попыток
   const modelsToTry = [
-    "google/gemini-3.1-pro-preview",
-    "anthropic/claude-3.5-sonnet",
-    "anthropic/claude-3-haiku-20240307",
+    process.env.OPENROUTER_MODEL || "google/gemini-2.0-flash-001",
     "google/gemini-2.0-flash-001",
-    "meta-llama/llama-3-70b-instruct",
-    "google/gemini-2.0-flash-001",
-  ];
+    "google/gemini-1.5-flash",
+    "meta-llama/llama-3.1-70b-instruct",
+    "mistralai/mistral-large",
+  ].filter(Boolean);
 
-  // Добавляем модель из конфига, если её нет в списке
-  const configuredModel = process.env.OPENROUTER_MODEL;
-  if (configuredModel && !modelsToTry.includes(configuredModel)) {
-    modelsToTry.unshift(configuredModel);
-  }
-
-  // Убираем дубликаты
   const uniqueModels = Array.from(new Set(modelsToTry));
 
-  console.log(`[ai-analysis] Starting analysis for "${params.surveyTitle}" with ${totalAnswers} answers across ${normalizedOpenAnswers.length} questions`);
-  console.log(`[ai-analysis] Models to try: ${uniqueModels.join(", ")}`);
+  console.log(`[ai-analysis] Starting analysis for "${params.surveyTitle}" with ${totalAnswers} answers`);
+  console.log(`[ai-analysis] Will try models: ${uniqueModels.join(", ")}`);
 
-  let lastError: Error | null = null;
+  const errors: string[] = [];
 
   for (const model of uniqueModels) {
-    console.log(`[ai-analysis] Trying model: ${model}`);
-
     try {
-      const { content: cleaned, attempt } = await withTimeout(
-        requestAnalysisFromModelWithRetry({
-          model,
-          surveyTitle: params.surveyTitle,
-          surveyCategory: params.surveyCategory,
-          openAnswers: normalizedOpenAnswers,
-          quantitativeSummary,
-          maxRetries: 2,
-        }),
-        60000,
-        "AI_ANALYSIS"
-      );
+      console.log(`[ai-analysis] Trying ${model}...`);
+      
+      const rawResponse = await callOpenRouterWithRetry({
+        model,
+        systemPrompt,
+        userPrompt,
+        maxRetries: 2,
+      });
 
-      console.log(`[ai-analysis] Got response from ${model} (attempt ${attempt}), parsing...`);
+      console.log(`[ai-analysis] Got response from ${model}, length: ${rawResponse.length}`);
 
+      // Пробуем распарсить JSON
+      let parsedJson: any;
       try {
-        const parsedJson = JSON.parse(cleaned);
-        const parsed = analysisResultSchema.parse(parsedJson) as AnalysisResult;
-
-        if (!isLowQuality(parsed)) {
-          console.log(`[ai-analysis] SUCCESS with ${model} (attempt ${attempt})`);
-          return {
-            ...parsed,
-            sentiment: normalizeSentiment(parsed.sentiment),
-          };
-        } else {
-          console.warn(`[ai-analysis] Low quality result from ${model}, trying next model...`);
-        }
-      } catch (parseError) {
-        console.warn(`[ai-analysis] JSON parse/schema error with ${model}:`, 
-          parseError instanceof Error ? parseError.message : "Unknown error");
-        // Продолжаем со следующей моделью
+        parsedJson = JSON.parse(rawResponse);
+      } catch {
+        // Может быть, там лишние символы, пробуем ещё раз очистить
+        const cleanedAgain = rawResponse
+          .replace(/^[^{]*/, "")
+          .replace(/[^}]*$/, "");
+        parsedJson = JSON.parse(cleanedAgain);
       }
+
+      // Валидируем через Zod
+      const validated = analysisResultSchema.parse(parsedJson) as AnalysisResult;
+
+      // Нормализуем sentiment
+      validated.sentiment = normalizeSentiment(validated.sentiment);
+
+      // Проверяем базовое качество
+      if (
+        validated.summary.length < 50 ||
+        validated.keyInsights.length < 3 ||
+        validated.themes.length < 1
+      ) {
+        console.warn(`[ai-analysis] ${model} returned low quality response, trying next...`);
+        errors.push(`${model}: low quality`);
+        continue;
+      }
+
+      console.log(`[ai-analysis] SUCCESS with ${model}`);
+      return validated;
+
     } catch (error) {
-      const message = error instanceof Error ? error.message : "AI_ANALYSIS_FAILED";
-
-      if (message.includes("OPENROUTER_NOT_CONFIGURED")) {
-        throw error;
-      }
-
-      lastError = error instanceof Error ? error : new Error(message);
-      console.warn(`[ai-analysis] Model ${model} failed: ${message}`);
+      const msg = error instanceof Error ? error.message : String(error);
+      console.warn(`[ai-analysis] ${model} failed: ${msg}`);
+      errors.push(`${model}: ${msg}`);
     }
   }
 
-  // Если все модели не сработали — выбрасываем понятную ошибку
-  const errorMessage = lastError
-    ? `Все ИИ-модели не смогли провести анализ (последняя ошибка: ${lastError.message}). Пожалуйста, попробуйте позже или обратитесь в поддержку.`
-    : "Все ИИ-модели не смогли провести анализ. Пожалуйста, попробуйте позже или обратитесь в поддержку.";
-
-  console.error(`[ai-analysis] ALL MODELS FAILED. ${errorMessage}`);
-  throw new Error(errorMessage);
+  console.error(`[ai-analysis] All models failed. Errors:`, errors);
+  
+  throw new Error(
+    `Failed to analyze responses with all available AI models. ` +
+    `Errors: ${errors.join("; ")}. ` +
+    `Please try again later or contact support.`
+  );
 }
