@@ -1,7 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
-/** DB migration not applied: Prisma schema has `diagnostics`, PostgreSQL table does not */
+
 function isMissingDiagnosticsColumnError(error: unknown): boolean {
   const msg = (error instanceof Error ? error.message : String(error)).toLowerCase();
   if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2022") {
@@ -13,10 +13,10 @@ function isMissingDiagnosticsColumnError(error: unknown): boolean {
   );
 }
 
-/**
- * Load diagnostics without including the field in the main Prisma select (avoids failing
- * the whole page when production DB is behind schema and column is missing).
- */
+
+
+
+
 export async function fetchSurveyAnalysisDiagnostics(surveyId: string): Promise<unknown | null> {
   try {
     const rows = await prisma.$queryRaw<Array<{ diagnostics: unknown }>>`

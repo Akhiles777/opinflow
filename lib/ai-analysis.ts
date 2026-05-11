@@ -46,7 +46,7 @@ export type AnalysisResult = {
   confidenceScore?: number;
 };
 
-// Смягчаем валидацию — минимум 1 вместо 2-3
+
 const diagnosticsSchema = z.object({
   recommendations: z.array(z.string().min(10).max(600)).min(1).max(10),
   hypotheses: z.array(z.string().min(10).max(500)).min(1).max(8),
@@ -400,7 +400,7 @@ export async function analyzeSurveyResponses(params: {
       parsedJson = JSON.parse(extraCleaned);
     }
 
-    // Патчим actionPlan если там меньше 2 элементов
+    
     if (parsedJson.diagnostics?.actionPlan) {
       const ap = parsedJson.diagnostics.actionPlan;
       const fallbackAction = "Провести дополнительный анализ и разработать план улучшений на основе полученных данных";

@@ -559,14 +559,14 @@ export default function StepQuestions({ questions, onChange, draft }: Props) {
   const [expandedId, setExpandedId] = useState<string | null>(questions[0]?.id ?? null);
   const [showTypeMenu, setShowTypeMenu] = useState(false);
 
-  // — автосохранение черновика —
+  
   const [draftId, setDraftId] = useState<string | undefined>(undefined);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isFirstRender = useRef(true);
 
   useEffect(() => {
-    // Пропускаем первый рендер, чтобы не сохранять при монтировании
+    
     if (isFirstRender.current) {
       isFirstRender.current = false;
       return;
@@ -587,7 +587,7 @@ export default function StepQuestions({ questions, onChange, draft }: Props) {
       if (debounceTimer.current) clearTimeout(debounceTimer.current);
     };
   }, [questions, draft]);
-  // — конец автосохранения —
+  
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
   const ids = useMemo(() => questions.map((question) => question.id), [questions]);
@@ -616,7 +616,7 @@ export default function StepQuestions({ questions, onChange, draft }: Props) {
 
   return (
     <div className="space-y-4">
-      {/* Индикатор автосохранения */}
+      {}
       {saveStatus !== "idle" && (
         <div className="flex justify-end">
           <span className="text-xs font-medium text-dash-muted">

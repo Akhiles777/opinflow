@@ -16,7 +16,7 @@ function toMoneyString(amount: number) {
   return amount.toFixed(2);
 }
 
-/** Trim, strip BOM, strip wrapping quotes (typical .env / Vercel paste issues) */
+
 function stripCredentialOuter(raw: string): string {
   let s = (raw ?? "").toString();
   if (s.charCodeAt(0) === 0xfeff) {
@@ -29,12 +29,12 @@ function stripCredentialOuter(raw: string): string {
   return s;
 }
 
-/** Невидимые символы и «особые» пробелы при копировании из ЛК/PDF — ломали нашу валидацию */
+
 const CREDENTIAL_INVISIBLE = /[\uFEFF\u200B-\u200D\u2060\u00A0]/g;
-/** Юникод‑дефисы в интерфейсах ЮKassa/браузера — не совпадают с ASCII "-" в regex */
+
 const UNICODE_TO_ASCII_HYPHEN = /[\u2010\u2011\u2012\u2013\u2014\u2212\uFF0D]/g;
 
-/** Gateway agentId (логин Basic Auth для выплат): только сам id, без пробелов/невидимых символов */
+
 function normalizePayoutAgentId(raw: string): string {
   let s = stripCredentialOuter(raw);
   s = s.replace(CREDENTIAL_INVISIBLE, "");
@@ -43,7 +43,7 @@ function normalizePayoutAgentId(raw: string): string {
   return s;
 }
 
-/** Секрет шлюза выплат — одна строка */
+
 function normalizePayoutSecretKey(raw: string): string {
   let s = stripCredentialOuter(raw);
   s = s.replace(CREDENTIAL_INVISIBLE, "");
@@ -51,11 +51,11 @@ function normalizePayoutSecretKey(raw: string): string {
   return s.trim();
 }
 
-/**
- * Идентификатор шлюза выплат (agentId) — НЕ shopId магазина для приёма платежей.
- * Сначала явные имена (часто в .env остаётся старое YUKASSA_PAYOUT_SHOP_ID с неверным значением).
- * @see https://yookassa.ru/developers/using-api/interaction-format — «For those who make payouts»
- */
+
+
+
+
+
 function getPayoutAgentId(): string {
   const raw =
     process.env.YUKASSA_PAYOUT_AGENT_ID ||
@@ -73,7 +73,7 @@ function getPayoutSecretKey(): string {
   return normalizePayoutSecretKey(raw);
 }
 
-/** ЮKassa: длина ключа идемпотентности не более 64 символов */
+
 function toYukassaIdempotenceKey(key: string): string {
   const trimmed = stripCredentialOuter(key);
   if (trimmed.length <= 64) {
@@ -114,7 +114,7 @@ function ensurePayoutsConfigured() {
     );
   }
 
-  // Частая ошибка: в буфер попала подпись поля или пояснение на русском
+  
   if (/[а-яА-ЯёЁ]/.test(agentId)) {
     throw new Error(
       "YUKASSA_PAYOUT_AGENT_FORMAT: В agentId есть кириллица — обычно скопирована не та часть текста. Нужен только идентификатор шлюза (латиница/цифры), из раздела «Настройки выплат» / API шлюза.",
@@ -229,7 +229,7 @@ function getPayoutDestinationForRequest(params: {
 type SbpBankRow = { bank_id: string; name: string };
 
 const SBP_BANKS_CACHE_OK_TTL_MS = 20 * 60 * 1000;
-/** Не дёргать sbp_banks при стабильном «продукт не подключён» от ЮKassa */
+
 const SBP_BANKS_CACHE_FORBIDDEN_TTL_MS = 30 * 60 * 1000;
 
 type SbpBanksFetchCache =
@@ -275,7 +275,7 @@ export type FetchSbpBanksForPayoutsResult =
       ok: false;
       httpStatus: number;
       yukassaCode: string | null;
-      /** ЮKassa явно сообщила о запрете операции (договор/продукт), не обязательно HTTP 403 */
+      
       contractForbidden: boolean;
       rawSnippet: string;
     };
@@ -307,10 +307,10 @@ function isSbpContractForbiddenResponse(httpStatus: number, code: string | null,
   return false;
 }
 
-/**
- * Получает список банков-участников СБП для выплат (credentials шлюза выплат).
- * Возвращает структуру без throw — включая случай «СБП не подключён в ЛК ЮKassa».
- */
+
+
+
+
 export async function fetchSbpBanksForPayouts(): Promise<FetchSbpBanksForPayoutsResult> {
   ensurePayoutsConfigured();
 

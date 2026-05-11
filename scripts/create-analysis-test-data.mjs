@@ -1,12 +1,12 @@
-// ===============================
-// ТЕСТ 1 — Онлайн-банк
-// ===============================
+
+
+
 
 import { PrismaClient, Prisma } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-const TARGET_EMAIL = "gasan07.03.2009@icloud.com";
+const TARGET_EMAIL = "metalgeorg@yandex.ru";
 const RESPONDENT_COUNT = 40;
 
 const OPEN_ANSWERS = [

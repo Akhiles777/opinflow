@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma'
 
-// Возраст в годах из даты рождения
+
 function getAge(birthDate?: Date | null): number {
   if (!birthDate) return 0
   const diffMs = Date.now() - birthDate.getTime()
@@ -8,12 +8,12 @@ function getAge(birthDate?: Date | null): number {
 }
 
 export async function getSurveyFeed(userId: string) {
-  // Загружаем профиль респондента для таргетинга
+  
   const profile = await prisma.respondentProfile.findUnique({
     where: { userId },
   })
 
-  // ID опросов которые пользователь уже проходил (или проходит)
+  
   const existingSessions = await prisma.surveySession.findMany({
     where:  { userId },
     select: { surveyId: true },
@@ -27,16 +27,16 @@ export async function getSurveyFeed(userId: string) {
     where: {
       status: 'ACTIVE',
 
-      // Исключить уже пройденные
+      
       id: { notIn: excludeIds.length > 0 ? excludeIds : [''] },
 
-      // Опрос ещё идёт
+      
       OR: [
         { endsAt: null },
         { endsAt: { gt: now } },
       ],
 
-      // Опрос уже начался
+      
       AND: [
         {
           OR: [
@@ -45,7 +45,7 @@ export async function getSurveyFeed(userId: string) {
           ],
         },
 
-        // Таргетинг по полу
+        
         {
           OR: [
             { targetGender: 'any' },
@@ -54,7 +54,7 @@ export async function getSurveyFeed(userId: string) {
           ],
         },
 
-        // Таргетинг по минимальному возрасту
+        
         {
           OR: [
             { targetAgeMin: null },
@@ -62,7 +62,7 @@ export async function getSurveyFeed(userId: string) {
           ],
         },
 
-        // Таргетинг по максимальному возрасту
+        
         {
           OR: [
             { targetAgeMax: null },
@@ -70,7 +70,7 @@ export async function getSurveyFeed(userId: string) {
           ],
         },
 
-        // Таргетинг по городу
+        
         {
           OR: [
             { targetCities: { isEmpty: true } },
@@ -83,13 +83,13 @@ export async function getSurveyFeed(userId: string) {
     },
 
     include: {
-      questions: { select: { id: true } },  // только для подсчёта
+      questions: { select: { id: true } },  
       _count:    { select: { sessions: { where: { isValid: true, status: 'COMPLETED' } } } },
     },
 
     orderBy: [
-      { reward: 'desc' },     // сначала самые дорогие
-      { createdAt: 'desc' },  // потом новые
+      { reward: 'desc' },     
+      { createdAt: 'desc' },  
     ],
 
     take: 20,
@@ -98,7 +98,7 @@ export async function getSurveyFeed(userId: string) {
   return surveys
 }
 
-// Незавершённые сессии пользователя (опросы в работе)
+
 export async function getInProgressSurveys(userId: string) {
   return prisma.surveySession.findMany({
     where:   { userId, status: 'IN_PROGRESS' },
@@ -107,7 +107,7 @@ export async function getInProgressSurveys(userId: string) {
   })
 }
 
-// Завершённые сессии пользователя
+
 export async function getCompletedSurveys(userId: string) {
   return prisma.surveySession.findMany({
     where:   { userId, status: { in: ['COMPLETED', 'REJECTED'] } },

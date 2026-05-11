@@ -62,7 +62,7 @@ export default function TwoAudiences() {
               Начать зарабатывать →
             </Button>
 
-            {/* Мини-карточка снизу, после кнопки */}
+            {}
             <div className="mt-6 w-full rounded-2xl border border-site-border bg-site-card p-5 shadow-card">
               <div className="flex items-start justify-between">
                 <div>
@@ -120,7 +120,7 @@ export default function TwoAudiences() {
               Заказать исследование →
             </Button>
 
-            {/* Мини-карточка снизу, после кнопки */}
+            {}
             <div className="mt-6 w-full rounded-2xl border border-site-border bg-site-card p-5 shadow-card">
               <p className="text-xs font-body text-site-muted mb-4">Результаты опроса</p>
               <div className="grid grid-cols-2 gap-x-5 gap-y-3">

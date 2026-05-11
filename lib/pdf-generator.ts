@@ -21,7 +21,7 @@ async function getCyrillicFontBytes() {
       cachedFontBytes = new Uint8Array(data);
       return cachedFontBytes;
     } catch {
-      // try next candidate
+      
     }
   }
 
@@ -60,7 +60,7 @@ export async function generateSurveyPDF(params: {
     const fontBytes = await getCyrillicFontBytes();
     const regular = await pdf.embedFont(fontBytes);
     const bold = regular;
-    let page = pdf.addPage([595.28, 841.89]); // A4
+    let page = pdf.addPage([595.28, 841.89]); 
     const { width } = page.getSize();
     const x = 36;
     let y = 805;

@@ -42,7 +42,7 @@ export default function About() {
     <section id="about" className="bg-site-bg px-4 py-20 sm:px-6 sm:py-24 lg:px-8 lg:py-32">
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 lg:gap-16 items-center">
 
-        {/* Левая колонка */}
+        {}
         <div>
           <RevealOnScroll>
             <h2 className="font-display text-heading text-site-heading mb-6">
@@ -76,7 +76,7 @@ export default function About() {
           </RevealOnScroll>
         </div>
 
-        {/* Правая колонка — изображение по центру, без sticky */}
+        {}
         <RevealOnScroll direction="right">
           <div className="mt-12 lg:mt-0">
             <div className="relative rounded-3xl overflow-hidden w-full aspect-[3/4] max-h-[640px]">
@@ -86,13 +86,13 @@ export default function About() {
                 className="w-full h-full object-cover object-center"
               />
 
-              {/* Градиент снизу */}
+              {}
               <div
                 className="absolute inset-0"
                 style={{ background: "linear-gradient(to top, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 50%)" }}
               />
 
-              {/* Статы поверх */}
+              {}
               <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5">
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {stats.map((stat) => (

@@ -1,4 +1,4 @@
-/** E.164-стиль для РФ: 11 цифр с ведущей 7, как в примерах ЮKassa для СБП */
+
 export function normalizeRuPhoneForYukassa(phone: string): string {
   let digits = phone.replace(/\D/g, "");
   if (digits.length === 10 && digits.startsWith("9")) {
@@ -10,15 +10,15 @@ export function normalizeRuPhoneForYukassa(phone: string): string {
   return digits;
 }
 
-/** OpenAPI ЮKassa: YooMoneyAccountNumber — от 11 до 33 символов, только цифры */
+
 const YOOMONEY_ACCOUNT_DIGITS_MIN = 11;
 const YOOMONEY_ACCOUNT_DIGITS_MAX = 33;
 
-/** CardDataForPayoutDestination.number — паттерн [0-9]{16,19} */
+
 const BANK_CARD_DIGITS_MIN = 16;
 const BANK_CARD_DIGITS_MAX = 19;
 
-/** OpenAPI ЮKassa: SbpBankId — ровно 12 символов [a-zA-Z0-9]{12}, пример "100000000111" */
+
 export const YUKASSA_SBP_BANK_ID_PATTERN = /^[a-zA-Z0-9]{12}$/;
 
 export function isValidSbpBankId(raw: string): boolean {
@@ -41,10 +41,10 @@ export function normalizeBankCardNumberForPayout(raw: string): string {
   return digitsOnly(stripInvisible(raw));
 }
 
-/**
- * Серверная валидация реквизитов выплаты по схеме OpenAPI ЮKassa.
- * @see https://yookassa.ru/developers/api/yookassa-openapi-specification.yaml
- */
+
+
+
+
 function requisitesBankId(requisites: Record<string, string>): string {
   const direct = requisites.bankId ?? requisites.bank_id;
   return typeof direct === "string" ? direct : "";
@@ -107,7 +107,7 @@ export type PayoutDestinationForApi =
   | { type: "bank_card"; card: { number: string } }
   | { type: "sbp"; phone: string; bank_id: string };
 
-/** Нормализованные реквизиты для хранения в БД и отправки в ЮKassa */
+
 export function normalizeWithdrawalRequisitesForStorage(
   method: "CARD" | "SBP" | "WALLET",
   requisites: Record<string, string>,

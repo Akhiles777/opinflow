@@ -153,6 +153,19 @@ export async function getSurveyFeed(userId: string) {
   const exclude = sessions.map((session) => session.surveyId);
   const age = getAge(profile?.birthDate);
   const now = new Date();
+  
+  const NEW_USER_WINDOW_DAYS = Number(process.env.NEW_USER_WINDOW_DAYS ?? "2");
+  const NEW_SURVEY_BOOST_DAYS = Number(process.env.NEW_SURVEY_BOOST_DAYS ?? "2");
+
+  
+  let userCreatedAt: Date | null = null;
+  try {
+    const userRow = await prisma.user.findUnique({ where: { id: userId }, select: { createdAt: true } });
+    userCreatedAt = userRow?.createdAt ?? null;
+  } catch {
+    userCreatedAt = null;
+  }
+  const userAgeDays = userCreatedAt ? Math.floor((now.getTime() - userCreatedAt.getTime()) / (1000 * 60 * 60 * 24)) : Infinity;
   let surveys: Array<{
     id: string;
     title: string;
@@ -282,7 +295,23 @@ export async function getSurveyFeed(userId: string) {
         targetIndustries: survey.targetIndustries ?? [],
         targetMaritalStatuses: survey.targetMaritalStatuses ?? [],
       };
-      const score = getMatchScore(surveyForScore, profile, age);
+      let score = getMatchScore(surveyForScore, profile, age);
+
+      
+      const surveyAgeDays = Math.floor((now.getTime() - survey.createdAt.getTime()) / (1000 * 60 * 60 * 24));
+
+      
+      if (userAgeDays <= NEW_USER_WINDOW_DAYS && surveyAgeDays <= NEW_SURVEY_BOOST_DAYS) {
+        
+        const boost = Math.max(0, NEW_SURVEY_BOOST_DAYS - surveyAgeDays + 1);
+        score += Math.min(3, boost);
+      }
+
+      
+      if (userAgeDays > NEW_USER_WINDOW_DAYS && surveyAgeDays <= NEW_SURVEY_BOOST_DAYS) {
+        
+        score -= 0.8;
+      }
       return {
         ...survey,
         recommended: score >= 8,

@@ -12,7 +12,7 @@ type PayoutWebhookObject = {
 function normalizeWebhookSignatureHeader(raw: string | null) {
   const s = (raw ?? "").trim();
   if (!s) return "";
-  // allow "sha256=<hex>" or plain "<hex>"
+  
   const m = /^sha256\s*=\s*([0-9a-f]+)$/i.exec(s);
   return (m?.[1] ?? s).toLowerCase();
 }

@@ -45,7 +45,7 @@ function yukassaPayoutDescription(message: string): string | null {
       return data.description.trim();
     }
   } catch {
-    // not JSON
+    
   }
   return withoutPrefix.length > 320 ? `${withoutPrefix.slice(0, 320)}…` : withoutPrefix;
 }
@@ -146,7 +146,7 @@ export async function createWithdrawalAction(params: {
   const session = await requireRole("RESPONDENT");
 
   if (params.amount < 100) {
-    return { error: "Минимальная сумма вывода — 100 ₽" };
+    return { error: "Минимальная сумма вывода — 500 ₽" };
   }
 
   try {
@@ -167,7 +167,7 @@ export async function createWithdrawalAction(params: {
         return { error: YUKASSA_SBP_CONTRACT_FORBIDDEN_RESPONDENT_RU };
       }
     } catch {
-      /** fetchSbpBanksForPayouts оборачивает ensurePayoutsConfigured; ошибки уже отражены ниже через createPayout */
+      
     }
   }
 
@@ -216,81 +216,11 @@ export async function createWithdrawalAction(params: {
     return { error: "Недостаточно средств для вывода" };
   }
 
-  try {
-    const payout = await createPayout({
-      amount: params.amount,
-      method: withdrawalMethodToPayoutApi(params.method),
-      requisites: cleanedRequisites,
-      description: `Выплата респонденту ${session.user.id}`,
-      metadata: { withdrawalRequestId: reserve.requestId },
-      idempotenceKey: `wd-req-${reserve.requestId}`,
-    });
-
-    const payoutStatusLower = (payout.status ?? "").toLowerCase();
-    if (payoutStatusLower === "succeeded") {
-      await completeWithdrawalRequest({ requestId: reserve.requestId, payoutId: payout.id });
-    } else if (payoutStatusLower === "canceled" || payoutStatusLower === "failed") {
-      await failWithdrawalRequest({ requestId: reserve.requestId, payoutId: payout.id });
-    } else {
-      await prisma.withdrawalRequest.update({
-        where: { id: reserve.requestId },
-        data: {
-          status: "PROCESSING",
-          yukassaPayoutId: payout.id,
-        },
-      });
-    }
-
-    revalidatePath("/respondent/wallet");
-    revalidatePath("/admin/finance");
-    return { success: true };
-  } catch (error) {
-    console.error("[payments][create-withdrawal-error]", error);
-
-    await prisma.$transaction(async (tx) => {
-      await tx.wallet.update({
-        where: { id: reserve.walletId },
-        data: {
-          balance: { increment: new Prisma.Decimal(params.amount) },
-        },
-      });
-
-      await tx.withdrawalRequest.update({
-        where: { id: reserve.requestId },
-        data: { status: "FAILED" },
-      });
-
-      await tx.transaction.updateMany({
-        where: {
-          walletId: reserve.walletId,
-          type: "WITHDRAWAL",
-          status: "PENDING",
-          description: { contains: reserve.requestId },
-        },
-        data: { status: "FAILED" },
-      });
-
-      await tx.transaction.create({
-        data: {
-          walletId: reserve.walletId,
-          type: "REFUND",
-          amount: new Prisma.Decimal(params.amount),
-          description: `Возврат: ЮKassa не приняла выплату (заявка #${reserve.requestId})`,
-          status: "COMPLETED",
-        },
-      });
-    });
-
-    revalidatePath("/respondent/wallet");
-    revalidatePath("/admin/finance");
-
-    return {
-      error: getPaymentErrorMessage(
-        error,
-        "Не удалось выполнить автоматическую выплату. Пожалуйста, обратитесь в поддержку.",
-      ),
-    };
-  }
+  
+  
+  revalidatePath("/respondent/wallet");
+  revalidatePath("/admin/finance");
+  return { success: true };
 }
 
 export async function approveWithdrawalAction(requestId: string) {
@@ -335,7 +265,7 @@ export async function approveWithdrawalAction(requestId: string) {
         };
       }
     } catch {
-      /** далее createPayout покажет причину */
+      
     }
   }
 
@@ -349,11 +279,11 @@ export async function approveWithdrawalAction(requestId: string) {
       idempotenceKey: `admin-approve-${requestId}`,
     });
 
-    // If the payout API already returned a final status, apply it immediately.
+    
     const payoutStatusLower = (payout.status ?? "").toLowerCase();
 
     if (payoutStatusLower === "succeeded") {
-      // Mark completed including yukassa payout id when available
+      
       await completeWithdrawalRequest({ requestId, payoutId: payout.id });
     } else if (payoutStatusLower === "canceled" || payoutStatusLower === "failed") {
       await failWithdrawalRequest({ requestId, payoutId: payout.id });

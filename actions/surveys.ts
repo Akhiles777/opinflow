@@ -664,7 +664,7 @@ export async function saveDraftAction(draft: SurveyDraft, surveyId?: string) {
   const session = await requireRole("CLIENT");
 
   const questions = draft.questions.map((question, index) => ({
-    surveyId: "", // заполнится ниже
+    surveyId: "", 
     order: index,
     type: question.type,
     title: question.title.trim(),
@@ -677,7 +677,7 @@ export async function saveDraftAction(draft: SurveyDraft, surveyId?: string) {
   }));
 
   if (surveyId) {
-    // Обновляем существующий черновик
+    
     const existing = await prisma.survey.findUnique({
       where: { id: surveyId },
       select: { creatorId: true, status: true },
@@ -723,7 +723,7 @@ export async function saveDraftAction(draft: SurveyDraft, surveyId?: string) {
     return { success: true, surveyId };
   }
 
-  // Создаём новый черновик
+  
   const survey = await prisma.$transaction(async (tx) => {
     const created = await tx.survey.create({
       data: {

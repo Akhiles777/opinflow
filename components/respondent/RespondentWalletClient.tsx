@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Modal from "@/components/dashboard/Modal";
 import Badge from "@/components/dashboard/Badge";
 import { createWithdrawalAction } from "@/actions/payments";
+import { analyzeSurveyResponses } from "@/lib/ai-analysis";
 
 type WithdrawalMethod = "CARD" | "SBP" | "WALLET";
 
@@ -45,7 +46,7 @@ function mapRequestStatus(status: Props["withdrawalRequests"][number]["status"])
         : { v: "rejected" as const, t: status === "REJECTED" ? "Отклонено" : "Ошибка" };
 }
 
-/** OpenAPI ЮKassa: номер карты для выплаты — 16–19 цифр */
+
 function maskCard(value: string) {
   const digits = value.replace(/\D/g, "").slice(0, 19);
   return digits.replace(/(\d{4})(?=\d)/g, "$1 ").trim();
@@ -62,7 +63,7 @@ export default function RespondentWalletClient({
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [step, setStep] = useState<1 | 2>(1);
   const [method, setMethod] = useState<WithdrawalMethod>("CARD");
-  const [amount, setAmount] = useState("100");
+  const [amount, setAmount] = useState("500");
   const [cardNumber, setCardNumber] = useState("");
   const [phone, setPhone] = useState("");
   const [bankId, setBankId] = useState("");
@@ -171,7 +172,7 @@ export default function RespondentWalletClient({
     setShowWithdrawModal(false);
     setStep(1);
     setMethod("CARD");
-    setAmount("100");
+    setAmount("500");
     setCardNumber("");
     setPhone("");
     clearSbpPrefetchState();
@@ -195,8 +196,8 @@ export default function RespondentWalletClient({
     setError(null);
     setSuccessMessage(null);
 
-    if (numericAmount < 100) {
-      setError("Минимальная сумма вывода — 100 ₽");
+    if (numericAmount < 500) {
+      setError("Минимальная сумма вывода — 500 ₽");
       return;
     }
 
@@ -249,6 +250,7 @@ export default function RespondentWalletClient({
       resetModal();
       setSuccessMessage("Заявка на вывод создана. Статус выплаты обновится автоматически.");
       router.refresh();
+      
     });
   }
 
@@ -274,12 +276,12 @@ export default function RespondentWalletClient({
             <button
               type="button"
               onClick={() => setShowWithdrawModal(true)}
-              disabled={balance < 100}
+              disabled={balance < 500}
               className="inline-flex w-full items-center justify-center rounded-2xl bg-brand px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-mid disabled:cursor-not-allowed disabled:opacity-50 lg:w-auto"
             >
               Вывести средства
             </button>
-            <div className="text-xs text-dash-muted">Минимальная сумма вывода — 100 ₽</div>
+            <div className="text-xs text-dash-muted">Минимальная сумма вывода — 500 ₽</div>
           </div>
         </div>
 
@@ -386,7 +388,7 @@ export default function RespondentWalletClient({
         }}
         footer={
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="text-sm text-dash-muted">Минимальная сумма — 100 ₽</div>
+            <div className="text-sm text-dash-muted">Минимальная сумма — 500 ₽</div>
             {step === 1 ? (
               <button
                 type="button"
@@ -532,10 +534,10 @@ export default function RespondentWalletClient({
             ) : null}
 
             <label className="grid gap-2">
-              <span className="text-sm font-medium text-dash-heading">Сумма</span>
+              <span className="text-sm font-medium text-dash-heading">Сумма </span>
               <input
                 type="number"
-                min={100}
+                min={500}
                 max={balance}
                 value={amount}
                 onChange={(event) => setAmount(event.target.value)}

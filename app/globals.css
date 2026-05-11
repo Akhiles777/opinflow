@@ -4,8 +4,8 @@
 :root {
   font-family: var(--font-geist);
 
-  /* Site variables (light by default) */
-  /* Slightly darker/off-white to reduce glare */
+  
+  
   --site-bg: #eef2f7;
   --site-section: #e6ebf3;
   --site-card: #ffffff;
@@ -14,7 +14,7 @@
   --site-heading: #0b1220;
   --site-body: #2b3547;
 
-  /* Dashboard variables (light by default) */
+  
   --dash-sidebar: #0a0a0f;
   --dash-bg: #eceff4;
   --dash-card: #ffffff;
@@ -24,9 +24,9 @@
   --dash-body: #334155;
 }
 
-/* Dashboard variables (dark theme) */
+
 .dark {
-  /* Site variables (dark theme) */
+  
   --site-bg: #0a0a0f;
   --site-section: #0f0f1a;
   --site-card: #16162a;
@@ -50,7 +50,7 @@ body {
 
 html {
   scroll-behavior: smooth;
-  scroll-padding-top: 80px; /* sticky header offset */
+  scroll-padding-top: 80px; 
 }
 
 .dashboard-root,
@@ -66,7 +66,7 @@ html {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* Anchor targets shouldn't hide under sticky header when using scrollIntoView */
+
 [id] {
   scroll-margin-top: 88px;
 }

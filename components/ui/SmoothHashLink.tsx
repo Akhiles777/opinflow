@@ -14,7 +14,7 @@ export default function SmoothHashLink({ href, onClick, ...rest }: Props) {
         onClick?.(e);
         if (e.defaultPrevented) return;
 
-        // Only handle same-page hashes.
+        
         if (!href.startsWith("#")) return;
         const id = href.slice(1);
         const el = document.getElementById(id);
