@@ -10,16 +10,9 @@ export default function CTA() {
 
   const { data: session, status } = useSession();
   const user = status === "authenticated" && session?.user
-
-
-  
-
   const userRole = session?.user?.role
 
-  
-  
   return (
-   
     <section className="relative overflow-hidden bg-site-bg px-4 pt-10 pb-14 text-center sm:px-6 sm:pt-12 sm:pb-16 lg:px-8 lg:pt-16 lg:pb-24">
       
       <GlowOrb size={800} opacity={0.08} className="top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
@@ -34,51 +27,49 @@ export default function CTA() {
           <p className="mb-8 text-lg font-body text-site-muted sm:mb-10">
             Реальные люди, реальные ответы и честная система вознаграждений — всё в одном сервисе.
           </p>
-          <div className="flex flex-col justify-center gap-3 sm:flex-row sm:gap-4">
-      {user ? (
-        <div>
-              <Button
-              variant="primary"
-              size="lg"
-              href={ ''}
-              className="sm:px-9 sm:py-4 sm:text-lg sm:font-semibold"
-            >
-              Я хочу зарабатывать →
-            </Button>
-            <Button
-              variant="secondary"
-              size="lg"
-              href="/register?role=CLIENT"
-              className="sm:px-9 sm:py-4 sm:text-lg sm:font-semibold"
-            >
-              Я хочу заказать опрос →
-            </Button>
-            </div>
-      ) : 
-      <div>
 
-        
-            <Button
-              variant="primary"
-              size="lg"
-              href="/register?role=RESPONDENT"
-              className="sm:px-9 sm:py-4 sm:text-lg sm:font-semibold"
-            >
-              Я хочу зарабатывать →
-            </Button>
-            <Button
-              variant="secondary"
-              size="lg"
-              href='/register?role=CLIENT'
-              className="sm:px-9 sm:py-4 ml-5 sm:text-lg sm:font-semibold"
-            >
-              Я хочу заказать опрос →
-            </Button>
-            </div>
-      }
-
-
+          <div className="flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
+            {user ? (
+              <>
+                <Button
+                  variant="primary"
+                  size="lg"
+                  href={''}
+                  className="w-full sm:w-auto sm:px-9 sm:py-4 sm:text-lg sm:font-semibold"
+                >
+                  Я хочу зарабатывать →
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="lg"
+                  href="/register?role=CLIENT"
+                  className="w-full sm:w-auto sm:px-9 sm:py-4 sm:text-lg sm:font-semibold"
+                >
+                  Я хочу заказать опрос →
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  variant="primary"
+                  size="lg"
+                  href="/register?role=RESPONDENT"
+                  className="w-full sm:w-auto sm:px-9 sm:py-4 sm:text-lg sm:font-semibold"
+                >
+                  Я хочу зарабатывать →
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="lg"
+                  href="/register?role=CLIENT"
+                  className="w-full sm:w-auto sm:px-9 sm:py-4 sm:text-lg sm:font-semibold"
+                >
+                  Я хочу заказать опрос →
+                </Button>
+              </>
+            )}
           </div>
+
         </RevealOnScroll>
       </div>
     </section>
