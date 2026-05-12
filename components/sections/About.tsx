@@ -69,11 +69,7 @@ export default function About() {
             ))}
           </div>
 
-          <RevealOnScroll>
-            <Button variant="ghost" size="md" className="mt-2">
-              Узнать больше о нас →
-            </Button>
-          </RevealOnScroll>
+         
         </div>
 
         {}

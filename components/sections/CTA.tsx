@@ -12,9 +12,9 @@ export default function CTA() {
   const user = status === "authenticated" && session?.user
 
 
-    const userRole = session?.user.role
+  
 
-    console.log(userRole)
+  const userRole = session?.user?.role
 
   
   
@@ -70,7 +70,7 @@ export default function CTA() {
               variant="secondary"
               size="lg"
               href='/register?role=CLIENT'
-              className="sm:px-9 sm:py-4 sm:text-lg sm:font-semibold"
+              className="sm:px-9 sm:py-4 ml-5 sm:text-lg sm:font-semibold"
             >
               Я хочу заказать опрос →
             </Button>
