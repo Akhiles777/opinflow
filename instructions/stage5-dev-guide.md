@@ -592,6 +592,8 @@ self.addEventListener('notificationclick', (event) => {
 })
 ```
 
+// Мы остановились здесь!!!
+
 Зарегистрировать SW в `app/layout.tsx`:
 ```typescript
 // В useEffect на клиенте:
@@ -601,6 +603,8 @@ if ('serviceWorker' in navigator) {
 ```
 
 ---
+
+
 
 ## 3.5 — Иконки для PWA
 
@@ -612,6 +616,8 @@ if ('serviceWorker' in navigator) {
 Используй логотип ПотокМнений.
 
 ---
+
+
 
 ## 3.6 — Компонент кнопки подписки
 

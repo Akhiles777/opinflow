@@ -45,6 +45,9 @@ export default function RegisterPageClient({
   const personRespondet = [
     { value: "RESPONDENT" as const, title: "Респондент", text: "Зарабатывать на прохождении опросов" },
   ];
+  const roleOffer = role === "RESPONDENT"
+    ? { href: "/legal/respondent-offer", label: "публичную оферту для респондента" }
+    : { href: "/legal/client-offer", label: "публичную оферту для заказчика" };
 
   useEffect(() => {
     setRole(initialRole);
@@ -234,7 +237,45 @@ export default function RegisterPageClient({
             </label>
             <label className="flex items-start gap-3 rounded-xl border border-white/8 bg-white/5 p-4 text-[15px] text-white/65">
               <input name="acceptTerms" type="checkbox" className="mt-0.5 accent-brand" disabled={isPending || isSigningIn} />
-              <span>Согласен с условиями использования и политикой конфиденциальности</span>
+              <span className="leading-relaxed">
+                Я принимаю{" "}
+                <Link
+                  href={roleOffer.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-semibold text-brand-light underline-offset-4 hover:underline"
+                >
+                  {roleOffer.label}
+                </Link>
+                ,{" "}
+                <Link
+                  href="/legal/user-agreement"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-semibold text-brand-light underline-offset-4 hover:underline"
+                >
+                  пользовательское соглашение
+                </Link>
+                , ознакомлен(а) с{" "}
+                <Link
+                  href="/legal/personal-data-policy"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-semibold text-brand-light underline-offset-4 hover:underline"
+                >
+                  политикой обработки персональных данных
+                </Link>{" "}
+                и даю{" "}
+                <Link
+                  href="/legal/personal-data-consent"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-semibold text-brand-light underline-offset-4 hover:underline"
+                >
+                  согласие на обработку персональных данных
+                </Link>
+                .
+              </span>
             </label>
 
             {state.error ? <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-[15px] text-red-400">{state.error}</div> : null}

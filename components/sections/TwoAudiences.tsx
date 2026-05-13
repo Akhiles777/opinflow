@@ -1,7 +1,10 @@
+"use client";
+
 import * as React from "react";
 import Button from "@/components/ui/Button";
-import GlowOrb from "@/components/ui/GlowOrb";
 import RevealOnScroll from "@/components/ui/RevealOnScroll";
+
+type AudienceTab = "respondent" | "client";
 
 const respondentBenefits = [
   "Опросы, которые подходят именно вам — по возрасту, городу и интересам",
@@ -27,119 +30,255 @@ const analyticsRows = [
 ];
 
 export default function TwoAudiences() {
+  const [activeTab, setActiveTab] =
+    React.useState<AudienceTab>("respondent");
+
+  const [renderedTab, setRenderedTab] =
+    React.useState<AudienceTab>("respondent");
+
+  const [isVisible, setIsVisible] = React.useState(true);
+
+  React.useEffect(() => {
+    setIsVisible(false);
+    setRenderedTab(activeTab);
+
+    const frame = window.requestAnimationFrame(() => {
+      setIsVisible(true);
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [activeTab]);
+
+  const isRespondent = renderedTab === "respondent";
+
   return (
-    <section className="bg-site-bg px-4 py-8 sm:px-6 lg:px-8" aria-label="Для респондентов и бизнеса">
-      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-5 lg:grid-cols-2">
-        <RevealOnScroll direction="left">
-          <div className="group relative min-h-0 overflow-hidden rounded-3xl border border-site-border bg-site-card p-6 transition-all duration-500 hover:border-brand/25 flex flex-col sm:min-h-[500px] sm:p-10">
-            <span id="respondents" className="absolute -top-20" aria-hidden="true" />
-            <GlowOrb
-              size={300}
-              opacity={0}
-              className="bottom-0 left-0 group-hover:opacity-15 transition-opacity duration-700"
-            />
+    <section
+      className="bg-site-bg px-4 py-14 sm:px-6 lg:px-8"
+      aria-label="Для респондентов и бизнеса"
+    >
+      <RevealOnScroll direction="up">
+        <div className="mx-auto max-w-7xl">
 
-            <span className="text-xs font-semibold font-body text-site-muted uppercase tracking-[0.2em]">
-              Респондентам
-            </span>
-            <h2 className="font-display text-title text-site-heading mt-4 mb-5">
-              Зарабатывайте,<br />делясь мнением
-            </h2>
-            <p className="font-body text-site-muted text-base leading-relaxed max-w-xs mb-8">
-              Ваше мнение действительно важно — и может приносить дополнительный доход. На платформе ПотокМнений вы можете проходить онлайн-опросы от брендов и получать вознаграждение за ответы.
-            </p>
+          {/* Tabs */}
+          <div className="mb-14 flex justify-center">
+            <div className="relative inline-grid grid-cols-2 rounded-2xl border border-site-border bg-site-card p-1 shadow-sm">
+              <div
+                aria-hidden="true"
+                className={[
+                  "absolute inset-y-1 w-[calc(50%-0.25rem)] rounded-xl bg-site-bg shadow-sm transition-all duration-300",
+                  activeTab === "respondent"
+                    ? "left-1"
+                    : "left-[calc(50%+0.25rem)]",
+                ].join(" ")}
+              />
 
-            <ul className="space-y-4 mb-10 flex-1">
-              {respondentBenefits.map((item) => (
-                <li key={item} className="flex items-start gap-3 text-sm font-body text-site-body">
-                  <span className="w-1 h-1 rounded-full bg-brand-light mt-2 flex-shrink-0" />
-                  {item}
-                </li>
-              ))}
-            </ul>
+              <button
+                type="button"
+                onClick={() => setActiveTab("respondent")}
+                className={[
+                  "relative z-10 rounded-xl px-6 py-3 text-base transition-colors sm:px-8",
+                  activeTab === "respondent"
+                    ? "font-semibold text-site-heading"
+                    : "font-medium text-site-muted hover:text-site-heading",
+                ].join(" ")}
+              >
+                Респондентам
+              </button>
 
-            <Button variant="primary" size="lg" href="/register?role=RESPONDENT">
-              Начать зарабатывать →
-            </Button>
-
-            {}
-            <div className="mt-6 w-full rounded-2xl border border-site-border bg-site-card p-5 shadow-card">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-xs font-body text-site-muted">Мой баланс</p>
-                  <p className="font-body tabular-nums text-2xl text-site-heading font-semibold tracking-tight mt-1">
-                    1 240 ₽
-                  </p>
-                </div>
-                <span className="text-xs font-body text-site-muted bg-site-bg rounded-md px-2 py-1">
-                  Вывести
-                </span>
-              </div>
-              <div className="mt-3 pt-3 border-t border-site-border flex items-center justify-between">
-                <p className="text-xs font-body text-site-muted">Последнее начисление</p>
-                <p className="text-sm font-semibold text-brand-light">+350 ₽</p>
-              </div>
+              <button
+                type="button"
+                onClick={() => setActiveTab("client")}
+                className={[
+                  "relative z-10 rounded-xl px-6 py-3 text-base transition-colors sm:px-8",
+                  activeTab === "client"
+                    ? "font-semibold text-site-heading"
+                    : "font-medium text-site-muted hover:text-site-heading",
+                ].join(" ")}
+              >
+                Бизнесу
+              </button>
             </div>
           </div>
-        </RevealOnScroll>
 
-        <RevealOnScroll direction="right">
-          <div className="group relative min-h-0 overflow-hidden rounded-3xl border border-site-border bg-site-card p-6 transition-all duration-500 hover:border-brand/25 flex flex-col sm:min-h-[500px] sm:p-10">
-            <span id="business" className="absolute -top-20" aria-hidden="true" />
-            <GlowOrb
-              size={300}
-              opacity={0}
-              color="#7C3AED"
-              className="bottom-0 right-0 group-hover:opacity-15 transition-opacity duration-700"
-            />
+          {/* Content */}
+          <div
+            className={[
+              "mx-auto max-w-6xl transition-all duration-300",
+              isVisible
+                ? "translate-y-0 opacity-100"
+                : "translate-y-2 opacity-0",
+            ].join(" ")}
+          >
+            <div className="flex flex-col gap-12 lg:grid lg:grid-cols-2 lg:items-center lg:gap-20">
 
-            <span className="text-xs font-semibold font-body text-site-muted uppercase tracking-[0.2em]">
-              Бизнесу
-            </span>
-            <h2 className="font-display text-title text-site-heading mt-4 mb-5">
-              Получайте ответы<br />от нужной аудитории
-            </h2>
-            <p className="font-body text-site-muted text-base leading-relaxed max-w-xs mb-8">
-              Маркетинговые исследования часто занимают недели и требуют больших бюджетов. ПотокМнений делает этот процесс быстрым и доступным. Вы создаёте опрос, выбираете нужную аудиторию и получаете готовые результаты с аналитикой.
-            </p>
+              {/* Left */}
+              <div className="order-1">
+                <span
+                  id={isRespondent ? "respondents" : "business"}
+                  className="text-sm font-semibold uppercase tracking-[0.2em] text-site-muted"
+                >
+                  {isRespondent ? "Респондентам" : "Бизнесу"}
+                </span>
 
-            <ul className="space-y-4 mb-10 flex-1">
-              {businessBenefits.map((item) => (
-                <li key={item} className="flex items-start gap-3 text-sm font-body text-site-body">
-                  <span className="w-1 h-1 rounded-full bg-brand-light mt-2 flex-shrink-0" />
-                  {item}
-                </li>
-              ))}
-            </ul>
+                <h2 className="mt-5 font-display text-title text-site-heading">
+                  {isRespondent ? (
+                    <>
+                      Зарабатывайте,
+                      <br />
+                      делясь мнением
+                    </>
+                  ) : (
+                    <>
+                      Получайте ответы
+                      <br />
+                      от нужной аудитории
+                    </>
+                  )}
+                </h2>
 
-            <p className="text-sm font-body text-site-muted leading-relaxed max-w-md mb-10">
-              Подходит для маркетинговых исследований, тестирования продуктов, анализа рекламы, изучения потребительских привычек и HR-опросов.
-            </p>
+                <p className="mt-6 max-w-xl text-lg leading-8 text-site-body">
+                  {isRespondent
+                    ? "Ваше мнение действительно важно — и может приносить дополнительный доход. На платформе ПотокМнений вы можете проходить онлайн-опросы от брендов и получать вознаграждение за ответы."
+                    : "Маркетинговые исследования часто занимают недели и требуют больших бюджетов. ПотокМнений делает этот процесс быстрым и доступным. Вы создаёте опрос, выбираете нужную аудиторию и получаете готовые результаты с аналитикой."}
+                </p>
 
-            <Button variant="secondary" size="lg" href="/register?role=CLIENT">
-              Заказать исследование →
-            </Button>
+                <ul className="mt-10 space-y-5">
+                  {(isRespondent
+                    ? respondentBenefits
+                    : businessBenefits
+                  ).map((item) => (
+                    <li
+                      key={item}
+                      className="flex items-start gap-4 text-base leading-8 text-site-body"
+                    >
+                      <span className="mt-3 h-2 w-2 shrink-0 rounded-full bg-brand-light" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
 
-            {}
-            <div className="mt-6 w-full rounded-2xl border border-site-border bg-site-card p-5 shadow-card">
-              <p className="text-xs font-body text-site-muted mb-4">Результаты опроса</p>
-              <div className="grid grid-cols-2 gap-x-5 gap-y-3">
-                {analyticsRows.map((row) => (
-                  <div key={row.label}>
-                    <div className="flex justify-between mb-1">
-                      <span className="text-xs font-body text-site-muted">{row.label}</span>
-                      <span className="text-xs font-body text-site-muted">{row.pct}%</span>
+                {!isRespondent ? (
+                  <p className="mt-10 max-w-xl text-base leading-8 text-site-muted">
+                    Подходит для маркетинговых исследований,
+                    тестирования продуктов, анализа рекламы,
+                    изучения потребительских привычек и HR-опросов.
+                  </p>
+                ) : null}
+
+                <div className="mt-12">
+                  <Button
+                    variant={isRespondent ? "primary" : "secondary"}
+                    size="lg"
+                    href={
+                      isRespondent
+                        ? "/register?role=RESPONDENT"
+                        : "/register?role=CLIENT"
+                    }
+                  >
+                    {isRespondent
+                      ? "Начать зарабатывать →"
+                      : "Заказать исследование →"}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Right */}
+              <div className="order-2">
+                {isRespondent ? (
+                  <div className="mx-auto w-full max-w-xl rounded-[28px] border border-site-border bg-site-card p-7 shadow-card">
+
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="text-sm text-site-muted">
+                          Мой баланс
+                        </p>
+
+                        <p className="mt-3 font-display text-5xl text-site-heading">
+                          1 240 ₽
+                        </p>
+                      </div>
+
+                      <span className="rounded-xl bg-site-section px-4 py-2 text-sm font-semibold text-site-heading">
+                        Вывести
+                      </span>
                     </div>
-                    <div className="bg-site-border rounded-full h-1">
-                      <div className="bg-brand rounded-full h-1" style={{ width: `${row.pct}%` }} />
+
+                    <div className="mt-7 rounded-2xl border border-site-border bg-site-section p-5">
+                      <div className="flex items-center justify-between">
+                        <p className="text-base text-site-body">
+                          Опрос о сервисах доставки
+                        </p>
+
+                        <span className="text-base font-semibold text-brand-light">
+                          +350 ₽
+                        </span>
+                      </div>
+
+                      <div className="mt-4 h-2 rounded-full bg-site-border">
+                        <div className="h-2 w-3/4 rounded-full bg-brand" />
+                      </div>
+
+                      <div className="mt-4 flex items-center justify-between text-sm text-site-muted">
+                        <span>Пройдено сегодня</span>
+                        <span>3 опроса</span>
+                      </div>
                     </div>
                   </div>
-                ))}
+                ) : (
+                  <div className="mx-auto w-full max-w-xl rounded-[28px] border border-site-border bg-site-card p-7 shadow-card">
+
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-site-muted">
+                        Результаты опроса
+                      </p>
+
+                      <span className="rounded-xl bg-site-section px-4 py-2 text-sm font-semibold text-site-heading">
+                        842 ответа
+                      </span>
+                    </div>
+
+                    <div className="mt-7 space-y-5">
+                      {analyticsRows.map((row) => (
+                        <div key={row.label}>
+                          <div className="mb-3 flex items-center justify-between text-base">
+                            <span className="text-site-body">
+                              {row.label}
+                            </span>
+
+                            <span className="font-semibold text-site-heading">
+                              {row.pct}%
+                            </span>
+                          </div>
+
+                          <div className="h-2 rounded-full bg-site-border">
+                            <div
+                              className="h-2 rounded-full bg-brand transition-all duration-300"
+                              style={{ width: `${row.pct}%` }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="mt-7 rounded-2xl border border-site-border bg-site-section p-5">
+                      <p className="text-sm uppercase tracking-[0.16em] text-site-muted">
+                        AI Summary
+                      </p>
+
+                      <p className="mt-4 text-base leading-8 text-site-body">
+                        Аудитория наиболее позитивно реагирует
+                        на простую доставку, прозрачные цены
+                        и понятные бонусы в приложении.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
+
             </div>
           </div>
-        </RevealOnScroll>
-      </div>
+        </div>
+      </RevealOnScroll>
     </section>
   );
 }

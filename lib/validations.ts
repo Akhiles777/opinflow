@@ -15,7 +15,7 @@ export const registerSchema = z
     acceptTerms: z.string().optional(),
   })
   .refine((data) => data.acceptTerms === "on", {
-    message: "Подтвердите согласие с условиями использования",
+    message: "Подтвердите принятие документов и согласие на обработку персональных данных",
     path: ["acceptTerms"],
   })
   .refine((data) => data.password === data.confirmPassword, {

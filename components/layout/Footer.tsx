@@ -1,5 +1,6 @@
 import * as React from "react";
 import Image from "next/image";
+import Link from "next/link";
 import SmoothHashLink from "@/components/ui/SmoothHashLink";
 
 const navLinks = [
@@ -8,6 +9,16 @@ const navLinks = [
   { label: "Бизнесу", href: "#business" },
   { label: "О нас", href: "#about" },
   { label: "Контакты", href: "#contacts" },
+];
+
+const documentLinks = [
+  { label: "Политика персональных данных", href: "/legal/personal-data-policy" },
+  { label: "Согласие на обработку ПДн", href: "/legal/personal-data-consent" },
+  { label: "Пользовательское соглашение", href: "/legal/user-agreement" },
+  { label: "Оферта для респондента", href: "/legal/respondent-offer" },
+  { label: "Оферта для заказчика", href: "/legal/client-offer" },
+  { label: "Политика cookie", href: "/legal/cookies" },
+  { label: "Согласие на публикацию отзыва", href: "/legal/review-consent" },
 ];
 
 export default function Footer() {
@@ -39,6 +50,12 @@ export default function Footer() {
             >
               support@potokmneny.ru
             </a>
+            <a
+              href="mailto:gmetalnikov1993@gmail.com"
+              className="mt-2 block text-sm font-body text-site-muted transition-colors hover:text-site-heading"
+            >
+              Правовые обращения: gmetalnikov1993@gmail.com
+            </a>
           </div>
 
           <div>
@@ -59,16 +76,24 @@ export default function Footer() {
           <div>
             <p className="text-sm font-semibold text-site-heading mb-4">Документы</p>
             <div className="grid gap-2">
-              <span className="text-sm font-body text-site-muted">Политика конфиденциальности</span>
-              <span className="text-sm font-body text-site-muted">Пользовательское соглашение</span>
-              <span className="text-sm font-body text-site-muted">Оферта</span>
+              {documentLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="text-sm font-body text-site-muted transition-colors hover:text-site-heading"
+                >
+                  {link.label}
+                </Link>
+              ))}
             </div>
           </div>
         </div>
 
         <div className="flex flex-col sm:flex-row justify-between pt-10 text-xs font-body text-site-muted">
           <span>© 2026 ПотокМнений. Все права защищены.</span>
-          <span>Политика · Оферта</span>
+          <Link href="/legal" className="transition-colors hover:text-site-heading">
+            Все юридические документы
+          </Link>
         </div>
       </div>
     </footer>

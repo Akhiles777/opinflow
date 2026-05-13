@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/theme/Providers";
+import CookieNotice from "@/components/legal/CookieNotice";
 
 const geist = Geist({
   subsets: ["latin"],
@@ -22,6 +23,10 @@ const inter = Inter({
   display: "swap",
 });
 
+if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+  navigator.serviceWorker.register('/sw.js')
+}
+
 export const metadata: Metadata = {
   title: "ПотокМнений — платформа маркетинговых исследований",
   description:
@@ -39,7 +44,10 @@ export default function RootLayout({
         className={`${geist.variable} ${geistMono.variable} ${inter.variable} bg-site-bg text-site-body antialiased`}
         suppressHydrationWarning
       >
-        <Providers>{children}</Providers>
+        <Providers>
+          {children}
+          <CookieNotice />
+        </Providers>
       </body>
     </html>
   );
