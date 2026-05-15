@@ -1,6 +1,6 @@
 'use client'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
-import { BellIcon, BellSlashIcon } from 'lucide-react'
+import { Bell, BellOff } from 'lucide-react'
 
 export default function PushNotificationButton() {
   const { permission, isSubscribed, subscribe, unsubscribe } = usePushNotifications()
@@ -17,7 +17,7 @@ export default function PushNotificationButton() {
                    hover:bg-dash-bg transition-colors"
         title="Отключить push уведомления"
       >
-        <BellSlashIcon className="w-4 h-4" />
+        <BellOff className="w-4 h-4" />
         <span className="hidden sm:inline">Уведомления вкл.</span>
       </button>
     )
@@ -31,7 +31,7 @@ export default function PushNotificationButton() {
                  border border-brand/20 transition-colors"
       title="Включить push уведомления"
     >
-      <BellIcon className="w-4 h-4" />
+      <Bell className="w-4 h-4" />
       <span className="hidden sm:inline">Включить уведомления</span>
     </button>
   )
