@@ -195,7 +195,7 @@ export default function VKIDButton({ appId, callbackUrl, mode = "login" }: Props
   }, [renderWidget]);
 
   return (
-    <div className="grid gap-3">
+      <div className="grid gap-3">
       <Script
         src="https://unpkg.com/@vkid/sdk@2.6.1/dist-sdk/umd/index.js"
         strategy="afterInteractive"
@@ -203,14 +203,16 @@ export default function VKIDButton({ appId, callbackUrl, mode = "login" }: Props
         onError={() => setError("Не удалось загрузить VK SDK. Попробуйте позже.")}
       />
 
-      <div className="text-[15px] font-semibold text-white">{verb} через VK</div>
+      <div className="text-[15px] font-semibold text-site-heading">{verb} через VK</div>
       <div
         ref={containerRef}
-        className="min-h-12 rounded-xl border border-white/10 bg-white/5 p-1 transition-opacity"
-        style={{ opacity: pending ? 0.8 : 1 }}
+        className={[
+          "min-h-12 rounded-xl border border-site-border bg-site-section p-1 transition-opacity",
+          pending ? "opacity-80" : "opacity-100",
+        ].join(" ")}
       />
 
-      {pending ? <p className="text-[15px] text-white/45">Завершаем вход через VK...</p> : null}
+      {pending ? <p className="text-[15px] text-site-muted">Завершаем вход через VK...</p> : null}
       {error ? (
         <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-[15px] text-red-400">
           {error}

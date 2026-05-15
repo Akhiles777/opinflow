@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { getDepositPaymentStatus, getPayoutStatus } from "@/lib/yukassa";
 import { Prisma } from "@prisma/client";
+import { notify } from "@/lib/notifications";
 
 async function creditDepositPayment(paymentId: string) {
   return prisma.$transaction(async (tx) => {
@@ -153,6 +154,18 @@ export async function completeWithdrawalRequest(params: { requestId: string; pay
     }
   });
 
+  await notify({
+    userId: requestRecord.userId,
+    type: "WITHDRAWAL_STATUS",
+    title: "Вывод средств выполнен",
+    body: `Заявка на ${Number(requestRecord.amount)} ₽ успешно обработана`,
+    link: "/respondent/wallet",
+    emailData: {
+      amount: Number(requestRecord.amount),
+      status: "COMPLETED",
+    },
+  });
+
   return true;
 }
 
@@ -217,6 +230,18 @@ export async function failWithdrawalRequest(params: { requestId: string; payoutI
         status: "COMPLETED",
       },
     });
+  });
+
+  await notify({
+    userId: requestRecord.userId,
+    type: "WITHDRAWAL_STATUS",
+    title: "Выплата не выполнена",
+    body: `Не удалось выполнить вывод ${Number(requestRecord.amount)} ₽, средства возвращены на баланс`,
+    link: "/respondent/wallet",
+    emailData: {
+      amount: Number(requestRecord.amount),
+      status: "FAILED",
+    },
   });
 
   return true;

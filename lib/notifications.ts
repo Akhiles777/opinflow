@@ -18,7 +18,7 @@ type NotifyParams = {
 
 export async function notify(params: NotifyParams) {
   // 1. Сохранить в БД
-  await prisma.notification.create({
+  const notification = await prisma.notification.create({
     data: {
       userId:  params.userId,
       type:    params.type,
@@ -26,14 +26,28 @@ export async function notify(params: NotifyParams) {
       body:    params.body,
       link:    params.link,
     },
+    select: {
+      id: true,
+    },
   })
 
   // 2. Отправить Push (не блокируем основной поток)
-  sendPushToUser(params.userId, {
-    title: params.title,
-    body:  params.body,
-    url:   params.link,
-  }).catch(console.error)
+  try {
+    const pushDelivered = await sendPushToUser(params.userId, {
+      title: params.title,
+      body:  params.body,
+      url:   params.link,
+    })
+
+    if (pushDelivered) {
+      await prisma.notification.update({
+        where: { id: notification.id },
+        data:  { sentPush: true },
+      })
+    }
+  } catch (error) {
+    console.error('[notify] push error:', error)
+  }
 
   // 3. Отправить Email по типу
   const user = await prisma.user.findUnique({
@@ -43,15 +57,26 @@ export async function notify(params: NotifyParams) {
   if (!user?.email) return
 
   const name = user.name ?? 'Пользователь'
+  let emailSent = false
 
   try {
     switch (params.type) {
+      case 'NEW_SURVEY':
+        await sendNewSurveyEmail(user.email, name, {
+          title:         String(params.emailData?.title ?? params.emailData?.surveyTitle ?? params.title),
+          reward:        Number(params.emailData?.reward ?? 0),
+          estimatedTime: params.emailData?.estimatedTime ?? null,
+          id:            String(params.emailData?.id ?? params.link?.split('/').pop() ?? ''),
+        })
+        emailSent = true
+        break
       case 'EARNING_CREDITED':
         await sendEarningEmail(
           user.email, name,
           params.emailData?.amount,
           params.emailData?.surveyTitle,
         )
+        emailSent = true
         break
       case 'WITHDRAWAL_STATUS':
         await sendWithdrawalStatusEmail(
@@ -60,9 +85,11 @@ export async function notify(params: NotifyParams) {
           params.emailData?.status,
           params.emailData?.adminNote,
         )
+        emailSent = true
         break
       case 'SURVEY_APPROVED':
         await sendSurveyStatusEmail(user.email, name, params.emailData?.surveyTitle, 'APPROVED')
+        emailSent = true
         break
       case 'SURVEY_REJECTED':
         await sendSurveyStatusEmail(
@@ -71,13 +98,16 @@ export async function notify(params: NotifyParams) {
           'REJECTED',
           params.emailData?.moderationNote,
         )
+        emailSent = true
         break
     }
 
-    await prisma.notification.updateMany({
-      where: { userId: params.userId, type: params.type, sentEmail: false },
-      data:  { sentEmail: true },
-    })
+    if (emailSent) {
+      await prisma.notification.update({
+        where: { id: notification.id },
+        data:  { sentEmail: true },
+      })
+    }
   } catch (e) {
     console.error('[notify] email error:', e)
   }
@@ -106,29 +136,33 @@ export async function notifyRespondentsNewSurvey(survey: {
     take: 500, // не спамить всем сразу
   })
 
-  for (const user of respondents) {
-    // Не отправлять тем кто уже проходил
-    const alreadyDone = await prisma.surveySession.findUnique({
-      where: { surveyId_userId: { surveyId: survey.id, userId: user.id } },
-    })
-    if (alreadyDone) continue
+  const BATCH_SIZE = 10
 
-    await notify({
-      userId: user.id,
-      type:   'NEW_SURVEY',
-      title:  'Новый опрос для вас',
-      body:   `${survey.title} — ${Number(survey.reward)} ₽`,
-      link:   `/survey/${survey.id}`,
-      emailData: {
-        title:         survey.title,
-        reward:        Number(survey.reward),
-        estimatedTime: survey.estimatedTime,
-        id:            survey.id,
-      },
-    })
+  for (let index = 0; index < respondents.length; index += BATCH_SIZE) {
+    const batch = respondents.slice(index, index + BATCH_SIZE)
 
-    // Пауза чтобы не перегружать SMTP
-    await new Promise(r => setTimeout(r, 100))
+    await Promise.allSettled(
+      batch.map(async (user) => {
+        // Не отправлять тем кто уже проходил
+        const alreadyDone = await prisma.surveySession.findUnique({
+          where: { surveyId_userId: { surveyId: survey.id, userId: user.id } },
+        })
+        if (alreadyDone) return
+
+        await notify({
+          userId: user.id,
+          type:   'NEW_SURVEY',
+          title:  'Новый опрос для вас',
+          body:   `${survey.title} — ${Number(survey.reward)} ₽`,
+          link:   `/survey/${survey.id}`,
+          emailData: {
+            title:         survey.title,
+            reward:        Number(survey.reward),
+            estimatedTime: survey.estimatedTime,
+            id:            survey.id,
+          },
+        })
+      }),
+    )
   }
 }
-

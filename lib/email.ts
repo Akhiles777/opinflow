@@ -146,22 +146,29 @@ export async function sendWithdrawalStatusEmail(
   email: string,
   name: string,
   amount: number,
-  status: 'COMPLETED' | 'REJECTED',
+  status: 'COMPLETED' | 'REJECTED' | 'FAILED',
   adminNote?: string
 ) {
   const isSuccess = status === 'COMPLETED'
+  const isRejected = status === 'REJECTED'
   await transporter.sendMail({
     from: FROM,
     to: email,
-    subject: isSuccess ? `Вывод ${amount} ₽ выполнен` : `Заявка на вывод отклонена — ПотокМнений`,
+    subject: isSuccess
+      ? `Вывод ${amount} ₽ выполнен`
+      : isRejected
+      ? `Заявка на вывод отклонена — ПотокМнений`
+      : `Выплата не выполнена — ПотокМнений`,
     html: `
       <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:40px 32px;">
-        <h2 style="color:#111827;">${isSuccess ? 'Средства переведены' : 'Заявка отклонена'}</h2>
+        <h2 style="color:#111827;">${isSuccess ? 'Средства переведены' : isRejected ? 'Заявка отклонена' : 'Выплата не выполнена'}</h2>
         <p style="color:#6B7280;">Привет, ${name}!</p>
         <p style="color:#374151;">
           ${isSuccess
             ? `Ваша заявка на вывод ${amount} ₽ успешно обработана. Средства поступят в течение 1-3 рабочих дней.`
-            : `Ваша заявка на вывод ${amount} ₽ была отклонена.`
+            : isRejected
+            ? `Ваша заявка на вывод ${amount} ₽ была отклонена.`
+            : `Не удалось выполнить выплату ${amount} ₽. Средства возвращены на ваш баланс.`
           }
         </p>
         ${!isSuccess && adminNote ? `

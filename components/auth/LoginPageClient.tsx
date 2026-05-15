@@ -107,15 +107,13 @@ export default function LoginPageClient({
   }
 
   return (
-    <div className="mx-auto max-w-md rounded-2xl border border-white/8 bg-surface-900 p-6 text-white sm:p-10">
-      <p className="text-sm uppercase tracking-[0.25em] text-white/35">Вход</p>
-      <h1 className="mt-4 font-display text-3xl text-white">Добро пожаловать</h1>
-      <p className="mt-3 text-sm leading-relaxed text-white/55">
+    <div className="mx-auto max-w-md rounded-2xl border border-site-border bg-site-card p-6 text-site-body shadow-card sm:p-10">
+      <p className="text-sm uppercase tracking-[0.25em] text-site-muted">Вход</p>
+      <h1 className="mt-4 font-display text-3xl text-site-heading">Добро пожаловать</h1>
+      <p className="mt-3 text-sm leading-relaxed text-site-body/80">
         Войдите в ПотокМнений. Для респондентов доступен вход через соцсети, для заказчиков
         только вход по email.
       </p>
-
-      
 
       {role === "RESPONDENT" ? (
         <OAuthButtons
@@ -126,7 +124,7 @@ export default function LoginPageClient({
           mode="login"
         />
       ) : (
-        <div className="mt-6  mb-5 rounded-2xl border border-white/8 bg-white/5 p-4 text-[15px] leading-relaxed text-white/55">
+        <div className="mt-6 mb-5 rounded-2xl border border-site-border bg-site-section p-4 text-[15px] leading-relaxed text-site-body/80">
           Для заказчиков вход через соцсети отключён. Используйте email и пароль, с которыми
           был создан аккаунт.
         </div>
@@ -135,12 +133,12 @@ export default function LoginPageClient({
 
       <form onSubmit={handleCredentialsLogin} className="grid gap-4">
         <label className="grid gap-2">
-          <span className="text-[15px] text-white/55">Email</span>
-          <input value={email} onChange={(event) => setEmail(event.target.value)} type="email" className="h-11 rounded-xl border border-white/10 bg-white/5 px-3 text-[15px] text-white outline-none placeholder:text-white/25" placeholder="mail@example.com" disabled={credentialsPending} />
+          <span className="text-[15px] text-site-body/80">Email</span>
+          <input value={email} onChange={(event) => setEmail(event.target.value)} type="email" className="h-11 rounded-xl border border-site-border bg-site-bg px-3 text-[15px] text-site-heading outline-none placeholder:text-site-muted focus:border-brand/40" placeholder="mail@example.com" disabled={credentialsPending} />
         </label>
         <label className="grid gap-2">
-          <span className="text-[15px] text-white/55">Пароль</span>
-          <input value={password} onChange={(event) => setPassword(event.target.value)} type="password" className="h-11 rounded-xl border border-white/10 bg-white/5 px-3 text-[15px] text-white outline-none" disabled={credentialsPending} />
+          <span className="text-[15px] text-site-body/80">Пароль</span>
+          <input value={password} onChange={(event) => setPassword(event.target.value)} type="password" className="h-11 rounded-xl border border-site-border bg-site-bg px-3 text-[15px] text-site-heading outline-none focus:border-brand/40" disabled={credentialsPending} />
         </label>
 
         <div className="flex justify-end">
@@ -166,7 +164,7 @@ export default function LoginPageClient({
         </button>
       </form>
 
-      <p className="mt-6 text-[15px] text-white/45">
+      <p className="mt-6 text-[15px] text-site-muted">
         Нет аккаунта?{" "}
         <Link
           href={`/register?role=${role}&callbackUrl=${encodeURIComponent(callbackUrl)}`}

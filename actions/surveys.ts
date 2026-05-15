@@ -11,6 +11,7 @@ import { mapSurveyQuestion } from "@/lib/survey-mappers";
 import { uploadSurveyMedia } from "@/lib/storage";
 import type { SurveyDraft } from "@/types/survey";
 import type { LogicRule, Question } from "@/types/survey";
+import { notify, notifyRespondentsNewSurvey } from "@/lib/notifications";
 
 function toDate(value: string) {
   return value ? new Date(value) : null;
@@ -462,13 +463,37 @@ export async function completeSurveyAction(params: {
     }
   });
 
+  // Notify respondent about credited earning
+  if (fraud.isValid && survey.reward) {
+    await notify({
+      userId: session.user.id,
+      type: "EARNING_CREDITED",
+      title: "Начислено вознаграждение",
+      body: `+${Number(survey.reward)} ₽ за опрос "${survey.title}"`,
+      link: "/respondent/wallet",
+      emailData: { amount: Number(survey.reward), surveyTitle: survey.title },
+    });
+  }
+
   if (fraud.isValid && survey.maxResponses) {
     const count = await prisma.surveySession.count({
       where: { surveyId: params.surveyId, isValid: true, status: "COMPLETED" },
     });
 
     if (count >= survey.maxResponses) {
-      await prisma.survey.update({ where: { id: params.surveyId }, data: { status: "COMPLETED" } });
+      const completedSurvey = await prisma.survey.update({
+        where: { id: params.surveyId },
+        data: { status: "COMPLETED" },
+        select: { id: true, title: true, creatorId: true },
+      });
+
+      await notify({
+        userId: completedSurvey.creatorId,
+        type: "SURVEY_COMPLETED",
+        title: "Опрос завершён",
+        body: `Опрос "${completedSurvey.title}" набрал нужное количество ответов`,
+        link: `/client/surveys/${completedSurvey.id}`,
+      });
     }
   }
 
@@ -489,7 +514,42 @@ export async function completeSurveyAction(params: {
 
 export async function approveSurveyAction(surveyId: string) {
   await requireRole("ADMIN");
-  await prisma.survey.update({ where: { id: surveyId }, data: { status: "ACTIVE", moderationNote: null } });
+  const updated = await prisma.survey.update({
+    where: { id: surveyId },
+    data: { status: "ACTIVE", moderationNote: null },
+    select: {
+      id: true,
+      title: true,
+      creatorId: true,
+      reward: true,
+      estimatedTime: true,
+      targetGender: true,
+      targetAgeMin: true,
+      targetAgeMax: true,
+      targetCities: true,
+    },
+  });
+
+  await notify({
+    userId: updated.creatorId,
+    type: "SURVEY_APPROVED",
+    title: "Опрос одобрен",
+    body: `Ваш опрос "${updated.title}" опубликован`,
+    link: `/client/surveys/${surveyId}`,
+    emailData: { surveyTitle: updated.title },
+  });
+
+  await notifyRespondentsNewSurvey({
+    id: updated.id,
+    title: updated.title,
+    reward: updated.reward,
+    estimatedTime: updated.estimatedTime,
+    targetGender: updated.targetGender,
+    targetAgeMin: updated.targetAgeMin,
+    targetAgeMax: updated.targetAgeMax,
+    targetCities: updated.targetCities,
+  });
+
   revalidatePath("/admin/moderation");
   revalidatePath(`/client/surveys/${surveyId}`);
   revalidatePath("/client/surveys");
@@ -537,6 +597,15 @@ export async function rejectSurveyAction(surveyId: string, reason: string) {
         });
       }
     }
+  });
+
+  await notify({
+    userId: survey.creatorId,
+    type: "SURVEY_REJECTED",
+    title: "Опрос отклонён",
+    body: `Опрос "${survey.title}" отклонён: ${reason}`,
+    link: `/client/surveys/${surveyId}`,
+    emailData: { surveyTitle: survey.title, moderationNote: reason },
   });
 
   revalidatePath("/admin/moderation");

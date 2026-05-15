@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/theme/Providers";
 import CookieNotice from "@/components/legal/CookieNotice";
+import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 
 const geist = Geist({
   subsets: ["latin"],
@@ -45,6 +46,7 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <Providers>
+          <ServiceWorkerRegister />
           {children}
           <CookieNotice />
         </Providers>

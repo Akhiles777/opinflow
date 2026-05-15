@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { Bell, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
+import NotificationBell from "@/components/dashboard/NotificationBell";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import type { DashboardViewer } from "@/lib/dashboard-data";
 
@@ -41,15 +42,7 @@ export default function TopBar({
       </div>
       <div className="order-1 ml-auto flex items-center gap-2 sm:gap-3 lg:order-2">
         <ThemeToggle tone="dash" />
-
-        <button
-          type="button"
-          className="w-9 h-9 rounded-lg border border-dash-border bg-dash-card flex items-center justify-center text-dash-muted hover:text-dash-heading hover:bg-dash-bg transition-all duration-200 relative"
-          aria-label="Уведомления"
-        >
-          <Bell className="w-4 h-4" />
-          <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-red-500" />
-        </button>
+        <NotificationBell />
 
         <div className="w-px h-6 bg-dash-border" />
 

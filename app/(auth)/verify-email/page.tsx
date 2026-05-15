@@ -9,17 +9,17 @@ export default async function VerifyEmailPage({ searchParams }: { searchParams: 
   const result = await verifyEmailTokenAction(token);
 
   return (
-    <div className="mx-auto max-w-md rounded-2xl border border-white/8 bg-surface-900 p-6 text-center text-white sm:p-10">
+    <div className="mx-auto max-w-md rounded-2xl border border-site-border bg-site-card p-6 text-center text-site-body shadow-card sm:p-10">
       <div className={[
         "mx-auto flex h-14 w-14 items-center justify-center rounded-full text-2xl",
         result.success ? "bg-emerald-500/15 text-emerald-400" : "bg-red-500/15 text-red-400",
       ].join(" ")}>
         {result.success ? "✓" : "✕"}
       </div>
-      <h1 className="mt-6 font-display text-3xl text-white">
+      <h1 className="mt-6 font-display text-3xl text-site-heading">
         {result.success ? "Email подтверждён" : result.error || "Не удалось подтвердить email"}
       </h1>
-      <p className="mt-3 text-[15px] leading-relaxed text-white/55">
+      <p className="mt-3 text-[15px] leading-relaxed text-site-body/80">
         {result.success
           ? "Теперь вы можете войти в аккаунт и продолжить работу с платформой."
           : "Проверьте ссылку или запросите новое письмо для подтверждения email."}

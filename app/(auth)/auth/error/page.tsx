@@ -56,11 +56,11 @@ export default async function AuthErrorPage({ searchParams }: { searchParams: Se
   const content = errorMap[resolvedCode] ?? errorMap[errorCode] ?? errorMap.Default;
 
   return (
-    <div className="mx-auto max-w-md rounded-2xl border border-white/8 bg-surface-900 p-6 text-white sm:p-10">
-      <p className="text-xs uppercase tracking-[0.25em] text-white/35">Ошибка авторизации</p>
-      <h1 className="mt-4 font-display text-3xl text-white">{content.title}</h1>
-      <p className="mt-3 text-sm leading-relaxed text-white/55">{content.description}</p>
-      <p className="mt-3 text-xs text-white/35">Код ошибки: {resolvedCode}</p>
+    <div className="mx-auto max-w-md rounded-2xl border border-site-border bg-site-card p-6 text-site-body shadow-card sm:p-10">
+      <p className="text-xs uppercase tracking-[0.25em] text-site-muted">Ошибка авторизации</p>
+      <h1 className="mt-4 font-display text-3xl text-site-heading">{content.title}</h1>
+      <p className="mt-3 text-sm leading-relaxed text-site-body/80">{content.description}</p>
+      <p className="mt-3 text-xs text-site-muted">Код ошибки: {resolvedCode}</p>
 
       <div className="mt-8 flex flex-col gap-3 sm:flex-row">
         <Link
@@ -71,7 +71,7 @@ export default async function AuthErrorPage({ searchParams }: { searchParams: Se
         </Link>
         <Link
           href="/register"
-          className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/8"
+          className="inline-flex items-center justify-center rounded-xl border border-site-border bg-site-section px-5 py-3 text-sm font-semibold text-site-heading transition-colors hover:bg-site-bg"
         >
           К регистрации
         </Link>

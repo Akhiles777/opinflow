@@ -142,16 +142,16 @@ export default function RegisterPageClient({
   }
 
   return (
-    <div className="mx-auto max-w-md rounded-2xl border border-white/8 bg-surface-900 p-6 text-white sm:p-10">
-      <p className="text-sm uppercase tracking-[0.25em] text-white/35">
+    <div className="mx-auto max-w-md rounded-2xl border border-site-border bg-site-card p-6 text-site-body shadow-card sm:p-10">
+      <p className="text-sm uppercase tracking-[0.25em] text-site-muted">
         Регистрация
       </p>
 
-      <h1 className="mt-4 font-display text-3xl text-white">
+      <h1 className="mt-4 font-display text-3xl text-site-heading">
         {state.success ? "Проверьте почту" : "Создайте аккаунт"}
       </h1>
 
-      <p className="mt-3 text-sm leading-relaxed text-white/55">
+      <p className="mt-3 text-sm leading-relaxed text-site-body/80">
         {state.success
           ? "Мы создали аккаунт и отправили письмо со ссылкой для подтверждения email."
           : "Зарегистрируйтесь по email, подтвердите адрес и войдите в свой кабинет."}
@@ -195,7 +195,7 @@ export default function RegisterPageClient({
               <button
                 type="button"
                 onClick={() => setState(initialState)}
-                className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-[15px] font-semibold text-white transition-colors hover:bg-white/8"
+                className="inline-flex items-center justify-center rounded-xl border border-site-border bg-site-section px-5 py-3 text-[15px] font-semibold text-site-heading transition-colors hover:bg-site-bg"
               >
                 Зарегистрировать ещё
               </button>
@@ -205,49 +205,49 @@ export default function RegisterPageClient({
       ) : (
         <>
           {/* role cards */}
-          <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {personRespondet.map((item) => (
-              <button
-                key={item.value}
-                type="button"
-                onClick={() => setRole(item.value)}
-                className={[
-                  "rounded-2xl border p-4 text-left transition-colors",
-                  role === item.value
-                    ? "border-brand bg-brand/10"
-                    : "border-white/8 bg-white/5 hover:bg-white/8",
-                ].join(" ")}
-              >
-                <p className="text-[16px] font-semibold text-white">
-                  {item.title}
-                </p>
-                <p className="mt-2 text-[15px] leading-7 text-white/60">
-                  {item.text}
-                </p>
-              </button>
-            ))}
+         <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+  {personRespondet.map((item) => (
+    <button
+      key={item.value}
+      type="button"
+      onClick={() => setRole(item.value)}
+      className={[
+        "rounded-2xl border px-4 py-3 text-left transition-colors",
+        role === item.value
+          ? "border-brand bg-brand/10"
+          : "border-site-border bg-site-section hover:bg-site-bg",
+      ].join(" ")}
+    >
+      <p className="text-[15px] font-semibold text-site-heading leading-tight">
+        {item.title}
+      </p>
+      <p className="mt-1 text-[13px] leading-5 text-site-body/80">
+        {item.text}
+      </p>
+    </button>
+  ))}
 
-            {personClient.map((item) => (
-              <button
-                key={item.value}
-                type="button"
-                onClick={() => setRole(item.value)}
-                className={[
-                  "rounded-2xl border p-4 text-left transition-colors",
-                  role === item.value
-                    ? "border-brand bg-brand/10"
-                    : "border-white/8 bg-white/5 hover:bg-white/8",
-                ].join(" ")}
-              >
-                <p className="text-[16px] font-semibold text-white">
-                  {item.title}
-                </p>
-                <p className="mt-2 text-[15px] leading-7 text-white/60">
-                  {item.text}
-                </p>
-              </button>
-            ))}
-          </div>
+  {personClient.map((item) => (
+    <button
+      key={item.value}
+      type="button"
+      onClick={() => setRole(item.value)}
+      className={[
+        "rounded-2xl border px-4 py-3 text-left transition-colors",
+        role === item.value
+          ? "border-brand bg-brand/10"
+          : "border-site-border bg-site-section hover:bg-site-bg",
+      ].join(" ")}
+    >
+      <p className="text-[15px] font-semibold text-site-heading leading-tight">
+        {item.title}
+      </p>
+      <p className="mt-1 text-[13px] leading-5 text-site-body/80">
+        {item.text}
+      </p>
+    </button>
+  ))}
+</div>
 
           {/* SOCIAL */}
           {role === "RESPONDENT" ? (
@@ -259,7 +259,7 @@ export default function RegisterPageClient({
               mode="register"
             />
           ) : (
-            <div className="mt-5 rounded-2xl border border-white/8 bg-white/5 p-4 text-[15px] leading-7 text-white/70">
+            <div className="mt-5 rounded-2xl border border-site-border bg-site-section p-4 text-[15px] leading-7 text-site-body/80">
               Регистрация через соцсети доступна только респондентам. Для
               заказчика создайте аккаунт по email.
             </div>
@@ -269,78 +269,64 @@ export default function RegisterPageClient({
             <input type="hidden" name="role" value={role} />
 
             <label className="grid gap-2">
-              <span className="text-[15px] text-white/60">Имя</span>
+              <span className="text-[15px] text-site-body/80">Имя</span>
               <input
                 name="name"
-                className="h-11 rounded-xl border border-white/10 bg-white/5 px-3 text-[15px] text-white outline-none placeholder:text-white/25"
+                className="h-11 rounded-xl border border-site-border bg-site-bg px-3 text-[15px] text-site-heading outline-none placeholder:text-site-muted focus:border-brand/40"
                 placeholder="Ваше имя"
                 disabled={isPending || isSigningIn}
               />
             </label>
 
             <label className="grid gap-2">
-              <span className="text-[15px] text-white/60">Email</span>
+              <span className="text-[15px] text-site-body/80">Email</span>
               <input
                 name="email"
                 type="email"
-                className="h-11 rounded-xl border border-white/10 bg-white/5 px-3 text-[15px] text-white outline-none placeholder:text-white/25"
+                className="h-11 rounded-xl border border-site-border bg-site-bg px-3 text-[15px] text-site-heading outline-none placeholder:text-site-muted focus:border-brand/40"
                 placeholder="mail@example.com"
                 disabled={isPending || isSigningIn}
               />
             </label>
 
             <label className="grid gap-2">
-              <span className="text-[15px] text-white/60">Пароль</span>
+              <span className="text-[15px] text-site-body/80">Пароль</span>
               <input
                 name="password"
                 type="password"
-                className="h-11 rounded-xl border border-white/10 bg-white/5 px-3 text-[15px] text-white outline-none"
+                className="h-11 rounded-xl border border-site-border bg-site-bg px-3 text-[15px] text-site-heading outline-none focus:border-brand/40"
                 placeholder="Минимум 8 символов"
                 disabled={isPending || isSigningIn}
               />
             </label>
 
             <label className="grid gap-2">
-              <span className="text-[15px] text-white/60">
+              <span className="text-[15px] text-site-body/80">
                 Подтвердите пароль
               </span>
               <input
                 name="confirmPassword"
                 type="password"
-                className="h-11 rounded-xl border border-white/10 bg-white/5 px-3 text-[15px] text-white outline-none"
+                className="h-11 rounded-xl border border-site-border bg-site-bg px-3 text-[15px] text-site-heading outline-none focus:border-brand/40"
                 disabled={isPending || isSigningIn}
               />
             </label>
 
             {/* LEGAL BLOCK — FIXED */}
-            <label className="flex items-start gap-3 rounded-xl border border-white/8 bg-white/5 p-4 text-[15px] leading-7 text-white/75">
-         <input
-  name="acceptTerms"
-  type="checkbox"
-  disabled={isPending || isSigningIn}
-  className="
-    mt-1
-    h-5 w-5
-    shrink-0
-    cursor-pointer
-    rounded-md
-    border border-white/20
-    bg-white/10
-    text-brand
-    accent-brand
-    transition
-    hover:scale-[1.05]
-    focus:ring-2
-    focus:ring-brand/40
-    focus:ring-offset-0
-  "
-/>
+            <label className="flex items-start gap-3 rounded-xl border border-site-border bg-site-section p-4 text-[15px] leading-7 text-site-body/85">
+              <input
+                name="acceptTerms"
+                type="checkbox"
+                disabled={isPending || isSigningIn}
+                className="mt-1 h-5 w-5 shrink-0 cursor-pointer rounded-md border border-site-border bg-site-bg text-brand accent-brand transition hover:scale-[1.05] focus:ring-2 focus:ring-brand/40 focus:ring-offset-0"
+              />
 
               <span className="leading-7">
                 Я принимаю{" "}
                 <Link
                   href={roleOffer.href}
                   target="_blank"
+                  rel="noreferrer"
                   className="font-semibold text-brand-light underline-offset-4 hover:underline"
                 >
                   {roleOffer.label}
@@ -349,6 +335,7 @@ export default function RegisterPageClient({
                 <Link
                   href="/legal/user-agreement"
                   target="_blank"
+                  rel="noreferrer"
                   className="font-semibold text-brand-light underline-offset-4 hover:underline"
                 >
                   пользовательское соглашение
@@ -357,6 +344,7 @@ export default function RegisterPageClient({
                 <Link
                   href="/legal/personal-data-policy"
                   target="_blank"
+                  rel="noreferrer"
                   className="font-semibold text-brand-light underline-offset-4 hover:underline"
                 >
                   политикой обработки персональных данных
@@ -365,6 +353,7 @@ export default function RegisterPageClient({
                 <Link
                   href="/legal/personal-data-consent"
                   target="_blank"
+                  rel="noreferrer"
                   className="font-semibold text-brand-light underline-offset-4 hover:underline"
                 >
                   согласие на обработку персональных данных
@@ -392,7 +381,7 @@ export default function RegisterPageClient({
             </button>
           </form>
 
-          <p className="mt-6 text-[15px] text-white/50">
+          <p className="mt-6 text-[15px] text-site-muted">
             Уже есть аккаунт?{" "}
             <Link
               href={`/login?role=${role}&callbackUrl=${encodeURIComponent(

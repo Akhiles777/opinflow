@@ -66,7 +66,7 @@ export default function OAuthButtons({
       </div>
 
       {mode === "register" ? (
-        <p className="mt-4 rounded-2xl border border-white/8 bg-white/5 p-4 text-[13px] leading-relaxed text-white/55">
+        <p className="mt-4 rounded-2xl border border-site-border bg-site-section p-4 text-[13px] leading-relaxed text-site-body/80">
           Продолжая регистрацию через соцсети, вы принимаете{" "}
           <Link
             href="/legal/respondent-offer"
@@ -107,10 +107,10 @@ export default function OAuthButtons({
         </p>
       ) : null}
 
-      <div className="my-6 flex items-center gap-3 text-sm uppercase tracking-[0.25em] text-white/25">
-        <div className="h-px flex-1 bg-white/10" />
+      <div className="my-6 flex items-center gap-3 text-sm uppercase tracking-[0.25em] text-site-muted">
+        <div className="h-px flex-1 bg-site-border" />
         или
-        <div className="h-px flex-1 bg-white/10" />
+        <div className="h-px flex-1 bg-site-border" />
       </div>
     </>
   );

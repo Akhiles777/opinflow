@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth-utils";
+import { notify } from "@/lib/notifications";
 import { assertPayoutRequisitesValid, normalizeWithdrawalRequisitesForStorage } from "@/lib/yukassa-payout-requisites";
 import { YUKASSA_PAYOUT_HTTP_403_RU, YUKASSA_SBP_CONTRACT_FORBIDDEN_RESPONDENT_RU } from "@/lib/yukassa-payout-copy";
 import { createDepositPayment, createPayout, fetchSbpBanksForPayouts } from "@/lib/yukassa";
@@ -374,6 +375,20 @@ export async function rejectWithdrawalAction(requestId: string, reason: string) 
         adminNote: reason.trim(),
       },
     });
+  });
+
+  // Notify user about rejected withdrawal
+  await notify({
+    userId: requestRecord.userId,
+    type: "WITHDRAWAL_STATUS",
+    title: "Заявка на вывод отклонена",
+    body: `Заявка на ${Number(requestRecord.amount)} ₽ отклонена`,
+    link: "/respondent/wallet",
+    emailData: {
+      amount: Number(requestRecord.amount),
+      status: "REJECTED",
+      adminNote: reason,
+    },
   });
 
   revalidatePath("/admin/finance");
