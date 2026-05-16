@@ -48,15 +48,16 @@ export default function Features() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {features.map((feature, index) => (
             <RevealOnScroll key={feature.title} delay={index * 100}>
-              <div className="bg-site-bg rounded-2xl overflow-hidden border border-site-border hover:border-brand/20 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg group">
+              <div className="bg-site-bg rounded-2xl overflow-hidden border border-site-border hover:border-brand/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl group">
                 {/* Feature Image */}
-                <div className="aspect-[4/3] relative bg-gradient-to-br from-brand/5 to-brand/10 p-4">
+                <div className="aspect-[4/3] relative bg-gradient-to-br from-brand/5 to-brand/10 overflow-hidden">
                   <Image
                     src={feature.image}
                     alt={feature.title}
                     fill
-                    className="object-contain p-2"
+                    className="object-cover"
                     sizes="(max-width: 768px) 100vw, 33vw"
+                    quality={100}
                   />
                 </div>
                 <div className="p-6">

@@ -18,6 +18,8 @@ export default function Hero() {
           fill
           className="object-cover object-right"
           priority
+          quality={100}
+          sizes="100vw"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/80 to-transparent" />
       </div>
@@ -94,8 +96,10 @@ export default function Hero() {
                   alt="Дашборд ПотокМнений"
                   width={800}
                   height={600}
-                  className="w-full h-auto"
+                  className="w-full h-auto drop-shadow-2xl"
                   priority
+                  quality={100}
+                  sizes="(max-width: 1024px) 100vw, 50vw"
                 />
               </div>
             </RevealOnScroll>
@@ -107,77 +111,26 @@ export default function Hero() {
           <div className="mt-12 lg:mt-16 grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
             {[
               {
-                icon: "chart",
+                icon: "/icons/add-square.svg",
                 value: "800+",
                 label: "проведённых исследований",
               },
-              { icon: "target", value: "97%", label: "качество данных" },
-              { icon: "integration", value: "15+", label: "интеграций с CRM" },
-              { icon: "users", value: "25k+", label: "активных респондентов" },
+              { icon: "/icons/shield-tick.svg", value: "97%", label: "качество данных" },
+              { icon: "/icons/profile-2user.svg", value: "15+", label: "интеграций с CRM" },
+              { icon: "/icons/people.svg", value: "25k+", label: "активных респондентов" },
             ].map((stat) => (
               <div
                 key={stat.label}
-                className="flex items-center gap-3 p-4 bg-white/60 backdrop-blur-sm rounded-xl border border-white/80 shadow-sm"
+                className="flex items-center gap-3 p-4 bg-white/80 backdrop-blur-sm rounded-xl border border-white/80 shadow-sm"
               >
-                <div className="w-10 h-10 rounded-lg bg-brand/10 flex items-center justify-center text-brand shrink-0">
-                  {stat.icon === "chart" && (
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                      />
-                    </svg>
-                  )}
-                  {stat.icon === "target" && (
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <circle cx="12" cy="12" r="10" />
-                      <circle cx="12" cy="12" r="6" />
-                      <circle cx="12" cy="12" r="2" />
-                    </svg>
-                  )}
-                  {stat.icon === "integration" && (
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
-                      />
-                    </svg>
-                  )}
-                  {stat.icon === "users" && (
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                      />
-                    </svg>
-                  )}
+                <div className="w-10 h-10 rounded-lg bg-brand/10 flex items-center justify-center shrink-0">
+                  <Image
+                    src={stat.icon}
+                    alt=""
+                    width={24}
+                    height={24}
+                    className="w-5 h-5"
+                  />
                 </div>
                 <div>
                   <p className="font-bold text-xl text-site-heading">

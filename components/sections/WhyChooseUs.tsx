@@ -48,7 +48,7 @@ export default function WhyChooseUs() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
           {benefits.map((benefit, index) => (
             <RevealOnScroll key={benefit.title} delay={index * 80}>
-              <div className="flex gap-4 p-6 bg-site-bg rounded-2xl border border-site-border hover:border-brand/20 transition-all duration-300">
+              <div className="flex gap-4 p-6 bg-site-bg rounded-2xl border border-site-border hover:border-brand/30 hover:shadow-lg transition-all duration-300">
                 <div className="w-12 h-12 rounded-xl bg-brand/10 flex items-center justify-center shrink-0">
                   <Image
                     src={benefit.icon}
@@ -72,14 +72,15 @@ export default function WhyChooseUs() {
         {/* Dashboard Preview */}
         <RevealOnScroll delay={200}>
           <div className="mt-12 lg:mt-16 relative">
-            <div className="rounded-2xl overflow-hidden border border-site-border bg-gradient-to-br from-site-bg to-white">
+            <div className="rounded-2xl overflow-hidden border border-site-border bg-gradient-to-br from-site-bg to-white shadow-xl">
               <div className="relative aspect-[16/9] lg:aspect-[21/9]">
                 <Image
                   src="/laptop 1.png"
                   alt="Дашборд ПотокМнений"
                   fill
-                  className="object-contain p-4 lg:p-8"
+                  className="object-contain"
                   sizes="100vw"
+                  quality={100}
                 />
               </div>
             </div>
