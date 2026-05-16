@@ -1,5 +1,6 @@
 import * as React from "react";
 import RevealOnScroll from "@/components/ui/RevealOnScroll";
+import Image from "next/image";
 
 const testimonials = [
   {
@@ -29,7 +30,11 @@ const caseStudy = {
   image: null,
 };
 
-const companies = ["Adobe", "S7", "Яндекс"];
+const companies = [
+  { name: "Adobe", logo: null },
+  { name: "S7", logo: null },
+  { name: "Яндекс", logo: "/yandexAuth.png" },
+];
 
 const stats = [
   { value: "800+", label: "проведённых исследований по всей России" },
@@ -58,7 +63,9 @@ export default function Testimonials() {
                   {testimonials[0].author.slice(0, 2).toUpperCase()}
                 </div>
                 <div>
-                  <p className="font-semibold text-site-heading">{testimonials[0].author}</p>
+                  <p className="font-semibold text-site-heading">
+                    {testimonials[0].author}
+                  </p>
                   <p className="text-sm text-site-muted">{testimonials[0].role}</p>
                 </div>
               </div>
@@ -76,7 +83,9 @@ export default function Testimonials() {
                   {testimonials[1].author.slice(0, 2).toUpperCase()}
                 </div>
                 <div>
-                  <p className="font-semibold text-site-heading">{testimonials[1].author}</p>
+                  <p className="font-semibold text-site-heading">
+                    {testimonials[1].author}
+                  </p>
                   <p className="text-sm text-site-muted">{testimonials[1].role}</p>
                 </div>
               </div>
@@ -89,19 +98,37 @@ export default function Testimonials() {
               <div className="space-y-6">
                 {stats.map((stat) => (
                   <div key={stat.label}>
-                    <p className="font-display text-4xl font-bold text-brand">{stat.value}</p>
+                    <p className="font-display text-4xl font-bold text-brand">
+                      {stat.value}
+                    </p>
                     <p className="text-sm text-site-muted mt-1">{stat.label}</p>
                   </div>
                 ))}
               </div>
               <div className="mt-8 pt-6 border-t border-site-border">
-                <p className="text-xs text-site-muted uppercase tracking-wider mb-4">Нам доверяют</p>
+                <p className="text-xs text-site-muted uppercase tracking-wider mb-4">
+                  Нам доверяют
+                </p>
                 <div className="flex items-center gap-4 flex-wrap">
-                  {companies.map((company) => (
-                    <span key={company} className="text-sm font-semibold text-site-muted">
-                      {company}
-                    </span>
-                  ))}
+                  {companies.map((company) =>
+                    company.logo ? (
+                      <Image
+                        key={company.name}
+                        src={company.logo}
+                        alt={company.name}
+                        width={80}
+                        height={32}
+                        className="h-8 w-auto object-contain opacity-70 hover:opacity-100 transition-opacity"
+                      />
+                    ) : (
+                      <span
+                        key={company.name}
+                        className="text-sm font-semibold text-site-muted"
+                      >
+                        {company.name}
+                      </span>
+                    )
+                  )}
                 </div>
               </div>
             </div>
@@ -121,7 +148,9 @@ export default function Testimonials() {
                   {caseStudy.author.slice(0, 2).toUpperCase()}
                 </div>
                 <div>
-                  <p className="font-semibold text-site-heading">{caseStudy.author}</p>
+                  <p className="font-semibold text-site-heading">
+                    {caseStudy.author}
+                  </p>
                   <p className="text-sm text-site-muted">{caseStudy.role}</p>
                 </div>
               </div>
