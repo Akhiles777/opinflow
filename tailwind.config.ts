@@ -7,10 +7,15 @@ const config: Config = {
     extend: {
       colors: {
         brand: {
-          DEFAULT: "#6366F1",
-          light: "#818CF8",
-          dark: "#4F46E5",
-          glow: "rgba(99,102,241,0.15)",
+          DEFAULT: "#6B4EFF",
+          light: "#8B7AFF",
+          dark: "#5438E5",
+          glow: "rgba(107,78,255,0.15)",
+        },
+        accent: {
+          DEFAULT: "#FFD700",
+          light: "#FFE44D",
+          dark: "#E5C200",
         },
         surface: {
           950: "#0A0A0F",
