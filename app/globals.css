@@ -4,17 +4,14 @@
 :root {
   font-family: var(--font-geist);
 
-  
-  
-  --site-bg: #eef2f7;
-  --site-section: #e6ebf3;
-  --site-card: #ffffff;
-  --site-border: #cbd3df;
-  --site-muted: #556277;
-  --site-heading: #0b1220;
-  --site-body: #2b3547;
+  --site-bg: #F8F6FF;
+  --site-section: #FFFFFF;
+  --site-card: #FFFFFF;
+  --site-border: #E5E1F5;
+  --site-muted: #6B7280;
+  --site-heading: #111827;
+  --site-body: #374151;
 
-  
   --dash-sidebar: #0a0a0f;
   --dash-bg: #eceff4;
   --dash-card: #ffffff;
@@ -24,9 +21,7 @@
   --dash-body: #334155;
 }
 
-
 .dark {
-  
   --site-bg: #0a0a0f;
   --site-section: #0f0f1a;
   --site-card: #16162a;
@@ -65,7 +60,6 @@ html {
 .dashboard-root .font-body {
   font-family: Arial, Helvetica, sans-serif;
 }
-
 
 [id] {
   scroll-margin-top: 88px;

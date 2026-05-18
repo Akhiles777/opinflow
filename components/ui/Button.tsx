@@ -29,10 +29,10 @@ const base =
   "inline-flex items-center justify-center font-body font-medium rounded-xl transition-all duration-200 cursor-pointer";
 
 const variants: Record<Variant, string> = {
-  primary: "bg-brand hover:bg-brand-dark text-white shadow-glow hover:shadow-glow",
+  primary: "bg-brand hover:bg-brand-dark text-white shadow-lg shadow-brand/25 hover:shadow-brand/40",
   secondary:
-    "border border-site-border text-site-heading bg-site-card hover:bg-site-section hover:border-site-border/80 transition-colors",
-  ghost: "text-site-muted hover:text-site-heading hover:bg-site-section transition-colors",
+    "border border-site-border text-site-heading bg-white hover:bg-site-bg hover:border-brand/20 transition-colors",
+  ghost: "text-site-muted hover:text-site-heading hover:bg-site-bg transition-colors",
 };
 
 const sizes: Record<Size, string> = {

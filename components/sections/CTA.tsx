@@ -1,75 +1,52 @@
-'use client'
+"use client";
 
 import * as React from "react";
 import Button from "@/components/ui/Button";
-import GlowOrb from "@/components/ui/GlowOrb";
 import RevealOnScroll from "@/components/ui/RevealOnScroll";
-import { useSession } from "next-auth/react";
+import Image from "next/image";
 
 export default function CTA() {
-
-  const { data: session, status } = useSession();
-  const user = status === "authenticated" && session?.user
-  const userRole = session?.user?.role
-
   return (
-    <section className="relative overflow-hidden bg-site-bg px-4 pt-10 pb-14 text-center sm:px-6 sm:pt-12 sm:pb-16 lg:px-8 lg:pt-16 lg:pb-24">
-      
-      <GlowOrb size={800} opacity={0.08} className="top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+    <section className="relative overflow-hidden px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-24">
+      {/* Background gradient */}
+      <div
+        className="absolute inset-0 z-0"
+        style={{
+          background:
+            "linear-gradient(135deg, #6B4EFF 0%, #8B7AFF 50%, #A594FF 100%)",
+        }}
+      />
 
-      <div className="relative z-10 max-w-3xl mx-auto">
+      {/* Decorative spheres from bg img */}
+      <div className="absolute inset-0 z-0 opacity-20">
+        <Image
+          src="/bg img.png"
+          alt=""
+          fill
+          className="object-cover object-center"
+        />
+      </div>
+
+      <div className="relative z-10 max-w-3xl mx-auto text-center">
         <RevealOnScroll>
-          <h2 className="mb-5 font-display text-title text-site-heading">
-            Запустите исследование или
+          <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-6">
+            Готовы начать
             <br />
-            начните проходить опросы уже сегодня
+            исследование?
           </h2>
-          <p className="mb-8 text-lg font-body text-site-muted sm:mb-10">
-            Реальные люди, реальные ответы и честная система вознаграждений — всё в одном сервисе.
+          <p className="text-lg text-white/80 mb-8 max-w-xl mx-auto">
+            Зарегистрируйтесь, создайте и запустите свой первый опрос уже за 5
+            минут!
           </p>
 
-          <div className="flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
-            {user ? (
-              <>
-                <Button
-                  variant="primary"
-                  size="lg"
-                  href={''}
-                  className="w-full sm:w-auto sm:px-9 sm:py-4 sm:text-lg sm:font-semibold"
-                >
-                  Я хочу зарабатывать →
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="lg"
-                  href="/register?role=CLIENT"
-                  className="w-full sm:w-auto sm:px-9 sm:py-4 sm:text-lg sm:font-semibold"
-                >
-                  Я хочу заказать опрос →
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button
-                  variant="primary"
-                  size="lg"
-                  href="/register?role=RESPONDENT"
-                  className="w-full sm:w-auto sm:px-9 sm:py-4 sm:text-lg sm:font-semibold"
-                >
-                  Я хочу зарабатывать →
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="lg"
-                  href="/register?role=CLIENT"
-                  className="w-full sm:w-auto sm:px-9 sm:py-4 sm:text-lg sm:font-semibold"
-                >
-                  Я хочу заказать опрос →
-                </Button>
-              </>
-            )}
-          </div>
-
+          <Button
+            variant="secondary"
+            size="xl"
+            href="/register?role=CLIENT"
+            className="!bg-white !text-brand hover:!bg-white/90 !border-white"
+          >
+            Регистрация
+          </Button>
         </RevealOnScroll>
       </div>
     </section>

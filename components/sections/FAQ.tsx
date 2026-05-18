@@ -5,83 +5,63 @@ import RevealOnScroll from "@/components/ui/RevealOnScroll";
 
 const faqs = [
   {
-    q: "Как начать зарабатывать на опросах?",
-    a: "Зарегистрируйтесь как респондент, заполните профиль — и вам сразу станут доступны опросы. Выбирайте подходящие, проходите и выводите деньги.",
+    q: "Как быстро я получу ответы?",
+    a: "В среднем первые ответы приходят в течение часа после запуска опроса. Полный сбор данных занимает от нескольких часов до пары дней в зависимости от объёма выборки.",
   },
   {
-    q: "Сколько можно заработать?",
-    a: "Стоимость одного опроса — от 20 до 500 рублей. В среднем активные пользователи зарабатывают 3 000–5 000 рублей в месяц.",
+    q: "Какое качество данных вы гарантируете?",
+    a: "Мы гарантируем 97% верифицированных ответов благодаря многоуровневой системе контрольных вопросов, анализа поведения и ИИ-фильтров, которые отсеивают ботов и недобросовестных респондентов.",
   },
   {
-    q: "Какие гарантии качества данных для заказчика?",
-    a: "Антифрод-система: проверка по IP, device fingerprint, скорость прохождения и контрольные вопросы. Подозрительные ответы отклоняются — деньги не списываются.",
+    q: "Можно ли выгрузить данные?",
+    a: "Да, вы можете экспортировать все данные в форматах CSV, Excel или JSON. Также доступна интеграция с популярными аналитическими системами через API.",
   },
   {
-    q: "Можно ли заказать опрос для малого бизнеса?",
-    a: "Да, минимальный бюджет — от 1 000 рублей. Конструктор интуитивен, отчёт формируется автоматически — аналитик не нужен.",
-  },
-  {
-    q: "Как связаться с поддержкой?",
-    a: "Напишите на support@potokmneny.ru или воспользуйтесь формой обратной связи в разделе «Контакты».",
+    q: "Как происходит оплата?",
+    a: "Оплата производится по факту собранных ответов. Вы пополняете баланс и платите только за реальные верифицированные ответы. Минимальный бюджет — от 1 000 рублей.",
   },
 ];
 
 export default function FAQ() {
-  const [activeIndex, setActiveIndex] = React.useState<number | null>(null);
+  const [activeIndex, setActiveIndex] = React.useState<number | null>(1);
 
   return (
-    <section className="bg-site-bg px-4 py-20 sm:px-6 sm:py-24 lg:px-8 lg:py-10" id="faq">
-      <div className="max-w-5xl mx-auto grid grid-cols-1 gap-10 lg:grid-cols-[280px_1fr] lg:gap-20">
-        <div className="self-start lg:sticky lg:top-24">
-          <RevealOnScroll>
-            <p className="text-xs font-semibold font-body text-brand-light uppercase tracking-[0.2em] mb-4">
-              FAQ
-            </p>
-            <h2 className="font-display text-heading text-site-heading mb-6">
-              Ответы на частые вопросы
-            </h2>
-            <p className="text-sm font-body text-site-muted leading-relaxed">
-              Напишите в поддержку, если не нашли нужный ответ.
-            </p>
-            <a
-              href="mailto:support@potokmneny.ru"
-              className="inline-flex items-center gap-2 text-sm font-body text-brand hover:text-brand-dark transition-colors mt-4"
-            >
-              support@potokmneny.ru
-              <span>→</span>
-            </a>
-          </RevealOnScroll>
-        </div>
+    <section className="bg-site-bg px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-24" id="faq">
+      <div className="max-w-3xl mx-auto">
+        <RevealOnScroll>
+          <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-site-heading text-center mb-12 lg:mb-16">
+            Частые вопросы
+          </h2>
+        </RevealOnScroll>
 
-        <div>
+        <div className="space-y-4">
           {faqs.map((faq, index) => {
             const active = index === activeIndex;
             return (
               <RevealOnScroll key={faq.q} delay={index * 60}>
                 <div
                   className={[
-                    "rounded-2xl border px-4 sm:px-6 transition-colors",
-                    active ? "bg-site-section border-brand/20" : "bg-site-card border-site-border",
-                    index === 0 ? "mt-0" : "mt-4",
+                    "rounded-2xl border transition-all duration-300",
+                    active 
+                      ? "bg-white border-brand/20 shadow-sm" 
+                      : "bg-white border-site-border hover:border-brand/10",
                   ].join(" ")}
                 >
                   <button
-                    className="w-full flex justify-between items-center py-6 text-left"
-                    onClick={() =>
-                      setActiveIndex(active ? null : index)
-                    }
+                    className="w-full flex justify-between items-center px-6 py-5 text-left"
+                    onClick={() => setActiveIndex(active ? null : index)}
                     type="button"
                   >
                     <span
                       className={[
-                        "text-base font-semibold font-body transition-colors",
+                        "text-base font-semibold transition-colors",
                         active ? "text-site-heading" : "text-site-body hover:text-site-heading",
                       ].join(" ")}
                     >
                       {faq.q}
                     </span>
                     <span
-                      className={`text-brand text-2xl font-light transition-transform duration-300 ${
+                      className={`text-brand text-2xl font-light transition-transform duration-300 ml-4 ${
                         active ? "rotate-45" : ""
                       }`}
                     >
@@ -89,11 +69,11 @@ export default function FAQ() {
                     </span>
                   </button>
                   <div
-                    className={`overflow-hidden transition-all duration-350 ${
-                      active ? "max-h-48 pb-6" : "max-h-0"
+                    className={`overflow-hidden transition-all duration-300 ${
+                      active ? "max-h-48 pb-5 px-6" : "max-h-0"
                     }`}
                   >
-                    <p className="text-sm font-body text-site-muted leading-relaxed">
+                    <p className="text-sm text-site-muted leading-relaxed">
                       {faq.a}
                     </p>
                   </div>

@@ -1,24 +1,24 @@
 import Header from "@/components/layout/Header";
 import Hero from "@/components/sections/Hero";
-import TwoAudiences from "@/components/sections/TwoAudiences";
-import Stats from "@/components/sections/Stats";
-import Cabinets from "@/components/sections/Cabinets";
-import About from "@/components/sections/About";
-import Partners from "@/components/sections/Partners";
+import Features from "@/components/sections/Features";
+import WhoItsFor from "@/components/sections/WhoItsFor";
+import WhyChooseUs from "@/components/sections/WhyChooseUs";
+import Pricing from "@/components/sections/Pricing";
+import Testimonials from "@/components/sections/Testimonials";
 import FAQ from "@/components/sections/FAQ";
 import CTA from "@/components/sections/CTA";
 import Footer from "@/components/layout/Footer";
 
 export default function Home() {
   return (
-    <main className="bg-site-bg text-site-body overflow-hidden">
+    <main className="bg-white text-site-body overflow-hidden">
       <Header />
       <Hero />
-      <TwoAudiences />
-      <Stats />
-      <Cabinets />
-      <About />
-      <Partners />
+      <Features />
+      <WhoItsFor />
+      <WhyChooseUs />
+      <Pricing />
+      <Testimonials />
       <FAQ />
       <CTA />
       <Footer />
