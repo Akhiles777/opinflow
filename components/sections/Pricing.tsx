@@ -1,166 +1,262 @@
 "use client";
 
-import * as React from "react";
-import Button from "@/components/ui/Button";
-import RevealOnScroll from "@/components/ui/RevealOnScroll";
-import Image from "next/image";
-
 const plans = [
   {
     name: "Basic",
-    price: "25% комиссии площадки",
-    description: "Подходит для начала изучения",
+    subtitle: "20% комиссия площадки",
     features: [
-      "Базовая аналитика",
-      "До 500 респондентов",
-      "Стандартный конструктор",
-      "Email-поддержка",
+      "Все возможности площадки",
+      "Углубленная ИИ-аналитика",
       "Доступ к базе респондентов",
     ],
-    highlighted: false,
-    ctaText: "Выбрать тариф",
+    button: "green",
   },
   {
     name: "Pro",
-    price: "от 150 000 ₽",
-    priceNote: "Подходит для начала изучения",
-    description: "Подходит для растущего бизнеса",
+    subtitle: "Подключить аналитика компании",
     features: [
-      "Всё из Basic +",
-      "ИИ-аналитика",
-      "Безлимит респондентов",
-      "Запуск опросов под ключ",
-      "Приоритетная поддержка",
+      "Углубленная аналитика",
+      "Анализ рынка",
+      "Поиск инсайтов",
+      "Запуск опроса под ключ",
     ],
-    highlighted: true,
-    ctaText: "Выбрать тариф",
+    button: "violet",
   },
   {
     name: "Enterprise",
-    price: "Индивидуально",
-    description: "Для крупного бизнеса",
+    subtitle: "Индивидуально",
     features: [
-      "Всё из Pro +",
+      "API",
       "White-label",
-      "Выделенный менеджер",
-      "SLA гарантии",
-      "Интеграции API",
+      "Личный менеджер",
     ],
-    highlighted: false,
-    ctaText: "Выбрать тариф",
+    button: "mix",
   },
 ];
 
-export default function Pricing() {
+function CheckIcon() {
   return (
-    <section className="relative overflow-hidden px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-24">
-      {/* Background gradient */}
-      <div
-        className="absolute inset-0 z-0"
-        style={{
-          background:
-            "linear-gradient(135deg, #6B4EFF 0%, #8B7AFF 50%, #A594FF 100%)",
-        }}
-      />
+    <div className="w-5 h-5 rounded-full bg-[#2F1D69] flex items-center justify-center shrink-0">
+      <div className="w-2 h-2 rounded-full bg-white" />
+    </div>
+  );
+}
 
-      {/* Decorative spheres from bg img */}
-      <div className="absolute inset-0 z-0 opacity-30">
-        <Image
-          src="/bg img.png"
-          alt=""
-          fill
-          className="object-cover object-center"
-        />
+function PlanCard({ plan }: any) {
+  return (
+    <div
+      className="
+        relative
+        overflow-hidden
+
+        rounded-[34px]
+
+        border
+        border-white/30
+
+        bg-white/70
+        backdrop-blur-2xl
+
+        p-5
+
+        shadow-[0_10px_50px_rgba(0,0,0,0.06)]
+
+        transition-all
+        duration-300
+
+        hover:-translate-y-1
+      "
+    >
+      {/* glass overlay */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.95),transparent_45%)]" />
+
+      {/* top block */}
+      <div
+        className={`
+          relative
+          z-10
+
+          rounded-[24px]
+
+          p-7
+
+          min-h-[120px]
+
+          overflow-hidden
+
+          ${
+            plan.name === "Enterprise"
+              ? "bg-[linear-gradient(135deg,#6438D9_0%,#7B4FF0_60%,#D9F326_100%)]"
+              : plan.name === "Pro"
+              ? "bg-[linear-gradient(180deg,#FFFFFF_0%,#F3EDFF_100%)]"
+              : "bg-[linear-gradient(135deg,#FFFFFF_0%,#F7F3FF_60%,#D9F326_140%)]"
+          }
+        `}
+      >
+        {/* glow */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.9),transparent_45%)]" />
+
+        <div className="relative z-10">
+          <h3
+            className={`
+              text-[28px]
+              leading-none
+              tracking-[-0.04em]
+              font-semibold
+
+              ${
+                plan.name === "Enterprise"
+                  ? "text-white"
+                  : "text-[#1C0C4C]"
+              }
+            `}
+          >
+            {plan.name}
+          </h3>
+
+          <p
+            className={`
+              mt-3
+              text-[18px]
+              leading-[1.1]
+
+              ${
+                plan.name === "Enterprise"
+                  ? "text-white/80"
+                  : "text-[#3A2B73]"
+              }
+            `}
+          >
+            {plan.subtitle}
+          </p>
+        </div>
       </div>
 
-      <div className="mx-auto max-w-7xl relative z-10">
-        <RevealOnScroll>
-          <div className="text-center mb-12 lg:mb-16">
-            <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-white">
-              Прозрачные тарифы
-              <br />
-              для любых задач
-            </h2>
+      {/* features */}
+      <div className="relative z-10 mt-7 flex flex-col gap-4">
+        {plan.features.map((item: string, i: number) => (
+          <div key={i} className="flex items-center gap-3">
+            <CheckIcon />
+
+            <span
+              className="
+                text-[20px]
+                leading-[1.15]
+                tracking-[-0.03em]
+                text-[#2A185F]
+                font-medium
+              "
+            >
+              {item}
+            </span>
           </div>
-        </RevealOnScroll>
+        ))}
+      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* button */}
+      <button
+        className={`
+          relative
+          z-10
+
+          mt-10
+
+          h-[58px]
+          w-full
+
+          rounded-[18px]
+
+          text-[20px]
+          font-medium
+
+          transition-all
+          duration-300
+
+          ${
+            plan.button === "violet"
+              ? "bg-[#6438D9] text-white"
+              : plan.button === "mix"
+              ? "bg-[linear-gradient(90deg,#6438D9_0%,#7B4FF0_60%,#D9F326_100%)] text-white"
+              : "bg-[linear-gradient(90deg,#D9F326_0%,#E5F667_100%)] text-[#1C0C4C]"
+          }
+        `}
+      >
+        ✦ Выбрать тариф
+      </button>
+    </div>
+  );
+}
+
+export default function Pricing() {
+  return (
+    <section
+      className="
+        relative
+        overflow-hidden
+
+        py-20
+        lg:py-28
+
+        px-4
+        sm:px-6
+        lg:px-8
+      "
+    >
+      {/* background */}
+      <div className="absolute inset-0 bg-[linear-gradient(135deg,#DCCEFF_0%,#7B4FF0_45%,#9A78F5_100%)]" />
+
+      {/* curved lines */}
+      <div className="absolute inset-0 opacity-20">
+        <div className="absolute -top-[200px] left-[10%] w-[900px] h-[900px] rounded-full border border-white/30" />
+
+        <div className="absolute top-[10%] right-[-250px] w-[800px] h-[800px] rounded-full border border-white/20" />
+
+        <div className="absolute bottom-[-350px] left-[20%] w-[900px] h-[900px] rounded-full border border-white/20" />
+      </div>
+
+      {/* glass overlay */}
+      <div className="absolute inset-0 bg-white/5 backdrop-blur-[2px]" />
+
+      <div className="relative z-10 max-w-[1280px] mx-auto">
+        {/* title */}
+        <div className="flex justify-center mb-14 lg:mb-16">
+          <h2
+            className="
+              max-w-[700px]
+
+              text-center
+
+              text-[42px]
+              sm:text-[56px]
+              lg:text-[72px]
+
+              leading-[0.9]
+              tracking-[-0.06em]
+
+              font-semibold
+
+              text-white
+            "
+          >
+            Прозрачные тарифы
+            <br />
+            для любых задач
+          </h2>
+        </div>
+
+        {/* cards */}
+        <div
+          className="
+            grid
+            grid-cols-1
+            md:grid-cols-2
+            xl:grid-cols-3
+
+            gap-6
+          "
+        >
           {plans.map((plan, index) => (
-            <RevealOnScroll key={plan.name} delay={index * 100}>
-              <div
-                className={`rounded-2xl p-6 lg:p-8 h-full flex flex-col ${
-                  plan.highlighted
-                    ? "bg-white shadow-xl"
-                    : "bg-white/10 backdrop-blur-sm border border-white/20"
-                }`}
-              >
-                <div className="mb-6">
-                  <h3
-                    className={`font-display text-2xl font-bold mb-2 ${
-                      plan.highlighted ? "text-site-heading" : "text-white"
-                    }`}
-                  >
-                    {plan.name}
-                  </h3>
-                  <p
-                    className={`text-lg font-semibold ${
-                      plan.highlighted ? "text-brand" : "text-white/90"
-                    }`}
-                  >
-                    {plan.price}
-                  </p>
-                  <p
-                    className={`text-sm mt-1 ${
-                      plan.highlighted ? "text-site-muted" : "text-white/70"
-                    }`}
-                  >
-                    {plan.description}
-                  </p>
-                </div>
-
-                <ul className="space-y-3 mb-8 flex-1">
-                  {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-start gap-3">
-                      <svg
-                        className={`w-5 h-5 shrink-0 mt-0.5 ${
-                          plan.highlighted ? "text-brand" : "text-white"
-                        }`}
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                      <span
-                        className={`text-sm ${
-                          plan.highlighted ? "text-site-body" : "text-white/90"
-                        }`}
-                      >
-                        {feature}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-
-                <Button
-                  variant={plan.highlighted ? "primary" : "secondary"}
-                  size="lg"
-                  href="/register?role=CLIENT"
-                  className={`w-full justify-center ${
-                    !plan.highlighted
-                      ? "!bg-white/20 !border-white/30 !text-white hover:!bg-white/30"
-                      : ""
-                  }`}
-                >
-                  {plan.ctaText}
-                </Button>
-              </div>
-            </RevealOnScroll>
+            <PlanCard key={index} plan={plan} />
           ))}
         </div>
       </div>
