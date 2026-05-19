@@ -6,76 +6,233 @@ import RevealOnScroll from "@/components/ui/RevealOnScroll";
 const faqs = [
   {
     q: "Как быстро я получу ответы?",
-    a: "В среднем первые ответы приходят в течение часа после запуска опроса. Полный сбор данных занимает от нескольких часов до пары дней в зависимости от объёма выборки.",
+    a: "В среднем первые ответы приходят в течение часа после запуска опроса.",
   },
   {
     q: "Какое качество данных вы гарантируете?",
-    a: "Мы гарантируем 97% верифицированных ответов благодаря многоуровневой системе контрольных вопросов, анализа поведения и ИИ-фильтров, которые отсеивают ботов и недобросовестных респондентов.",
+    a: "Мы гарантируем 97% верифицированных ответов благодаря многоступенчатой системе защиты.",
   },
   {
     q: "Можно ли выгрузить данные?",
-    a: "Да, вы можете экспортировать все данные в форматах CSV, Excel или JSON. Также доступна интеграция с популярными аналитическими системами через API.",
+    a: "Да, доступен экспорт в CSV, Excel и JSON.",
   },
   {
     q: "Как происходит оплата?",
-    a: "Оплата производится по факту собранных ответов. Вы пополняете баланс и платите только за реальные верифицированные ответы. Минимальный бюджет — от 1 000 рублей.",
+    a: "Вы оплачиваете только реальные верифицированные ответы.",
   },
 ];
+
+function Arrow({ active }: { active: boolean }) {
+  return (
+    <div
+      className={`
+        flex
+        items-center
+        justify-center
+
+        w-10
+        h-10
+
+        rounded-full
+
+        border
+
+        transition-all
+        duration-500
+
+        ${
+          active
+            ? "border-[#6438D9] text-[#6438D9] bg-white"
+            : "border-[#DAD4F3] text-[#1C0C4C] bg-white/70"
+        }
+      `}
+    >
+      <svg
+        className={`
+          transition-transform
+          duration-500
+          ease-out
+          ${active ? "rotate-180" : ""}
+        `}
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+      >
+        <path
+          d="M8 10L12 14L16 10"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </div>
+  );
+}
 
 export default function FAQ() {
   const [activeIndex, setActiveIndex] = React.useState<number | null>(1);
 
   return (
-    <section className="bg-site-bg px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-24" id="faq">
-      <div className="max-w-3xl mx-auto">
+    <section className="bg-[#FCFBFF] px-4 py-16 lg:py-24" id="faq">
+      <div
+        className="
+          max-w-[1780px]
+          mx-auto
+
+          rounded-[36px]
+
+          border
+          border-[#DDD6F6]
+
+          bg-[#FCFBFF]
+
+          px-5
+          sm:px-8
+          lg:px-12
+
+          py-12
+          lg:py-16
+        "
+      >
+        {/* title */}
         <RevealOnScroll>
-          <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-site-heading text-center mb-12 lg:mb-16">
+          <h2
+            className="
+              text-center
+
+              text-[34px]
+              sm:text-[48px]
+              lg:text-[64px]
+
+              leading-[0.95]
+              tracking-[-0.05em]
+
+              font-semibold
+
+              text-[#24115D]
+
+              mb-8
+              lg:mb-10
+            "
+          >
             Частые вопросы
           </h2>
         </RevealOnScroll>
 
-        <div className="space-y-4">
+        {/* list */}
+        <div className="max-w-[1420px] mx-auto flex flex-col gap-4">
           {faqs.map((faq, index) => {
-            const active = index === activeIndex;
+            const active = activeIndex === index;
+
             return (
-              <RevealOnScroll key={faq.q} delay={index * 60}>
+              <RevealOnScroll key={faq.q} delay={index * 40}>
                 <div
-                  className={[
-                    "rounded-2xl border transition-all duration-300",
-                    active 
-                      ? "bg-white border-brand/20 shadow-sm" 
-                      : "bg-white border-site-border hover:border-brand/10",
-                  ].join(" ")}
+                  className={`
+                    rounded-[24px]
+
+                    border
+
+                    overflow-hidden
+
+                    transition-all
+                    duration-500
+                    ease-out
+
+                    ${
+                      active
+                        ? "border-[#D8D0F4] bg-[#F3EEFF]"
+                        : "border-[#DDD6F6] bg-white/90"
+                    }
+                  `}
                 >
+                  {/* top */}
                   <button
-                    className="w-full flex justify-between items-center px-6 py-5 text-left"
-                    onClick={() => setActiveIndex(active ? null : index)}
                     type="button"
+                    onClick={() =>
+                      setActiveIndex(active ? null : index)
+                    }
+                    className="
+                      w-full
+
+                      flex
+                      items-center
+                      justify-between
+
+                      gap-4
+
+                      px-5
+                      sm:px-6
+                      lg:px-7
+
+                      py-5
+
+                      text-left
+                    "
                   >
                     <span
-                      className={[
-                        "text-base font-semibold transition-colors",
-                        active ? "text-site-heading" : "text-site-body hover:text-site-heading",
-                      ].join(" ")}
+                      className="
+                        text-[18px]
+                        sm:text-[22px]
+                        lg:text-[26px]
+
+                        leading-[1]
+
+                        tracking-[-0.04em]
+
+                        font-medium
+
+                        text-[#24115D]
+                      "
                     >
                       {faq.q}
                     </span>
-                    <span
-                      className={`text-brand text-2xl font-light transition-transform duration-300 ml-4 ${
-                        active ? "rotate-45" : ""
-                      }`}
-                    >
-                      +
-                    </span>
+
+                    <Arrow active={active} />
                   </button>
+
+                  {/* content */}
                   <div
-                    className={`overflow-hidden transition-all duration-300 ${
-                      active ? "max-h-48 pb-5 px-6" : "max-h-0"
-                    }`}
+                    className={`
+                      grid
+                      transition-all
+                      duration-500
+                      ease-out
+
+                      ${
+                        active
+                          ? "grid-rows-[1fr] opacity-100"
+                          : "grid-rows-[0fr] opacity-0"
+                      }
+                    `}
                   >
-                    <p className="text-sm text-site-muted leading-relaxed">
-                      {faq.a}
-                    </p>
+                    <div className="overflow-hidden">
+                      <div className="px-5 sm:px-6 lg:px-7 pb-5">
+                        <div
+                          className="
+                            rounded-[18px]
+
+                            border
+                            border-[#E2DCF7]
+
+                            bg-white
+
+                            px-5
+                            py-4
+
+                            text-[15px]
+                            lg:text-[16px]
+
+                            leading-[1.45]
+
+                            text-[#4A3B7A]
+                          "
+                        >
+                          {faq.a}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </RevealOnScroll>
