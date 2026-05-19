@@ -34,6 +34,7 @@ const integrationLinks = [
 export default function Footer() {
   return (
     <footer className="bg-[#FCFBFF] px-4 pb-6 pt-0 lg:px-6 lg:pb-8">
+
       <div
         className="
           relative

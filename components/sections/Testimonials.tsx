@@ -46,6 +46,10 @@ export default function Testimonials() {
     <section className="bg-white px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-24">
       <div className="mx-auto max-w-7xl">
         <RevealOnScroll>
+
+
+      <h1 className="text-4xl font-display text-center mt-5 mb-5">Страница в доработке, блоки не реализованы до конца!!!</h1>
+
           <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-site-heading mb-12 lg:mb-16">
             Нам доверяют
           </h2>
