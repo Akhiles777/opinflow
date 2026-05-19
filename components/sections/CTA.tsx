@@ -101,6 +101,7 @@ export default function CTA() {
               </p>
 
               {/* BUTTON */}
+              <Link href='/register?role=CLIENT'>
               <button
                 className="
                   mt-10
@@ -125,8 +126,9 @@ export default function CTA() {
                   hover:shadow-[0_10px_30px_rgba(217,243,38,0.25)]
                 "
               >
-                <Link href='/register?role=CLIENT'>✦ Регистрация</Link>
+                ✦ Регистрация
               </button>
+              </Link>
             </div>
 
             {/* IMAGE */}
