@@ -279,49 +279,136 @@ export default function Hero() {
           </div>
 
           {/* СТАТИСТИКА СНИЗУ */}
-          <RevealOnScroll delay={250}>
-            <div className="mt-10 rounded-[28px] border border-[#DAD4F3]
-                            bg-white/60 backdrop-blur-xl">
-              <div className="grid grid-cols-2 gap-y-6 px-6 py-6 md:grid-cols-4 md:px-10 md:py-8">
-                {stats.map((stat, i) => (
-                  <div key={stat.label} className="flex items-center gap-4">
-                    {/* Иконка */}
-                    <div
-                      className="flex h-12 w-12 shrink-0 items-center
-                                 justify-center rounded-2xl"
-                      style={{ backgroundColor: stat.bg }}
-                    >
-                      {/* Fallback если иконка не загрузится */}
-                      <Image
-                        src={stat.icon}
-                        alt=""
-                        width={26}
-                        height={26}
-                        className="brightness-0 invert"
-                        onError={(e) => {
-                          // Если иконка не загрузилась — скрыть
-                          (e.target as HTMLImageElement).style.display = 'none'
-                        }}
-                      />
-                    </div>
+         {/* СТАТИСТИКА СНИЗУ */}
+<RevealOnScroll delay={250}>
+  <div
+    className="
+      mt-8
+      lg:mt-10
 
-                    <div>
-                      <div
-                        className="text-[38px] leading-none font-bold"
-                        style={{ color: stat.bg === "#6438D9" ? "#6438D9" : "#6438D9" }}
-                      >
-                        {stat.value}
-                      </div>
-                      <div className="mt-1 max-w-[130px] text-[15px]
-                                      leading-[1.3] text-[#1C0C4C]">
-                        {stat.label}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+      rounded-[24px]
+      lg:rounded-[30px]
+
+      border
+      border-[#DAD4F3]
+
+      bg-white/65
+
+      backdrop-blur-xl
+
+      overflow-hidden
+    "
+  >
+    <div
+      className="
+        grid
+
+      grid-cols-2
+      xl:grid-cols-4
+
+        divide-y
+        sm:divide-y-0
+
+        sm:divide-x
+
+        divide-[#ECE8FF]
+      "
+    >
+      {stats.map((stat) => (
+        <div
+          key={stat.label}
+          className="
+            flex
+            items-center
+
+            gap-3
+            lg:gap-4
+
+            px-4
+            py-4
+           
+
+            sm:px-6
+            lg:px-7
+            lg:py-6
+
+            min-w-0
+          "
+        >
+          {/* icon */}
+          <div
+            className="
+              flex
+              shrink-0
+
+              items-center
+              justify-center
+
+              w-12
+              h-12
+
+              lg:w-14
+              lg:h-14
+
+              rounded-[16px]
+              lg:rounded-[18px]
+            "
+            style={{
+              backgroundColor: stat.bg,
+            }}
+          >
+            <Image
+              src={stat.icon}
+              alt=""
+              width={24}
+              height={24}
+              className="brightness-0 invert"
+            />
+          </div>
+
+          {/* content */}
+          <div className="min-w-0">
+            <div
+              className="
+               text-[24px]
+               sm:text-[30px]
+               lg:text-[40px]
+
+                leading-none
+
+                tracking-[-0.05em]
+
+                font-extrabold
+
+                text-[#6438D9]
+              "
+            >
+              {stat.value}
             </div>
-          </RevealOnScroll>
+
+            <div
+              className="
+                mt-1
+
+                text-[13px]
+                sm:text-[14px]
+                lg:text-[15px]
+
+                leading-[1.35]
+
+                text-[#1C0C4C]/75
+
+                max-w-[150px]
+              "
+            >
+              {stat.label}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</RevealOnScroll>
         </div>
 
         {/* Большой шар снизу справа — внутри секции */}
