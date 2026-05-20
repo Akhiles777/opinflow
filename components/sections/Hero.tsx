@@ -71,7 +71,7 @@ export default function Hero() {
               <RevealOnScroll>
                 <h1 className="
                   font-manrope
-                  text-[56px]
+                  text-[52px]
                   sm:text-[68px]
                   xl:text-[78px]
                   leading-[0.88]

@@ -37,8 +37,8 @@ function Arrow({ active }: { active: boolean }) {
 
         border
 
-        transition-all
-        duration-500
+        transition-colors
+        duration-200
 
         ${
           active
@@ -50,7 +50,7 @@ function Arrow({ active }: { active: boolean }) {
       <svg
         className={`
           transition-transform
-          duration-500
+          duration-200
           ease-out
           ${active ? "rotate-180" : ""}
         `}
@@ -127,7 +127,8 @@ export default function FAQ() {
             const active = activeIndex === index;
 
             return (
-              <RevealOnScroll key={faq.q} delay={index * 40}>
+              
+              <div key={faq.q}>
                 <div
                   className={`
                     rounded-[24px]
@@ -136,8 +137,8 @@ export default function FAQ() {
 
                     overflow-hidden
 
-                    transition-all
-                    duration-500
+                    transition-colors
+                    duration-300
                     ease-out
 
                     ${
@@ -195,15 +196,15 @@ export default function FAQ() {
                   {/* content */}
                   <div
                     className={`
-                      grid
-                      transition-all
-                      duration-500
+                      overflow-hidden
+                      transition-[max-height,opacity]
+                      duration-300
                       ease-out
 
                       ${
                         active
-                          ? "grid-rows-[1fr] opacity-100"
-                          : "grid-rows-[0fr] opacity-0"
+                          ? "max-h-[200px] opacity-100"
+                          : "max-h-0 opacity-0"
                       }
                     `}
                   >
@@ -235,7 +236,7 @@ export default function FAQ() {
                     </div>
                   </div>
                 </div>
-              </RevealOnScroll>
+             </div>
             );
           })}
         </div>

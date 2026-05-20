@@ -65,12 +65,17 @@ function PlanCard({ plan }: any) {
         duration-300
 
         hover:-translate-y-1
+
+        flex
+        flex-col
+
+        h-full
       "
     >
       {/* glass overlay */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.95),transparent_45%)]" />
 
-      {/* top block */}
+      {/* top */}
       <div
         className={`
           relative
@@ -93,7 +98,6 @@ function PlanCard({ plan }: any) {
           }
         `}
       >
-        {/* glow */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.9),transparent_45%)]" />
 
         <div className="relative z-10">
@@ -132,8 +136,21 @@ function PlanCard({ plan }: any) {
         </div>
       </div>
 
-      {/* features */}
-      <div className="relative z-10 mt-7 flex flex-col gap-4">
+      {/* middle */}
+      <div
+        className="
+          relative
+          z-10
+
+          mt-7
+
+          flex
+          flex-col
+          gap-4
+
+          flex-1
+        "
+      >
         {plan.features.map((item: string, i: number) => (
           <div key={i} className="flex items-center gap-3">
             <CheckIcon />
@@ -171,6 +188,8 @@ function PlanCard({ plan }: any) {
 
           transition-all
           duration-300
+
+          hover:scale-[1.01]
 
           ${
             plan.button === "violet"
