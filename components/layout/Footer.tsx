@@ -5,8 +5,9 @@ import SmoothHashLink from "@/components/ui/SmoothHashLink";
 
 const navLinks = [
   { label: "Главная", href: "#top" },
-  { label: "Респондентам", href: "#respondents" },
+  { label: "Респондентам", href: "#respondents", accent: true },
   { label: "Бизнесу", href: "#business" },
+  { label: "О нас", href: "#about" },
   { label: "Контакты", href: "#contacts" },
 ];
 
@@ -16,53 +17,97 @@ const documentLinks = [
     href: "/legal/personal-data-policy",
   },
   {
+    label: "Согласие на обработку ПДн",
+    href: "/legal/personal-data-consent",
+  },
+  {
     label: "Пользовательское соглашение",
     href: "/legal/user-agreement",
+  },
+  {
+    label: "Оферта для респондента",
+    href: "/legal/respondent-offer",
+  },
+  {
+    label: "Оферта для заказчика",
+    href: "/legal/client-offer",
   },
   {
     label: "Политика cookie",
     href: "/legal/cookies",
   },
-];
-
-const integrationLinks = [
-  { label: "Битрикс24", href: "#" },
-  { label: "amoCRM", href: "#" },
-  { label: "Google Analytics", href: "#" },
+  {
+    label: "Согласие на публикацию отзыва",
+    href: "/legal/review-consent",
+  },
 ];
 
 export default function Footer() {
   return (
-    <footer className="bg-[#FCFBFF] px-4 pb-6 pt-0 lg:px-6 lg:pb-8">
-
+    <footer className="bg-[#FCFBFF] px-3 pb-4 sm:px-4 lg:px-6 lg:pb-6">
       <div
         className="
           relative
           overflow-hidden
 
-          max-w-[1800px]
           mx-auto
+          max-w-[1800px]
 
-          rounded-[40px]
+          rounded-[34px]
+          sm:rounded-[42px]
 
           border
-          border-[#D8D0F4]
+          border-[#3E248D]
 
-          bg-[linear-gradient(135deg,#1C0C4C_0%,#2A136B_45%,#3A1B91_100%)]
+          bg-[#1F0A5A]
 
-          px-6
+          px-5
           sm:px-8
           lg:px-14
 
-          py-10
-          lg:py-14
+          pt-8
+          sm:pt-10
+          lg:pt-14
+
+          pb-5
+          sm:pb-6
         "
       >
-        {/* glow */}
+        {/* background glow */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-[200px] left-[10%] w-[500px] h-[500px] rounded-full bg-[#6438D9] opacity-25 blur-3xl" />
+          <div
+            className="
+              absolute
+              left-[-120px]
+              top-[-120px]
 
-          <div className="absolute bottom-[-250px] right-[5%] w-[600px] h-[600px] rounded-full bg-[#8F67F5] opacity-20 blur-3xl" />
+              w-[380px]
+              h-[380px]
+
+              rounded-full
+
+              bg-[#6438D9]/25
+
+              blur-3xl
+            "
+          />
+
+          <div
+            className="
+              absolute
+              right-[-180px]
+              bottom-[-180px]
+
+              w-[520px]
+              h-[520px]
+
+              rounded-full
+
+              bg-[#7B4FF0]/20
+
+              blur-3xl
+            "
+          />
         </div>
 
         {/* top */}
@@ -71,18 +116,12 @@ export default function Footer() {
             relative
             z-10
 
-            flex
-            flex-col
-            xl:flex-row
-
-            justify-between
+            grid
+            grid-cols-1
+            lg:grid-cols-[1.2fr_1fr_0.7fr]
 
             gap-12
-
-            pb-10
-
-            border-b
-            border-white/10
+            lg:gap-20
           "
         >
           {/* brand */}
@@ -91,222 +130,204 @@ export default function Footer() {
               {/* logo */}
               <div
                 className="
-                  w-14
-                  h-14
-
-                  rounded-[18px]
-
-                  bg-[linear-gradient(135deg,#7B4FF0_0%,#9A7CFF_100%)]
+                  relative
 
                   flex
                   items-center
                   justify-center
 
-                  shadow-[0_10px_30px_rgba(123,79,240,0.35)]
+                  w-12
+                  h-12
+
+                  rounded-2xl
+
+                  bg-[#6438D9]/25
+                  backdrop-blur-xl
+
+                  border
+                  border-white/10
                 "
               >
-                <div className="w-5 h-5 rounded-sm bg-white" />
+                <div className="relative w-6 h-6">
+                  <span className="absolute left-1/2 top-0 h-full w-[2px] -translate-x-1/2 rounded-full bg-[#9A7CFF]" />
+                  <span className="absolute top-1/2 left-0 h-[2px] w-full -translate-y-1/2 rounded-full bg-[#9A7CFF]" />
+                  <span className="absolute left-1/2 top-1/2 h-full w-[2px] -translate-x-1/2 -translate-y-1/2 rotate-45 rounded-full bg-[#9A7CFF]" />
+                  <span className="absolute left-1/2 top-1/2 h-full w-[2px] -translate-x-1/2 -translate-y-1/2 -rotate-45 rounded-full bg-[#9A7CFF]" />
+                </div>
               </div>
 
-              <div>
-                <h2
-                  className="
-                    text-white
+              <h2
+                className="
+                  text-white
 
-                    text-[26px]
+                  text-[24px]
+                  sm:text-[28px]
 
-                    leading-none
+                  leading-none
 
-                    tracking-[-0.04em]
+                  tracking-[-0.05em]
 
-                    font-semibold
-                  "
-                >
-                  ПотокМнений
-                </h2>
-
-                <p className="mt-1 text-white/50 text-sm">
-                  AI Research Platform
-                </p>
-              </div>
+                  font-medium
+                "
+              >
+                ПотокМнений
+              </h2>
             </div>
 
             <p
               className="
                 mt-6
 
-                text-[16px]
+                max-w-[360px]
 
-                leading-[1.6]
+                text-[15px]
+                sm:text-[16px]
 
-                text-white/65
+                leading-[1.55]
+
+                text-white/70
               "
             >
               Платформа маркетинговых исследований нового поколения.
-              Объединяем бизнес и людей, готовых делиться своим
-              мнением.
+              Объединяем бизнес и людей, готовых делиться своим мнением.
             </p>
 
             {/* contacts */}
-            <div className="mt-8 flex flex-col gap-3">
-              <a
-                href="mailto:support@potokmneny.ru"
-                className="
-                  text-[#E5F667]
+            <div className="mt-7 space-y-4">
+              <div>
+                <p className="text-white/45 text-[15px]">
+                  Сотрудничество:
+                </p>
 
-                  text-[15px]
+                <a
+                  href="mailto:support@potokmneny.ru"
+                  className="
+                    mt-1
+                    inline-block
 
-                  hover:text-white
+                    text-[#E5F667]
 
-                  transition-colors
-                "
-              >
-                support@potokmneny.ru
-              </a>
+                    text-[16px]
 
-              <a
-                href="mailto:legal@potokmneny.ru"
-                className="
-                  text-white/55
+                    underline
+                    underline-offset-4
 
-                  text-[15px]
+                    hover:text-white
 
-                  hover:text-white
+                    transition-colors
+                  "
+                >
+                  support@potokmneny.ru
+                </a>
+              </div>
 
-                  transition-colors
-                "
-              >
-                legal@potokmneny.ru
-              </a>
+              <div>
+                <p className="text-white/45 text-[15px]">
+                  Правовые обращения:
+                </p>
+
+                <a
+                  href="mailto:gmetalnikov1993@gmail.com"
+                  className="
+                    mt-1
+                    inline-block
+
+                    text-[#E5F667]
+
+                    text-[16px]
+
+                    underline
+                    underline-offset-4
+
+                    hover:text-white
+
+                    transition-colors
+                  "
+                >
+                  gmetalnikov1993@gmail.com
+                </a>
+              </div>
             </div>
           </div>
 
-          {/* links */}
-          <div
-            className="
-              grid
-              grid-cols-1
-              sm:grid-cols-3
+          {/* docs */}
+          <div>
+            <h3
+              className="
+                text-white/35
 
-              gap-10
-              lg:gap-16
-            "
-          >
-            {/* nav */}
-            <div>
-              <h3
-                className="
-                  text-white
+                text-[28px]
 
-                  text-[17px]
+                tracking-[-0.04em]
 
-                  font-medium
+                mb-6
+              "
+            >
+              Документы
+            </h3>
 
-                  mb-5
-                "
-              >
-                Навигация
-              </h3>
+            <ul className="space-y-3">
+              {documentLinks.map((link) => (
+                <li key={link.label}>
+                  <Link
+                    href={link.href}
+                    className="
+                      text-white/78
 
-              <ul className="flex flex-col gap-3">
-                {navLinks.map((link) => (
-                  <li key={link.label}>
-                    <SmoothHashLink
-                      href={link.href}
-                      className="
-                        text-white/60
+                      text-[15px]
+                      sm:text-[16px]
 
-                        text-[15px]
+                      leading-[1.35]
 
-                        hover:text-white
+                      hover:text-white
 
-                        transition-colors
-                      "
-                    >
-                      {link.label}
-                    </SmoothHashLink>
-                  </li>
-                ))}
-              </ul>
-            </div>
+                      transition-colors
+                    "
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
 
-            {/* docs */}
-            <div>
-              <h3
-                className="
-                  text-white
+          {/* nav */}
+          <div>
+            <h3
+              className="
+                text-white/35
 
-                  text-[17px]
+                text-[28px]
 
-                  font-medium
+                tracking-[-0.04em]
 
-                  mb-5
-                "
-              >
-                Документы
-              </h3>
+                mb-6
+              "
+            >
+              Навигация
+            </h3>
 
-              <ul className="flex flex-col gap-3">
-                {documentLinks.map((link) => (
-                  <li key={link.label}>
-                    <Link
-                      href={link.href}
-                      className="
-                        text-white/60
+            <ul className="space-y-3">
+              {navLinks.map((link) => (
+                <li key={link.label}>
+                  <SmoothHashLink
+                    href={link.href}
+                    className={`
+                      text-[16px]
+                      transition-colors
 
-                        text-[15px]
-
-                        leading-[1.4]
-
-                        hover:text-white
-
-                        transition-colors
-                      "
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* integrations */}
-            <div>
-              <h3
-                className="
-                  text-white
-
-                  text-[17px]
-
-                  font-medium
-
-                  mb-5
-                "
-              >
-                Интеграции
-              </h3>
-
-              <ul className="flex flex-col gap-3">
-                {integrationLinks.map((link) => (
-                  <li key={link.label}>
-                    <Link
-                      href={link.href}
-                      className="
-                        text-white/60
-
-                        text-[15px]
-
-                        hover:text-white
-
-                        transition-colors
-                      "
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
+                      ${
+                        link.accent
+                          ? "text-[#E5F667]"
+                          : "text-white/78 hover:text-white"
+                      }
+                    `}
+                  >
+                    {link.label}
+                  </SmoothHashLink>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
 
@@ -315,6 +336,22 @@ export default function Footer() {
           className="
             relative
             z-10
+
+            mt-10
+            sm:mt-12
+
+            rounded-[22px]
+
+            border
+            border-white/5
+
+            bg-white/6
+            backdrop-blur-xl
+
+            px-5
+            sm:px-7
+
+            py-4
 
             flex
             flex-col
@@ -326,20 +363,29 @@ export default function Footer() {
             justify-between
 
             gap-4
-
-            pt-6
           "
         >
-          <p className="text-white/40 text-[14px]">
+          <p
+            className="
+              text-white/75
+
+              text-[14px]
+              sm:text-[15px]
+            "
+          >
             © 2026 ПотокМнений. Все права защищены.
           </p>
 
           <Link
             href="/legal"
             className="
-              text-white/50
+              text-white/75
 
               text-[14px]
+              sm:text-[15px]
+
+              underline
+              underline-offset-4
 
               hover:text-white
 
