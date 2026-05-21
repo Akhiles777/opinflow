@@ -2,7 +2,7 @@
 import { useMemo, useState, useTransition } from "react";
 import Modal from "@/components/dashboard/Modal";
 import Badge from "@/components/dashboard/Badge";
-import { createDepositAction } from "@/actions/payments";
+import { createCorporateInvoiceAction, createDepositAction } from "@/actions/payments";
 
 type Props = {
   balance: number;
@@ -51,6 +51,7 @@ function mapStatus(status: string) {
 export default function ClientWalletClient({ balance, transactions, payments, paymentSuccess }: Props) {
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [depositAmount, setDepositAmount] = useState("500");
+  const [depositMethod, setDepositMethod] = useState<"CARD" | "INVOICE">("CARD");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, startTransition] = useTransition();
 
@@ -59,6 +60,17 @@ export default function ClientWalletClient({ balance, transactions, payments, pa
   function handleDeposit() {
     setError(null);
     startTransition(async () => {
+      if (depositMethod === "INVOICE") {
+        const result = (await createCorporateInvoiceAction(normalizedAmount)) as any;
+        if (result?.error || !result?.downloadUrl) {
+          setError(result?.error ?? "Не удалось сформировать счёт");
+          return;
+        }
+        window.open(result.downloadUrl, "_blank", "noopener,noreferrer");
+        setShowDepositModal(false);
+        return;
+      }
+
       const result = await createDepositAction(normalizedAmount);
       if (result.error || !result.confirmationUrl) {
         setError(result.error ?? "Не удалось создать платёж");
@@ -184,7 +196,13 @@ export default function ClientWalletClient({ balance, transactions, payments, pa
               disabled={isLoading}
               className="rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-mid disabled:opacity-60"
             >
-              {isLoading ? "Создаём платёж..." : "Перейти к оплате"}
+              {isLoading
+                ? depositMethod === "INVOICE"
+                  ? "Формируем счёт..."
+                  : "Создаём платёж..."
+                : depositMethod === "INVOICE"
+                  ? "Скачать счёт PDF"
+                  : "Перейти к оплате"}
             </button>
           </div>
         }
@@ -213,6 +231,38 @@ export default function ClientWalletClient({ balance, transactions, payments, pa
                 {formatRub(amount)}
               </button>
             ))}
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => setDepositMethod("CARD")}
+              className={`rounded-2xl border p-4 text-left transition-colors ${
+                depositMethod === "CARD"
+                  ? "border-brand/30 bg-brand/10"
+                  : "border-dash-border bg-dash-bg hover:border-brand/20"
+              }`}
+            >
+              <div className="text-sm font-semibold text-dash-heading">Банковская карта / ЮKassa</div>
+              <div className="mt-2 text-sm text-dash-muted">
+                Моментальное пополнение через карту или СБП.
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setDepositMethod("INVOICE")}
+              className={`rounded-2xl border p-4 text-left transition-colors ${
+                depositMethod === "INVOICE"
+                  ? "border-brand/30 bg-brand/10"
+                  : "border-dash-border bg-dash-bg hover:border-brand/20"
+              }`}
+            >
+              <div className="text-sm font-semibold text-dash-heading">Безналичный расчёт</div>
+              <div className="mt-2 text-sm text-dash-muted">
+                Сформируем счёт PDF для оплаты от юрлица или ИП по реквизитам из настроек.
+              </div>
+            </button>
           </div>
 
           {error ? <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-500">{error}</div> : null}

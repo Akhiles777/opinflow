@@ -481,19 +481,24 @@ export async function completeSurveyAction(params: {
     });
 
     if (count >= survey.maxResponses) {
-      const completedSurvey = await prisma.survey.update({
+      // update status first
+      await prisma.survey.update({ where: { id: params.surveyId }, data: { status: "COMPLETED" } });
+
+      // fetch minimal fields explicitly to avoid delegate/type inference issues
+      const completedSurvey = await prisma.survey.findUnique({
         where: { id: params.surveyId },
-        data: { status: "COMPLETED" },
         select: { id: true, title: true, creatorId: true },
       });
 
-      await notify({
-        userId: completedSurvey.creatorId,
-        type: "SURVEY_COMPLETED",
-        title: "Опрос завершён",
-        body: `Опрос "${completedSurvey.title}" набрал нужное количество ответов`,
-        link: `/client/surveys/${completedSurvey.id}`,
-      });
+      if (completedSurvey?.creatorId) {
+        await notify({
+          userId: completedSurvey.creatorId,
+          type: "SURVEY_COMPLETED",
+          title: "Опрос завершён",
+          body: `Опрос "${completedSurvey.title}" набрал нужное количество ответов`,
+          link: `/client/surveys/${completedSurvey.id}`,
+        });
+      }
     }
   }
 

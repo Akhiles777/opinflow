@@ -2,24 +2,28 @@
 
 import * as React from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { useSession } from "next-auth/react";
-import Button from "@/components/ui/Button";
-import ThemeToggle from "@/components/ui/ThemeToggle";
+
 import SmoothHashLink from "@/components/ui/SmoothHashLink";
 import PublicUserMenu from "@/components/layout/PublicUserMenu";
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+
   const { data: session, status } = useSession();
-  const user = status === "authenticated" && session?.user
-    ? {
-        name: session.user.name ?? "Пользователь",
-        email: session.user.email ?? "",
-        image: session.user.image ?? null,
-        role: session.user.role,
-      }
-    : null;
+
+  const user =
+    status === "authenticated" && session?.user
+      ? {
+          name: session.user.name ?? "Пользователь",
+          email: session.user.email ?? "",
+          image: session.user.image ?? null,
+          role: session.user.role,
+        }
+      : null;
+
   const links = [
     { label: "Главная", href: "#top" },
     { label: "Респондентам", href: "#respondents" },
@@ -29,139 +33,222 @@ export default function Header() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-site-border/50">
-      <div className="h-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto flex justify-between items-center gap-3">
-        <a href="/">
-          <div className="flex items-center gap-2.5">
-            <div className="relative h-8 w-8 overflow-hidden">
+    <header className="relative z-50 bg-transparent">
+      <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-8">
+        <div className="flex h-[104px] items-center justify-between">
+
+          {/* LOGO */}
+          <Link
+            href="/"
+            className="flex items-center gap-3 shrink-0"
+          >
+            <div className="relative h-[80px] w-[80px]">
+
+              {/* основа logo.svg */}
               <Image
-                src="/logo.svg"
-                alt="ПотокМнений"
+                src="/logo2.png"
+                alt="logo"
                 fill
-                sizes="50px"
-                className="object-fill"
+                className="object-contain"
                 priority
               />
-              {/* centered checkmark overlay */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <img src="/logo-vector.svg" alt="check" className="h-3 w-3" />
-              </div>
+
+         
             </div>
-            <span className="font-display text-site-heading font-bold text-base">
+
+            <span
+              className="
+                text-[22px]
+                font-medium
+                tracking-[-0.04em]
+                text-[#2B1B67]
+              "
+            >
               ПотокМнений
             </span>
-          </div>
-        </a>
-        <nav className="hidden lg:flex items-center gap-8 text-sm font-body text-site-muted">
-          {links.map((link) => (
-            <SmoothHashLink
-              key={link.label}
-              href={link.href}
-              className="hover:text-site-heading transition-colors"
-            >
-              {link.label}
-            </SmoothHashLink>
-          ))}
-        </nav>
-        <div className="flex items-center gap-2 shrink-0">
-          <button
-            type="button"
-            onClick={() => setMobileMenuOpen((prev) => !prev)}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-site-border bg-white text-site-heading transition-colors hover:bg-site-bg lg:hidden"
-            aria-label={mobileMenuOpen ? "Закрыть меню" : "Открыть меню"}
-            aria-expanded={mobileMenuOpen}
-          >
-            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
-          <div className="hidden items-center gap-2 lg:flex">
-            <ThemeToggle />
-            {user ? (
-              <PublicUserMenu name={user.name} email={user.email} image={user.image} role={user.role} />
-            ) : (
-              <>
-                <Button variant="ghost" size="md" href="/login">
-                  Войти
-                </Button>
-                <Button variant="primary" size="md" href="/register">
-                  Регистрация
-                </Button>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
+          </Link>
 
-      <div
-        className={[
-          "bg-white/95 backdrop-blur-xl lg:hidden border-b border-site-border",
-          mobileMenuOpen ? "block" : "hidden",
-        ].join(" ")}
-      >
-        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-4 sm:px-6">
-          <div className="flex justify-end sm:hidden">
-            <ThemeToggle />
-          </div>
-          <nav className="grid gap-2">
+          {/* DESKTOP NAV */}
+          <nav className="hidden lg:flex items-center gap-11">
             {links.map((link) => (
               <SmoothHashLink
                 key={link.label}
                 href={link.href}
-                onClick={() => setMobileMenuOpen(false)}
-                className="rounded-xl border border-transparent px-3 py-3 text-base font-body text-site-body transition-colors hover:border-site-border hover:bg-site-bg hover:text-site-heading"
+                className="
+                  text-[17px]
+                  font-medium
+                  text-[#6E6884]
+                  transition-colors
+                  hover:text-[#2B1B67]
+                "
               >
                 {link.label}
               </SmoothHashLink>
             ))}
           </nav>
-          {user ? (
-            <div className="grid gap-3 pt-2">
-              <div className="flex items-center gap-3 rounded-2xl border border-site-border bg-white px-3 py-3">
-                {user.image ? (
-                  <img src={user.image} alt={user.name} className="h-12 w-12 rounded-full object-cover" />
-                ) : (
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand/10 text-sm font-semibold text-brand">
-                    {(user.name || user.email).slice(0, 2).toUpperCase()}
-                  </div>
-                )}
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-site-heading">{user.name}</p>
-                  <p className="truncate text-xs text-site-muted">{user.email}</p>
-                </div>
-              </div>
-              <Button
-                variant="secondary"
-                size="md"
-                href={user.role === "ADMIN" ? "/admin" : user.role === "CLIENT" ? "/client" : "/respondent"}
-                className="w-full justify-center"
-              >
-                Личный кабинет
-              </Button>
-              <a
-                href="/logout"
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                }}
-                className="inline-flex w-full items-center justify-center rounded-xl border border-site-border bg-white px-5 py-2.5 text-sm font-medium text-site-heading transition-all duration-200 hover:bg-site-bg"
-              >
-                Выйти
-              </a>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-2 pt-2 sm:grid-cols-2">
-              <Button variant="ghost" size="md" href="/login" className="w-full justify-center">
-                Войти
-              </Button>
-              <Button
-                variant="primary"
-                size="md"
-                href="/register"
-                className="w-full justify-center"
-              >
-                Регистрация
-              </Button>
-            </div>
-          )}
+
+          {/* ACTIONS */}
+          <div className="hidden lg:flex items-center gap-4">
+            {user ? (
+              <PublicUserMenu user={user} />
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="
+                    h-[44px]
+                    px-7
+                    rounded-[14px]
+                    border
+                    border-[#DDD5F5]
+                    bg-[#F5F2FF]
+                    flex
+                    items-center
+                    justify-center
+
+                    text-[16px]
+                    font-medium
+                    text-[#2B1B67]
+
+                    transition-all
+                    duration-200
+                    hover:border-[#C7BAF2]
+                    hover:bg-white
+                  "
+                >
+                  Войти
+                </Link>
+
+                <Link
+                  href="/register"
+                  className="
+                    h-[44px]
+                    px-7
+                    rounded-[14px]
+
+                    border
+                    border-[#D7EC3A]
+
+                    bg-[linear-gradient(180deg,#E5F667_0%,#D9F326_100%)]
+
+                    flex
+                    items-center
+                    justify-center
+
+                    text-[16px]
+                    font-medium
+                    text-[#1C0C4C]
+
+                    transition-all
+                    duration-200
+                    hover:translate-y-[-1px]
+                    hover:shadow-[0_8px_24px_rgba(217,243,38,0.22)]
+                  "
+                >
+                  Регистрация
+                </Link>
+              </>
+            )}
+          </div>
+
+          {/* MOBILE */}
+          <button
+            onClick={() => setMobileMenuOpen((v) => !v)}
+            className="
+              lg:hidden
+              flex
+              h-11
+              w-11
+              items-center
+              justify-center
+              rounded-[14px]
+              border
+              border-[#DDD5F5]
+              bg-white
+            "
+          >
+            {mobileMenuOpen ? (
+              <X className="h-5 w-5 text-[#2B1B67]" />
+            ) : (
+              <Menu className="h-5 w-5 text-[#2B1B67]" />
+            )}
+          </button>
         </div>
+
+        {/* MOBILE MENU */}
+        {mobileMenuOpen && (
+          <div
+            className="
+              lg:hidden
+              mb-4
+              rounded-[28px]
+              border
+              border-[#E4DEF7]
+              bg-white
+              p-5
+              shadow-[0_20px_60px_rgba(45,20,90,0.08)]
+            "
+          >
+            <div className="flex flex-col gap-5">
+              {links.map((link) => (
+                <SmoothHashLink
+                  key={link.label}
+                  href={link.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="
+                    text-[17px]
+                    font-medium
+                    text-[#4B416D]
+                  "
+                >
+                  {link.label}
+                </SmoothHashLink>
+              ))}
+            </div>
+
+            {!user && (
+              <div className="mt-6 flex flex-col gap-3">
+                <Link
+                  href="/login"
+                  className="
+                    h-[46px]
+                    rounded-[14px]
+                    border
+                    border-[#DDD5F5]
+                    bg-[#F5F2FF]
+                    flex
+                    items-center
+                    justify-center
+                    text-[16px]
+                    font-medium
+                    text-[#2B1B67]
+                  "
+                >
+                  Войти
+                </Link>
+
+                <Link
+                  href="/register"
+                  className="
+                    h-[46px]
+                    rounded-[14px]
+                    border
+                    border-[#D7EC3A]
+                    bg-[linear-gradient(180deg,#E5F667_0%,#D9F326_100%)]
+                    flex
+                    items-center
+                    justify-center
+                    text-[16px]
+                    font-medium
+                    text-[#1C0C4C]
+                  "
+                >
+                  Регистрация
+                </Link>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </header>
   );

@@ -188,6 +188,19 @@ export default async function ClientSurveyDetailPage({ params }: { params: Promi
           error: true,
         },
       },
+      expertReviewRequests: {
+        where: { userId: session.user.id },
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: {
+          id: true,
+          status: true,
+          assignedExpert: true,
+          reportUrl: true,
+          adminNote: true,
+          amount: true,
+        },
+      },
     },
   });
 
@@ -365,6 +378,17 @@ export default async function ClientSurveyDetailPage({ params }: { params: Promi
       }
     : null;
 
+  const expertReview = survey.expertReviewRequests[0]
+    ? {
+        id: survey.expertReviewRequests[0].id,
+        status: survey.expertReviewRequests[0].status,
+        assignedExpert: survey.expertReviewRequests[0].assignedExpert,
+        reportUrl: survey.expertReviewRequests[0].reportUrl,
+        adminNote: survey.expertReviewRequests[0].adminNote,
+        amount: Number(survey.expertReviewRequests[0].amount),
+      }
+    : null;
+
   return (
     <div className="space-y-8">
       <PageHeader
@@ -472,7 +496,7 @@ export default async function ClientSurveyDetailPage({ params }: { params: Promi
         </div>
       ) : null}
 
-      <ClientSurveyAnalysis surveyId={survey.id} analysis={analysis} quantitative={quantBlocks} />
+      <ClientSurveyAnalysis surveyId={survey.id} analysis={analysis} quantitative={quantBlocks} expertReview={expertReview} />
 
       <div className="rounded-2xl border border-dash-border bg-dash-card p-6">
         <div className="text-sm font-semibold text-dash-heading">Ответы по вопросам</div>

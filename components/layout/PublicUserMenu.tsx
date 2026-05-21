@@ -12,13 +12,17 @@ type Props = {
   role: Role;
 };
 
-function getInitials(name: string, email: string) {
-  const source = name.trim() || email.split("@")[0] || "PM";
+function getInitials(name?: string | null, email?: string | null) {
+  // defensively handle missing values
+  const safeName = typeof name === "string" ? name.trim() : "";
+  const safeEmail = typeof email === "string" ? email : "";
+  const source = safeName || (safeEmail.split("@")[0] || "") || "PM";
   const parts = source.split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "PM";
   if (parts.length === 1) {
     return parts[0].slice(0, 2).toUpperCase();
   }
-  return `${parts[0][0] ?? ""}${parts[1][0] ?? ""}`.toUpperCase();
+  return `${(parts[0][0] ?? "").toString()}${(parts[1][0] ?? "").toString()}`.toUpperCase();
 }
 
 function getMenuItems(role: Role) {

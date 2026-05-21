@@ -299,6 +299,12 @@ export async function getClientSurveysData(userId: string) {
       maxResponses: true,
       budget: true,
       status: true,
+      expertReviewRequests: {
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: { id: true, status: true, assignedExpert: true, reportUrl: true, amount: true },
+      },
       _count: {
         select: {
           sessions: { where: { status: "COMPLETED", isValid: true } },
@@ -314,6 +320,15 @@ export async function getClientSurveysData(userId: string) {
     progress: survey.maxResponses ? `${survey._count.sessions} / ${survey.maxResponses}` : `${survey._count.sessions} ответов`,
     budget: survey.budget ? Number(survey.budget) : "—",
     status: mapSurveyStatus(survey.status),
+    expertReview: survey.expertReviewRequests[0]
+      ? {
+          id: survey.expertReviewRequests[0].id,
+          status: survey.expertReviewRequests[0].status,
+          assignedExpert: survey.expertReviewRequests[0].assignedExpert,
+          reportUrl: survey.expertReviewRequests[0].reportUrl,
+          amount: survey.expertReviewRequests[0].amount ? Number(survey.expertReviewRequests[0].amount) : null,
+        }
+      : null,
   }));
 }
 

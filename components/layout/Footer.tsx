@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import SmoothHashLink from "@/components/ui/SmoothHashLink";
 
@@ -73,7 +74,7 @@ export default function Footer() {
           sm:pb-6
         "
       >
-        {/* background glow */}
+        {/* glow */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div
             className="
@@ -124,38 +125,21 @@ export default function Footer() {
             lg:gap-20
           "
         >
-          {/* brand */}
+          {/* BRAND */}
           <div className="max-w-[420px]">
-            <div className="flex items-center gap-3">
-              {/* logo */}
-              <div
-                className="
-                  relative
-
-                  flex
-                  items-center
-                  justify-center
-
-                  w-12
-                  h-12
-
-                  rounded-2xl
-
-                  bg-[#6438D9]/25
-                  backdrop-blur-xl
-
-                  border
-                  border-white/10
-                "
-              >
-                <div className="relative w-6 h-6">
-                  <span className="absolute left-1/2 top-0 h-full w-[2px] -translate-x-1/2 rounded-full bg-[#9A7CFF]" />
-                  <span className="absolute top-1/2 left-0 h-[2px] w-full -translate-y-1/2 rounded-full bg-[#9A7CFF]" />
-                  <span className="absolute left-1/2 top-1/2 h-full w-[2px] -translate-x-1/2 -translate-y-1/2 rotate-45 rounded-full bg-[#9A7CFF]" />
-                  <span className="absolute left-1/2 top-1/2 h-full w-[2px] -translate-x-1/2 -translate-y-1/2 -rotate-45 rounded-full bg-[#9A7CFF]" />
-                </div>
+            <div className="flex items-center gap-4">
+              {/* LOGO */}
+              <div className="relative h-[70px] w-[70px] shrink-0">
+                <Image
+                  src="/logo2.png"
+                  alt="ПотокМнений"
+                  fill
+                  priority
+                  className="object-contain"
+                />
               </div>
 
+              {/* TITLE */}
               <h2
                 className="
                   text-white
@@ -174,6 +158,7 @@ export default function Footer() {
               </h2>
             </div>
 
+            {/* description */}
             <p
               className="
                 mt-6
@@ -250,7 +235,7 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* docs */}
+          {/* DOCS */}
           <div>
             <h3
               className="
@@ -291,7 +276,7 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* nav */}
+          {/* NAVIGATION */}
           <div>
             <h3
               className="

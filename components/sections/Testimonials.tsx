@@ -25,6 +25,7 @@ type CaseSlide = {
   result: string;
   logo?: string;
   logoAlt?: string;
+  logoTone?: "light" | "dark";
   quote: string;
   quoteName: string;
   quoteRole: string;
@@ -71,8 +72,9 @@ const slides: CaseSlide[] = [
     summary:
       "До вывода бренда на рынок команда проверила упаковку, ожидания аудитории и сценарии выбора товара. Исследование помогло сократить число дорогих гипотез ещё до закупок и производства.",
     result: "Итог: запуск за 4 месяца и экономия более 5 000 000 ₽.",
-    logo: "/Testimonials/logo-white (1).png",
+    logo: "/Testimonials2/logo-white (1).png",
     logoAlt: "ANGFA",
+    logoTone: "light",
     quote:
       "Без проб и ошибок: сначала мы собрали ответы аудитории, а уже потом принимали решения по продукту и коммуникации. Это сняло лишние расходы на тесты вслепую и ускорило выход на рынок.",
     quoteName: "Ливенцев В.В.",
@@ -103,8 +105,9 @@ const slides: CaseSlide[] = [
     summary:
       "Опросы помогли команде перейти от внутренних гипотез к понятным сигналам рынка: какие акции воспринимаются лучше, какой посыл работает и что действительно важно покупателю.",
     result: "Итог: коммуникация стала точнее и ближе к реальному запросу ЦА.",
-    logo: "/Testimonials/logo_black_crop.svg",
+    logo: "/Testimonials2/logo_black_crop.svg",
     logoAlt: "EYFEL",
+    logoTone: "dark",
     quote:
       "Благодаря структурированным опросам мы точно поняли, какой посыл, акция и формат подачи информации действительно важны для нашей ЦА. Это позволило выстроить коммуникацию на языке потребителя.",
     quoteName: "Хвостов М.Р.",
@@ -116,7 +119,7 @@ const slides: CaseSlide[] = [
 const mosaicTiles = [
   {
     kind: "logo" as const,
-    src: "/Testimonials/2MOOD_logo_main-_2_.png",
+    src: "/Testimonials2/2MOOD_logo_main-_2_.png",
     alt: "2MOOD",
     className:
       "rounded-[28px] bg-[#F0ECFA] flex items-center justify-center p-3",
@@ -124,7 +127,7 @@ const mosaicTiles = [
   },
   {
     kind: "logo" as const,
-    src: "/Testimonials/logo-klient-1.jpg",
+    src: "/Testimonials2/logo-klient-1-Photoroom.png",
     alt: "Natura Siberica",
     className:
       "rounded-[28px] bg-[#F0ECFA] flex items-center justify-center p-3",
@@ -141,7 +144,7 @@ const mosaicTiles = [
   },
   {
     kind: "logo" as const,
-    src: "/Testimonials/fc3816fd-7346-48d2-948d-4e69bee035a3.jpg",
+    src: "/Testimonials2/fc3816fd-7346-48d2-948d-4e69bee035a3 (1).png",
     alt: "Sammy Beauty",
     className:
       "rounded-[28px] bg-[#EEF67C] flex items-center justify-center p-3",
@@ -149,7 +152,7 @@ const mosaicTiles = [
   },
   {
     kind: "logo" as const,
-    src: "/Testimonials/logo_black_crop.svg",
+    src: "/Testimonials2/logo_black_crop.svg",
     alt: "EYFEL",
     className:
       "rounded-[28px] border border-[#D8CEF5] bg-white flex items-center justify-center p-3",
@@ -168,7 +171,7 @@ const mosaicTiles = [
   },
   {
     kind: "logo" as const,
-    src: "/Testimonials/__.jpg",
+    src: "/Testimonials2/__ (1)-Photoroom.png",
     alt: "Gamma D'oro",
     className:
       "rounded-[28px] bg-[#F0ECFA] flex items-center justify-center p-3",
@@ -176,7 +179,7 @@ const mosaicTiles = [
   },
   {
     kind: "logo" as const,
-    src: "/Testimonials/krjx4LhlKer_zPTk7-JGVWgNMyvS7kEIZZ_KfeTnrXsN74ytEn6OglOntuD0o9r4i6BtOIqHnwzENfWuTUCOPO4j.jpg",
+    src: "/Testimonials2/krjx4LhlKer_zPTk7-JGVWgNMyvS7kEIZZ_KfeTnrXsN74ytEn6OglOntuD0o9r4i6BtOIqHnwzENfWuTUCOPO4j (1)-Photoroom.png",
     alt: "La'Venti",
     className:
       "rounded-[28px] border border-[#D8CEF5] bg-white flex items-center justify-center p-3",
@@ -375,13 +378,21 @@ export default function Testimonials() {
 
                   <div className="flex max-w-full items-center justify-end">
                     {activeSlide.logo ? (
-                      <Image
-                        src={activeSlide.logo}
-                        alt={activeSlide.logoAlt ?? activeSlide.brand}
-                        width={220}
-                        height={82}
-                        className="max-h-[58px] w-auto max-w-full object-contain sm:max-h-[68px] lg:max-h-[76px]"
-                      />
+                      <div
+                        className={
+                          activeSlide.logoTone === "light"
+                            ? "rounded-[22px] bg-[#2B1768] px-4 py-3 shadow-[0_12px_30px_rgba(40,18,94,0.18)]"
+                            : ""
+                        }
+                      >
+                        <Image
+                          src={activeSlide.logo}
+                          alt={activeSlide.logoAlt ?? activeSlide.brand}
+                          width={220}
+                          height={82}
+                          className="max-h-[58px] w-auto max-w-full object-contain sm:max-h-[68px] lg:max-h-[76px]"
+                        />
+                      </div>
                     ) : (
                       <span className="text-[40px] font-semibold tracking-[-0.08em] text-[#6D6788] sm:text-[54px] lg:text-[64px]">
                         {activeSlide.brand}

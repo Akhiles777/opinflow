@@ -33,8 +33,9 @@ model User {
   complaintsSent    Complaint[]
   payments          Payment[]
   withdrawalRequests WithdrawalRequest[]
-pushSubscriptions PushSubscription[]
-notifications     Notification[]
+  expertReviewRequests ExpertReviewRequest[]
+  pushSubscriptions PushSubscription[]
+  notifications     Notification[]
   @@map("users")
 }
 
@@ -220,6 +221,7 @@ model Survey {
   sessions   SurveySession[]
   complaints Complaint[]
   analysis   SurveyAnalysis?
+  expertReviewRequests ExpertReviewRequest[]
 
   @@map("surveys")
 }
@@ -484,6 +486,33 @@ model Notification {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("notifications")
+}
+
+model ExpertReviewRequest {
+  id             String             @id @default(cuid())
+  surveyId       String
+  userId         String
+  amount         Decimal            @db.Decimal(10, 2)
+  status         ExpertReviewStatus @default(PENDING)
+  assignedExpert String?
+  adminNote      String?
+  reportUrl      String?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  completedAt    DateTime?
+
+  survey Survey @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([surveyId, userId])
+  @@map("expert_review_requests")
+}
+
+enum ExpertReviewStatus {
+  PENDING
+  ASSIGNED
+  COMPLETED
+  REJECTED
 }
 
 enum NotificationType {

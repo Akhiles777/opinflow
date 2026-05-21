@@ -127,3 +127,33 @@ export async function uploadSurveyReport(surveyId: string, buffer: Buffer) {
 
   return `${SUPABASE_URL}/storage/v1/object/public/${SUPABASE_REPORTS_BUCKET}/${filePath}`;
 }
+
+export async function uploadExpertReviewReport(requestId: string, buffer: Buffer) {
+  if (!buffer || buffer.length === 0) {
+    throw new Error("EMPTY_REPORT_BUFFER");
+  }
+
+  await ensureBucketExists({
+    bucket: SUPABASE_REPORTS_BUCKET,
+    fileSizeLimit: "52428800",
+    mimeTypes: ["application/pdf"],
+  });
+
+  const filePath = `expert-reports/${requestId}-${Date.now()}.pdf`;
+
+  const response = await fetch(`${SUPABASE_URL}/storage/v1/object/${SUPABASE_REPORTS_BUCKET}/${filePath}`, {
+    method: "POST",
+    headers: {
+      ...getAuthHeaders("application/pdf"),
+      "x-upsert": "true",
+    },
+    body: new Uint8Array(buffer),
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`SUPABASE_EXPERT_REPORT_UPLOAD_FAILED: ${text}`);
+  }
+
+  return `${SUPABASE_URL}/storage/v1/object/public/${SUPABASE_REPORTS_BUCKET}/${filePath}`;
+}

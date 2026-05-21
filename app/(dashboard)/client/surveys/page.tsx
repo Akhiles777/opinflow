@@ -1,5 +1,6 @@
 import * as React from "react";
 import PageHeader from "@/components/dashboard/PageHeader";
+import OrderExpertButton from "@/components/dashboard/OrderExpertButton";
 import DataTable, { Column } from "@/components/dashboard/DataTable";
 import Badge from "@/components/dashboard/Badge";
 import EmptyState from "@/components/dashboard/EmptyState";
@@ -26,8 +27,9 @@ export default async function ClientSurveysPage() {
       key: "actions",
       header: "Действия",
       cell: (r) => (
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-3 items-center">
           <a className="text-sm font-semibold text-brand hover:underline" href={`/client/surveys/${r.id}`}>Статистика</a>
+          <OrderExpertButton surveyId={r.id} answers={r.answers} expertReview={r.expertReview} />
         </div>
       ),
     },

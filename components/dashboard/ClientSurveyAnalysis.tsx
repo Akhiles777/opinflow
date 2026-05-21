@@ -3,6 +3,8 @@
 import { useEffect, useTransition } from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { createExpertReviewRequestAction } from "@/actions/expert-reviews";
+import { getExpertReviewPrice } from "@/lib/expert-review";
 import type { AnalysisDiagnostics } from "@/lib/ai-analysis";
 import type { QuantQuestionBlock } from "@/lib/survey-quantitative";
 
@@ -23,6 +25,14 @@ type Props = {
     summary: string | null;
     keyInsights: string[];
     diagnostics: AnalysisDiagnostics | null;
+  } | null;
+  expertReview: {
+    id: string;
+    status: "PENDING" | "ASSIGNED" | "COMPLETED" | "REJECTED";
+    assignedExpert: string | null;
+    reportUrl: string | null;
+    adminNote: string | null;
+    amount: number;
   } | null;
 };
 
@@ -129,11 +139,13 @@ function SentimentDonut({
   );
 }
 
-export default function ClientSurveyAnalysis({ surveyId, analysis, quantitative }: Props) {
+export default function ClientSurveyAnalysis({ surveyId, analysis, quantitative, expertReview }: Props) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isRunning, startRunTransition] = useTransition();
+  const [isOrderingExpert, startExpertTransition] = useTransition();
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const expertReviewPrice = getExpertReviewPrice();
 
   useEffect(() => {
     if (analysis?.status !== "PROCESSING") {
@@ -224,6 +236,18 @@ export default function ClientSurveyAnalysis({ surveyId, analysis, quantitative 
     });
   }
 
+  function handleOrderExpertReview() {
+    setError(null);
+    startExpertTransition(async () => {
+      const result = await createExpertReviewRequestAction(surveyId);
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+      router.refresh();
+    });
+  }
+
   const analysisReady = analysis?.status === "COMPLETED";
 
   if (!analysis || analysis.status === "PENDING" || analysis.status === "FAILED") {
@@ -250,6 +274,36 @@ export default function ClientSurveyAnalysis({ surveyId, analysis, quantitative 
             </button>
           </div>
           {error ? <div className="mt-4 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-500">{error}</div> : null}
+        </div>
+
+        <div className="rounded-2xl border border-dash-border bg-dash-card p-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <div className="text-sm font-semibold text-dash-heading">Экспертный разбор</div>
+              <div className="mt-2 text-sm text-dash-muted">
+                Если нужен ручной разбор результатов, можно заказать заключение эксперта платформы.
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleOrderExpertReview}
+              disabled={isOrderingExpert || Boolean(expertReview && expertReview.status !== "REJECTED")}
+              className="rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-mid disabled:opacity-60"
+            >
+              {expertReview && expertReview.status !== "REJECTED"
+                ? expertReview.status === "COMPLETED"
+                  ? "Разбор уже готов"
+                  : "Заявка уже создана"
+                : isOrderingExpert
+                  ? "Отправляем..."
+                  : `Заказать детальный разбор · ${expertReviewPrice.toLocaleString("ru-RU")} ₽`}
+            </button>
+          </div>
+          {expertReview?.adminNote ? (
+            <div className="mt-4 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-500">
+              {expertReview.adminNote}
+            </div>
+          ) : null}
         </div>
       </div>
     );
@@ -425,6 +479,58 @@ export default function ClientSurveyAnalysis({ surveyId, analysis, quantitative 
           </div>
         ) : null}
       </div>
+      </div>
+
+      <div className="rounded-2xl border border-dash-border bg-dash-card p-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <div className="text-sm font-semibold text-dash-heading">Экспертный разбор</div>
+            <div className="mt-2 text-sm text-dash-muted">
+              Можно заказать дополнительный ручной разбор результатов от эксперта платформы.
+            </div>
+            {expertReview ? (
+              <div className="mt-3 text-sm text-dash-body">
+                Статус:{" "}
+                <span className="font-semibold">
+                  {expertReview.status === "PENDING"
+                    ? "ожидает назначения"
+                    : expertReview.status === "ASSIGNED"
+                      ? `назначен эксперт${expertReview.assignedExpert ? ` — ${expertReview.assignedExpert}` : ""}`
+                      : expertReview.status === "COMPLETED"
+                        ? "заключение готово"
+                        : "отклонено"}
+                </span>
+              </div>
+            ) : null}
+            {expertReview?.adminNote ? (
+              <div className="mt-2 text-sm text-red-500">{expertReview.adminNote}</div>
+            ) : null}
+          </div>
+
+          {expertReview?.status === "COMPLETED" && expertReview.reportUrl ? (
+            <a
+              href={expertReview.reportUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-xl border border-brand/20 bg-brand/10 px-5 py-3 text-sm font-semibold text-brand transition-colors hover:bg-brand/15"
+            >
+              Скачать заключение
+            </a>
+          ) : (
+            <button
+              type="button"
+              onClick={handleOrderExpertReview}
+              disabled={isOrderingExpert || Boolean(expertReview && expertReview.status !== "REJECTED")}
+              className="rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-mid disabled:opacity-60"
+            >
+              {expertReview && expertReview.status !== "REJECTED"
+                ? "Заявка уже создана"
+                : isOrderingExpert
+                  ? "Отправляем..."
+                  : `Заказать детальный разбор · ${expertReviewPrice.toLocaleString("ru-RU")} ₽`}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
