@@ -2,7 +2,7 @@
 import { useMemo, useState, useTransition } from "react";
 import Modal from "@/components/dashboard/Modal";
 import Badge from "@/components/dashboard/Badge";
-import { createCorporateInvoiceAction, createDepositAction } from "@/actions/payments";
+import { createDepositAction } from "@/actions/payments";
 
 type Props = {
   balance: number;
@@ -59,24 +59,28 @@ export default function ClientWalletClient({ balance, transactions, payments, pa
 
   function handleDeposit() {
     setError(null);
-    startTransition(async () => {
-      if (depositMethod === "INVOICE") {
-        const result = (await createCorporateInvoiceAction(normalizedAmount)) as any;
-        if (result?.error || !result?.downloadUrl) {
-          setError(result?.error ?? "Не удалось сформировать счёт");
-          return;
-        }
-        window.open(result.downloadUrl, "_blank", "noopener,noreferrer");
-        setShowDepositModal(false);
+
+    if (depositMethod === "INVOICE") {
+      if (!normalizedAmount || normalizedAmount < 100) {
+        setError("Минимальная сумма — 100 ₽");
         return;
       }
+      const link = document.createElement("a");
+      link.href = `/api/invoices/draft?amount=${normalizedAmount}`;
+      link.download = `invoice_${normalizedAmount}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setShowDepositModal(false);
+      return;
+    }
 
+    startTransition(async () => {
       const result = await createDepositAction(normalizedAmount);
       if (result.error || !result.confirmationUrl) {
         setError(result.error ?? "Не удалось создать платёж");
         return;
       }
-
       window.location.href = result.confirmationUrl;
     });
   }
@@ -182,7 +186,7 @@ export default function ClientWalletClient({ balance, transactions, payments, pa
         open={showDepositModal}
         title="Пополнение баланса"
         onClose={() => {
-          if (!isLoading) {
+          if (!isLoading || depositMethod === "INVOICE") {
             setShowDepositModal(false);
             setError(null);
           }
@@ -193,15 +197,13 @@ export default function ClientWalletClient({ balance, transactions, payments, pa
             <button
               type="button"
               onClick={handleDeposit}
-              disabled={isLoading}
+              disabled={depositMethod === "CARD" && isLoading}
               className="rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-mid disabled:opacity-60"
             >
-              {isLoading
-                ? depositMethod === "INVOICE"
-                  ? "Формируем счёт..."
-                  : "Создаём платёж..."
-                : depositMethod === "INVOICE"
-                  ? "Скачать счёт PDF"
+              {depositMethod === "INVOICE"
+                ? "Скачать счёт PDF"
+                : isLoading
+                  ? "Создаём платёж..."
                   : "Перейти к оплате"}
             </button>
           </div>
