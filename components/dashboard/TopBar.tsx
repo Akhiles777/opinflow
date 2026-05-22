@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Menu } from "lucide-react";
 import NotificationBell from "@/components/dashboard/NotificationBell";
+import PushNotificationButton from "@/components/dashboard/PushNotificationButton";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import type { DashboardViewer } from "@/lib/dashboard-data";
 
@@ -41,6 +42,7 @@ export default function TopBar({
         </div>
       </div>
       <div className="order-1 ml-auto flex items-center gap-2 sm:gap-3 lg:order-2">
+        <PushNotificationButton />
         <ThemeToggle tone="dash" />
         <NotificationBell />
 

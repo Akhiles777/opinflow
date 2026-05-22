@@ -1,92 +1,102 @@
-import PageHeader from "@/components/dashboard/PageHeader";
-import DataTable, { Column } from "@/components/dashboard/DataTable";
-import Badge from "@/components/dashboard/Badge";
-import EmptyState from "@/components/dashboard/EmptyState";
-import { getAdminUsersData } from "@/lib/dashboard-data";
 import { requireRole } from "@/lib/auth-utils";
-import { Role } from "@prisma/client";
-type TabValue = "all" | "RESPONDENT" | "CLIENT" | "blocked";
+import { prisma } from "@/lib/prisma";
+import AdminUsersClient from "@/components/dashboard/AdminUsersClient";
+import PageHeader from "@/components/dashboard/PageHeader";
 
-type Row = Awaited<ReturnType<typeof getAdminUsersData>>[number];
-
-const tabs = [
-  { label: "Все", value: "all" },
-  { label: "Респонденты", value: "RESPONDENT" },
-  { label: "Заказчики", value: "CLIENT" },
-  { label: "Заблокированные", value: "blocked" },
-] as const;
-type User = {
-  id: string;
-  email: string;
-  role: Role;
-  registered: string;
-  activity: string;
-  status: 
-    | { v: "active"; t: string }
-    | { v: "rejected"; t: string }
-    | { v: "pending"; t: string };
-  href: string;
-};
+function formatDate(date: Date) {
+  return new Intl.DateTimeFormat("ru-RU", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(date);
+}
 
 export default async function AdminUsersPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ tab?: string }>;
+  searchParams?: Promise<{ tab?: string; q?: string }>;
 }) {
   await requireRole("ADMIN");
   const params = (await searchParams) ?? {};
+  const tab = params.tab ?? "all";
+  const q = (params.q ?? "").toLowerCase().trim();
 
-  const tab = (params.tab as TabValue) || "all";
-  const rows = await getAdminUsersData();
+  const [users, complaints] = await Promise.all([
+    prisma.user.findMany({
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        status: true,
+        createdAt: true,
+        respondentProfile: { select: { city: true } },
+        clientProfile: { select: { companyName: true } },
+        wallet: { select: { balance: true, totalEarned: true } },
+        _count: { select: { surveySessions: true, surveysCreated: true } },
+      },
+    }),
+    prisma.complaint.findMany({
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        reason: true,
+        details: true,
+        status: true,
+        createdAt: true,
+        fromUser: { select: { email: true, name: true } },
+        survey: { select: { id: true, title: true } },
+      },
+    }),
+  ]);
 
-  const filtered = rows.filter((r) => {
-    if (tab === "all") return true;
-    if (tab === "blocked") return r.status.v === "rejected";
-    return r.role === tab;
+  const mappedUsers = users.map((u) => ({
+    id: u.id,
+    email: u.email,
+    name: u.name ?? "",
+    role: u.role,
+    status: u.status,
+    registered: formatDate(u.createdAt),
+    balance: Number(u.wallet?.balance ?? 0),
+    totalEarned: Number(u.wallet?.totalEarned ?? 0),
+    surveysCount: u.role === "CLIENT" ? u._count.surveysCreated : u._count.surveySessions,
+    extra: u.role === "CLIENT"
+      ? u.clientProfile?.companyName ?? ""
+      : u.respondentProfile?.city ?? "",
+  }));
+
+  const mappedComplaints = complaints.map((c) => ({
+    id: c.id,
+    fromEmail: c.fromUser.email,
+    fromName: c.fromUser.name ?? "",
+    surveyTitle: c.survey?.title ?? "—",
+    surveyId: c.survey?.id ?? null,
+    reason: c.reason,
+    details: c.details ?? "",
+    status: c.status,
+    date: formatDate(c.createdAt),
+  }));
+
+  const filteredUsers = mappedUsers.filter((u) => {
+    const matchesTab =
+      tab === "all" ? true :
+      tab === "blocked" ? u.status === "BLOCKED" :
+      u.role === tab;
+    const matchesSearch = !q || u.email.toLowerCase().includes(q) || u.name.toLowerCase().includes(q);
+    return matchesTab && matchesSearch;
   });
 
-  const columns: Column<Row>[] = [
-    { key: "user", header: "Пользователь", cell: (r) => r.email, className: "max-w-[280px] lg:max-w-[420px]" },
-    { key: "role", header: "Роль", cell: (r) => (r.role === "CLIENT" ? "Заказчик" : r.role === "ADMIN" ? "Администратор" : "Респондент") },
-    { key: "reg", header: "Регистрация", cell: (r) => r.registered },
-    { key: "act", header: "Активность", cell: (r) => r.activity },
-    {
-      key: "status",
-      header: "Статус",
-      cell: (r) => <Badge variant={r.status.v}>{r.status.t}</Badge>,
-    },
-  ];
   return (
     <div>
-      <PageHeader title="Пользователи" subtitle="Реальные пользователи, роли и статусы из базы данных." />
-
-      <div className="mt-6 flex flex-wrap gap-2">
-        {tabs.map((t) => {
-          const active = t.value === tab;
-          const href = t.value === "all" ? "/admin/users" : `/admin/users?tab=${t.value}`;
-          return (
-            <a
-              key={t.value}
-              href={href}
-              className={[
-                "rounded-xl border px-4 py-2 text-[15px] font-semibold font-body transition-colors",
-                active
-                  ? "bg-brand/10 border-brand/30 text-brand"
-                  : "bg-dash-card border-dash-border text-dash-muted hover:text-dash-heading hover:bg-dash-bg",
-              ].join(" ")}
-            >
-              {t.label}
-            </a>
-          );
-        })}
-      </div>
-
+      <PageHeader title="Пользователи" subtitle="Управление пользователями, роли, статусы и жалобы." />
       <div className="mt-8">
-        {filtered.length > 0 ? (
-          <DataTable columns={columns} users={filtered} keyForRow={(u) => u.id} />
-        ) : (
-          <EmptyState title="Пользователи не найдены" description="По текущему фильтру в базе пока нет подходящих аккаунтов." />
-        )}
+        <AdminUsersClient
+          users={filteredUsers}
+          complaints={mappedComplaints}
+          activeTab={tab}
+          searchQuery={params.q ?? ""}
+        />
       </div>
     </div>
   );

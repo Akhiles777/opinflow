@@ -32,10 +32,6 @@ const manrope = Manrope({
   display: "swap",
 });
 
-if (typeof window !== "undefined" && "serviceWorker" in navigator) {
-  navigator.serviceWorker.register('/sw.js')
-}
-
 export const metadata: Metadata = {
   title: "ПотокМнений — платформа маркетинговых исследований",
   description:

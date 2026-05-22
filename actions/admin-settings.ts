@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireRole } from "@/lib/auth-utils";
 import { setCommissionRate } from "@/lib/platform-settings";
+import { prisma } from "@/lib/prisma";
 
 export async function updateCommissionRateAction(ratePercent: number) {
   await requireRole("ADMIN");
@@ -15,4 +16,91 @@ export async function updateCommissionRateAction(ratePercent: number) {
   revalidatePath("/admin/finance");
   revalidatePath("/client/surveys/create");
   return { success: true, rate: normalizedRate };
+}
+
+export async function toggleUserBlockAction(userId: string) {
+  await requireRole("ADMIN");
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, status: true, role: true },
+  });
+
+  if (!user) return { error: "Пользователь не найден" };
+  if (user.role === "ADMIN") return { error: "Нельзя заблокировать администратора" };
+
+  const newStatus = user.status === "BLOCKED" ? "ACTIVE" : "BLOCKED";
+  await prisma.user.update({ where: { id: userId }, data: { status: newStatus } });
+
+  revalidatePath("/admin/users");
+  revalidatePath(`/admin/users/${userId}`);
+  return { success: true, newStatus };
+}
+
+export async function resolveComplaintAction(id: string, status: "RESOLVED" | "DISMISSED") {
+  await requireRole("ADMIN");
+
+  const complaint = await prisma.complaint.findUnique({ where: { id }, select: { id: true } });
+  if (!complaint) return { error: "Жалоба не найдена" };
+
+  await prisma.complaint.update({ where: { id }, data: { status } });
+
+  revalidatePath("/admin/users");
+  return { success: true };
+}
+
+export async function savePlatformSettingsAction(data: {
+  commissionPercent: number;
+  minWithdrawal: number;
+  minReward: number;
+  maintenanceMode: boolean;
+  adminEmail: string;
+}) {
+  await requireRole("ADMIN");
+
+  if (!Number.isFinite(data.commissionPercent) || data.commissionPercent < 0 || data.commissionPercent > 100) {
+    return { error: "Комиссия должна быть от 0 до 100%" };
+  }
+  if (!Number.isFinite(data.minWithdrawal) || data.minWithdrawal < 0) {
+    return { error: "Минимальная сумма вывода не может быть отрицательной" };
+  }
+  if (!Number.isFinite(data.minReward) || data.minReward < 0) {
+    return { error: "Минимальное вознаграждение не может быть отрицательным" };
+  }
+
+  await prisma.platformSettings.upsert({
+    where: { id: "singleton" },
+    create: {
+      id: "singleton",
+      commissionPercent: data.commissionPercent,
+      minWithdrawal: data.minWithdrawal,
+      minReward: data.minReward,
+      maintenanceMode: data.maintenanceMode,
+      adminEmail: data.adminEmail.trim(),
+    },
+    update: {
+      commissionPercent: data.commissionPercent,
+      minWithdrawal: data.minWithdrawal,
+      minReward: data.minReward,
+      maintenanceMode: data.maintenanceMode,
+      adminEmail: data.adminEmail.trim(),
+    },
+  });
+
+  await setCommissionRate(data.commissionPercent / 100);
+
+  revalidatePath("/admin/settings");
+  revalidatePath("/admin/finance");
+  revalidatePath("/client/surveys/create");
+  return { success: true };
+}
+
+export async function getPlatformSettingsAction() {
+  await requireRole("ADMIN");
+
+  return prisma.platformSettings.upsert({
+    where: { id: "singleton" },
+    create: { id: "singleton" },
+    update: {},
+  });
 }

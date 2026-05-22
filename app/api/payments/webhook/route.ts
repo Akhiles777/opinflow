@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { createHmac } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { creditDepositPaymentByYukassaId } from "@/lib/payment-processing";
+import { notify } from "@/lib/notifications";
 
 type PayoutWebhookObject = {
   id?: string;
@@ -133,6 +134,15 @@ export async function POST(request: Request) {
             });
           }
         });
+
+        notify({
+          userId: requestRecord.userId,
+          type: "WITHDRAWAL_STATUS",
+          title: "Средства переведены",
+          body: `${Number(requestRecord.amount)} ₽ успешно выплачено`,
+          link: "/respondent/wallet",
+          emailData: { amount: Number(requestRecord.amount), status: "COMPLETED" },
+        }).catch(console.error)
       }
     }
 
@@ -183,6 +193,15 @@ export async function POST(request: Request) {
               },
             });
           });
+
+          notify({
+            userId: requestRecord.userId,
+            type: "WITHDRAWAL_STATUS",
+            title: "Выплата не выполнена",
+            body: `Не удалось выполнить выплату ${Number(requestRecord.amount)} ₽. Средства возвращены на баланс.`,
+            link: "/respondent/wallet",
+            emailData: { amount: Number(requestRecord.amount), status: "FAILED" },
+          }).catch(console.error)
         }
       }
     }
@@ -234,6 +253,15 @@ export async function POST(request: Request) {
               },
             });
           });
+
+          notify({
+            userId: requestRecord.userId,
+            type: "WITHDRAWAL_STATUS",
+            title: "Выплата отменена",
+            body: `Выплата ${Number(requestRecord.amount)} ₽ отменена. Средства возвращены на баланс.`,
+            link: "/respondent/wallet",
+            emailData: { amount: Number(requestRecord.amount), status: "FAILED" },
+          }).catch(console.error)
         }
       }
     }

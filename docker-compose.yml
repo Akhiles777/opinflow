@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  app:
+    image: opinflow:latest
+    restart: always
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.production
+
+  postgres:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: opinflow
+      POSTGRES_USER: opinflow
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"
+
+volumes:
+  postgres_data:

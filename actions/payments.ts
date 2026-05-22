@@ -396,20 +396,12 @@ export async function rejectWithdrawalAction(requestId: string, reason: string) 
   return { success: true };
 }
 
-// Minimal placeholder for corporate invoice generation.
-// Export exists so client code can call it; implementation currently returns a helpful message.
 export async function createCorporateInvoiceAction(amount: number) {
-  const session = await requireRole("CLIENT");
+  await requireRole("CLIENT");
 
   if (!amount || Number.isNaN(Number(amount)) || Number(amount) < 100) {
-    return { error: "Сумма счёта должна быть не меньше 100 ₽" };
+    return { error: "Сумма счёта должна быть не меньше 100 ₽", downloadUrl: null };
   }
 
-  // TODO: implement full corporate invoice PDF generation and storage (Supabase, S3, etc.)
-  // For now return a user-facing error so the UI handles it gracefully.
-  return {
-    error:
-      "Функция формирования счёта пока не настроена. Пожалуйста, свяжитесь с поддержкой или используйте банковский перевод.",
-    downloadUrl: null,
-  };
+  return { downloadUrl: `/api/invoices/draft?amount=${Math.round(amount)}`, error: null };
 }

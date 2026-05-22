@@ -95,6 +95,7 @@ const adminNav: NavSection[] = [
       { label: "Пользователи", href: "/admin/users", icon: <Users className="w-4 h-4" /> },
       { label: "Эксперты", href: "/admin/experts", icon: <GraduationCap className="w-4 h-4" /> },
       { label: "Финансы", href: "/admin/finance", icon: <BarChart3 className="w-4 h-4" /> },
+      { label: "Настройки", href: "/admin/settings", icon: <Settings className="w-4 h-4" /> },
     ],
   },
 ];
