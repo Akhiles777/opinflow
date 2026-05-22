@@ -94,13 +94,7 @@ export default function AdminExpertsClient({ experts, requests }: Props) {
       });
       const payload = (await response.json().catch(() => null)) as { error?: string } | null;
       if (!response.ok) {
-        setError(
-          payload?.error === "INVALID_FILE_TYPE"
-            ? "Загрузите PDF-файл."
-            : payload?.error === "FILE_TOO_LARGE"
-              ? "Файл слишком большой. Максимум 10 МБ."
-              : payload?.error || "Не удалось загрузить заключение.",
-        );
+        setError(payload?.error || "Не удалось загрузить заключение.");
         return;
       }
       setUploadTarget(null);

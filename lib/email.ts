@@ -86,9 +86,8 @@ export async function sendNewSurveyEmail(
   name: string,
   survey: { title: string; reward: number; estimatedTime: number | null; id: string }
 ) {
-  const url = `${getBaseUrl()}/survey/${survey.id}`
-  await transporter.sendMail({
-    from: FROM,
+  const url = `${getBaseUrl()}/survey/${survey.id}`;
+  await sendMail({
     to: email,
     subject: `Новый опрос для вас — ${survey.reward} ₽`,
     html: `
@@ -98,10 +97,9 @@ export async function sendNewSurveyEmail(
         <div style="background:#F9FAFB;border-radius:12px;padding:20px;margin:20px 0;">
           <p style="font-weight:600;color:#111827;margin:0 0 8px;">${survey.title}</p>
           <p style="color:#6366F1;font-size:20px;font-weight:700;margin:0;">+${survey.reward} ₽</p>
-          ${survey.estimatedTime ? `<p style="color:#9CA3AF;font-size:13px;margin:4px 0 0;">~${survey.estimatedTime} минут</p>` : ''}
+          ${survey.estimatedTime ? `<p style="color:#9CA3AF;font-size:13px;margin:4px 0 0;">~${survey.estimatedTime} минут</p>` : ""}
         </div>
-        <a href="${url}" style="display:inline-block;background:#6366F1;color:#fff;
-           text-decoration:none;padding:14px 28px;border-radius:10px;font-weight:600;">
+        <a href="${url}" style="display:inline-block;background:#6366F1;color:#fff;text-decoration:none;padding:14px 28px;border-radius:10px;font-weight:600;">
           Пройти опрос
         </a>
         <p style="color:#9CA3AF;font-size:12px;margin-top:32px;">
@@ -109,7 +107,7 @@ export async function sendNewSurveyEmail(
         </p>
       </div>
     `,
-  })
+  });
 }
 
 // Начисление вознаграждения
@@ -119,26 +117,23 @@ export async function sendEarningEmail(
   amount: number,
   surveyTitle: string
 ) {
-  await transporter.sendMail({
-    from: FROM,
+  await sendMail({
     to: email,
     subject: `Начислено ${amount} ₽ — ПотокМнений`,
     html: `
       <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:40px 32px;">
         <h2 style="color:#111827;">Вознаграждение начислено!</h2>
         <p style="color:#6B7280;">Привет, ${name}! Вы завершили опрос и получили вознаграждение.</p>
-        <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:12px;
-                    padding:20px;margin:20px 0;text-align:center;">
+        <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:12px;padding:20px;margin:20px 0;text-align:center;">
           <p style="color:#15803D;font-size:36px;font-weight:700;margin:0;">+${amount} ₽</p>
           <p style="color:#6B7280;font-size:13px;margin:8px 0 0;">Опрос: ${surveyTitle}</p>
         </div>
-        <a href="${getBaseUrl()}/respondent/wallet" style="display:inline-block;background:#6366F1;
-           color:#fff;text-decoration:none;padding:14px 28px;border-radius:10px;font-weight:600;">
+        <a href="${getBaseUrl()}/respondent/wallet" style="display:inline-block;background:#6366F1;color:#fff;text-decoration:none;padding:14px 28px;border-radius:10px;font-weight:600;">
           Перейти к кошельку
         </a>
       </div>
     `,
-  })
+  });
 }
 
 // Статус вывода средств
@@ -146,43 +141,41 @@ export async function sendWithdrawalStatusEmail(
   email: string,
   name: string,
   amount: number,
-  status: 'COMPLETED' | 'REJECTED' | 'FAILED',
+  status: "COMPLETED" | "REJECTED" | "FAILED",
   adminNote?: string
 ) {
-  const isSuccess = status === 'COMPLETED'
-  const isRejected = status === 'REJECTED'
-  await transporter.sendMail({
-    from: FROM,
+  const isSuccess = status === "COMPLETED";
+  const isRejected = status === "REJECTED";
+  await sendMail({
     to: email,
     subject: isSuccess
       ? `Вывод ${amount} ₽ выполнен`
       : isRejected
-      ? `Заявка на вывод отклонена — ПотокМнений`
-      : `Выплата не выполнена — ПотокМнений`,
+        ? `Заявка на вывод отклонена — ПотокМнений`
+        : `Выплата не выполнена — ПотокМнений`,
     html: `
       <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:40px 32px;">
-        <h2 style="color:#111827;">${isSuccess ? 'Средства переведены' : isRejected ? 'Заявка отклонена' : 'Выплата не выполнена'}</h2>
+        <h2 style="color:#111827;">${isSuccess ? "Средства переведены" : isRejected ? "Заявка отклонена" : "Выплата не выполнена"}</h2>
         <p style="color:#6B7280;">Привет, ${name}!</p>
         <p style="color:#374151;">
           ${isSuccess
             ? `Ваша заявка на вывод ${amount} ₽ успешно обработана. Средства поступят в течение 1-3 рабочих дней.`
             : isRejected
-            ? `Ваша заявка на вывод ${amount} ₽ была отклонена.`
-            : `Не удалось выполнить выплату ${amount} ₽. Средства возвращены на ваш баланс.`
+              ? `Ваша заявка на вывод ${amount} ₽ была отклонена.`
+              : `Не удалось выполнить выплату ${amount} ₽. Средства возвращены на ваш баланс.`
           }
         </p>
         ${!isSuccess && adminNote ? `
           <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;padding:16px;margin:16px 0;">
             <p style="color:#DC2626;margin:0;font-size:14px;">Причина: ${adminNote}</p>
           </div>
-        ` : ''}
-        <a href="${getBaseUrl()}/respondent/wallet" style="display:inline-block;background:#6366F1;
-           color:#fff;text-decoration:none;padding:14px 28px;border-radius:10px;font-weight:600;">
+        ` : ""}
+        <a href="${getBaseUrl()}/respondent/wallet" style="display:inline-block;background:#6366F1;color:#fff;text-decoration:none;padding:14px 28px;border-radius:10px;font-weight:600;">
           Перейти к кошельку
         </a>
       </div>
     `,
-  })
+  });
 }
 
 // Статус опроса (заказчику)
@@ -190,19 +183,16 @@ export async function sendSurveyStatusEmail(
   email: string,
   name: string,
   surveyTitle: string,
-  status: 'APPROVED' | 'REJECTED',
+  status: "APPROVED" | "REJECTED",
   moderationNote?: string
 ) {
-  const isApproved = status === 'APPROVED'
-  await transporter.sendMail({
-    from: FROM,
+  const isApproved = status === "APPROVED";
+  await sendMail({
     to: email,
     subject: isApproved ? `Опрос одобрен — ${surveyTitle}` : `Опрос отклонён — ${surveyTitle}`,
     html: `
       <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:40px 32px;">
-        <h2 style="color:#111827;">
-          ${isApproved ? '✅ Опрос опубликован' : '❌ Опрос отклонён'}
-        </h2>
+        <h2 style="color:#111827;">${isApproved ? "Опрос опубликован" : "Опрос отклонён"}</h2>
         <p style="color:#6B7280;">Привет, ${name}!</p>
         <p style="color:#374151;">
           ${isApproved
@@ -214,12 +204,11 @@ export async function sendSurveyStatusEmail(
           <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;padding:16px;margin:16px 0;">
             <p style="color:#DC2626;margin:0;font-size:14px;">Причина: ${moderationNote}</p>
           </div>
-        ` : ''}
-        <a href="${getBaseUrl()}/client/surveys" style="display:inline-block;background:#6366F1;
-           color:#fff;text-decoration:none;padding:14px 28px;border-radius:10px;font-weight:600;">
+        ` : ""}
+        <a href="${getBaseUrl()}/client/surveys" style="display:inline-block;background:#6366F1;color:#fff;text-decoration:none;padding:14px 28px;border-radius:10px;font-weight:600;">
           Мои опросы
         </a>
       </div>
     `,
-  })
+  });
 }

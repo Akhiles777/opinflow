@@ -120,13 +120,17 @@ export async function assignExpertReviewAction(requestId: string, expertName: st
     },
   });
 
-  await notify({
-    userId: request.userId,
-    type: "SYSTEM",
-    title: "Назначен эксперт",
-    body: `По опросу "${request.survey.title}" назначен эксперт: ${expertName.trim()}.`,
-    link: `/client/surveys/${request.survey.id}`,
-  });
+  try {
+    await notify({
+      userId: request.userId,
+      type: "SYSTEM",
+      title: "Назначен эксперт",
+      body: `По опросу "${request.survey.title}" назначен эксперт: ${expertName.trim()}.`,
+      link: `/client/surveys/${request.survey.id}`,
+    });
+  } catch (error) {
+    console.error("[expert-reviews][assign] notify error:", error);
+  }
 
   revalidatePath("/admin/experts");
   revalidatePath(`/client/surveys/${request.survey.id}`);
@@ -186,13 +190,17 @@ export async function rejectExpertReviewAction(requestId: string, reason: string
     }
   });
 
-  await notify({
-    userId: request.userId,
-    type: "SYSTEM",
-    title: "Экспертный разбор отклонён",
-    body: `Заявка по опросу "${request.survey.title}" отклонена: ${reason.trim()}`,
-    link: `/client/surveys/${request.survey.id}`,
-  });
+  try {
+    await notify({
+      userId: request.userId,
+      type: "SYSTEM",
+      title: "Экспертный разбор отклонён",
+      body: `Заявка по опросу "${request.survey.title}" отклонена: ${reason.trim()}`,
+      link: `/client/surveys/${request.survey.id}`,
+    });
+  } catch (error) {
+    console.error("[expert-reviews][reject] notify error:", error);
+  }
 
   revalidatePath("/admin/experts");
   revalidatePath(`/client/surveys/${request.survey.id}`);
@@ -229,13 +237,17 @@ export async function completeExpertReviewAction(params: {
     },
   });
 
-  await notify({
-    userId: request.userId,
-    type: "SYSTEM",
-    title: "Экспертный разбор готов",
-    body: `По опросу "${request.survey.title}" загружено экспертное заключение.`,
-    link: `/client/surveys/${request.survey.id}`,
-  });
+  try {
+    await notify({
+      userId: request.userId,
+      type: "SYSTEM",
+      title: "Экспертный разбор готов",
+      body: `По опросу "${request.survey.title}" загружено экспертное заключение.`,
+      link: `/client/surveys/${request.survey.id}`,
+    });
+  } catch (error) {
+    console.error("[expert-reviews][complete] notify error:", error);
+  }
 
   revalidatePath("/admin/experts");
   revalidatePath(`/client/surveys/${request.survey.id}`);

@@ -29,7 +29,8 @@ export async function getCommissionRate() {
       ? Number((rows[0].value as Record<string, unknown>).rate)
       : NaN;
     return normalizeRate(rate);
-  } catch {
+  } catch (error) {
+    console.error("[platform-settings] getCommissionRate error:", error);
     return DEFAULT_COMMISSION_RATE;
   }
 }

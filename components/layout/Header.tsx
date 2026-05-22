@@ -90,7 +90,7 @@ export default function Header() {
           {/* ACTIONS */}
           <div className="hidden lg:flex items-center gap-4">
             {user ? (
-              <PublicUserMenu user={user} />
+              <PublicUserMenu {...user} />
             ) : (
               <>
                 <Link
