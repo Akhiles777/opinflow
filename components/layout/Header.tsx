@@ -5,145 +5,93 @@ import Image from "next/image";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { useTheme } from "next-themes";
 
 import SmoothHashLink from "@/components/ui/SmoothHashLink";
 import PublicUserMenu from "@/components/layout/PublicUserMenu";
 
-export default function Header() {
-  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+const links = [
+  { label: "Главная",      href: "#top" },
+  { label: "Респондентам", href: "/respondents" },
+  { label: "Бизнесу",     href: "#business" },
+  { label: "О нас",       href: "#about" },
+  { label: "Контакты",    href: "#contacts" },
+];
 
+export default function Header({ dark: _dark }: { dark?: boolean } = {}) {
+  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const { data: session, status } = useSession();
+  const { theme, setTheme } = useTheme();
 
   const user =
     status === "authenticated" && session?.user
       ? {
-          name: session.user.name ?? "Пользователь",
+          name:  session.user.name  ?? "Пользователь",
           email: session.user.email ?? "",
           image: session.user.image ?? null,
-          role: session.user.role,
+          role:  session.user.role,
         }
       : null;
-
-  const links = [
-    { label: "Главная", href: "#top" },
-    { label: "Респондентам", href: "#respondents" },
-    { label: "Бизнесу", href: "#business" },
-    { label: "О нас", href: "#about" },
-    { label: "Контакты", href: "#contacts" },
-  ];
 
   return (
     <header className="relative z-50 bg-transparent">
       <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-8">
-        <div className="flex h-[104px] items-center justify-between">
+        <div className="flex h-[104px] items-center justify-between gap-4">
 
-          {/* LOGO */}
-          <Link
-            href="/"
-            className="flex items-center gap-3 shrink-0"
-          >
-            <div className="relative h-[80px] w-[80px]">
-
-              {/* основа logo.svg */}
-              <Image
-                src="/logo2.png"
-                alt="logo"
-                fill
-                className="object-contain"
-                priority
-              />
-
-         
+          {/* ─── LOGO ─── */}
+          <Link href="/" className="flex items-center gap-3 shrink-0">
+            <div className="relative h-[72px] w-[72px]">
+              <Image src="/logo2.png" alt="ПотокМнений" fill className="object-contain" priority />
             </div>
-
-            <span
-              className="
-                text-[22px]
-                font-medium
-                tracking-[-0.04em]
-                text-[#2B1B67]
-              "
-            >
+            <span className="text-[20px] font-medium tracking-[-0.04em] text-[#2B1B67] dark:text-white hidden sm:block">
               ПотокМнений
             </span>
           </Link>
 
-          {/* DESKTOP NAV */}
-          <nav className="hidden lg:flex items-center gap-11">
+          {/* ─── DESKTOP NAV ─── */}
+          <nav className="hidden lg:flex items-center gap-8 xl:gap-11 flex-1 justify-center">
             {links.map((link) => (
               <SmoothHashLink
                 key={link.label}
                 href={link.href}
-                className="
-                  text-[17px]
-                  font-medium
-                  text-[#6E6884]
-                  transition-colors
-                  hover:text-[#2B1B67]
-                "
+                className="text-[16px] xl:text-[17px] font-medium transition-colors text-[#6E6884] hover:text-[#2B1B67] dark:text-white/70 dark:hover:text-white whitespace-nowrap"
               >
                 {link.label}
               </SmoothHashLink>
             ))}
           </nav>
 
-          {/* ACTIONS */}
-          <div className="hidden lg:flex items-center gap-4">
+          {/* ─── DESKTOP ACTIONS ─── */}
+          <div className="hidden lg:flex items-center gap-3 shrink-0">
+
+            {/* THEME TOGGLE */}
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              aria-label="Переключить тему"
+              className="shrink-0 flex items-center justify-center hover:opacity-75 transition-opacity duration-200"
+            >
+              <Image
+                src="/theme.svg"
+                alt=""
+                width={40}
+                height={40}
+                className="block"
+              />
+            </button>
+
             {user ? (
               <PublicUserMenu {...user} />
             ) : (
               <>
                 <Link
                   href="/login"
-                  className="
-                    h-[44px]
-                    px-7
-                    rounded-[14px]
-                    border
-                    border-[#DDD5F5]
-                    bg-[#F5F2FF]
-                    flex
-                    items-center
-                    justify-center
-
-                    text-[16px]
-                    font-medium
-                    text-[#2B1B67]
-
-                    transition-all
-                    duration-200
-                    hover:border-[#C7BAF2]
-                    hover:bg-white
-                  "
+                  className="h-11 px-6 rounded-[14px] border flex items-center justify-center text-[15px] font-medium transition-all duration-200 border-[#DDD5F5] bg-[#F5F2FF] text-[#2B1B67] hover:border-[#C7BAF2] hover:bg-white dark:border-white/20 dark:bg-white/10 dark:text-white dark:hover:bg-white/18 whitespace-nowrap"
                 >
                   Войти
                 </Link>
-
                 <Link
                   href="/register"
-                  className="
-                    h-[44px]
-                    px-7
-                    rounded-[14px]
-
-                    border
-                    border-[#D7EC3A]
-
-                    bg-[linear-gradient(180deg,#E5F667_0%,#D9F326_100%)]
-
-                    flex
-                    items-center
-                    justify-center
-
-                    text-[16px]
-                    font-medium
-                    text-[#1C0C4C]
-
-                    transition-all
-                    duration-200
-                    hover:translate-y-[-1px]
-                    hover:shadow-[0_8px_24px_rgba(217,243,38,0.22)]
-                  "
+                  className="h-11 px-6 rounded-[14px] border border-[#D7EC3A] bg-[linear-gradient(180deg,#E5F667_0%,#D9F326_100%)] flex items-center justify-center text-[15px] font-medium text-[#1C0C4C] transition-all duration-200 hover:-translate-y-px hover:shadow-[0_8px_24px_rgba(217,243,38,0.25)] whitespace-nowrap"
                 >
                   Регистрация
                 </Link>
@@ -151,97 +99,62 @@ export default function Header() {
             )}
           </div>
 
-          {/* MOBILE */}
+          {/* ─── MOBILE BURGER ─── */}
           <button
             onClick={() => setMobileMenuOpen((v) => !v)}
-            className="
-              lg:hidden
-              flex
-              h-11
-              w-11
-              items-center
-              justify-center
-              rounded-[14px]
-              border
-              border-[#DDD5F5]
-              bg-white
-            "
+            aria-label="Меню"
+            className="lg:hidden flex h-11 w-11 items-center justify-center rounded-[14px] border border-[#DDD5F5] bg-white dark:border-white/20 dark:bg-white/10 shrink-0"
           >
-            {mobileMenuOpen ? (
-              <X className="h-5 w-5 text-[#2B1B67]" />
-            ) : (
-              <Menu className="h-5 w-5 text-[#2B1B67]" />
-            )}
+            {mobileMenuOpen
+              ? <X    className="h-5 w-5 text-[#2B1B67] dark:text-white" />
+              : <Menu className="h-5 w-5 text-[#2B1B67] dark:text-white" />
+            }
           </button>
         </div>
 
-        {/* MOBILE MENU */}
+        {/* ─── MOBILE MENU ─── */}
         {mobileMenuOpen && (
-          <div
-            className="
-              lg:hidden
-              mb-4
-              rounded-[28px]
-              border
-              border-[#E4DEF7]
-              bg-white
-              p-5
-              shadow-[0_20px_60px_rgba(45,20,90,0.08)]
-            "
-          >
-            <div className="flex flex-col gap-5">
+          <div className="lg:hidden mb-4 rounded-[28px] border p-5 border-[#E4DEF7] bg-white shadow-[0_20px_60px_rgba(45,20,90,0.08)] dark:border-white/12 dark:bg-[#1A0A4A] dark:shadow-[0_20px_60px_rgba(0,0,0,0.3)]">
+
+            {/* Навигация */}
+            <div className="flex flex-col gap-4">
               {links.map((link) => (
                 <SmoothHashLink
                   key={link.label}
                   href={link.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="
-                    text-[17px]
-                    font-medium
-                    text-[#4B416D]
-                  "
+                  className="text-[17px] font-medium text-[#4B416D] dark:text-white/80"
                 >
                   {link.label}
                 </SmoothHashLink>
               ))}
             </div>
 
+            {/* Переключатель темы */}
+            <div className="mt-5 flex items-center justify-between py-3 border-t border-[#EDE8F8] dark:border-white/10">
+              <span className="text-[15px] text-[#6E6884] dark:text-white/55">Тема сайта</span>
+              <button
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                className="flex items-center justify-center hover:opacity-75 transition-opacity duration-200"
+              >
+                <Image src="/theme.svg" alt="" width={40} height={40} className="block" />
+              </button>
+            </div>
+
+            {/* Кнопки входа */}
             {!user && (
-              <div className="mt-6 flex flex-col gap-3">
+              <div className="mt-3 flex flex-col gap-3">
                 <Link
                   href="/login"
-                  className="
-                    h-[46px]
-                    rounded-[14px]
-                    border
-                    border-[#DDD5F5]
-                    bg-[#F5F2FF]
-                    flex
-                    items-center
-                    justify-center
-                    text-[16px]
-                    font-medium
-                    text-[#2B1B67]
-                  "
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="h-[46px] rounded-[14px] border flex items-center justify-center text-[16px] font-medium border-[#DDD5F5] bg-[#F5F2FF] text-[#2B1B67] dark:border-white/20 dark:bg-white/10 dark:text-white"
                 >
                   Войти
                 </Link>
-
                 <Link
                   href="/register"
-                  className="
-                    h-[46px]
-                    rounded-[14px]
-                    border
-                    border-[#D7EC3A]
-                    bg-[linear-gradient(180deg,#E5F667_0%,#D9F326_100%)]
-                    flex
-                    items-center
-                    justify-center
-                    text-[16px]
-                    font-medium
-                    text-[#1C0C4C]
-                  "
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="h-[46px] rounded-[14px] border border-[#D7EC3A] bg-[linear-gradient(180deg,#E5F667_0%,#D9F326_100%)] flex items-center justify-center text-[16px] font-medium text-[#1C0C4C]"
                 >
                   Регистрация
                 </Link>

@@ -11,7 +11,7 @@ import Footer from "@/components/layout/Footer";
 
 export default function Home() {
   return (
-    <main className="bg-white text-site-body overflow-hidden">
+    <main className="bg-white dark:bg-[#1C0C4C] text-site-body dark:text-white overflow-hidden">
       <Header />
       <Hero />
       <Features />

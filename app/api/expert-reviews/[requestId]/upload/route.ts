@@ -63,12 +63,6 @@ export async function POST(
     const message = error instanceof Error ? error.message : "Неизвестная ошибка";
     console.error("[expert-reviews][upload] storage error:", error);
 
-    if (message.includes("SUPABASE_STORAGE_NOT_CONFIGURED")) {
-      return NextResponse.json({ error: "Хранилище файлов не настроено. Проверьте NEXT_PUBLIC_SUPABASE_URL и SUPABASE_SERVICE_ROLE_KEY." }, { status: 500 });
-    }
-    if (message.includes("SUPABASE_BUCKET_CREATE_FAILED")) {
-      return NextResponse.json({ error: "Не удалось создать бакет в хранилище. Проверьте права сервисного ключа Supabase." }, { status: 500 });
-    }
     return NextResponse.json({ error: `Ошибка загрузки файла: ${message}` }, { status: 500 });
   }
 

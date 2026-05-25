@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import { useMemo, useState } from "react";
-
 import RevealOnScroll from "@/components/ui/RevealOnScroll";
 
 type ReviewItem = {
@@ -116,102 +115,105 @@ const slides: CaseSlide[] = [
   },
 ];
 
-const mosaicTiles = [
+type MosaicTile =
+  | { kind: "logo"; src: string; alt: string; lightBg: string; darkBg: string; lightImgClass: string; invertOnDark?: boolean }
+  | { kind: "metric"; top: string; bottom: string; badge: string; lightBg: string; darkBg: string; topClass: string; badgeClass?: string }
+  | { kind: "symbol"; label: string; lightBg: string; darkBg: string; lightText: string; darkText: string };
+
+const mosaicTiles: MosaicTile[] = [
   {
-    kind: "logo" as const,
+    kind: "logo",
     src: "/Testimonials2/2MOOD_logo_main-_2_.png",
     alt: "2MOOD",
-    className:
-      "rounded-[28px] bg-[#F0ECFA] flex items-center justify-center p-3",
-    imageClassName: "h-full max-h-[60px] w-full object-contain opacity-85",
+    lightBg: "rounded-[28px] bg-[#F0ECFA] flex items-center justify-center p-3",
+    darkBg: "rounded-[28px] bg-white/10 flex items-center justify-center p-3",
+    lightImgClass: "h-full max-h-[60px] w-full object-contain opacity-85",
   },
   {
-    kind: "logo" as const,
+    kind: "logo",
     src: "/Testimonials2/logo-klient-1-Photoroom.png",
     alt: "Natura Siberica",
-    className:
-      "rounded-[28px] bg-[#F0ECFA] flex items-center justify-center p-3",
-    imageClassName: "h-full max-h-[68px] w-full object-contain opacity-90",
+    lightBg: "rounded-[28px] bg-[#F0ECFA] flex items-center justify-center p-3",
+    darkBg: "rounded-[28px] bg-white/10 flex items-center justify-center p-3",
+    lightImgClass: "h-full max-h-[68px] w-full object-contain opacity-90",
   },
   {
-    kind: "metric" as const,
+    kind: "metric",
     top: "800+",
     bottom: "исследований проведено",
     badge: "◎",
-    className:
-      "row-span-2 rounded-[32px] bg-[#EEF67C] p-5 sm:p-6 flex flex-col justify-between",
-    topClassName: "text-[#6947DF]",
+    lightBg: "row-span-2 rounded-[32px] bg-[#EEF67C] p-5 sm:p-6 flex flex-col justify-between",
+    darkBg: "row-span-2 rounded-[32px] bg-[#D9F326] p-5 sm:p-6 flex flex-col justify-between",
+    topClass: "text-[#1C0C4C]",
   },
   {
-    kind: "logo" as const,
+    kind: "logo",
     src: "/Testimonials2/fc3816fd-7346-48d2-948d-4e69bee035a3 (1).png",
     alt: "Sammy Beauty",
-    className:
-      "rounded-[28px] bg-[#EEF67C] flex items-center justify-center p-3",
-    imageClassName: "h-full max-h-[74px] w-full object-contain",
+    lightBg: "rounded-[28px] bg-[#EEF67C] flex items-center justify-center p-3",
+    darkBg: "rounded-[28px] bg-[#D9F326] flex items-center justify-center p-3",
+    lightImgClass: "h-full max-h-[74px] w-full object-contain",
   },
   {
-    kind: "logo" as const,
+    kind: "logo",
     src: "/Testimonials2/logo_black_crop.svg",
     alt: "EYFEL",
-    className:
-      "rounded-[28px] border border-[#D8CEF5] bg-white flex items-center justify-center p-3",
-    imageClassName: "h-full max-h-[62px] w-full object-contain opacity-80",
+    lightBg: "rounded-[28px] border border-[#D8CEF5] bg-white flex items-center justify-center p-3",
+    darkBg: "rounded-[28px] border border-white/15 bg-white/10 flex items-center justify-center p-3",
+    lightImgClass: "h-full max-h-[62px] w-full object-contain opacity-80",
+    invertOnDark: true,
   },
   {
-    kind: "metric" as const,
+    kind: "metric",
     top: "15+",
     bottom: "компаний уже с нами",
     badge: "+",
-    className:
-      "row-span-2 rounded-[32px] bg-[#ECE5FA] p-5 sm:p-6 flex flex-col justify-between",
-    topClassName: "text-[#6947DF]",
-    badgeClassName:
-      "bg-[linear-gradient(180deg,#9A73FF_0%,#6E42E5_100%)] text-white",
+    lightBg: "row-span-2 rounded-[32px] bg-[#ECE5FA] p-5 sm:p-6 flex flex-col justify-between",
+    darkBg: "row-span-2 rounded-[32px] bg-white/10 p-5 sm:p-6 flex flex-col justify-between",
+    topClass: "text-[#6947DF] dark:text-[#A98BFF]",
+    badgeClass: "bg-[linear-gradient(180deg,#9A73FF_0%,#6E42E5_100%)] text-white",
   },
   {
-    kind: "logo" as const,
+    kind: "logo",
     src: "/Testimonials2/__ (1)-Photoroom.png",
     alt: "Gamma D'oro",
-    className:
-      "rounded-[28px] bg-[#F0ECFA] flex items-center justify-center p-3",
-    imageClassName: "h-full max-h-[72px] w-full object-contain opacity-85",
+    lightBg: "rounded-[28px] bg-[#F0ECFA] flex items-center justify-center p-3",
+    darkBg: "rounded-[28px] bg-white/10 flex items-center justify-center p-3",
+    lightImgClass: "h-full max-h-[72px] w-full object-contain opacity-85",
   },
   {
-    kind: "logo" as const,
+    kind: "logo",
     src: "/Testimonials2/krjx4LhlKer_zPTk7-JGVWgNMyvS7kEIZZ_KfeTnrXsN74ytEn6OglOntuD0o9r4i6BtOIqHnwzENfWuTUCOPO4j (1)-Photoroom.png",
     alt: "La'Venti",
-    className:
-      "rounded-[28px] border border-[#D8CEF5] bg-white flex items-center justify-center p-3",
-    imageClassName: "h-full max-h-[72px] w-full object-contain opacity-85",
+    lightBg: "rounded-[28px] border border-[#D8CEF5] bg-white flex items-center justify-center p-3",
+    darkBg: "rounded-[28px] border border-white/15 bg-white/10 flex items-center justify-center p-3",
+    lightImgClass: "h-full max-h-[72px] w-full object-contain opacity-85",
   },
   {
-    kind: "symbol" as const,
+    kind: "symbol",
     label: "S.",
-    className:
-      "rounded-[28px] bg-[#EEF67C] flex items-center justify-center text-[44px] font-semibold tracking-[-0.08em] text-[#7B7396]",
+    lightBg: "rounded-[28px] bg-[#EEF67C] flex items-center justify-center text-[44px] font-semibold tracking-[-0.08em]",
+    darkBg: "rounded-[28px] bg-[#D9F326] flex items-center justify-center text-[44px] font-semibold tracking-[-0.08em]",
+    lightText: "text-[#7B7396]",
+    darkText: "text-[#1C0C4C]",
   },
   {
-    kind: "symbol" as const,
+    kind: "symbol",
     label: "+7",
-    className:
-      "rounded-[28px] bg-[#F0ECFA] flex items-center justify-center text-[36px] font-medium tracking-[-0.06em] text-[#8D84A7]",
+    lightBg: "rounded-[28px] bg-[#F0ECFA] flex items-center justify-center text-[36px] font-medium tracking-[-0.06em]",
+    darkBg: "rounded-[28px] bg-white/10 flex items-center justify-center text-[36px] font-medium tracking-[-0.06em]",
+    lightText: "text-[#8D84A7]",
+    darkText: "text-white/60",
   },
 ];
 
-function ArrowButton({
-  direction,
-  onClick,
-}: {
-  direction: "prev" | "next";
-  onClick: () => void;
-}) {
+function ArrowButton({ direction, onClick }: { direction: "prev" | "next"; onClick: () => void }) {
   return (
     <button
       type="button"
       onClick={onClick}
       aria-label={direction === "prev" ? "Предыдущий отзыв" : "Следующий отзыв"}
-      className="flex h-12 w-12 items-center justify-center rounded-full border border-[#D8CEF5] bg-white text-[#2C1A67] transition-all duration-200 hover:border-[#B9ACEC] hover:bg-[#F7F4FF]"
+      className="flex h-12 w-12 items-center justify-center rounded-full border border-[#D8CEF5] bg-white text-[#2C1A67] dark:border-white/20 dark:bg-white/10 dark:text-white transition-all duration-200 hover:border-[#B9ACEC] hover:bg-[#F7F4FF] dark:hover:border-white/35 dark:hover:bg-white/18"
     >
       <span className="text-[20px] leading-none">
         {direction === "prev" ? "‹" : "›"}
@@ -222,7 +224,7 @@ function ArrowButton({
 
 function ReviewAvatar({ item }: { item: ReviewItem }) {
   return (
-    <div className="flex h-14 w-14 items-center justify-center rounded-[18px] bg-[linear-gradient(180deg,#A67EFF_0%,#6D43E5_100%)] text-[18px] font-semibold tracking-[-0.04em] text-white">
+    <div className="flex h-14 w-14 items-center justify-center rounded-[18px] bg-[linear-gradient(180deg,#A67EFF_0%,#6D43E5_100%)] text-[18px] font-semibold tracking-[-0.04em] text-white shrink-0">
       {item.initials}
     </div>
   );
@@ -230,18 +232,17 @@ function ReviewAvatar({ item }: { item: ReviewItem }) {
 
 function ReviewCard({ item }: { item: ReviewItem }) {
   return (
-    <article className="flex min-h-[300px] flex-col justify-between rounded-[34px] border border-[#D8CEF5] p-6 lg:min-h-[320px] lg:p-7">
-      <p className="text-[16px] leading-[1.54] tracking-[-0.02em] text-[#35236B] sm:text-[17px] lg:text-[18px]">
+    <article className="flex min-h-[300px] flex-col justify-between rounded-[34px] border border-[#D8CEF5] dark:border-white/12 dark:bg-white/5 dark:backdrop-blur-sm p-6 lg:min-h-[320px] lg:p-7">
+      <p className="text-[16px] leading-[1.54] tracking-[-0.02em] text-[#35236B] dark:text-white/80 sm:text-[17px] lg:text-[18px]">
         {item.text}
       </p>
-
       <div className="mt-8 flex items-center gap-4">
         <ReviewAvatar item={item} />
         <div>
-          <div className="text-[20px] font-semibold tracking-[-0.04em] text-[#24115D]">
+          <div className="text-[20px] font-semibold tracking-[-0.04em] text-[#24115D] dark:text-white">
             {item.name}
           </div>
-          <div className="mt-1 text-[16px] text-[#8A80A8]">
+          <div className="mt-1 text-[16px] text-[#8A80A8] dark:text-white/50">
             {item.role} · {item.company}
           </div>
         </div>
@@ -250,50 +251,50 @@ function ReviewCard({ item }: { item: ReviewItem }) {
   );
 }
 
-function MosaicTile({
-  tile,
-}: {
-  tile: (typeof mosaicTiles)[number];
-}) {
+function MosaicTile({ tile }: { tile: MosaicTile }) {
   if (tile.kind === "logo") {
+    const darkImgClass = `h-full max-h-[70px] w-full object-contain opacity-65${tile.invertOnDark ? " invert" : ""}`;
     return (
-      <div className={tile.className}>
-        <Image
-          src={tile.src}
-          alt={tile.alt}
-          width={180}
-          height={80}
-          className={tile.imageClassName}
-        />
-      </div>
+      <>
+        <div className={`${tile.lightBg} dark:hidden`}>
+          <Image src={tile.src} alt={tile.alt} width={180} height={80} className={tile.lightImgClass} />
+        </div>
+        <div className={`${tile.darkBg} hidden dark:flex`}>
+          <Image src={tile.src} alt={tile.alt} width={180} height={80} className={darkImgClass} />
+        </div>
+      </>
     );
   }
-
   if (tile.kind === "symbol") {
-    return <div className={tile.className}>{tile.label}</div>;
+    return (
+      <>
+        <div className={`${tile.lightBg} ${tile.lightText} dark:hidden`}>{tile.label}</div>
+        <div className={`${tile.darkBg} ${tile.darkText} hidden dark:flex`}>{tile.label}</div>
+      </>
+    );
   }
-
+  // metric
   return (
-    <div className={tile.className}>
-      <div
-        className={`flex h-12 w-12 items-center justify-center rounded-[16px] text-[22px] font-semibold ${
-          tile.badgeClassName ?? "bg-[#D8EB16] text-white"
-        }`}
-      >
-        {tile.badge}
-      </div>
-
-      <div>
-        <div
-          className={`text-[50px] leading-none tracking-[-0.06em] font-semibold ${tile.topClassName}`}
-        >
-          {tile.top}
+    <>
+      <div className={`${tile.lightBg} dark:hidden`}>
+        <div className={`flex h-12 w-12 items-center justify-center rounded-[16px] text-[22px] font-semibold ${tile.badgeClass ?? "bg-[#D8EB16] text-white"}`}>
+          {tile.badge}
         </div>
-        <p className="mt-2 max-w-[130px] text-[16px] leading-[1.2] text-[#35236B]">
-          {tile.bottom}
-        </p>
+        <div>
+          <div className={`text-[50px] leading-none tracking-[-0.06em] font-semibold ${tile.topClass}`}>{tile.top}</div>
+          <p className="mt-2 max-w-[130px] text-[16px] leading-[1.2] text-[#35236B]">{tile.bottom}</p>
+        </div>
       </div>
-    </div>
+      <div className={`${tile.darkBg} hidden dark:flex`}>
+        <div className={`flex h-12 w-12 items-center justify-center rounded-[16px] text-[22px] font-semibold ${tile.badgeClass ?? "bg-[#1C0C4C]/20 text-[#1C0C4C]"}`}>
+          {tile.badge}
+        </div>
+        <div>
+          <div className={`text-[50px] leading-none tracking-[-0.06em] font-semibold ${tile.topClass}`}>{tile.top}</div>
+          <p className="mt-2 max-w-[130px] text-[16px] leading-[1.2] text-[#1C0C4C]/70">{tile.bottom}</p>
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -306,23 +307,17 @@ export default function Testimonials() {
     return reviewCards.map((_, index) => reviewCards[(activeIndex + index) % reviewCards.length]);
   }, [activeIndex]);
 
-  const goPrev = () => {
-    setActiveIndex((current) => (current === 0 ? slides.length - 1 : current - 1));
-  };
-
-  const goNext = () => {
-    setActiveIndex((current) => (current === slides.length - 1 ? 0 : current + 1));
-  };
+  const goPrev = () => setActiveIndex((c) => (c === 0 ? slides.length - 1 : c - 1));
+  const goNext = () => setActiveIndex((c) => (c === slides.length - 1 ? 0 : c + 1));
 
   return (
-    <section className="overflow-hidden bg-[#FCFBFF] px-4 py-20 sm:px-6 lg:px-8 lg:py-24">
+    <section className="overflow-hidden bg-[#FCFBFF] dark:bg-[#1C0C4C] px-4 py-20 sm:px-6 lg:px-8 lg:py-24">
       <div className="mx-auto max-w-[1350px]">
         <RevealOnScroll>
           <div className="flex items-start justify-between gap-6">
-            <h2 className="text-[44px] font-semibold leading-[0.9] tracking-[-0.07em] text-[#24115D] sm:text-[58px] lg:text-[72px]">
+            <h2 className="text-[44px] font-semibold leading-[0.9] tracking-[-0.07em] text-[#24115D] dark:text-white sm:text-[58px] lg:text-[72px]">
               Нам доверяют
             </h2>
-
             <div className="flex items-center gap-3">
               <ArrowButton direction="prev" onClick={goPrev} />
               <ArrowButton direction="next" onClick={goNext} />
@@ -351,40 +346,31 @@ export default function Testimonials() {
             <RevealOnScroll delay={160}>
               <article
                 key={`${activeSlide.id}-case`}
-                className="flex min-h-[460px] flex-col justify-between rounded-[38px] bg-[#EFECFA] p-6 transition-all duration-300 sm:p-8 lg:min-h-[500px] lg:p-9"
+                className="flex min-h-[460px] flex-col justify-between rounded-[38px] bg-[#EFECFA] dark:bg-white/8 dark:border dark:border-white/10 dark:backdrop-blur-sm p-6 transition-all duration-300 sm:p-8 lg:min-h-[500px] lg:p-9"
               >
                 <div>
-                  <h3 className="max-w-[15ch] text-[30px] font-semibold leading-[1.02] tracking-[-0.06em] text-[#24115D] sm:text-[36px] lg:max-w-[14ch] lg:text-[54px] lg:leading-[0.95]">
+                  <h3 className="max-w-[15ch] text-[30px] font-semibold leading-[1.02] tracking-[-0.06em] text-[#24115D] dark:text-white sm:text-[36px] lg:max-w-[14ch] lg:text-[54px] lg:leading-[0.95]">
                     {activeSlide.titleBefore}{" "}
-                    <span className="box-decoration-clone rounded-[16px] bg-[#EAF45D] px-2 py-0.5">
+                    <span className="box-decoration-clone rounded-[16px] bg-[#EAF45D] dark:bg-[#D9F326] dark:text-[#1C0C4C] px-2 py-0.5">
                       {activeSlide.highlight}
                     </span>{" "}
                     {activeSlide.titleAfter}
                   </h3>
-
-                  <p className="mt-5 max-w-[34rem] text-[15px] leading-[1.62] text-[#4F417A] sm:text-[16px] lg:mt-6 lg:text-[18px]">
+                  <p className="mt-5 max-w-[34rem] text-[15px] leading-[1.62] text-[#4F417A] dark:text-white/65 sm:text-[16px] lg:mt-6 lg:text-[18px]">
                     {activeSlide.summary}
                   </p>
-
-                  <p className="mt-4 max-w-[30rem] text-[15px] leading-[1.5] text-[#24115D] sm:text-[16px]">
+                  <p className="mt-4 max-w-[30rem] text-[15px] leading-[1.5] text-[#24115D] dark:text-white/80 sm:text-[16px]">
                     {activeSlide.result}
                   </p>
                 </div>
 
                 <div className="mt-10 flex flex-wrap items-end justify-between gap-5">
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8A80A8] sm:text-[12px]">
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8A80A8] dark:text-white/40 sm:text-[12px]">
                     {activeSlide.brand}
                   </span>
-
                   <div className="flex max-w-full items-center justify-end">
                     {activeSlide.logo ? (
-                      <div
-                        className={
-                          activeSlide.logoTone === "light"
-                            ? "rounded-[22px] bg-[#2B1768] px-4 py-3 shadow-[0_12px_30px_rgba(40,18,94,0.18)]"
-                            : ""
-                        }
-                      >
+                      <div className={activeSlide.logoTone === "light" ? "rounded-[22px] bg-[#2B1768] px-4 py-3 shadow-[0_12px_30px_rgba(40,18,94,0.18)]" : ""}>
                         <Image
                           src={activeSlide.logo}
                           alt={activeSlide.logoAlt ?? activeSlide.brand}
@@ -394,7 +380,7 @@ export default function Testimonials() {
                         />
                       </div>
                     ) : (
-                      <span className="text-[40px] font-semibold tracking-[-0.08em] text-[#6D6788] sm:text-[54px] lg:text-[64px]">
+                      <span className="text-[40px] font-semibold tracking-[-0.08em] text-[#6D6788] dark:text-white/50 sm:text-[54px] lg:text-[64px]">
                         {activeSlide.brand}
                       </span>
                     )}
@@ -406,27 +392,25 @@ export default function Testimonials() {
             <RevealOnScroll delay={220}>
               <article
                 key={`${activeSlide.id}-quote`}
-                className="min-h-[420px] rounded-[38px] bg-[#EFECFA] p-4 transition-all duration-300 sm:p-5 lg:min-h-[500px] lg:p-6"
+                className="min-h-[420px] rounded-[38px] bg-[#EFECFA] dark:bg-white/8 dark:border dark:border-white/10 dark:backdrop-blur-sm p-4 transition-all duration-300 sm:p-5 lg:min-h-[500px] lg:p-6"
               >
-                <div className="flex h-full flex-col justify-between rounded-[32px] bg-white p-5 sm:p-6 lg:p-7">
-                  <p className="text-[16px] leading-[1.6] text-[#35236B] sm:text-[17px] lg:text-[18px]">
+                <div className="flex h-full flex-col justify-between rounded-[32px] bg-white dark:bg-white/8 p-5 sm:p-6 lg:p-7">
+                  <p className="text-[16px] leading-[1.6] text-[#35236B] dark:text-white/80 sm:text-[17px] lg:text-[18px]">
                     {activeSlide.quote}
                   </p>
-
                   <div className="mt-8 flex items-center gap-4">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-[18px] bg-[linear-gradient(180deg,#A67EFF_0%,#6D43E5_100%)] text-[18px] font-semibold tracking-[-0.04em] text-white">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-[18px] bg-[linear-gradient(180deg,#A67EFF_0%,#6D43E5_100%)] text-[18px] font-semibold tracking-[-0.04em] text-white shrink-0">
                       {activeSlide.quoteName.slice(0, 1)}
                       {activeSlide.quoteName.split(" ")[0].slice(1, 2)}
                     </div>
-
                     <div className="min-w-0">
-                      <div className="text-[18px] font-semibold tracking-[-0.04em] text-[#24115D] sm:text-[20px]">
+                      <div className="text-[18px] font-semibold tracking-[-0.04em] text-[#24115D] dark:text-white sm:text-[20px]">
                         {activeSlide.quoteName}
                       </div>
-                      <div className="mt-1 text-[14px] leading-[1.35] text-[#8A80A8] sm:text-[16px]">
+                      <div className="mt-1 text-[14px] leading-[1.35] text-[#8A80A8] dark:text-white/50 sm:text-[16px]">
                         {activeSlide.quoteRole}
                       </div>
-                      <div className="mt-1 text-[12px] font-semibold uppercase tracking-[0.18em] text-[#A095BD]">
+                      <div className="mt-1 text-[12px] font-semibold uppercase tracking-[0.18em] text-[#A095BD] dark:text-white/35">
                         {activeSlide.quoteCompany}
                       </div>
                     </div>

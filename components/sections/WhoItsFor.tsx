@@ -53,50 +53,26 @@ function GlassCard({
   };
 }) {
   return (
-    <div
-      className={
-      "group relative overflow-hidden rounded-[34px] border border-white/30 bg-[rgba(255,255,255,0.18)] p-9 lg:p-11 backdrop-blur-2xl backdrop-saturate-180 shadow-[0_8px_32px_rgba(31,38,135,0.10)] transition-all duration-500 hover:bg-[rgba(255,255,255,0.24)] hover:border-white/40 hover:-translate-y-1"
-      }
-    >
+    <div className="group relative overflow-hidden rounded-[34px] border border-white/30 dark:border-white/15 bg-[rgba(255,255,255,0.55)] dark:bg-white/8 p-9 lg:p-11 backdrop-blur-2xl backdrop-saturate-180 shadow-[0_8px_32px_rgba(31,38,135,0.10)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.25)] transition-all duration-500 hover:bg-[rgba(255,255,255,0.70)] dark:hover:bg-white/12 hover:border-white/50 dark:hover:border-white/25 hover:-translate-y-1">
       {/* top light */}
-      <div
-        className={
-          "pointer-events-none absolute inset-0 rounded-[34px] bg-linear-to-b from-white/30 via-white/10 to-white/3"
-        }
-      />
-
+      <div className="pointer-events-none absolute inset-0 rounded-[34px] bg-gradient-to-b from-white/40 dark:from-white/10 via-white/10 dark:via-white/5 to-white/0" />
       {/* inner glow */}
-      <div
-        className={
-          "pointer-events-none absolute inset-px rounded-[33px] bg-linear-to-br from-white/20 via-transparent to-transparent"
-        }
-      />
-
+      <div className="pointer-events-none absolute inset-px rounded-[33px] bg-gradient-to-br from-white/30 dark:from-white/8 via-transparent to-transparent" />
       {/* border highlight */}
-      <div
-        className={
-          "pointer-events-none absolute inset-0 rounded-[34px] ring-1 ring-inset ring-white/20"
-        }
-      />
-
+      <div className="pointer-events-none absolute inset-0 rounded-[34px] ring-1 ring-inset ring-white/20" />
       {/* reflection */}
-      <div
-        className={
-          "pointer-events-none absolute -top-30 -right-15 h-55 w-55 rounded-full bg-white/20 blur-[60px]"
-        }
-      />
+      <div className="pointer-events-none absolute -top-30 -right-15 h-55 w-55 rounded-full bg-white/20 dark:bg-white/8 blur-[60px]" />
 
       {/* content */}
       <div className="relative z-10">
-  <span className="text-[15px] font-bold tracking-[0.08em] text-[#8E88A8]">
+        <span className="text-[15px] font-bold tracking-[0.08em] text-[#8E88A8] dark:text-white/60">
           {audience.id}
         </span>
-
-  <h3 className="mt-4 font-manrope text-[30px] leading-[1.1] tracking-[-1px] font-bold text-[#241152]">
-          {audience.title} <span className="text-[#6438D9]">{audience.subtitle}</span>
+        <h3 className="mt-4 font-manrope text-[30px] leading-[1.1] tracking-[-1px] font-bold text-[#241152] dark:text-white">
+          {audience.title}{" "}
+          <span className="text-[#6438D9] dark:text-[#A98BFF]">{audience.subtitle}</span>
         </h3>
-
-  <p className="mt-5 max-w-135 text-[18px] leading-[1.6] font-[450] text-[#6E6A86]">
+        <p className="mt-5 max-w-135 text-[18px] leading-[1.6] font-[450] text-[#6E6A86] dark:text-white/88">
           {audience.description}
         </p>
       </div>
@@ -107,32 +83,27 @@ function GlassCard({
 export default function WhoItsFor() {
   return (
     <section
-      className={
-        "relative overflow-hidden bg-[#F5F5F5] px-4 pt-12 pb-20 sm:px-6 lg:px-6 lg:pt-16 lg:pb-24"
-      }
+      className="relative overflow-hidden bg-[#F5F5F5] dark:bg-[#1C0C4C] px-4 pt-12 pb-20 sm:px-6 lg:px-6 lg:pt-16 lg:pb-24"
       id="business"
     >
       {/* ambient purple glow */}
-  <div className="pointer-events-none absolute left-[20%] top-[20%] h-125 w-125 rounded-full bg-[#6438D9]/10 blur-[120px]" />
-
+      <div className="pointer-events-none absolute left-[20%] top-[20%] h-125 w-125 rounded-full bg-[#6438D9]/10 dark:bg-[#6438D9]/20 blur-[120px]" />
       {/* ambient lime glow */}
-  <div className="pointer-events-none absolute right-[10%] bottom-[10%] h-105 w-105 rounded-full bg-[#E5F667]/10 blur-[120px]" />
-
+      <div className="pointer-events-none absolute right-[10%] bottom-[10%] h-105 w-105 rounded-full bg-[#E5F667]/10 dark:bg-[#E5F667]/8 blur-[120px]" />
       {/* center glow */}
-  <div className="pointer-events-none absolute left-1/2 top-10 h-175 w-175 -translate-x-1/2 rounded-full bg-[#6438D9]/8 blur-[140px]" />
+      <div className="pointer-events-none absolute left-1/2 top-10 h-175 w-175 -translate-x-1/2 rounded-full bg-[#6438D9]/5 dark:bg-[#6438D9]/15 blur-[140px]" />
 
-  <div className="relative z-10 mx-auto max-w-360">
+      <div className="relative z-10 mx-auto max-w-360">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-10">
 
           {/* LEFT COLUMN */}
           <div className="space-y-6">
             <RevealOnScroll>
               <div className="lg:sticky lg:top-12">
-                <h2 className="font-manrope text-[44px] sm:text-[56px] lg:text-[64px] lg:ml-15 tracking-[-3px] leading-[0.95] font-extrabold text-[#1C0C4C]">
+                <h2 className="font-manrope text-[44px] sm:text-[56px] lg:text-[64px] lg:ml-15 tracking-[-3px] leading-[0.95] font-extrabold text-[#1C0C4C] dark:text-white">
                   Кому подойдёт
                   <br />
-
-                  <span className="text-[#6438D9]">ПотокМнений</span>
+                  <span className="text-[#6438D9] dark:text-[#A98BFF]">ПотокМнений</span>
                 </h2>
               </div>
             </RevealOnScroll>

@@ -133,6 +133,11 @@ export async function uploadExpertReviewReport(requestId: string, buffer: Buffer
     throw new Error("EMPTY_REPORT_BUFFER");
   }
 
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    const { saveExpertReportLocally } = await import("@/lib/local-storage");
+    return saveExpertReportLocally(requestId, buffer);
+  }
+
   await ensureBucketExists({
     bucket: SUPABASE_REPORTS_BUCKET,
     fileSizeLimit: "52428800",

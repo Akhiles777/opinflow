@@ -6,7 +6,7 @@ import Link from "next/link";
 
 export default function CTA() {
   return (
-    <section className="bg-[#FCFBFF] px-4 mt-6 mb-20">
+    <section className="bg-[#FCFBFF] dark:bg-[#1C0C4C] px-4 mt-6 mb-20">
       <RevealOnScroll>
         <div
           className="
@@ -100,7 +100,7 @@ export default function CTA() {
                   className="
                     mt-6
 
-                    text-white/80
+                    text-white/95
 
                     text-[17px]
                     sm:text-[19px]

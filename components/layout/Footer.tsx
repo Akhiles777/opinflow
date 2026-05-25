@@ -45,7 +45,7 @@ const documentLinks = [
 
 export default function Footer() {
   return (
-    <footer className="bg-[#FCFBFF] px-3 pb-4 sm:px-4 lg:px-6 lg:pb-6">
+    <footer className="bg-[#FCFBFF] dark:bg-[#1C0C4C] px-3 pb-4 sm:px-4 lg:px-6 lg:pb-6">
       <div
         className="
           relative
@@ -170,7 +170,7 @@ export default function Footer() {
 
                 leading-[1.55]
 
-                text-white/70
+                text-white/88
               "
             >
               Платформа маркетинговых исследований нового поколения.
@@ -180,7 +180,7 @@ export default function Footer() {
             {/* contacts */}
             <div className="mt-7 space-y-4">
               <div>
-                <p className="text-white/45 text-[15px]">
+                <p className="text-white/70 text-[15px]">
                   Сотрудничество:
                 </p>
 
@@ -207,7 +207,7 @@ export default function Footer() {
               </div>
 
               <div>
-                <p className="text-white/45 text-[15px]">
+                <p className="text-white/70 text-[15px]">
                   Правовые обращения:
                 </p>
 
@@ -239,7 +239,7 @@ export default function Footer() {
           <div>
             <h3
               className="
-                text-white/35
+                text-white/65
 
                 text-[28px]
 
@@ -257,7 +257,7 @@ export default function Footer() {
                   <Link
                     href={link.href}
                     className="
-                      text-white/78
+                      text-white/92
 
                       text-[15px]
                       sm:text-[16px]
@@ -280,7 +280,7 @@ export default function Footer() {
           <div>
             <h3
               className="
-                text-white/35
+                text-white/65
 
                 text-[28px]
 
@@ -304,7 +304,7 @@ export default function Footer() {
                       ${
                         link.accent
                           ? "text-[#E5F667]"
-                          : "text-white/78 hover:text-white"
+                          : "text-white/92 hover:text-white"
                       }
                     `}
                   >
@@ -352,7 +352,7 @@ export default function Footer() {
         >
           <p
             className="
-              text-white/75
+              text-white/90
 
               text-[14px]
               sm:text-[15px]
@@ -364,7 +364,7 @@ export default function Footer() {
           <Link
             href="/legal"
             className="
-              text-white/75
+              text-white/90
 
               text-[14px]
               sm:text-[15px]

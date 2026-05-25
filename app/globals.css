@@ -2,7 +2,7 @@
 @import "tailwindcss";
 
 :root {
-  font-family: var(--font-geist);
+  font-family: var(--font-manrope), var(--font-geist), sans-serif;
 
   --site-bg: #F8F6FF;
   --site-section: #FFFFFF;
@@ -25,18 +25,18 @@
   --site-bg: #0a0a0f;
   --site-section: #0f0f1a;
   --site-card: #16162a;
-  --site-border: rgba(255, 255, 255, 0.09);
-  --site-muted: rgba(255, 255, 255, 0.5);
+  --site-border: rgba(255, 255, 255, 0.12);
+  --site-muted: rgba(255, 255, 255, 0.75);
   --site-heading: #ffffff;
-  --site-body: rgba(255, 255, 255, 0.78);
+  --site-body: rgba(255, 255, 255, 0.92);
 
   --dash-sidebar: #060608;
   --dash-bg: #0d0d14;
   --dash-card: #13131e;
   --dash-border: rgba(255, 255, 255, 0.07);
-  --dash-muted: rgba(255, 255, 255, 0.35);
+  --dash-muted: rgba(255, 255, 255, 0.55);
   --dash-heading: #ffffff;
-  --dash-body: rgba(255, 255, 255, 0.65);
+  --dash-body: rgba(255, 255, 255, 0.85);
 }
 
 body {
