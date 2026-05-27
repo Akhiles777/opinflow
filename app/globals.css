@@ -43,6 +43,11 @@ body {
   margin: 0;
 }
 
+/* Safe area для iPhone (home indicator) */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
 html {
   scroll-behavior: smooth;
   scroll-padding-top: 80px; 

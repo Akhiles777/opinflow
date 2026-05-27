@@ -1,38 +1,33 @@
 'use client'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
-import { Bell, BellOff } from 'lucide-react'
+import { Bell, Loader2 } from 'lucide-react'
 
 export default function PushNotificationButton() {
-  const { permission, isSubscribed, subscribe, unsubscribe } = usePushNotifications()
+  const { permission, isSubscribed, isLoading, subscribe } = usePushNotifications()
 
-  // Если браузер не поддерживает — не показываем кнопку
+  // Не поддерживается браузером
   if (typeof window !== 'undefined' && !('Notification' in window)) return null
 
-  if (isSubscribed) {
-    return (
-      <button
-        onClick={unsubscribe}
-        className="flex items-center gap-2 px-3 py-2 rounded-lg
-                   text-sm text-dash-muted hover:text-dash-body
-                   hover:bg-dash-bg transition-colors"
-        title="Отключить push уведомления"
-      >
-        <BellOff className="w-4 h-4" />
-        <span className="hidden sm:inline">Уведомления вкл.</span>
-      </button>
-    )
-  }
+  // Уже подписан или пользователь заблокировал — прячем кнопку
+  if (isSubscribed || permission === 'denied') return null
 
   return (
     <button
       onClick={subscribe}
+      disabled={isLoading}
       className="flex items-center gap-2 px-3 py-2 rounded-lg
                  text-sm text-brand hover:bg-brand/10
-                 border border-brand/20 transition-colors"
-      title="Включить push уведомления"
+                 border border-brand/20 transition-colors
+                 disabled:opacity-60 disabled:cursor-not-allowed"
+      title="Включить push-уведомления"
     >
-      <Bell className="w-4 h-4" />
-      <span className="hidden sm:inline">Включить уведомления</span>
+      {isLoading
+        ? <Loader2 className="w-4 h-4 animate-spin" />
+        : <Bell className="w-4 h-4" />
+      }
+      <span className="hidden sm:inline">
+        {isLoading ? 'Подключаем...' : 'Уведомления'}
+      </span>
     </button>
   )
 }

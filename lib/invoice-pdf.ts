@@ -6,6 +6,7 @@ import * as fontkit from "fontkit";
 type PartyDetails = {
   companyName: string;
   inn?: string | null;
+  kpp?: string | null;
   legalAddress?: string | null;
   bankName?: string | null;
   bankAccount?: string | null;
@@ -49,14 +50,14 @@ function formatDate(date: Date) {
 }
 
 function formatRub(amount: number) {
-  return `${new Intl.NumberFormat("ru-RU", {
+  return new Intl.NumberFormat("ru-RU", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(amount)} руб.`;
+  }).format(amount);
 }
 
 function sanitize(value?: string | null) {
-  return value?.trim() || "-";
+  return value?.trim() || "—";
 }
 
 type DrawTextParams = {
@@ -72,7 +73,11 @@ type DrawTextParams = {
 };
 
 function drawWrappedText(params: DrawTextParams): number {
-  const { page, text, x, y, maxWidth, size, font, lineHeight = size * 1.35, color = rgb(0.14, 0.1, 0.38) } = params;
+  const {
+    page, text, x, y, maxWidth, size, font,
+    lineHeight = size * 1.4,
+    color = rgb(0.14, 0.1, 0.38),
+  } = params;
 
   const words = text.split(/\s+/);
   const lines: string[] = [];
@@ -82,13 +87,9 @@ function drawWrappedText(params: DrawTextParams): number {
     const next = current ? `${current} ${word}` : word;
     try {
       const width = font.widthOfTextAtSize(next, size);
-      if (width <= maxWidth) {
-        current = next;
-        continue;
-      }
+      if (width <= maxWidth) { current = next; continue; }
     } catch {
-      current = next;
-      continue;
+      current = next; continue;
     }
     if (current) lines.push(current);
     current = word;
@@ -97,11 +98,7 @@ function drawWrappedText(params: DrawTextParams): number {
 
   let currentY = y;
   for (const line of lines) {
-    try {
-      page.drawText(line, { x, y: currentY, size, font, color });
-    } catch {
-      // skip unencodable chars — should not happen with DejaVu
-    }
+    try { page.drawText(line, { x, y: currentY, size, font, color }); } catch { /* skip */ }
     currentY -= lineHeight;
   }
   return currentY;
@@ -114,148 +111,346 @@ export async function generateCorporateInvoicePdf(input: InvoicePdfInput) {
   pdf.registerFontkit(fontkit as never);
 
   const regular = await pdf.embedFont(fontBytes.regular);
-  const bold = await pdf.embedFont(fontBytes.bold);
+  const bold    = await pdf.embedFont(fontBytes.bold);
 
   const page = pdf.addPage([595.28, 841.89]);
 
   const colors = {
-    text:   rgb(0.14, 0.1, 0.38),
+    text:   rgb(0.14, 0.1,  0.38),
     muted:  rgb(0.42, 0.38, 0.58),
-    line:   rgb(0.86, 0.82, 0.95),
+    line:   rgb(0.82, 0.78, 0.92),
     accent: rgb(0.31, 0.18, 0.72),
     soft:   rgb(0.95, 0.94, 0.99),
+    hdr:    rgb(0.90, 0.87, 0.98),
+    white:  rgb(1, 1, 1),
   };
 
-  const marginX = 48;
-  let y = 785;
+  const marginX = 40;
+  const pageW   = 499;  // usable width
+  let y = 790;
 
-  // ── Заголовок ──────────────────────────────────────────────────────────────
-  page.drawText(`СЧЕТ НА ОПЛАТУ N ${input.invoiceNumber}`, {
-    x: marginX, y, size: 18, font: bold, color: colors.text,
+  // ── Заголовок ───────────────────────────────────────────────────────────────
+  page.drawText(`СЧЁТ НА ОПЛАТУ № ${input.invoiceNumber}`, {
+    x: marginX, y, size: 16, font: bold, color: colors.text,
   });
   page.drawText(`от ${formatDate(input.invoiceDate)}`, {
-    x: 395, y: y + 2, size: 11, font: regular, color: colors.muted,
+    x: 390, y: y + 1, size: 10, font: regular, color: colors.muted,
   });
 
-  y -= 30;
+  y -= 10;
+  page.drawLine({
+    start: { x: marginX, y }, end: { x: marginX + pageW, y },
+    thickness: 1.5, color: colors.accent,
+  });
+  y -= 18;
 
-  // ── Блок стороны ───────────────────────────────────────────────────────────
+  // ── Блок Поставщик / Покупатель ─────────────────────────────────────────────
+  const blockH = 108;
   page.drawRectangle({
-    x: marginX, y: y - 120, width: 499, height: 120,
+    x: marginX, y: y - blockH, width: pageW, height: blockH,
     color: colors.soft, borderColor: colors.line, borderWidth: 1,
   });
 
-  page.drawText("Исполнитель", {
-    x: marginX + 14, y: y - 16, size: 10, font: bold, color: colors.accent,
-  });
-  page.drawText("Плательщик", {
-    x: marginX + 268, y: y - 16, size: 10, font: bold, color: colors.accent,
-  });
-
-  drawWrappedText({
-    page,
-    text: [
-      sanitize(input.seller.companyName),
-      `ИНН: ${sanitize(input.seller.inn)}`,
-      input.seller.legalAddress ? `Адрес: ${sanitize(input.seller.legalAddress)}` : "",
-      input.seller.bankName ? `Банк: ${sanitize(input.seller.bankName)}` : "",
-      input.seller.bankAccount ? `Р/с: ${sanitize(input.seller.bankAccount)}` : "",
-      input.seller.bankBik ? `БИК: ${sanitize(input.seller.bankBik)}` : "",
-    ].filter(Boolean).join(" * "),
-    x: marginX + 14, y: y - 34, maxWidth: 220,
-    size: 9, font: regular, color: colors.text,
+  // divider
+  page.drawLine({
+    start: { x: marginX + 250, y }, end: { x: marginX + 250, y: y - blockH },
+    thickness: 0.6, color: colors.line,
   });
 
-  drawWrappedText({
-    page,
-    text: [
-      sanitize(input.buyer.companyName),
-      input.buyer.inn ? `ИНН: ${sanitize(input.buyer.inn)}` : "",
-      input.buyer.legalAddress ? `Адрес: ${sanitize(input.buyer.legalAddress)}` : "",
-      input.buyer.contactName ? `Контакт: ${sanitize(input.buyer.contactName)}` : "",
-      input.buyer.email ? `Email: ${sanitize(input.buyer.email)}` : "",
-    ].filter(Boolean).join(" * "),
-    x: marginX + 268, y: y - 34, maxWidth: 212,
-    size: 9, font: regular, color: colors.text,
+  // Labels
+  page.drawText("Поставщик (Исполнитель):", {
+    x: marginX + 8, y: y - 13, size: 8, font: bold, color: colors.accent,
+  });
+  page.drawText("Покупатель:", {
+    x: marginX + 258, y: y - 13, size: 8, font: bold, color: colors.accent,
   });
 
-  y -= 148;
+  // Seller: companyName, ИНН, р/с, Банк, БИК — без адреса, без к/с
+  const sellerLines = [
+    sanitize(input.seller.companyName),
+    `ИНН: ${sanitize(input.seller.inn)}`,
+    input.seller.bankAccount ? `р/с: ${sanitize(input.seller.bankAccount)}` : null,
+    input.seller.bankName    ? `Банк: ${sanitize(input.seller.bankName)}` : null,
+    input.seller.bankBik     ? `БИК: ${sanitize(input.seller.bankBik)}` : null,
+  ].filter(Boolean) as string[];
 
-  // ── Основание оплаты ────────────────────────────────────────────────────────
-  page.drawText("Основание оплаты", {
-    x: marginX, y, size: 11, font: bold, color: colors.accent,
+  let sy = y - 28;
+  for (const line of sellerLines) {
+    drawWrappedText({
+      page, text: line, x: marginX + 8, y: sy, maxWidth: 226,
+      size: 8.5, font: regular, color: colors.text, lineHeight: 12,
+    });
+    sy -= 14;
+  }
+
+  // Buyer: companyName, ИНН, КПП — только эти три поля
+  const buyerLines = [
+    sanitize(input.buyer.companyName),
+    input.buyer.inn ? `ИНН: ${sanitize(input.buyer.inn)}` : null,
+    input.buyer.kpp ? `КПП: ${sanitize(input.buyer.kpp)}` : null,
+  ].filter(Boolean) as string[];
+
+  let by = y - 28;
+  for (const line of buyerLines) {
+    drawWrappedText({
+      page, text: line, x: marginX + 258, y: by, maxWidth: 220,
+      size: 8.5, font: regular, color: colors.text, lineHeight: 12,
+    });
+    by -= 14;
+  }
+
+  y -= blockH + 18;
+
+  // ── Основание ───────────────────────────────────────────────────────────────
+  page.drawText("Основание:", {
+    x: marginX, y, size: 9.5, font: bold, color: colors.accent,
   });
   y = drawWrappedText({
     page,
-    text: "Пополнение внутреннего баланса платформы ПотокМнений и доступ к цифровым сервисам платформы на условиях публичной оферты для Заказчика.",
-    x: marginX, y: y - 16, maxWidth: 500,
-    size: 10, font: regular, color: colors.text,
-  });
-
-  y -= 20;
-
-  // ── Таблица услуг ──────────────────────────────────────────────────────────
-  const tableH = 68;
-  page.drawRectangle({
-    x: marginX, y: y - tableH, width: 499, height: tableH,
-    borderColor: colors.line, borderWidth: 1, color: rgb(1, 1, 1),
-  });
-
-  const cols = [marginX, marginX + 310, marginX + 400, marginX + 480];
-
-  page.drawText("Наименование", { x: cols[0] + 8, y: y - 16, size: 9, font: bold, color: colors.text });
-  page.drawText("Кол-во",       { x: cols[1] + 8, y: y - 16, size: 9, font: bold, color: colors.text });
-  page.drawText("Сумма",        { x: cols[2] + 8, y: y - 16, size: 9, font: bold, color: colors.text });
-
-  page.drawLine({ start: { x: marginX,  y: y - 24 }, end: { x: marginX + 499, y: y - 24 }, thickness: 1, color: colors.line });
-  page.drawLine({ start: { x: cols[1],  y },           end: { x: cols[1],  y: y - tableH }, thickness: 1, color: colors.line });
-  page.drawLine({ start: { x: cols[2],  y },           end: { x: cols[2],  y: y - tableH }, thickness: 1, color: colors.line });
-  page.drawLine({ start: { x: cols[3],  y },           end: { x: cols[3],  y: y - tableH }, thickness: 1, color: colors.line });
-
-  drawWrappedText({
-    page,
     text: input.serviceDescription,
-    x: cols[0] + 8, y: y - 40, maxWidth: 286,
-    size: 9, font: regular, color: colors.text,
-  });
-  page.drawText("1", { x: cols[1] + 20, y: y - 40, size: 9, font: regular, color: colors.text });
-  page.drawText(formatRub(input.amount), { x: cols[2] + 8, y: y - 40, size: 9, font: regular, color: colors.text });
-
-  y -= tableH + 20;
-
-  // ── Итого ──────────────────────────────────────────────────────────────────
-  page.drawText(`Итого к оплате: ${formatRub(input.amount)}`, {
-    x: marginX, y, size: 15, font: bold, color: colors.text,
+    x: marginX + 72, y, maxWidth: pageW - 72,
+    size: 9.5, font: regular, color: colors.text, lineHeight: 13,
   });
 
-  y -= 26;
+  y -= 16;
 
+  // ── Таблица услуг ───────────────────────────────────────────────────────────
+  // Колонки: №(22) | Наименование(200) | Цена ₽(65) | Кол-во(40) | Ед.изм.(40) | НДС(60) | Сумма ₽(72)
+  // Сумма: 22+200+65+40+40+60+72 = 499
+  const cW = [22, 200, 65, 40, 40, 60, 72];
+  const cX: number[] = [];
+  let cx = marginX;
+  for (const w of cW) { cX.push(cx); cx += w; }
+
+  const tHeaderH = 26;
+  const tRowH    = 24;
+  const tTotalH  = tHeaderH + tRowH;
+
+  // Header background
+  page.drawRectangle({
+    x: marginX, y: y - tHeaderH, width: pageW, height: tHeaderH,
+    color: colors.hdr, borderColor: colors.line, borderWidth: 0.8,
+  });
+
+  // Header labels
+  const hdrLabels = ["№", "Название товара или услуги", "Цена, ₽", "Кол-во", "Ед. изм.", "НДС", "Сумма, ₽"];
+  for (let i = 0; i < hdrLabels.length; i++) {
+    drawWrappedText({
+      page, text: hdrLabels[i],
+      x: cX[i] + 4, y: y - 9,
+      maxWidth: cW[i] - 6,
+      size: 7.5, font: bold, color: colors.text, lineHeight: 9.5,
+    });
+  }
+
+  // Vertical dividers in header
+  for (let i = 1; i < cX.length; i++) {
+    page.drawLine({
+      start: { x: cX[i], y }, end: { x: cX[i], y: y - tHeaderH },
+      thickness: 0.6, color: colors.line,
+    });
+  }
+
+  // Row background
+  page.drawRectangle({
+    x: marginX, y: y - tTotalH, width: pageW, height: tRowH,
+    color: colors.white, borderColor: colors.line, borderWidth: 0.8,
+  });
+
+  const rowY = y - tHeaderH - 8;
+
+  // Vertical dividers in row
+  for (let i = 1; i < cX.length; i++) {
+    page.drawLine({
+      start: { x: cX[i], y: y - tHeaderH }, end: { x: cX[i], y: y - tTotalH },
+      thickness: 0.6, color: colors.line,
+    });
+  }
+
+  // Row data
+  const rowData = [
+    "1",
+    input.serviceDescription,
+    formatRub(input.amount),
+    "1",
+    "услуга",
+    "Без НДС",
+    formatRub(input.amount),
+  ];
+
+  for (let i = 0; i < rowData.length; i++) {
+    drawWrappedText({
+      page, text: rowData[i],
+      x: cX[i] + 4, y: rowY,
+      maxWidth: cW[i] - 6,
+      size: 8, font: regular, color: colors.text, lineHeight: 10,
+    });
+  }
+
+  y -= tTotalH;
+
+  // Итого строка
+  page.drawRectangle({
+    x: marginX, y: y - 20, width: pageW, height: 20,
+    color: colors.hdr, borderColor: colors.line, borderWidth: 0.8,
+  });
+  page.drawText("Итого:", {
+    x: cX[5] + 4, y: y - 14, size: 8.5, font: bold, color: colors.text,
+  });
+  page.drawText(`${formatRub(input.amount)} руб.`, {
+    x: cX[6] + 4, y: y - 14, size: 8.5, font: bold, color: colors.text,
+  });
+  page.drawText("Без НДС", {
+    x: cX[5] + 4, y: y - 14, size: 8.5, font: regular, color: colors.muted,
+  });
+
+  y -= 20 + 22;
+
+  // ── Итого к оплате ──────────────────────────────────────────────────────────
+  page.drawText(`Итого к оплате: ${formatRub(input.amount)} руб.`, {
+    x: marginX, y, size: 14, font: bold, color: colors.text,
+  });
+
+  y -= 22;
+
+  const amountWords = rubles(input.amount);
+  page.drawText(`Сумма прописью: ${amountWords}`, {
+    x: marginX, y, size: 9, font: regular, color: colors.muted,
+  });
+
+  y -= 28;
+
+  // ── Примечание ──────────────────────────────────────────────────────────────
   drawWrappedText({
     page,
-    text: "Оплата настоящего счета подтверждает согласие плательщика с условиями публичной оферты для Заказчика. Счет сформирован в электронном виде и действителен без подписи и печати, если иное не требуется сторонами.",
-    x: marginX, y, maxWidth: 500,
-    size: 9, font: regular, color: colors.muted,
+    text: "Оплата настоящего счёта подтверждает согласие Покупателя с условиями публичной оферты. Счёт действителен 5 рабочих дней.",
+    x: marginX, y, maxWidth: pageW,
+    size: 8.5, font: regular, color: colors.muted, lineHeight: 12,
   });
 
-  y -= 60;
+  y -= 50;
 
-  // ── Реквизиты ──────────────────────────────────────────────────────────────
-  page.drawText("Реквизиты для оплаты", {
-    x: marginX, y, size: 11, font: bold, color: colors.accent,
+  // ── Реквизиты для оплаты ────────────────────────────────────────────────────
+  page.drawText("Реквизиты для оплаты:", {
+    x: marginX, y, size: 10, font: bold, color: colors.accent,
+  });
+  y -= 14;
+
+  const reqLines = [
+    sanitize(input.seller.companyName),
+    `ИНН: ${sanitize(input.seller.inn)}`,
+    input.seller.bankName    ? `Банк: ${sanitize(input.seller.bankName)}` : null,
+    input.seller.bankAccount ? `р/с: ${sanitize(input.seller.bankAccount)}` : null,
+    input.seller.bankBik     ? `БИК: ${sanitize(input.seller.bankBik)}` : null,
+  ].filter(Boolean) as string[];
+
+  for (const line of reqLines) {
+    drawWrappedText({
+      page, text: line, x: marginX, y, maxWidth: pageW,
+      size: 9, font: regular, color: colors.text, lineHeight: 13,
+    });
+    y -= 13;
+  }
+
+  y -= 30;
+
+  // ── Подписи ─────────────────────────────────────────────────────────────────
+  page.drawLine({
+    start: { x: marginX, y: y + 10 }, end: { x: marginX + pageW, y: y + 10 },
+    thickness: 0.5, color: colors.line,
   });
 
-  drawWrappedText({
-    page,
-    text: [
-      sanitize(input.seller.companyName),
-      `ИНН ${sanitize(input.seller.inn)}`,
-      input.seller.bankName ? `Банк: ${sanitize(input.seller.bankName)}` : "",
-      input.seller.bankAccount ? `Расчетный счет: ${sanitize(input.seller.bankAccount)}` : "",
-      input.seller.bankBik ? `БИК: ${sanitize(input.seller.bankBik)}` : "",
-    ].filter(Boolean).join(" * "),
-    x: marginX, y: y - 16, maxWidth: 500,
-    size: 10, font: regular, color: colors.text,
+  page.drawText("Руководитель ________________________", {
+    x: marginX, y, size: 9, font: regular, color: colors.muted,
+  });
+  page.drawText("Бухгалтер ________________________", {
+    x: marginX + 280, y, size: 9, font: regular, color: colors.muted,
   });
 
   return Buffer.from(await pdf.save());
+}
+
+// ── Число прописью (рубли) ───────────────────────────────────────────────────
+function rubles(amount: number): string {
+  const rub = Math.floor(amount);
+  const kop = Math.round((amount - rub) * 100);
+
+  const units = ["", "один", "два", "три", "четыре", "пять", "шесть", "семь", "восемь", "девять"];
+  const teens = ["десять","одиннадцать","двенадцать","тринадцать","четырнадцать","пятнадцать","шестнадцать","семнадцать","восемнадцать","девятнадцать"];
+  const tens  = ["","","двадцать","тридцать","сорок","пятьдесят","шестьдесят","семьдесят","восемьдесят","девяносто"];
+  const hundreds = ["","сто","двести","триста","четыреста","пятьсот","шестьсот","семьсот","восемьсот","девятьсот"];
+
+  function chunk(n: number, female: boolean): string {
+    const h = Math.floor(n / 100);
+    const t = Math.floor((n % 100) / 10);
+    const u = n % 10;
+    const parts: string[] = [];
+    if (h) parts.push(hundreds[h]);
+    if (t === 1) {
+      parts.push(teens[u]);
+    } else {
+      if (t) parts.push(tens[t]);
+      if (u) {
+        if (female) {
+          parts.push(u === 1 ? "одна" : u === 2 ? "две" : units[u]);
+        } else {
+          parts.push(units[u]);
+        }
+      }
+    }
+    return parts.join(" ");
+  }
+
+  function rubWord(n: number): string {
+    const u = n % 10; const t = n % 100;
+    if (t >= 11 && t <= 19) return "рублей";
+    if (u === 1) return "рубль";
+    if (u >= 2 && u <= 4) return "рубля";
+    return "рублей";
+  }
+
+  function kopWord(n: number): string {
+    const u = n % 10; const t = n % 100;
+    if (t >= 11 && t <= 19) return "копеек";
+    if (u === 1) return "копейка";
+    if (u >= 2 && u <= 4) return "копейки";
+    return "kopеек";
+  }
+
+  const millions  = Math.floor(rub / 1_000_000);
+  const thousands = Math.floor((rub % 1_000_000) / 1_000);
+  const rest      = rub % 1_000;
+
+  const parts: string[] = [];
+
+  if (millions) {
+    const w = millions % 10;
+    const t = millions % 100;
+    let word = "миллионов";
+    if (t < 11 || t > 19) {
+      if (w === 1) word = "миллион";
+      else if (w >= 2 && w <= 4) word = "миллиона";
+    }
+    parts.push(`${chunk(millions, false)} ${word}`);
+  }
+
+  if (thousands) {
+    const w = thousands % 10;
+    const t = thousands % 100;
+    let word = "тысяч";
+    if (t < 11 || t > 19) {
+      if (w === 1) word = "тысяча";
+      else if (w >= 2 && w <= 4) word = "тысячи";
+    }
+    parts.push(`${chunk(thousands, true)} ${word}`);
+  }
+
+  if (rest || parts.length === 0) {
+    parts.push(`${chunk(rest, false)}`);
+  }
+
+  const rubStr = parts.join(" ").replace(/\s+/g, " ").trim();
+  const first  = rubStr.charAt(0).toUpperCase() + rubStr.slice(1);
+
+  return `${first} ${rubWord(rub)}, ${String(kop).padStart(2, "0")} ${kopWord(kop)}`;
 }
