@@ -1,0 +1,30 @@
+{
+  "name": "ПотокМнений",
+  "short_name": "ПотокМнений",
+  "description": "Платформа маркетинговых исследований — создавайте опросы и участвуйте в них",
+  "start_url": "/respondent",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1C0C4C",
+  "theme_color": "#6438D9",
+  "lang": "ru",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

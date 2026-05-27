@@ -18,6 +18,7 @@ import {
   ClipboardList,
   User,
   UserPlus,
+  HeadphonesIcon,
 } from "lucide-react";
 import type { DashboardViewer } from "@/lib/dashboard-data";
 import SignOutButton from "@/components/auth/SignOutButton";
@@ -181,6 +182,22 @@ export default function Sidebar({
         ))}
         </div>
       </nav>
+
+      {/* Support contact */}
+      <div className="px-3 pb-3">
+        <a
+          href={`mailto:${role === "client" ? "client@potokmneny.ru" : "respondent@potokmneny.ru"}`}
+          className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-white/40 transition-colors hover:bg-white/5 hover:text-white/70"
+        >
+          <HeadphonesIcon className="h-4 w-4 shrink-0" />
+          <div className="min-w-0">
+            <p className="text-xs font-body">Поддержка</p>
+            <p className="truncate text-[11px] text-white/25 font-body">
+              {role === "client" ? "client@potokmneny.ru" : "respondent@potokmneny.ru"}
+            </p>
+          </div>
+        </a>
+      </div>
 
       <div className="border-t border-white/5 px-3 pb-4 pt-4">
         <div className="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-white/5">
