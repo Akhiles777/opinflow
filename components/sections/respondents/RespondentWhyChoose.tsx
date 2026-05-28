@@ -1,79 +1,36 @@
 "use client";
-
 import RevealOnScroll from "@/components/ui/RevealOnScroll";
 
 const features = [
-  {
-    num: "01",
-    icon: "💳",
-    title: "Честные выплаты",
-    desc: "Цена указана заранее, никаких сюрпризов",
-  },
-  {
-    num: "02",
-    icon: "⚡",
-    title: "Быстро и удобно",
-    desc: "Опросы занимают 3–15 минут. Проходи в любое время",
-  },
-  {
-    num: "03",
-    icon: "🎯",
-    title: "Только релевантные опросы",
-    desc: "Получай предложения, которые подходят твоему возрасту, городу и интересам",
-  },
-  {
-    num: "04",
-    icon: "🛡️",
-    title: "Безопасность данных",
-    desc: "Твоя анонимность защищена. Мы не передаём личные данные третьим лицам",
-  },
-  {
-    num: "05",
-    icon: "🎁",
-    title: "Бонусы за активность",
-    desc: "Реферальная программа, ежедневные квесты и повышенные ставки для профи",
-  },
-  {
-    num: "06",
-    icon: "📊",
-    title: "Прозрачная статистика",
-    desc: "Следи за заработком, пройденными опросами и рейтингом в личном кабинете",
-  },
+  { icon: "💳", title: "Честные выплаты", desc: "Цена указана заранее, никаких сюрпризов" },
+  { icon: "⚡", title: "Быстро и удобно", desc: "Опросы занимают 3–15 минут. Проходи в любое время" },
+  { icon: "🎯", title: "Только релевантные опросы", desc: "Получай предложения, которые подходят твоему возрасту, городу и интересам" },
+  { icon: "🛡️", title: "Безопасность данных", desc: "Твоя анонимность защищена. Мы не передаём личные данные третьим лицам" },
+  { icon: "🎁", title: "Бонусы за активность", desc: "Реферальная программа, ежедневные квесты и повышенные ставки для профи" },
+  { icon: "📊", title: "Прозрачная статистика", desc: "Следи за заработком, пройденными опросами и рейтингом в личном кабинете" },
 ];
 
 export default function RespondentWhyChoose() {
   return (
-    <section className="bg-[#F7F5FF] px-4 py-16 lg:py-24">
-      <div className="mx-auto max-w-[1400px]">
-
-        {/* Большой контейнер */}
-        <div className="rounded-[36px] border border-[#E0D9F7] bg-white px-6 sm:px-8 lg:px-12 py-12 lg:py-14">
-
+    <section className="bg-white px-4 py-16 lg:py-24">
+      <div className="mx-auto max-w-[1400px] px-2 lg:px-6">
+        <div className="rounded-[36px] bg-[#F3F0FF] px-6 sm:px-10 lg:px-14 py-12 lg:py-16">
           <RevealOnScroll>
-            <h2 className="text-[32px] sm:text-[44px] lg:text-[56px] leading-[0.95] tracking-[-0.05em] font-semibold text-[#1C0C4C] mb-10 lg:mb-12">
-              Почему респонденты
-              <br />
-              выбирают{" "}
+            <h2 className="font-manrope text-[32px] sm:text-[44px] lg:text-[58px] leading-[0.95] tracking-[-0.04em] font-extrabold text-[#1C0C4C] mb-10 lg:mb-14">
+              Почему респонденты выбирают{" "}
               <span className="text-[#6438D9]">ПотокМнений</span>
             </h2>
           </RevealOnScroll>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5">
             {features.map((f, i) => (
-              <RevealOnScroll key={f.num} delay={i * 60}>
-                <div className="rounded-[24px] border border-[#E4DEF7] bg-[#FCFBFF] p-5 lg:p-6 h-full">
-                  <div className="flex items-center gap-3 mb-4">
-                    <span className="text-[11px] font-bold tracking-[0.1em] text-[#6438D9]/50">
-                      {f.num}
-                    </span>
-                    <div className="flex h-9 w-9 items-center justify-center rounded-[12px] bg-[#F3EEFF] text-[18px]">
-                      {f.icon}
-                    </div>
+              <RevealOnScroll key={f.title} delay={i * 60}>
+                <div className="rounded-[24px] bg-white p-5 lg:p-6 h-full flex flex-col">
+                  <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-[14px] bg-[#EFEBFF] text-[22px]">
+                    {f.icon}
                   </div>
-                  <div className="text-[17px] font-semibold text-[#1C0C4C] mb-2">
-                    {f.title}
-                  </div>
-                  <p className="text-[14px] leading-[1.55] text-[#797691]">{f.desc}</p>
+                  <div className="text-[17px] font-semibold text-[#1C0C4C] mb-2">{f.title}</div>
+                  <p className="text-[14px] leading-[1.6] text-[#6B5F9E]">{f.desc}</p>
                 </div>
               </RevealOnScroll>
             ))}

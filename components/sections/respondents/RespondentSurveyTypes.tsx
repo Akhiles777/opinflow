@@ -1,42 +1,13 @@
 "use client";
-
 import Image from "next/image";
 import Link from "next/link";
 import RevealOnScroll from "@/components/ui/RevealOnScroll";
 
 const surveys = [
-  {
-    image: "/Respondent/img_res5.svg",
-    title: "Оценка нового дизайна упаковки сока",
-    time: "7 минут",
-    pay: "85 ₽",
-    audience: "Женщины 18–35 лет",
-    bg: "#EDE8FF",
-  },
-  {
-    image: "/Respondent/img_res4.svg",
-    title: "Отношение к электромобилям в РФ",
-    time: "12 минут",
-    pay: "150 ₽",
-    audience: "Автовладельцы",
-    bg: "#EDE8FF",
-  },
-  {
-    image: "/Respondent/img_res3.png",
-    title: "Предпочтения в доставке еды",
-    time: "5 минут",
-    pay: "45 ₽",
-    audience: "Все респонденты",
-    bg: "#EDE8FF",
-  },
-  {
-    image: "/Respondent/Слой9 1.svg",
-    title: "Удобство мобильного приложения банка",
-    time: "10 минут",
-    pay: "120 ₽",
-    audience: "Пользователи смартфонов",
-    bg: "#EDE8FF",
-  },
+  { image: "/Respondent/img_res5.svg", title: "Оценка нового дизайна упаковки сока", time: "7 минут", pay: "85 ₽", audience: "Женщины 18–35 лет" },
+  { image: "/Respondent/img_res4.svg", title: "Отношение к электромобилям в РФ", time: "12 минут", pay: "150 ₽", audience: "Автовладельцы" },
+  { image: "/Respondent/img_res3.png", title: "Предпочтения в доставке еды", time: "5 минут", pay: "45 ₽", audience: "Все респонденты" },
+  { image: "/Respondent/img_res2.svg", title: "Удобство мобильного приложения банка", time: "10 минут", pay: "120 ₽", audience: "Пользователи смартфонов" },
 ];
 
 function ClockIcon() {
@@ -47,7 +18,6 @@ function ClockIcon() {
     </svg>
   );
 }
-
 function CoinIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="shrink-0">
@@ -56,7 +26,6 @@ function CoinIcon() {
     </svg>
   );
 }
-
 function PeopleIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="shrink-0">
@@ -70,19 +39,16 @@ function PeopleIcon() {
 export default function RespondentSurveyTypes() {
   return (
     <section className="bg-white px-4 py-16 lg:py-24">
-      <div className="mx-auto max-w-[1400px]">
+      <div className="mx-auto max-w-[1400px] px-2 lg:px-6">
 
-        {/* Header row */}
         <RevealOnScroll>
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-5 mb-10 lg:mb-12">
-            <h2 className="text-[32px] sm:text-[44px] lg:text-[56px] leading-[0.95] tracking-[-0.05em] font-semibold text-[#1C0C4C]">
-              Какие опросы ты
-              <br />
-              будешь проходить
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-5 mb-10 lg:mb-14">
+            <h2 className="font-manrope text-[32px] sm:text-[44px] lg:text-[58px] leading-[0.95] tracking-[-0.04em] font-extrabold text-[#1C0C4C]">
+              Какие опросы ты<br />будешь проходить
             </h2>
             <Link
-              href="/surveys"
-              className="inline-flex shrink-0 items-center gap-2 rounded-full bg-[#D9F326] px-5 py-2.5 text-[14px] font-semibold text-[#1C0C4C] transition-transform hover:scale-[1.02]"
+              href="/register?role=RESPONDENT"
+              className="inline-flex shrink-0 items-center gap-2 rounded-full bg-[#E5F667] px-5 py-2.5 text-[14px] font-semibold text-[#1C0C4C] transition-transform hover:scale-[1.02]"
             >
               Все доступные опросы
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
@@ -92,48 +58,36 @@ export default function RespondentSurveyTypes() {
           </div>
         </RevealOnScroll>
 
-        {/* 2×2 grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 lg:gap-6">
           {surveys.map((s, i) => (
             <RevealOnScroll key={s.title} delay={i * 80}>
-              <div className="rounded-[28px] border border-[#E4DEF7] bg-white overflow-hidden flex flex-col transition-shadow hover:shadow-[0_8px_32px_rgba(100,56,217,0.10)]">
-
-                {/* Image area */}
-                <div
-                  className="flex items-center justify-center h-[200px] sm:h-[220px]"
-                  style={{ backgroundColor: s.bg }}
-                >
+              <div className="rounded-[28px] border border-[#E8E2F5] bg-white overflow-hidden flex flex-col transition-shadow hover:shadow-[0_8px_32px_rgba(100,56,217,0.10)]">
+                <div className="flex items-center justify-center bg-[#EFEBFF] h-[200px] sm:h-[240px]">
                   <Image
                     src={s.image}
                     alt={s.title}
-                    width={240}
+                    width={220}
                     height={180}
                     className="object-contain w-[200px] h-[160px]"
                   />
                 </div>
-
-                {/* Info area */}
-                <div className="p-5 flex flex-col gap-3">
-                  <div className="text-[16px] font-semibold text-[#1C0C4C] leading-[1.3]">
-                    {s.title}
-                  </div>
-
-                  <div className="flex flex-wrap gap-x-5 gap-y-2">
+                <div className="p-5 lg:p-6 flex flex-col gap-3">
+                  <div className="text-[16px] font-semibold text-[#1C0C4C] leading-[1.3]">{s.title}</div>
+                  <div className="flex flex-wrap gap-x-4 gap-y-2">
                     <div className="flex items-center gap-1.5">
                       <ClockIcon />
-                      <span className="text-[13px] text-[#797691]">Время прохождения</span>
+                      <span className="text-[13px] text-[#9B8FC9]">Время</span>
                       <span className="text-[13px] font-semibold text-[#1C0C4C]">{s.time}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <CoinIcon />
-                      <span className="text-[13px] text-[#797691]">Оплата</span>
+                      <span className="text-[13px] text-[#9B8FC9]">Оплата</span>
                       <span className="text-[13px] font-semibold text-[#6438D9]">{s.pay}</span>
                     </div>
                   </div>
-
                   <div className="flex items-center gap-1.5">
                     <PeopleIcon />
-                    <span className="text-[13px] text-[#797691]">Респонденты</span>
+                    <span className="text-[13px] text-[#9B8FC9]">Аудитория</span>
                     <span className="text-[13px] font-semibold text-[#1C0C4C]">{s.audience}</span>
                   </div>
                 </div>
