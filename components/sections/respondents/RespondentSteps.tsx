@@ -42,7 +42,7 @@ export default function RespondentSteps() {
 
           {/* LAPTOP ILLUSTRATION — no RevealOnScroll on outer div */}
           <div className="flex items-center justify-center lg:justify-end">
-            <RevealOnScroll direction="right">
+            <RevealOnScroll direction="right" className="flex items-start justify-center w-full">
               <div className="relative w-full max-w-[480px]">
                 <div className="absolute inset-0 rounded-full bg-[#6438D9]/6 blur-[70px] pointer-events-none" />
                 <Image

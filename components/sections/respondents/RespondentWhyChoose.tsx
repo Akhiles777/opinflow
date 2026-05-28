@@ -12,9 +12,9 @@ const features = [
 
 export default function RespondentWhyChoose() {
   return (
-    <section className="bg-white px-4 py-16 lg:py-24">
+    <section className="bg-[#F7F5FF] px-4 py-16 lg:py-24">
       <div className="mx-auto max-w-[1400px] px-2 lg:px-6">
-        <div className="rounded-[36px] bg-[#F3F0FF] px-6 sm:px-10 lg:px-14 py-12 lg:py-16">
+        <div className="rounded-[36px] border border-[#E0D9F7] bg-white px-6 sm:px-10 lg:px-14 py-12 lg:py-16">
           <RevealOnScroll>
             <h2 className="font-manrope text-[32px] sm:text-[44px] lg:text-[58px] leading-[0.95] tracking-[-0.04em] font-extrabold text-[#1C0C4C] mb-10 lg:mb-14">
               Почему респонденты выбирают{" "}
@@ -25,12 +25,12 @@ export default function RespondentWhyChoose() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5">
             {features.map((f, i) => (
               <RevealOnScroll key={f.title} delay={i * 60}>
-                <div className="rounded-[24px] bg-white p-5 lg:p-6 h-full flex flex-col">
-                  <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-[14px] bg-[#EFEBFF] text-[22px]">
+                <div className="rounded-[24px] border border-[#E4DEF7] bg-[#FCFBFF] p-5 lg:p-6 h-full flex flex-col">
+                  <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-[12px] bg-[#F3EEFF] text-[20px]">
                     {f.icon}
                   </div>
                   <div className="text-[17px] font-semibold text-[#1C0C4C] mb-2">{f.title}</div>
-                  <p className="text-[14px] leading-[1.6] text-[#6B5F9E]">{f.desc}</p>
+                  <p className="text-[14px] leading-[1.55] text-[#797691]">{f.desc}</p>
                 </div>
               </RevealOnScroll>
             ))}
