@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import RevealOnScroll from "@/components/ui/RevealOnScroll";
 
 const checks = [
   "Моментальные выплаты",
@@ -12,136 +11,236 @@ const checks = [
 
 export default function RespondentHero() {
   return (
-    <section className="px-4 pt-4 lg:px-6 lg:pt-6 bg-[#F5F5F5]">
+    <section className="bg-[#F5F5F7] px-3 pt-3 lg:px-5 lg:pt-5">
       <div
-        style={{ position: "relative", overflow: "hidden" }}
-        className="rounded-[32px] lg:rounded-[40px] bg-[#EFEBFF] min-h-[560px] lg:min-h-[640px]"
+        className="
+          relative
+          overflow-hidden
+
+          min-h-[680px]
+
+          rounded-[40px]
+
+          bg-[#F7F4FF]
+        "
       >
-        {/* Background pattern */}
-        <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 0 }}>
-          <Image
-            src="/Слой9 1.svg"
-            alt=""
-            fill
-            priority
-            className="object-cover object-center opacity-25"
-          />
-        </div>
+        {/* BACKGROUND GLOW */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(128,90,255,0.10),transparent_42%)]" />
 
-        {/* Overlays & glows */}
-        <div className="absolute inset-0 bg-white/5 pointer-events-none" style={{ zIndex: 0 }} />
-        <div className="absolute left-[-80px] top-[60px] h-[500px] w-[500px] rounded-full bg-[#6438D9]/10 blur-[80px] pointer-events-none" style={{ zIndex: 0 }} />
-        <div className="absolute right-[-40px] top-[-40px] h-[380px] w-[380px] rounded-full bg-[#B49DFF]/15 blur-[60px] pointer-events-none" style={{ zIndex: 0 }} />
-
-        {/* Decorative dots */}
-        <div className="absolute right-[37%] top-[68px] w-[13px] h-[13px] rounded-full bg-[#E5F667] pointer-events-none hidden lg:block" style={{ zIndex: 0 }} />
-        <div className="absolute left-[43%] top-[54%] w-[18px] h-[18px] rounded-full bg-[#C4A5FF]/50 pointer-events-none hidden lg:block" style={{ zIndex: 0 }} />
-
-        {/* Big orb bottom right */}
+        {/* RIGHT PURPLE GLOW */}
         <div
-          className="absolute bottom-[-60px] right-[-40px] w-[240px] h-[240px] rounded-full pointer-events-none hidden xl:block"
+          className="
+            absolute
+            right-[-140px]
+            top-[120px]
+
+            h-[620px]
+            w-[620px]
+
+            rounded-full
+
+            bg-[#8B5CF6]/10
+
+            blur-[110px]
+          "
+        />
+
+        {/* CURVE LINE */}
+        <svg
+          className="absolute right-[-80px] top-[210px] w-[760px] opacity-70"
+          viewBox="0 0 980 420"
+          fill="none"
+        >
+          <path
+            d="M10 260C170 120 340 340 520 250C710 150 830 210 980 80"
+            stroke="#D8E64B"
+            strokeWidth="2"
+          />
+        </svg>
+
+        {/* DOTS */}
+        <div className="absolute right-[340px] top-[150px] h-[14px] w-[14px] rounded-full bg-[#D7EB39]" />
+
+        <div className="absolute left-[48%] top-[58%] h-[16px] w-[16px] rounded-full bg-[#A56EFF]" />
+
+        <div className="absolute right-[120px] top-[390px] h-[16px] w-[16px] rounded-full bg-[#B06CFF]" />
+
+        {/* PURPLE SPHERE */}
+        <div
+          className="
+            absolute
+            bottom-[-90px]
+            right-[-60px]
+
+            h-[240px]
+            w-[240px]
+
+            rounded-full
+          "
           style={{
-            background: "radial-gradient(circle at 30% 30%, #B49DFF, #5B21B6)",
-            boxShadow: "0 20px 80px rgba(100,56,217,0.35)",
-            zIndex: 0,
+            background:
+              "radial-gradient(circle at 35% 35%, #C8AEFF 0%, #8B5CF6 45%, #6D28D9 100%)",
+            boxShadow: "0 30px 80px rgba(109,40,217,0.35)",
           }}
         />
 
-        {/* Small yellow orb top right */}
+        {/* CONTENT */}
         <div
-          className="absolute top-[16px] right-[90px] w-[36px] h-[36px] rounded-full pointer-events-none hidden lg:block"
-          style={{ background: "radial-gradient(circle, #E5F667, #C8E000)", zIndex: 0 }}
-        />
+          className="
+            relative
+            z-10
 
-        {/* Main content */}
-        <div
-          style={{ position: "relative", zIndex: 10 }}
-          className="mx-auto max-w-[1400px] px-6 pt-10 pb-12 lg:px-16 lg:pt-14 lg:pb-10"
+            mx-auto
+            flex
+            max-w-[1480px]
+
+            flex-col
+            lg:flex-row
+
+            items-center
+            justify-between
+
+            gap-8
+
+            px-7
+            pt-12
+            pb-12
+
+            lg:px-14
+            lg:pt-14
+          "
         >
-          {/* Two-column flex — inline styles to prevent RevealOnScroll interference */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              flexWrap: "wrap",
-              gap: "2rem",
-            }}
-          >
-            {/* LEFT column */}
-            <div style={{ width: "100%", flexShrink: 0 }} className="lg:w-[50%] lg:max-w-[50%]">
-              <RevealOnScroll>
-                <h1 className="font-manrope text-[52px] sm:text-[64px] xl:text-[80px] leading-[0.92] tracking-[-3px] font-[800] text-[#1C0C4C]">
-                  Зарабатывай
-                  <br />
-                  <span className="text-[#6438D9]">на своём</span>
-                  <br />
-                  мнении
-                </h1>
-              </RevealOnScroll>
+          {/* LEFT */}
+          <div className="max-w-[500px]">
+            <h1
+              className="
+                text-[62px]
+                leading-[0.9]
+                tracking-[-0.07em]
 
-              <RevealOnScroll delay={100}>
-                <p className="mt-6 text-[17px] lg:text-[19px] leading-[1.55] text-[#6B5F9E] max-w-[460px]">
-                  Регистрируйся, проходи короткие опросы от брендов и получай
-                  выплаты на карту, телефон или электронный кошелёк. Без
-                  сложных заданий и скрытых условий.
-                </p>
-              </RevealOnScroll>
+                font-[800]
 
-              <RevealOnScroll delay={160}>
-                <div className="mt-8">
-                  <Link
-                    href="/register?role=RESPONDENT"
-                    className="inline-flex h-[52px] items-center gap-2 rounded-[14px] bg-[#6438D9] px-7 text-[16px] font-semibold text-white transition-all hover:scale-[1.02] hover:bg-[#5530C4] hover:shadow-[0_8px_24px_rgba(100,56,217,0.30)] active:scale-[0.99]"
-                  >
-                    <span className="text-[20px] font-light leading-none">+</span>
-                    Начать зарабатывать
-                  </Link>
-                </div>
+                text-[#1E0D56]
 
-                <ul className="mt-7 space-y-[10px]">
-                  {checks.map((item) => (
-                    <li
-                      key={item}
-                      className="flex items-center gap-3 text-[15px] lg:text-[16px] text-[#4A3B7A] font-medium"
-                    >
-                      <span className="flex-shrink-0 text-[#6438D9] text-[15px]">✦</span>
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </RevealOnScroll>
-            </div>
-
-            {/* RIGHT column — overflow hidden, fixed width, no RevealOnScroll on outer div */}
-            <div
-              style={{
-                width: "100%",
-                flexShrink: 0,
-                overflow: "hidden",
-                maxWidth: "100%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-              className="lg:w-[50%] lg:max-w-[50%] lg:justify-end"
+                xl:text-[76px]
+              "
             >
-              <RevealOnScroll direction="right" className="w-full">
-                <div style={{ overflow: "hidden", maxWidth: "100%", position: "relative" }}>
-                  <div className="absolute inset-0 rounded-full bg-[#6438D9]/6 blur-[70px] pointer-events-none" />
-                  <Image
-                    src="/Respondent/img_res.svg"
-                    alt="Платформа для респондентов"
-                    width={560}
-                    height={460}
-                    priority
-                    style={{ width: "100%", height: "auto", display: "block" }}
-                    className="object-contain relative z-10 drop-shadow-[0_20px_40px_rgba(28,12,76,0.10)]"
-                  />
-                </div>
-              </RevealOnScroll>
-            </div>
+              <span className="text-[#6C3CF0]">Зарабатывай</span>
+              <br />
+              на своём
+              <br />
+              мнении
+            </h1>
 
+            <p
+              className="
+                mt-6
+
+                max-w-[470px]
+
+                text-[18px]
+                leading-[1.55]
+
+                text-[#776B9D]
+              "
+            >
+              Регистрируйся, проходи короткие опросы от брендов и
+              получай выплаты на карту, телефон или электронный
+              кошелёк. Без сложных заданий и скрытых условий.
+            </p>
+
+            <div className="mt-8">
+              <Link
+                href="/register?role=RESPONDENT"
+                className="
+                  inline-flex
+                  items-center
+                  gap-3
+
+                  rounded-[16px]
+
+                  bg-[#6438D9]
+
+                  px-7
+                  h-[58px]
+
+                  text-[16px]
+                  font-semibold
+                  text-white
+
+                  shadow-[0_18px_40px_rgba(100,56,217,0.24)]
+
+                  transition-all
+                  duration-300
+
+                  hover:-translate-y-1
+                  hover:bg-[#5B31CC]
+                "
+              >
+                ✦ Начать зарабатывать
+              </Link>
+
+              <ul className="mt-8 space-y-4">
+                {checks.map((item) => (
+                  <li
+                    key={item}
+                    className="
+                      flex
+                      items-center
+                      gap-3
+
+                      text-[16px]
+
+                      text-[#675B94]
+                    "
+                  >
+                    <span className="text-[#6A3EF0]">✦</span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
+
+
+{/* RIGHT */}
+<div
+  className="
+    relative
+
+    flex
+    items-center
+    justify-end
+
+    w-full
+    max-w-[760px]
+
+    lg:-ml-20
+  "
+>
+  <div className="relative w-full">
+    <Image
+      src="/Слой9 1.svg"
+      alt="Платформа опросов"
+      width={1080}
+      height={820}
+      priority
+      className="
+        relative
+        z-10
+
+        h-auto
+        w-[108%]
+
+        max-w-none
+
+        object-contain
+
+        drop-shadow-[0_30px_60px_rgba(40,16,90,0.10)]
+      "
+    />
+  </div>
+</div>
         </div>
       </div>
     </section>
