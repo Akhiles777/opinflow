@@ -95,6 +95,7 @@ export async function registerAction(_prevState: ActionState, formData: FormData
     role: formData.get("role"),
     acceptTerms: formData.get("acceptTerms"),
   };
+  const ref = typeof formData.get("ref") === "string" ? (formData.get("ref") as string).trim() : "";
 
   const result = registerSchema.safeParse(raw);
   if (!result.success) {
@@ -116,11 +117,13 @@ export async function registerAction(_prevState: ActionState, formData: FormData
 
     const passwordHash = await bcrypt.hash(password, 12);
 
+    const referralCode = Math.random().toString(36).slice(2, 9).toUpperCase();
     const user = await prisma.user.create({
       data: {
         name,
         email: normalizedEmail,
         passwordHash,
+        referralCode,
         role: assignedRole,
         status: "ACTIVE",
         emailVerified: new Date(),
@@ -128,6 +131,15 @@ export async function registerAction(_prevState: ActionState, formData: FormData
       select: registerUserSelect,
     });
     await ensureUserSetup(user.id, assignedRole);
+
+    if (ref && assignedRole === "RESPONDENT") {
+      const sender = await prisma.user.findUnique({ where: { referralCode: ref.toUpperCase() }, select: { id: true } });
+      if (sender && sender.id !== user.id) {
+        await prisma.referral.create({
+          data: { senderId: sender.id, receiverId: user.id, bonusPaid: false },
+        });
+      }
+    }
   } catch (error) {
     console.error("[auth][register-action-error]", error);
     return {

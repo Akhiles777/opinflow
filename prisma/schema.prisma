@@ -15,6 +15,7 @@ model User {
   name              String?
   image             String?
   passwordHash      String?
+  referralCode      String?             @unique
   role              Role                @default(RESPONDENT)
   status            UserStatus          @default(PENDING_VERIFICATION)
   createdAt         DateTime            @default(now())

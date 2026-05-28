@@ -11,6 +11,7 @@ function hasVkClientId(clientId: string | undefined) {
 type SearchParams = Promise<{
   role?: string;
   callbackUrl?: string;
+  ref?: string;
 }>;
 
 export default async function RegisterPage({ searchParams }: { searchParams: SearchParams }) {
@@ -20,6 +21,7 @@ export default async function RegisterPage({ searchParams }: { searchParams: Sea
   const yandexEnabled = hasOAuthCredentials(process.env.YANDEX_CLIENT_ID, process.env.YANDEX_CLIENT_SECRET);
   const initialRole = params.role === "CLIENT" ? "CLIENT" : "RESPONDENT";
   const callbackUrl = params.callbackUrl || "/dashboard";
+  const refCode = typeof params.ref === "string" ? params.ref.trim() : undefined;
 
   return (
     <RegisterPageClient
@@ -28,6 +30,7 @@ export default async function RegisterPage({ searchParams }: { searchParams: Sea
       yandexEnabled={yandexEnabled}
       initialRole={initialRole}
       callbackUrl={callbackUrl}
+      refCode={refCode}
     />
   );
 }

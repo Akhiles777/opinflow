@@ -28,6 +28,7 @@ type Props = {
   yandexEnabled: boolean;
   initialRole: Role;
   callbackUrl: string;
+  refCode?: string;
 };
 
 export default function RegisterPageClient({
@@ -36,6 +37,7 @@ export default function RegisterPageClient({
   yandexEnabled,
   initialRole,
   callbackUrl,
+  refCode,
 }: Props) {
   const [role, setRole] = useState<Role>(initialRole);
   const [state, setState] = useState<RegisterState>(initialState);
@@ -93,6 +95,7 @@ export default function RegisterPageClient({
     const form = event.currentTarget;
     const formData = new FormData(form);
     formData.set("role", role);
+    if (refCode) formData.set("ref", refCode);
     const submittedPassword = String(formData.get("password") ?? "");
 
     startTransition(async () => {

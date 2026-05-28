@@ -475,6 +475,56 @@ export async function completeSurveyAction(params: {
     });
   }
 
+  // Pay referral bonus after first valid survey completion
+  if (fraud.isValid) {
+    const referral = await prisma.referral.findUnique({
+      where: { receiverId: session.user.id },
+      select: { id: true, senderId: true, bonusPaid: true },
+    });
+    if (referral && !referral.bonusPaid) {
+      const previousCompleted = await prisma.surveySession.count({
+        where: {
+          userId: session.user.id,
+          isValid: true,
+          status: "COMPLETED",
+          surveyId: { not: params.surveyId },
+        },
+      });
+      if (previousCompleted === 0) {
+        const REFERRAL_BONUS = 150;
+        const senderWallet = await prisma.wallet.findUnique({ where: { userId: referral.senderId } });
+        if (senderWallet) {
+          await prisma.$transaction([
+            prisma.wallet.update({
+              where: { id: senderWallet.id },
+              data: { balance: { increment: REFERRAL_BONUS }, totalEarned: { increment: REFERRAL_BONUS } },
+            }),
+            prisma.transaction.create({
+              data: {
+                walletId: senderWallet.id,
+                type: "BONUS",
+                amount: REFERRAL_BONUS,
+                description: "Реферальный бонус",
+                status: "COMPLETED",
+              },
+            }),
+            prisma.referral.update({
+              where: { id: referral.id },
+              data: { bonusPaid: true },
+            }),
+          ]);
+          await notify({
+            userId: referral.senderId,
+            type: "REFERRAL_BONUS",
+            title: "Реферальный бонус",
+            body: `+${REFERRAL_BONUS} ₽ — ваш реферал завершил первый опрос`,
+            link: "/respondent/referral",
+          });
+        }
+      }
+    }
+  }
+
   if (fraud.isValid && survey.maxResponses) {
     const count = await prisma.surveySession.count({
       where: { surveyId: params.surveyId, isValid: true, status: "COMPLETED" },

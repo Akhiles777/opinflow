@@ -1,4 +1,3 @@
-import * as React from "react";
 import PageHeader from "@/components/dashboard/PageHeader";
 import DataTable, { Column } from "@/components/dashboard/DataTable";
 import EmptyState from "@/components/dashboard/EmptyState";
@@ -38,10 +37,10 @@ export default async function RespondentReferralPage() {
           <div className="flex flex-col sm:flex-row gap-2">
             <input
               readOnly
-              value={`https://potokmneny.ru/register?ref=${data.referralCode}`}
+              value={`https://opinflow-xi.vercel.app/register?ref=${data.referralCode}`}
               className="h-11 min-w-0 flex-1 rounded-xl border border-dash-border bg-dash-bg px-3 text-sm text-dash-body"
             />
-            <CopyButton text={`https://potokmneny.ru/register?ref=${data.referralCode}`} />
+            <CopyButton text={`https://opinflow-xi.vercel.app/register?ref=${data.referralCode}`} />
 
           </div>
          
