@@ -34,7 +34,7 @@ export default function RespondentSteps() {
     <section className="bg-white py-16 lg:py-20">
       <div className="mx-auto max-w-[1400px] px-6 lg:px-16">
 
-        <div className="flex flex-col xl:flex-row xl:items-center xl:gap-4">
+        <div className="flex flex-col xl:flex-row xl:items-start xl:gap-4">
 
           {/* LEFT — 45% */}
           <div className="w-full xl:w-[45%] xl:flex-shrink-0">
@@ -69,7 +69,7 @@ export default function RespondentSteps() {
           </div>
 
           {/* RIGHT — 55%, ноутбук в потоке */}
-          <div className="w-full xl:w-[55%] mt-10 xl:mt-0 flex items-center justify-center xl:justify-end">
+          <div className="w-full xl:w-[55%] mt-10 xl:mt-0 flex items-start justify-center xl:justify-end">
             <Image
               src="/Respondent/img_res.svg"
               alt="Платформа ПотокМнений"
