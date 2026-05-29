@@ -31,159 +31,36 @@ const steps = [
 
 export default function RespondentSteps() {
   return (
-    <section className="bg-[#F5F5F7] px-3 py-8 lg:px-5 lg:py-12">
-      <div
-        className="
-          relative
-          overflow-hidden
+    <section className="bg-white py-16 lg:py-20">
+      <div className="mx-auto max-w-[1400px] px-6 lg:px-16">
 
-          mx-auto
-          max-w-[1450px]
+        <div className="flex flex-col xl:flex-row xl:items-center xl:gap-4">
 
-          rounded-[38px]
-
-          bg-[#F7F4FF]
-
-          px-5
-          py-8
-
-          sm:px-7
-          lg:px-12
-          lg:py-12
-          xl:px-16
-        "
-      >
-        {/* soft background glow */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(120,90,255,0.08),transparent_40%)]" />
-
-        {/* content */}
-        <div
-          className="
-            relative
-            z-10
-
-            flex
-            flex-col
-
-            gap-10
-
-            xl:flex-row
-            xl:items-center
-            xl:justify-between
-          "
-        >
-          {/* LEFT */}
-          <div className="w-full max-w-[690px]">
-            <h2
-              className="
-                text-[42px]
-                leading-[0.92]
-                tracking-[-0.06em]
-
-                font-[800]
-
-                text-[#1D0B57]
-
-                sm:text-[54px]
-                lg:text-[66px]
-              "
-            >
+          {/* LEFT — 45% */}
+          <div className="w-full xl:w-[45%] xl:flex-shrink-0">
+            <h2 className="text-[40px] sm:text-[52px] lg:text-[62px] font-[800] leading-[0.92] tracking-[-0.05em] text-[#1D0B57]">
               4 простых шага
             </h2>
 
-            {/* cards */}
-            <div
-              className="
-                mt-8
-
-                grid
-                grid-cols-1
-                gap-4
-
-                sm:grid-cols-2
-                lg:gap-5
-              "
-            >
+            <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
               {steps.map((step) => (
                 <div
                   key={step.num}
-                  className={`
-                    relative
-
-                    min-h-[210px]
-
-                    rounded-[28px]
-
-                    p-6
-
-                    transition-all
-                    duration-300
-
-                    ${
-                      step.lime
-                        ? "bg-[#DDF247]"
-                        : "border border-[#DDD4FA] bg-[#FCFBFF]"
-                    }
-
-                    hover:-translate-y-[2px]
-                  `}
+                  className={`flex flex-col justify-between rounded-[24px] p-6 min-h-[180px] transition-transform duration-300 hover:-translate-y-[2px] ${
+                    step.lime
+                      ? "bg-[#DDF247]"
+                      : "bg-white border border-[#E2D9F8]"
+                  }`}
                 >
-                  {/* number */}
-                  <div
-                    className={`
-                      text-[15px]
-                      font-[700]
-
-                      ${
-                        step.lime
-                          ? "text-[#5C37D5]"
-                          : "text-[#6C3CF0]"
-                      }
-                    `}
-                  >
+                  <span className={`text-[14px] font-[700] ${step.lime ? "text-[#4A2DB5]" : "text-[#6C3CF0]"}`}>
                     {step.num}
-                  </div>
+                  </span>
 
-                  {/* title */}
-                  <h3
-                    className="
-                      mt-5
-
-                      whitespace-pre-line
-
-                      text-[20px]
-                      leading-[1.05]
-
-                      font-[700]
-
-                      tracking-[-0.05em]
-
-                      text-[#1D0B57]
-
-                      sm:text-[22px]
-                      lg:text-[24px]
-                    "
-                  >
+                  <h3 className="mt-4 whitespace-pre-line text-[20px] sm:text-[22px] font-[700] leading-[1.1] tracking-[-0.04em] text-[#1D0B57]">
                     {step.title}
                   </h3>
 
-                  {/* desc */}
-                  <p
-                    className={`
-                      mt-5
-
-                      max-w-[260px]
-
-                      text-[15px]
-                      leading-[1.5]
-
-                      ${
-                        step.lime
-                          ? "text-[#1D0B57]/75"
-                          : "text-[#7B7399]"
-                      }
-                    `}
-                  >
+                  <p className={`mt-3 text-[14px] leading-[1.55] max-w-[230px] ${step.lime ? "text-[#1D0B57]/70" : "text-[#7B7399]"}`}>
                     {step.desc}
                   </p>
                 </div>
@@ -191,64 +68,18 @@ export default function RespondentSteps() {
             </div>
           </div>
 
-          {/* RIGHT */}
-          <div
-            className="
-              relative
-
-              flex
-              items-center
-              justify-center
-
-              w-full
-
-              xl:w-[760px]
-              xl:flex-shrink-0
-
-              xl:-ml-24
-            "
-          >
-            {/* glow */}
-            <div
-              className="
-                absolute
-
-                h-[500px]
-                w-[500px]
-
-                rounded-full
-
-                bg-[#8B5CF6]/10
-
-                blur-[100px]
-              "
-            />
-
+          {/* RIGHT — 55%, ноутбук в потоке */}
+          <div className="w-full xl:w-[55%] mt-10 xl:mt-0 flex items-center justify-center xl:justify-end">
             <Image
               src="/Respondent/img_res.svg"
-              alt="Ноутбук"
-
-              width={1200}
-              height={900}
+              alt="Платформа ПотокМнений"
+              width={780}
+              height={580}
               priority
-
-              className="
-                relative
-                z-10
-
-                h-auto
-                w-full
-
-                max-w-[900px]
-
-                object-contain
-
-                drop-shadow-[0_30px_70px_rgba(40,16,90,0.12)]
-
-                xl:scale-[1.18]
-              "
+              className="w-full h-auto object-contain max-w-[500px] sm:max-w-[560px] xl:max-w-[680px] drop-shadow-[0_20px_50px_rgba(40,16,90,0.08)]"
             />
           </div>
+
         </div>
       </div>
     </section>
