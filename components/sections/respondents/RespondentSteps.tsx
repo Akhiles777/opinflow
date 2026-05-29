@@ -1,62 +1,207 @@
 "use client";
+
 import Image from "next/image";
-import RevealOnScroll from "@/components/ui/RevealOnScroll";
 
 const steps = [
-  { num: "01", title: "Зарегистрируйся за 1 минуту", desc: "Укажи имя, почту и создай пароль", lime: false },
-  { num: "02", title: "Заполни информацию о себе", desc: "Никаких сложных анкет", lime: false },
-  { num: "03", title: "Проходи опросы в удобное время", desc: "Получай уведомления о новых опросах, которые подходят твоему профилю", lime: false },
-  { num: "04", title: "Получай деньги на счёт", desc: "Выводи заработанное на карту, телефон или электронный кошелёк", lime: true },
+  {
+    num: "01",
+    title: "Зарегистрируйся\nза 1 минуту",
+    desc: "Укажи имя, почту и создай пароль",
+    lime: false,
+  },
+  {
+    num: "02",
+    title: "Заполни\nинформацию о себе",
+    desc: "Никаких сложных анкет",
+    lime: false,
+  },
+  {
+    num: "03",
+    title: "Проходи опросы в\nудобное время",
+    desc: "Получай уведомления о новых опросах, которые подходят твоему профилю",
+    lime: false,
+  },
+  {
+    num: "04",
+    title: "Получай деньги на\nсчёт",
+    desc: "Выводи заработанное на карту, телефон или электронный кошелёк",
+    lime: true,
+  },
 ];
 
 export default function RespondentSteps() {
   return (
-    <section className="bg-white px-4 py-16 lg:py-24">
-      <div className="mx-auto max-w-[1400px] px-2 lg:px-6">
-        <RevealOnScroll>
-          <h2 className="font-manrope text-[38px] sm:text-[52px] lg:text-[68px] leading-[0.93] tracking-[-0.04em] font-extrabold text-[#1C0C4C] mb-12 lg:mb-16">
-            4 простых шага
-          </h2>
-        </RevealOnScroll>
+    <section className="bg-[#F5F5F7] px-3 py-10 lg:px-5 lg:py-14">
+      <div
+        className="
+          relative
+          overflow-hidden
 
-        <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_480px] lg:items-center">
+          mx-auto
+          max-w-[1450px]
 
-          {/* STEPS 2×2 GRID */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            {steps.map((step, i) => (
-              <RevealOnScroll key={step.num} delay={i * 70}>
-                <div className={`rounded-[28px] p-6 lg:p-8 flex flex-col min-h-[200px] ${step.lime ? "bg-[#E5F667]" : "border border-[#E4DEF7] bg-[#FAFBFF]"}`}>
-                  <div className={`text-[12px] font-bold tracking-[0.1em] mb-4 ${step.lime ? "text-[#1C0C4C]/50" : "text-[#6438D9]/40"}`}>
+          rounded-[40px]
+
+          bg-[#F7F4FF]
+
+          px-6
+          py-10
+
+          lg:px-14
+          lg:py-14
+        "
+      >
+      
+
+        <div
+          className="
+            relative
+            z-10
+
+            flex
+            flex-col
+
+            gap-12
+
+            xl:flex-row
+            xl:items-center
+            xl:justify-between
+          "
+        >
+          {/* LEFT */}
+          <div className="w-full max-w-[620px]">
+            <h2
+              className="
+                text-[44px]
+                leading-none
+                tracking-[-0.05em]
+
+                font-[800]
+
+                text-[#1D0B57]
+
+                sm:text-[56px]
+                lg:text-[68px]
+              "
+            >
+              4 простых шага
+            </h2>
+
+            {/* cards */}
+            <div
+              className="
+                mt-10
+
+                grid
+                grid-cols-1
+                gap-5
+
+                sm:grid-cols-2
+              "
+            >
+              {steps.map((step) => (
+                <div
+                  key={step.num}
+                  className={`
+                    rounded-[30px]
+
+                    p-7
+
+                    min-h-[210px]
+
+                    transition-all
+                    duration-300
+
+                    ${
+                      step.lime
+                        ? "bg-[#DDF247]"
+                        : "border border-[#DDD4FA] bg-[#FBFAFF]"
+                    }
+                  `}
+                >
+                  {/* number */}
+                  <div className="text-[18px] font-semibold text-[#6C3CF0]">
                     {step.num}
                   </div>
-                  <div className="text-[18px] lg:text-[21px] font-semibold leading-[1.2] mb-3 text-[#1C0C4C]">
+
+                  {/* title */}
+                  <h3
+                    className="
+                      mt-6
+
+                      whitespace-pre-line
+
+                      text-[24px]
+                      leading-[1.05]
+
+                      font-semibold
+
+                      tracking-[-0.04em]
+
+                      text-[#1D0B57]
+                    "
+                  >
                     {step.title}
-                  </div>
-                  <p className={`text-[14px] lg:text-[15px] leading-[1.55] mt-auto ${step.lime ? "text-[#1C0C4C]/65" : "text-[#797691]"}`}>
+                  </h3>
+
+                  {/* desc */}
+                  <p
+                    className={`
+                      mt-5
+
+                      text-[16px]
+                      leading-[1.45]
+
+                      ${
+                        step.lime
+                          ? "text-[#1D0B57]/75"
+                          : "text-[#7D749C]"
+                      }
+                    `}
+                  >
                     {step.desc}
                   </p>
                 </div>
-              </RevealOnScroll>
-            ))}
+              ))}
+            </div>
           </div>
 
-          {/* LAPTOP ILLUSTRATION — no RevealOnScroll on outer div */}
-          <div className="flex items-center justify-center lg:justify-end">
-            <RevealOnScroll direction="right" className="flex items-start justify-center w-full">
-              <div className="relative w-full max-w-[480px]">
-                <div className="absolute inset-0 rounded-full bg-[#6438D9]/6 blur-[70px] pointer-events-none" />
-                <Image
-                  src="/Respondent/img_res2.svg"
-                  alt="Как работает платформа"
-                  width={480}
-                  height={420}
-                  style={{ width: "100%", height: "auto" }}
-                  className="object-contain relative z-10"
-                />
-              </div>
-            </RevealOnScroll>
-          </div>
+         {/* RIGHT */}
+<div
+  className="
+    relative
 
+    flex
+    items-center
+    justify-center
+
+    w-full
+    xl:w-[720px]
+
+    xl:-ml-10
+  "
+>
+  <Image
+    src="/Respondent/img_res.svg"
+    alt="Ноутбук"
+
+    width={920}
+    height={760}
+    priority
+
+    className="
+      relative
+      z-10
+
+      h-auto
+      w-full
+
+      max-w-[920px]
+
+      object-contain
+    "
+  />
+</div>
         </div>
       </div>
     </section>

@@ -11,31 +11,33 @@ const checks = [
 
 export default function RespondentHero() {
   return (
-    <section className="bg-[#F5F5F7] px-3 pt-3 lg:px-5 lg:pt-5">
+    <section className="bg-[#F5F5F7] px-3 pt-2 lg:px-5 lg:pt-3">
       <div
         className="
           relative
           overflow-hidden
 
-          min-h-[680px]
-
-          rounded-[40px]
+          rounded-[34px]
+          lg:rounded-[40px]
 
           bg-[#F7F4FF]
+
+          min-h-[620px]
+          lg:min-h-[700px]
         "
       >
-        {/* BACKGROUND GLOW */}
+        {/* background glow */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(128,90,255,0.10),transparent_42%)]" />
 
-        {/* RIGHT PURPLE GLOW */}
+        {/* soft purple glow */}
         <div
           className="
             absolute
-            right-[-140px]
-            top-[120px]
+            right-[-120px]
+            top-[80px]
 
-            h-[620px]
-            w-[620px]
+            h-[560px]
+            w-[560px]
 
             rounded-full
 
@@ -45,9 +47,18 @@ export default function RespondentHero() {
           "
         />
 
-        {/* CURVE LINE */}
+        {/* curved line */}
         <svg
-          className="absolute right-[-80px] top-[210px] w-[760px] opacity-70"
+          className="
+            absolute
+
+            right-[-120px]
+            top-[190px]
+
+            w-[760px]
+
+            opacity-70
+          "
           viewBox="0 0 980 420"
           fill="none"
         >
@@ -58,22 +69,22 @@ export default function RespondentHero() {
           />
         </svg>
 
-        {/* DOTS */}
-        <div className="absolute right-[340px] top-[150px] h-[14px] w-[14px] rounded-full bg-[#D7EB39]" />
+        {/* dots */}
+        <div className="absolute right-[320px] top-[140px] h-[14px] w-[14px] rounded-full bg-[#D7EB39]" />
 
-        <div className="absolute left-[48%] top-[58%] h-[16px] w-[16px] rounded-full bg-[#A56EFF]" />
+        <div className="absolute left-[49%] top-[57%] h-[16px] w-[16px] rounded-full bg-[#A56EFF]" />
 
-        <div className="absolute right-[120px] top-[390px] h-[16px] w-[16px] rounded-full bg-[#B06CFF]" />
+        <div className="absolute right-[120px] top-[380px] h-[16px] w-[16px] rounded-full bg-[#B06CFF]" />
 
-        {/* PURPLE SPHERE */}
+        {/* purple sphere */}
         <div
           className="
             absolute
-            bottom-[-90px]
-            right-[-60px]
+            bottom-[-80px]
+            right-[-50px]
 
-            h-[240px]
-            w-[240px]
+            h-[220px]
+            w-[220px]
 
             rounded-full
           "
@@ -84,7 +95,7 @@ export default function RespondentHero() {
           }}
         />
 
-        {/* CONTENT */}
+        {/* content */}
         <div
           className="
             relative
@@ -100,21 +111,24 @@ export default function RespondentHero() {
             items-center
             justify-between
 
-            gap-8
+            gap-6
 
-            px-7
-            pt-12
-            pb-12
+            px-6
+            pt-8
+            pb-10
+
+            sm:px-8
 
             lg:px-14
-            lg:pt-14
+            lg:pt-10
+            lg:pb-12
           "
         >
           {/* LEFT */}
-          <div className="max-w-[500px]">
+          <div className="relative z-20 max-w-[500px]">
             <h1
               className="
-                text-[62px]
+                text-[52px]
                 leading-[0.9]
                 tracking-[-0.07em]
 
@@ -122,6 +136,7 @@ export default function RespondentHero() {
 
                 text-[#1E0D56]
 
+                sm:text-[60px]
                 xl:text-[76px]
               "
             >
@@ -134,14 +149,16 @@ export default function RespondentHero() {
 
             <p
               className="
-                mt-6
+                mt-5
 
-                max-w-[470px]
+                max-w-[450px]
 
-                text-[18px]
+                text-[16px]
                 leading-[1.55]
 
                 text-[#776B9D]
+
+                sm:text-[17px]
               "
             >
               Регистрируйся, проходи короткие опросы от брендов и
@@ -149,7 +166,7 @@ export default function RespondentHero() {
               кошелёк. Без сложных заданий и скрытых условий.
             </p>
 
-            <div className="mt-8">
+            <div className="mt-7">
               <Link
                 href="/register?role=RESPONDENT"
                 className="
@@ -162,9 +179,9 @@ export default function RespondentHero() {
                   bg-[#6438D9]
 
                   px-7
-                  h-[58px]
+                  h-[56px]
 
-                  text-[16px]
+                  text-[15px]
                   font-semibold
                   text-white
 
@@ -180,7 +197,7 @@ export default function RespondentHero() {
                 ✦ Начать зарабатывать
               </Link>
 
-              <ul className="mt-8 space-y-4">
+              <ul className="mt-7 space-y-3">
                 {checks.map((item) => (
                   <li
                     key={item}
@@ -189,9 +206,11 @@ export default function RespondentHero() {
                       items-center
                       gap-3
 
-                      text-[16px]
+                      text-[15px]
 
                       text-[#675B94]
+
+                      sm:text-[16px]
                     "
                   >
                     <span className="text-[#6A3EF0]">✦</span>
@@ -202,45 +221,55 @@ export default function RespondentHero() {
             </div>
           </div>
 
+          {/* RIGHT */}
+          <div
+            className="
+              relative
 
-{/* RIGHT */}
-<div
-  className="
-    relative
+              flex
+              items-center
+              justify-center
 
-    flex
-    items-center
-    justify-end
+              w-full
 
-    w-full
-    max-w-[760px]
+              lg:flex-1
+              lg:justify-start
 
-    lg:-ml-20
-  "
->
-  <div className="relative w-full">
-    <Image
-      src="/Слой9 1.svg"
-      alt="Платформа опросов"
-      width={1080}
-      height={820}
-      priority
-      className="
-        relative
-        z-10
+              lg:-ml-6
+              xl:-ml-10
+            "
+          >
+            <div
+              className="
+                relative
 
-        h-auto
-        w-[108%]
+                w-full
 
-        max-w-none
+                max-w-[520px]
+                sm:max-w-[620px]
+                lg:max-w-[760px]
+              "
+            >
+              <Image
+                src="/Слой9 1.svg"
+                alt="Платформа опросов"
+                width={1080}
+                height={820}
+                priority
+                className="
+                  relative
+                  z-10
 
-        object-contain
+                  h-auto
+                  w-full
 
-        drop-shadow-[0_30px_60px_rgba(40,16,90,0.10)]
-      "
-    />
-  </div>
-</div>
+                  object-contain
+
+                  drop-shadow-[0_30px_60px_rgba(40,16,90,0.10)]
+                "
+              />
+            </div>
+          </div>
         </div>
       </div>
     </section>
