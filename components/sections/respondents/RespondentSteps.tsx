@@ -31,7 +31,7 @@ const steps = [
 
 export default function RespondentSteps() {
   return (
-    <section className="bg-[#F5F5F7] px-3 py-10 lg:px-5 lg:py-14">
+    <section className="bg-[#F5F5F7] px-3 py-8 lg:px-5 lg:py-12">
       <div
         className="
           relative
@@ -40,19 +40,23 @@ export default function RespondentSteps() {
           mx-auto
           max-w-[1450px]
 
-          rounded-[40px]
+          rounded-[38px]
 
           bg-[#F7F4FF]
 
-          px-6
-          py-10
+          px-5
+          py-8
 
-          lg:px-14
-          lg:py-14
+          sm:px-7
+          lg:px-12
+          lg:py-12
+          xl:px-16
         "
       >
-      
+        {/* soft background glow */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(120,90,255,0.08),transparent_40%)]" />
 
+        {/* content */}
         <div
           className="
             relative
@@ -61,7 +65,7 @@ export default function RespondentSteps() {
             flex
             flex-col
 
-            gap-12
+            gap-10
 
             xl:flex-row
             xl:items-center
@@ -69,19 +73,19 @@ export default function RespondentSteps() {
           "
         >
           {/* LEFT */}
-          <div className="w-full max-w-[620px]">
+          <div className="w-full max-w-[690px]">
             <h2
               className="
-                text-[44px]
-                leading-none
-                tracking-[-0.05em]
+                text-[42px]
+                leading-[0.92]
+                tracking-[-0.06em]
 
                 font-[800]
 
                 text-[#1D0B57]
 
-                sm:text-[56px]
-                lg:text-[68px]
+                sm:text-[54px]
+                lg:text-[66px]
               "
             >
               4 простых шага
@@ -90,24 +94,27 @@ export default function RespondentSteps() {
             {/* cards */}
             <div
               className="
-                mt-10
+                mt-8
 
                 grid
                 grid-cols-1
-                gap-5
+                gap-4
 
                 sm:grid-cols-2
+                lg:gap-5
               "
             >
               {steps.map((step) => (
                 <div
                   key={step.num}
                   className={`
-                    rounded-[30px]
-
-                    p-7
+                    relative
 
                     min-h-[210px]
+
+                    rounded-[28px]
+
+                    p-6
 
                     transition-all
                     duration-300
@@ -115,30 +122,46 @@ export default function RespondentSteps() {
                     ${
                       step.lime
                         ? "bg-[#DDF247]"
-                        : "border border-[#DDD4FA] bg-[#FBFAFF]"
+                        : "border border-[#DDD4FA] bg-[#FCFBFF]"
                     }
+
+                    hover:-translate-y-[2px]
                   `}
                 >
                   {/* number */}
-                  <div className="text-[18px] font-semibold text-[#6C3CF0]">
+                  <div
+                    className={`
+                      text-[15px]
+                      font-[700]
+
+                      ${
+                        step.lime
+                          ? "text-[#5C37D5]"
+                          : "text-[#6C3CF0]"
+                      }
+                    `}
+                  >
                     {step.num}
                   </div>
 
                   {/* title */}
                   <h3
                     className="
-                      mt-6
+                      mt-5
 
                       whitespace-pre-line
 
-                      text-[24px]
+                      text-[20px]
                       leading-[1.05]
 
-                      font-semibold
+                      font-[700]
 
-                      tracking-[-0.04em]
+                      tracking-[-0.05em]
 
                       text-[#1D0B57]
+
+                      sm:text-[22px]
+                      lg:text-[24px]
                     "
                   >
                     {step.title}
@@ -149,13 +172,15 @@ export default function RespondentSteps() {
                     className={`
                       mt-5
 
-                      text-[16px]
-                      leading-[1.45]
+                      max-w-[260px]
+
+                      text-[15px]
+                      leading-[1.5]
 
                       ${
                         step.lime
                           ? "text-[#1D0B57]/75"
-                          : "text-[#7D749C]"
+                          : "text-[#7B7399]"
                       }
                     `}
                   >
@@ -166,42 +191,64 @@ export default function RespondentSteps() {
             </div>
           </div>
 
-         {/* RIGHT */}
-<div
-  className="
-    relative
+          {/* RIGHT */}
+          <div
+            className="
+              relative
 
-    flex
-    items-center
-    justify-center
+              flex
+              items-center
+              justify-center
 
-    w-full
-    xl:w-[720px]
+              w-full
 
-    xl:-ml-10
-  "
->
-  <Image
-    src="/Respondent/img_res.svg"
-    alt="Ноутбук"
+              xl:w-[760px]
+              xl:flex-shrink-0
 
-    width={920}
-    height={760}
-    priority
+              xl:-ml-24
+            "
+          >
+            {/* glow */}
+            <div
+              className="
+                absolute
 
-    className="
-      relative
-      z-10
+                h-[500px]
+                w-[500px]
 
-      h-auto
-      w-full
+                rounded-full
 
-      max-w-[920px]
+                bg-[#8B5CF6]/10
 
-      object-contain
-    "
-  />
-</div>
+                blur-[100px]
+              "
+            />
+
+            <Image
+              src="/Respondent/img_res.svg"
+              alt="Ноутбук"
+
+              width={1200}
+              height={900}
+              priority
+
+              className="
+                relative
+                z-10
+
+                h-auto
+                w-full
+
+                max-w-[900px]
+
+                object-contain
+
+                drop-shadow-[0_30px_70px_rgba(40,16,90,0.12)]
+
+                xl:scale-[1.18]
+              "
+            />
+          </div>
         </div>
       </div>
     </section>
