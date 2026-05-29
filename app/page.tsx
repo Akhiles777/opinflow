@@ -1,14 +1,13 @@
 import Header from "@/components/layout/Header";
+import Hero from "@/components/sections/Hero";
+import Features from "@/components/sections/Features";
+import WhoItsFor from "@/components/sections/WhoItsFor";
+import WhyChooseUs from "@/components/sections/WhyChooseUs";
+import Pricing from "@/components/sections/Pricing";
+import Testimonials from "@/components/sections/Testimonials";
+import FAQ from "@/components/sections/FAQ";
+import CTA from "@/components/sections/CTA";
 import Footer from "@/components/layout/Footer";
-import HeroMain from "@/components/landing/HeroMain";
-import StatsBar from "@/components/landing/StatsBar";
-import HowItWorks from "@/components/landing/HowItWorks";
-import Features from "@/components/landing/Features";
-import WhoIsItFor from "@/components/landing/WhoIsItFor";
-import Pricing from "@/components/landing/Pricing";
-import SocialProof from "@/components/landing/SocialProof";
-import FAQMain from "@/components/landing/FAQMain";
-import CTABottom from "@/components/landing/CTABottom";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -18,17 +17,16 @@ export const metadata: Metadata = {
 
 export default function Home() {
   return (
-    <main className="bg-white text-site-body overflow-hidden">
+    <main className="bg-white dark:bg-[#1C0C4C] text-site-body dark:text-white overflow-hidden">
       <Header />
-      <HeroMain />
-      <StatsBar />
-      <HowItWorks />
+      <Hero />
       <Features />
-      <WhoIsItFor />
+      <WhoItsFor />
+      <WhyChooseUs />
       <Pricing />
-      <SocialProof />
-      <FAQMain />
-      <CTABottom />
+      <Testimonials />
+      <FAQ />
+      <CTA />
       <Footer />
     </main>
   );
