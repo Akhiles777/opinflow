@@ -142,9 +142,7 @@ export default function RespondentHero() {
             >
               <span className="text-[#6C3CF0]">Зарабатывай</span>
               <br />
-              на своём
-              <br />
-              мнении
+              <span className="text-[0.78em] tracking-[-0.04em] whitespace-nowrap">на своём мнении</span>
             </h1>
 
             <p

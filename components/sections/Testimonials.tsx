@@ -341,7 +341,7 @@ export default function Testimonials() {
             </div>
           </RevealOnScroll>
 
-          <div className="grid grid-cols-1 gap-5 2xl:grid-cols-[1.1fr_0.85fr]">
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.2fr_0.75fr]">
             <RevealOnScroll delay={160}>
               <article
                 key={`${activeSlide.id}-case`}
@@ -391,9 +391,9 @@ export default function Testimonials() {
             <RevealOnScroll delay={220}>
               <article
                 key={`${activeSlide.id}-quote`}
-                className="min-h-[420px] rounded-[38px] bg-[#EFECFA] dark:bg-white/8 dark:border dark:border-white/10 dark:backdrop-blur-sm p-4 transition-all duration-300 sm:p-5 lg:min-h-[500px] lg:p-6"
+                className="min-h-[320px] rounded-[38px] bg-[#EFECFA] dark:bg-white/8 dark:border dark:border-white/10 dark:backdrop-blur-sm p-3 transition-all duration-300 sm:p-4 lg:min-h-[400px] lg:p-5"
               >
-                <div className="flex h-full flex-col justify-between rounded-[32px] bg-white dark:bg-white/8 p-5 sm:p-6 lg:p-7">
+                <div className="flex h-full flex-col justify-between rounded-[30px] bg-white dark:bg-white/8 p-4 sm:p-5 lg:p-6">
                   <p className="text-[16px] leading-[1.6] text-[#35236B] dark:text-white/80 sm:text-[17px] lg:text-[18px]">
                     {activeSlide.quote}
                   </p>

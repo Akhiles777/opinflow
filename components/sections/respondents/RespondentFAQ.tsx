@@ -58,21 +58,21 @@ export default function RespondentFAQ() {
   const [activeIndex, setActiveIndex] = React.useState<number | null>(1);
 
   return (
-    <section className="bg-[#FCFBFF] px-4 py-16 lg:py-24">
-      <div className="mx-auto max-w-[1780px] rounded-[36px] border border-[#DDD6F6] bg-[#FCFBFF] px-5 sm:px-8 lg:px-12 py-12 lg:py-16">
+    <section className="bg-[#FCFBFF] px-4 py-12 lg:py-16">
+      <div className="mx-auto max-w-[1780px] rounded-[28px] border border-[#DDD6F6] bg-[#FCFBFF] px-5 sm:px-7 lg:px-10 py-8 lg:py-10">
         <RevealOnScroll>
-          <h2 className="text-center font-manrope text-[34px] sm:text-[48px] lg:text-[64px] leading-[0.95] tracking-[-0.05em] font-extrabold text-[#24115D] mb-8 lg:mb-10">
+          <h2 className="text-center font-manrope text-[28px] sm:text-[36px] lg:text-[44px] leading-[0.95] tracking-[-0.04em] font-extrabold text-[#24115D] mb-6 lg:mb-8">
             Частые вопросы
           </h2>
         </RevealOnScroll>
 
-        <div className="max-w-[1420px] mx-auto flex flex-col gap-4">
+        <div className="max-w-[1420px] mx-auto flex flex-col gap-3">
           {faqs.map((faq, index) => {
             const active = activeIndex === index;
             return (
               <div key={faq.q}>
                 <div
-                  className={`rounded-[24px] border overflow-hidden transition-colors duration-300 ease-out ${
+                  className={`rounded-[18px] border overflow-hidden transition-colors duration-300 ease-out ${
                     active
                       ? "border-[#D8D0F4] bg-[#F3EEFF]"
                       : "border-[#DDD6F6] bg-white/90"
@@ -81,9 +81,9 @@ export default function RespondentFAQ() {
                   <button
                     type="button"
                     onClick={() => setActiveIndex(active ? null : index)}
-                    className="w-full flex items-center justify-between gap-4 px-5 sm:px-6 lg:px-7 py-5 text-left"
+                    className="w-full flex items-center justify-between gap-4 px-4 sm:px-5 lg:px-6 py-4 text-left"
                   >
-                    <span className="text-[18px] sm:text-[22px] lg:text-[26px] leading-snug tracking-[-0.04em] font-medium text-[#24115D]">
+                    <span className="text-[15px] sm:text-[17px] lg:text-[19px] leading-snug tracking-[-0.03em] font-medium text-[#24115D]">
                       {faq.q}
                     </span>
                     <Arrow active={active} />
@@ -94,8 +94,8 @@ export default function RespondentFAQ() {
                       active ? "max-h-[300px] opacity-100" : "max-h-0 opacity-0"
                     }`}
                   >
-                    <div className="px-5 sm:px-6 lg:px-7 pb-5">
-                      <div className="rounded-[18px] border border-[#E2DCF7] bg-white px-5 py-4 text-[15px] lg:text-[16px] leading-[1.5] text-[#4A3B7A]">
+                    <div className="px-4 sm:px-5 lg:px-6 pb-4">
+                      <div className="rounded-[14px] border border-[#E2DCF7] bg-white px-4 py-3 text-[14px] lg:text-[15px] leading-[1.5] text-[#4A3B7A]">
                         {faq.a}
                       </div>
                     </div>
