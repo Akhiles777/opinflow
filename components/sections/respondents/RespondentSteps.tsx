@@ -31,36 +31,38 @@ const steps = [
 
 export default function RespondentSteps() {
   return (
-    <section className="bg-white py-16 lg:py-20">
-      <div className="mx-auto max-w-[1400px] px-6 lg:px-16">
+    <section className="bg-[#F5F5F7] px-3 py-10 lg:px-5 lg:py-14">
+      <div className="relative overflow-hidden mx-auto max-w-[1450px] rounded-[40px] bg-[#F7F4FF] px-6 py-10 lg:px-14 lg:py-14">
 
-        <div className="flex flex-col xl:flex-row xl:items-start xl:gap-4">
+        {/* Заголовок — полная ширина над двумя колонками */}
+        <h2 className="text-[44px] sm:text-[56px] lg:text-[68px] font-[800] leading-none tracking-[-0.05em] text-[#1D0B57] mb-10">
+          4 простых шага
+        </h2>
 
-          {/* LEFT — 45% */}
-          <div className="w-full xl:w-[45%] xl:flex-shrink-0">
-            <h2 className="text-[40px] sm:text-[52px] lg:text-[62px] font-[800] leading-[0.92] tracking-[-0.05em] text-[#1D0B57]">
-              4 простых шага
-            </h2>
+        {/* Две колонки: карточки слева, ноутбук справа */}
+        <div className="flex flex-col xl:flex-row xl:items-center xl:gap-6">
 
-            <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {/* LEFT — сетка карточек */}
+          <div className="w-full xl:w-[45%] xl:shrink-0">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {steps.map((step) => (
                 <div
                   key={step.num}
-                  className={`flex flex-col justify-between rounded-[24px] p-6 min-h-[180px] transition-transform duration-300 hover:-translate-y-[2px] ${
+                  className={`flex flex-col justify-between rounded-[28px] p-6 min-h-[200px] transition-transform duration-300 hover:-translate-y-[2px] ${
                     step.lime
                       ? "bg-[#DDF247]"
-                      : "bg-white border border-[#E2D9F8]"
+                      : "border border-[#DDD4FA] bg-[#FBFAFF]"
                   }`}
                 >
-                  <span className={`text-[14px] font-[700] ${step.lime ? "text-[#4A2DB5]" : "text-[#6C3CF0]"}`}>
+                  <span className={`text-[16px] font-[700] ${step.lime ? "text-[#4A2DB5]" : "text-[#6C3CF0]"}`}>
                     {step.num}
                   </span>
 
-                  <h3 className="mt-4 whitespace-pre-line text-[20px] sm:text-[22px] font-[700] leading-[1.1] tracking-[-0.04em] text-[#1D0B57]">
+                  <h3 className="mt-5 whitespace-pre-line text-[22px] sm:text-[24px] font-[700] leading-[1.08] tracking-[-0.04em] text-[#1D0B57]">
                     {step.title}
                   </h3>
 
-                  <p className={`mt-3 text-[14px] leading-[1.55] max-w-[230px] ${step.lime ? "text-[#1D0B57]/70" : "text-[#7B7399]"}`}>
+                  <p className={`mt-4 text-[15px] leading-[1.5] max-w-[220px] ${step.lime ? "text-[#1D0B57]/70" : "text-[#7D749C]"}`}>
                     {step.desc}
                   </p>
                 </div>
@@ -68,15 +70,15 @@ export default function RespondentSteps() {
             </div>
           </div>
 
-          {/* RIGHT — 55%, ноутбук в потоке */}
-          <div className="w-full xl:w-[55%] mt-10 xl:mt-0 flex items-start justify-center xl:justify-end">
+          {/* RIGHT — ноутбук, центрирован по высоте карточек */}
+          <div className="w-full xl:w-[55%] mt-10 xl:mt-0 flex items-center justify-center xl:justify-end">
             <Image
               src="/Respondent/img_res.svg"
               alt="Платформа ПотокМнений"
-              width={780}
-              height={580}
+              width={920}
+              height={760}
               priority
-              className="w-full h-auto object-contain max-w-[500px] sm:max-w-[560px] xl:max-w-[680px] drop-shadow-[0_20px_50px_rgba(40,16,90,0.08)]"
+              className="w-full h-auto object-contain max-w-[500px] sm:max-w-[620px] xl:max-w-[780px]"
             />
           </div>
 

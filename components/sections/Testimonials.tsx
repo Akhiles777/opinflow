@@ -1,106 +1,423 @@
 "use client";
 
+import Image from "next/image";
+import { useMemo, useState } from "react";
 import RevealOnScroll from "@/components/ui/RevealOnScroll";
 
-const stats = [
-  { num: "800+", label: "исследований проведено" },
-  { num: "25 000+", label: "респондентов" },
-  { num: "15+", label: "компаний уже с нами" },
-];
+type ReviewItem = {
+  id: string;
+  brand: string;
+  text: string;
+  name: string;
+  role: string;
+  company: string;
+  initials: string;
+};
 
-const pills = ["Ритейл", "FMCG", "Финтех", "EdTech", "Медиа", "E-commerce"];
+type CaseSlide = {
+  id: string;
+  brand: string;
+  titleBefore: string;
+  highlight: string;
+  titleAfter: string;
+  summary: string;
+  result: string;
+  logo?: string;
+  logoAlt?: string;
+  logoTone?: "light" | "dark";
+  quote: string;
+  quoteName: string;
+  quoteRole: string;
+  quoteCompany: string;
+};
 
-const testimonials = [
+const reviewCards: ReviewItem[] = [
   {
-    text: "Запустили исследование за день вместо обычных двух недель. Данные точные, аналитика понятная.",
-    initials: "ГЕ",
-    name: "Галина Елизавета",
+    id: "eyfel",
+    brand: "EYFEL",
+    text: "Контакт с аудиторией всегда у нас был вслепую, пока мы не решили сначала изучить реальные запросы аудитории, а не полагаться на внутренние гипотезы. Благодаря структурированным опросам мы точно поняли, какой посыл, акция и формат подачи информации действительно важны для нашей ЦА.",
+    name: "Хвостов М.Р.",
     role: "Маркетолог",
+    company: "EYFEL",
+    initials: "ХМ",
   },
   {
-    text: "Антифрод реально работает — качество ответов на высоте. Получили чистую выборку с первого запуска.",
-    initials: "ДМ",
-    name: "Дмитрий Михайлов",
-    role: "Product Manager",
+    id: "alluri",
+    brand: "ALLURI",
+    text: "Разрабатывая отдельный бренд специально под логику маркетплейсов, мы сразу поняли: здесь побеждает не только качество, но и точное соответствие алгоритмам выбора покупателя. Предварительное исследование дало нам чёткую картину того, как люди смотрят карточки и на каком этапе принимают решение о корзине.",
+    name: "Хегай И.В.",
+    role: "Бренд-менеджер",
+    company: "ALLURI",
+    initials: "ХИ",
   },
   {
-    text: "Провели NPS-исследование на 300 респондентов. Результаты за 2 дня, PDF-отчёт — в один клик.",
-    initials: "ЕВ",
-    name: "Елена Василенко",
-    role: "Директор по маркетингу",
+    id: "angfa",
+    brand: "ANGFA",
+    text: "Мы заранее протестировали гипотезы запуска и поняли, какие барьеры мешают покупке, какие формулировки вызывают доверие и как должен выглядеть первый продукт для локального рынка. Это дало возможность сократить риск дорогих ошибок до старта продаж.",
+    name: "Ливенцев В.В.",
+    role: "CMO ANGFA в России и СНГ",
+    company: "ANGFA",
+    initials: "ЛВ",
   },
 ];
+
+const slides: CaseSlide[] = [
+  {
+    id: "angfa",
+    brand: "ANGFA",
+    titleBefore: "Как бренд ANGFA сэкономил",
+    highlight: "5 000 000 ₽",
+    titleAfter: "до первого запуска в России",
+    summary:
+      "До вывода бренда на рынок команда проверила упаковку, ожидания аудитории и сценарии выбора товара. Исследование помогло сократить число дорогих гипотез ещё до закупок и производства.",
+    result: "Итог: запуск за 4 месяца и экономия более 5 000 000 ₽.",
+    logo: "/Testimonials2/logo-white (1).png",
+    logoAlt: "ANGFA",
+    logoTone: "light",
+    quote:
+      "Без проб и ошибок: сначала мы собрали ответы аудитории, а уже потом принимали решения по продукту и коммуникации. Это сняло лишние расходы на тесты вслепую и ускорило выход на рынок.",
+    quoteName: "Ливенцев В.В.",
+    quoteRole: "CMO ANGFA в России и СНГ",
+    quoteCompany: "ANGFA",
+  },
+  {
+    id: "alluri",
+    brand: "ALLURI",
+    titleBefore: "Как бренд ALLURI собрал",
+    highlight: "точную продуктовую матрицу",
+    titleAfter: "до выхода на маркетплейсы",
+    summary:
+      "Команда заранее выяснила, как покупатели читают карточки, на что смотрят в составе и какие обещания действительно влияют на решение о покупке. Это позволило выстроить ассортимент и упаковку под реальные ожидания.",
+    result: "Итог: запуск прошёл без хаотичных переработок карточек и цены.",
+    quote:
+      "Мы сформировали ассортимент, упаковку и цену строго под требования аудитории. Запуск прошёл гладко, потому что ключевые решения были приняты заранее, а не после первых ошибок.",
+    quoteName: "Хегай И.В.",
+    quoteRole: "Бренд-менеджер",
+    quoteCompany: "ALLURI",
+  },
+  {
+    id: "eyfel",
+    brand: "EYFEL",
+    titleBefore: "Как EYFEL нашёл",
+    highlight: "язык аудитории",
+    titleAfter: "и усилил рекламную коммуникацию",
+    summary:
+      "Опросы помогли команде перейти от внутренних гипотез к понятным сигналам рынка: какие акции воспринимаются лучше, какой посыл работает и что действительно важно покупателю.",
+    result: "Итог: коммуникация стала точнее и ближе к реальному запросу ЦА.",
+    logo: "/Testimonials2/logo_black_crop.svg",
+    logoAlt: "EYFEL",
+    logoTone: "dark",
+    quote:
+      "Благодаря структурированным опросам мы точно поняли, какой посыл, акция и формат подачи информации действительно важны для нашей ЦА. Это позволило выстроить коммуникацию на языке потребителя.",
+    quoteName: "Хвостов М.Р.",
+    quoteRole: "Маркетолог",
+    quoteCompany: "EYFEL",
+  },
+];
+
+type MosaicTile =
+  | { kind: "logo"; src: string; alt: string; lightBg: string; darkBg: string; lightImgClass: string; invertOnDark?: boolean }
+  | { kind: "metric"; top: string; bottom: string; badge: string; lightBg: string; darkBg: string; topClass: string; badgeClass?: string }
+  | { kind: "symbol"; label: string; lightBg: string; darkBg: string; lightText: string; darkText: string };
+
+const mosaicTiles: MosaicTile[] = [
+  {
+    kind: "logo",
+    src: "/Testimonials2/2MOOD_logo_main-_2_.png",
+    alt: "2MOOD",
+    lightBg: "rounded-[28px] bg-[#F0ECFA] flex items-center justify-center p-3",
+    darkBg: "rounded-[28px] bg-white/10 flex items-center justify-center p-3",
+    lightImgClass: "h-full max-h-[60px] w-full object-contain opacity-85",
+  },
+  {
+    kind: "logo",
+    src: "/Testimonials2/logo-klient-1-Photoroom.png",
+    alt: "Natura Siberica",
+    lightBg: "rounded-[28px] bg-[#F0ECFA] flex items-center justify-center p-3",
+    darkBg: "rounded-[28px] bg-white/10 flex items-center justify-center p-3",
+    lightImgClass: "h-full max-h-[68px] w-full object-contain opacity-90",
+  },
+  {
+    kind: "metric",
+    top: "800+",
+    bottom: "исследований проведено",
+    badge: "◎",
+    lightBg: "row-span-2 rounded-[32px] bg-[#EEF67C] p-5 sm:p-6 flex flex-col justify-between",
+    darkBg: "row-span-2 rounded-[32px] bg-[#D9F326] p-5 sm:p-6 flex flex-col justify-between",
+    topClass: "text-[#1C0C4C]",
+  },
+  {
+    kind: "logo",
+    src: "/Testimonials2/fc3816fd-7346-48d2-948d-4e69bee035a3 (1).png",
+    alt: "Sammy Beauty",
+    lightBg: "rounded-[28px] bg-[#EEF67C] flex items-center justify-center p-3",
+    darkBg: "rounded-[28px] bg-[#D9F326] flex items-center justify-center p-3",
+    lightImgClass: "h-full max-h-[74px] w-full object-contain",
+  },
+  {
+    kind: "logo",
+    src: "/Testimonials2/logo_black_crop.svg",
+    alt: "EYFEL",
+    lightBg: "rounded-[28px] border border-[#D8CEF5] bg-white flex items-center justify-center p-3",
+    darkBg: "rounded-[28px] border border-white/15 bg-white/10 flex items-center justify-center p-3",
+    lightImgClass: "h-full max-h-[62px] w-full object-contain opacity-80",
+    invertOnDark: true,
+  },
+  {
+    kind: "metric",
+    top: "15+",
+    bottom: "компаний уже с нами",
+    badge: "+",
+    lightBg: "row-span-2 rounded-[32px] bg-[#ECE5FA] p-5 sm:p-6 flex flex-col justify-between",
+    darkBg: "row-span-2 rounded-[32px] bg-white/10 p-5 sm:p-6 flex flex-col justify-between",
+    topClass: "text-[#6947DF] dark:text-[#A98BFF]",
+    badgeClass: "bg-[linear-gradient(180deg,#9A73FF_0%,#6E42E5_100%)] text-white",
+  },
+  {
+    kind: "logo",
+    src: "/Testimonials2/__ (1)-Photoroom.png",
+    alt: "Gamma D'oro",
+    lightBg: "rounded-[28px] bg-[#F0ECFA] flex items-center justify-center p-3",
+    darkBg: "rounded-[28px] bg-white/10 flex items-center justify-center p-3",
+    lightImgClass: "h-full max-h-[72px] w-full object-contain opacity-85",
+  },
+  {
+    kind: "logo",
+    src: "/Testimonials2/krjx4LhlKer_zPTk7-JGVWgNMyvS7kEIZZ_KfeTnrXsN74ytEn6OglOntuD0o9r4i6BtOIqHnwzENfWuTUCOPO4j (1)-Photoroom.png",
+    alt: "La'Venti",
+    lightBg: "rounded-[28px] border border-[#D8CEF5] bg-white flex items-center justify-center p-3",
+    darkBg: "rounded-[28px] border border-white/15 bg-white/10 flex items-center justify-center p-3",
+    lightImgClass: "h-full max-h-[72px] w-full object-contain opacity-85",
+  },
+  {
+    kind: "symbol",
+    label: "S.",
+    lightBg: "rounded-[28px] bg-[#EEF67C] flex items-center justify-center text-[44px] font-semibold tracking-[-0.08em]",
+    darkBg: "rounded-[28px] bg-[#D9F326] flex items-center justify-center text-[44px] font-semibold tracking-[-0.08em]",
+    lightText: "text-[#7B7396]",
+    darkText: "text-[#1C0C4C]",
+  },
+  {
+    kind: "symbol",
+    label: "+7",
+    lightBg: "rounded-[28px] bg-[#F0ECFA] flex items-center justify-center text-[36px] font-medium tracking-[-0.06em]",
+    darkBg: "rounded-[28px] bg-white/10 flex items-center justify-center text-[36px] font-medium tracking-[-0.06em]",
+    lightText: "text-[#8D84A7]",
+    darkText: "text-white/60",
+  },
+];
+
+function ArrowButton({ direction, onClick }: { direction: "prev" | "next"; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={direction === "prev" ? "Предыдущий отзыв" : "Следующий отзыв"}
+      className="flex h-12 w-12 items-center justify-center rounded-full border border-[#D8CEF5] bg-white text-[#2C1A67] dark:border-white/20 dark:bg-white/10 dark:text-white transition-all duration-200 hover:border-[#B9ACEC] hover:bg-[#F7F4FF] dark:hover:border-white/35 dark:hover:bg-white/18"
+    >
+      <span className="text-[20px] leading-none">
+        {direction === "prev" ? "‹" : "›"}
+      </span>
+    </button>
+  );
+}
+
+function ReviewAvatar({ item }: { item: ReviewItem }) {
+  return (
+    <div className="flex h-14 w-14 items-center justify-center rounded-[18px] bg-[linear-gradient(180deg,#A67EFF_0%,#6D43E5_100%)] text-[18px] font-semibold tracking-[-0.04em] text-white shrink-0">
+      {item.initials}
+    </div>
+  );
+}
+
+function ReviewCard({ item }: { item: ReviewItem }) {
+  return (
+    <article className="flex min-h-[300px] flex-col justify-between rounded-[34px] border border-[#D8CEF5] dark:border-white/12 dark:bg-white/5 dark:backdrop-blur-sm p-6 lg:min-h-[320px] lg:p-7">
+      <p className="text-[16px] leading-[1.54] tracking-[-0.02em] text-[#35236B] dark:text-white/80 sm:text-[17px] lg:text-[18px]">
+        {item.text}
+      </p>
+      <div className="mt-8 flex items-center gap-4">
+        <ReviewAvatar item={item} />
+        <div>
+          <div className="text-[20px] font-semibold tracking-[-0.04em] text-[#24115D] dark:text-white">
+            {item.name}
+          </div>
+          <div className="mt-1 text-[16px] text-[#8A80A8] dark:text-white/50">
+            {item.role} · {item.company}
+          </div>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function MosaicTile({ tile }: { tile: MosaicTile }) {
+  if (tile.kind === "logo") {
+    const darkImgClass = `h-full max-h-[70px] w-full object-contain opacity-65${tile.invertOnDark ? " invert" : ""}`;
+    return (
+      <>
+        <div className={`${tile.lightBg} dark:hidden`}>
+          <Image src={tile.src} alt={tile.alt} width={180} height={80} className={tile.lightImgClass} />
+        </div>
+        <div className={`${tile.darkBg} hidden dark:flex`}>
+          <Image src={tile.src} alt={tile.alt} width={180} height={80} className={darkImgClass} />
+        </div>
+      </>
+    );
+  }
+  if (tile.kind === "symbol") {
+    return (
+      <>
+        <div className={`${tile.lightBg} ${tile.lightText} dark:hidden`}>{tile.label}</div>
+        <div className={`${tile.darkBg} ${tile.darkText} hidden dark:flex`}>{tile.label}</div>
+      </>
+    );
+  }
+  return (
+    <>
+      <div className={`${tile.lightBg} dark:hidden`}>
+        <div className={`flex h-12 w-12 items-center justify-center rounded-[16px] text-[22px] font-semibold ${tile.badgeClass ?? "bg-[#D8EB16] text-white"}`}>
+          {tile.badge}
+        </div>
+        <div>
+          <div className={`text-[50px] leading-none tracking-[-0.06em] font-semibold ${tile.topClass}`}>{tile.top}</div>
+          <p className="mt-2 max-w-[130px] text-[16px] leading-[1.2] text-[#35236B]">{tile.bottom}</p>
+        </div>
+      </div>
+      <div className={`${tile.darkBg} hidden dark:flex`}>
+        <div className={`flex h-12 w-12 items-center justify-center rounded-[16px] text-[22px] font-semibold ${tile.badgeClass ?? "bg-[#1C0C4C]/20 text-[#1C0C4C]"}`}>
+          {tile.badge}
+        </div>
+        <div>
+          <div className={`text-[50px] leading-none tracking-[-0.06em] font-semibold ${tile.topClass}`}>{tile.top}</div>
+          <p className="mt-2 max-w-[130px] text-[16px] leading-[1.2] text-[#1C0C4C]/70">{tile.bottom}</p>
+        </div>
+      </div>
+    </>
+  );
+}
 
 export default function Testimonials() {
-  return (
-    <section className="bg-[#F8F6FF] dark:bg-[#1C0C4C] px-4 py-16 lg:py-20 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-[1350px]">
+  const [activeIndex, setActiveIndex] = useState(0);
 
+  const activeSlide = slides[activeIndex];
+
+  const orderedReviews = useMemo(() => {
+    return reviewCards.map((_, index) => reviewCards[(activeIndex + index) % reviewCards.length]);
+  }, [activeIndex]);
+
+  const goPrev = () => setActiveIndex((c) => (c === 0 ? slides.length - 1 : c - 1));
+  const goNext = () => setActiveIndex((c) => (c === slides.length - 1 ? 0 : c + 1));
+
+  return (
+    <section className="overflow-hidden bg-[#FCFBFF] dark:bg-[#1C0C4C] px-4 py-20 sm:px-6 lg:px-8 lg:py-24">
+      <div className="mx-auto max-w-[1350px]">
         <RevealOnScroll>
-          <h2 className="text-[44px] font-semibold leading-[0.9] tracking-[-0.07em] text-[#24115D] dark:text-white sm:text-[58px] lg:text-[72px] mb-12 lg:mb-14">
-            Нам доверяют
-          </h2>
+          <div className="flex items-start justify-between gap-6">
+            <h2 className="text-[44px] font-semibold leading-[0.9] tracking-[-0.07em] text-[#24115D] dark:text-white sm:text-[58px] lg:text-[72px]">
+              Нам доверяют
+            </h2>
+            <div className="flex items-center gap-3">
+              <ArrowButton direction="prev" onClick={goPrev} />
+              <ArrowButton direction="next" onClick={goNext} />
+            </div>
+          </div>
         </RevealOnScroll>
 
-        <div className="flex flex-col lg:flex-row gap-12 items-start">
-
-          {/* LEFT — stats + pills */}
-          <div className="lg:w-[40%] flex-shrink-0">
-            <RevealOnScroll>
-              <div className="flex flex-col gap-6">
-                {stats.map((s) => (
-                  <div key={s.label}>
-                    <div className="font-manrope text-[52px] sm:text-[64px] font-[800] tracking-[-3px] leading-none text-[#6438D9] dark:text-[#A98BFF]">
-                      {s.num}
-                    </div>
-                    <div className="mt-1 text-[16px] text-[#6B5F9E] dark:text-white/60">
-                      {s.label}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </RevealOnScroll>
-
-            <RevealOnScroll delay={80}>
-              <div className="mt-8 flex flex-wrap gap-2">
-                {pills.map((p) => (
-                  <span
-                    key={p}
-                    className="bg-[#F3F0FF] dark:bg-white/10 text-[#6438D9] dark:text-[#A98BFF] rounded-full px-4 py-2 text-[14px] font-medium"
-                  >
-                    {p}
-                  </span>
-                ))}
-              </div>
-            </RevealOnScroll>
+        <RevealOnScroll delay={80}>
+          <div className="mt-10 grid grid-cols-1 gap-5 xl:grid-cols-3">
+            {orderedReviews.map((item) => (
+              <ReviewCard key={`${activeSlide.id}-${item.id}`} item={item} />
+            ))}
           </div>
+        </RevealOnScroll>
 
-          {/* RIGHT — testimonial cards */}
-          <div className="lg:w-[60%] flex flex-col gap-4">
-            {testimonials.map((t, i) => (
-              <RevealOnScroll key={t.name} direction="right" delay={i * 80}>
-                <div className="bg-white dark:bg-white/6 dark:border dark:border-white/10 rounded-[20px] p-6 border border-[#F0EBF8]">
-                  <p className="text-[15px] lg:text-[16px] leading-[1.65] text-[#35236B] dark:text-white/80">
-                    «{t.text}»
+        <div className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-[420px_1fr]">
+          <RevealOnScroll delay={120}>
+            <div className="grid grid-cols-3 auto-rows-[110px] gap-4 sm:auto-rows-[125px] lg:auto-rows-[132px]">
+              {mosaicTiles.map((tile, index) => (
+                <MosaicTile key={`${tile.kind}-${index}`} tile={tile} />
+              ))}
+            </div>
+          </RevealOnScroll>
+
+          <div className="grid grid-cols-1 gap-5 2xl:grid-cols-[1.1fr_0.85fr]">
+            <RevealOnScroll delay={160}>
+              <article
+                key={`${activeSlide.id}-case`}
+                className="flex min-h-[460px] flex-col justify-between rounded-[38px] bg-[#EFECFA] dark:bg-white/8 dark:border dark:border-white/10 dark:backdrop-blur-sm p-6 transition-all duration-300 sm:p-8 lg:min-h-[500px] lg:p-9"
+              >
+                <div>
+                  <h3 className="max-w-[15ch] text-[30px] font-semibold leading-[1.02] tracking-[-0.06em] text-[#24115D] dark:text-white sm:text-[36px] lg:max-w-[14ch] lg:text-[54px] lg:leading-[0.95]">
+                    {activeSlide.titleBefore}{" "}
+                    <span className="box-decoration-clone rounded-[16px] bg-[#EAF45D] dark:bg-[#D9F326] dark:text-[#1C0C4C] px-2 py-0.5">
+                      {activeSlide.highlight}
+                    </span>{" "}
+                    {activeSlide.titleAfter}
+                  </h3>
+                  <p className="mt-5 max-w-[34rem] text-[15px] leading-[1.62] text-[#4F417A] dark:text-white/65 sm:text-[16px] lg:mt-6 lg:text-[18px]">
+                    {activeSlide.summary}
                   </p>
-                  <div className="mt-5 flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-[#6438D9] text-white flex items-center justify-center text-[13px] font-bold shrink-0">
-                      {t.initials}
-                    </div>
-                    <div>
-                      <div className="text-[15px] font-semibold text-[#1C0C4C] dark:text-white">
-                        {t.name}
+                  <p className="mt-4 max-w-[30rem] text-[15px] leading-[1.5] text-[#24115D] dark:text-white/80 sm:text-[16px]">
+                    {activeSlide.result}
+                  </p>
+                </div>
+
+                <div className="mt-10 flex flex-wrap items-end justify-between gap-5">
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8A80A8] dark:text-white/40 sm:text-[12px]">
+                    {activeSlide.brand}
+                  </span>
+                  <div className="flex max-w-full items-center justify-end">
+                    {activeSlide.logo ? (
+                      <div className={activeSlide.logoTone === "light" ? "rounded-[22px] bg-[#2B1768] px-4 py-3 shadow-[0_12px_30px_rgba(40,18,94,0.18)]" : ""}>
+                        <Image
+                          src={activeSlide.logo}
+                          alt={activeSlide.logoAlt ?? activeSlide.brand}
+                          width={220}
+                          height={82}
+                          className="max-h-[58px] w-auto max-w-full object-contain sm:max-h-[68px] lg:max-h-[76px]"
+                        />
                       </div>
-                      <div className="text-[13px] text-[#9B8FC9] dark:text-white/50">
-                        {t.role}
+                    ) : (
+                      <span className="text-[40px] font-semibold tracking-[-0.08em] text-[#6D6788] dark:text-white/50 sm:text-[54px] lg:text-[64px]">
+                        {activeSlide.brand}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </article>
+            </RevealOnScroll>
+
+            <RevealOnScroll delay={220}>
+              <article
+                key={`${activeSlide.id}-quote`}
+                className="min-h-[420px] rounded-[38px] bg-[#EFECFA] dark:bg-white/8 dark:border dark:border-white/10 dark:backdrop-blur-sm p-4 transition-all duration-300 sm:p-5 lg:min-h-[500px] lg:p-6"
+              >
+                <div className="flex h-full flex-col justify-between rounded-[32px] bg-white dark:bg-white/8 p-5 sm:p-6 lg:p-7">
+                  <p className="text-[16px] leading-[1.6] text-[#35236B] dark:text-white/80 sm:text-[17px] lg:text-[18px]">
+                    {activeSlide.quote}
+                  </p>
+                  <div className="mt-8 flex items-center gap-4">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-[18px] bg-[linear-gradient(180deg,#A67EFF_0%,#6D43E5_100%)] text-[18px] font-semibold tracking-[-0.04em] text-white shrink-0">
+                      {activeSlide.quoteName.slice(0, 1)}
+                      {activeSlide.quoteName.split(" ")[0].slice(1, 2)}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-[18px] font-semibold tracking-[-0.04em] text-[#24115D] dark:text-white sm:text-[20px]">
+                        {activeSlide.quoteName}
+                      </div>
+                      <div className="mt-1 text-[14px] leading-[1.35] text-[#8A80A8] dark:text-white/50 sm:text-[16px]">
+                        {activeSlide.quoteRole}
+                      </div>
+                      <div className="mt-1 text-[12px] font-semibold uppercase tracking-[0.18em] text-[#A095BD] dark:text-white/35">
+                        {activeSlide.quoteCompany}
                       </div>
                     </div>
                   </div>
                 </div>
-              </RevealOnScroll>
-            ))}
+              </article>
+            </RevealOnScroll>
           </div>
-
         </div>
       </div>
     </section>
