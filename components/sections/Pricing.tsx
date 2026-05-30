@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 const plans = [
   {
     name: "Basic",
@@ -10,6 +12,7 @@ const plans = [
       "Доступ к базе респондентов",
     ],
     button: "green",
+    href: "/register?role=CLIENT&plan=basic",
   },
   {
     name: "Pro",
@@ -21,6 +24,7 @@ const plans = [
       "Запуск опроса под ключ",
     ],
     button: "violet",
+    href: "/register?role=CLIENT&plan=pro",
   },
   {
     name: "Enterprise",
@@ -31,6 +35,7 @@ const plans = [
       "Личный менеджер",
     ],
     button: "mix",
+    href: "/#contacts",
   },
 ];
 
@@ -87,17 +92,18 @@ function PlanCard({ plan }: { plan: typeof plans[number] }) {
       </div>
 
       {/* button */}
-      <button
+      <Link
+        href={plan.href}
         className={`relative z-10 mt-10 h-[58px] w-full rounded-[18px] text-[20px] font-medium transition-all duration-300 hover:scale-[1.01] ${
           plan.button === "violet"
             ? "bg-[#6438D9] text-white"
             : plan.button === "mix"
             ? "bg-[linear-gradient(90deg,#6438D9_0%,#7B4FF0_60%,#D9F326_100%)] text-white"
             : "bg-[linear-gradient(90deg,#D9F326_0%,#E5F667_100%)] text-[#1C0C4C]"
-        }`}
+        } inline-flex items-center justify-center`}
       >
         ✦ Выбрать тариф
-      </button>
+      </Link>
     </div>
   );
 }

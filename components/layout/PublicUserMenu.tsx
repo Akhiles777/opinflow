@@ -35,7 +35,7 @@ function getMenuItems(role: Role) {
     return [
       { href: "/client",          label: "Кабинет",  icon: LayoutDashboard },
       { href: "/client/wallet",   label: "Кошелёк",  icon: Wallet },
-      { href: "/client/profile",  label: "Профиль",  icon: User },
+      { href: "/client/settings", label: "Профиль",  icon: User },
     ];
   }
   return [

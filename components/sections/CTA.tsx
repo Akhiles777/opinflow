@@ -115,9 +115,13 @@ export default function CTA() {
                   свой первый опрос за 5 минут
                 </p>
 
-                <Link href="/register?role=CLIENT">
-                  <button
-                    className="
+                <Link
+                  href="/register?role=CLIENT"
+                  className="
+                      inline-flex
+                      items-center
+                      justify-center
+
                       mt-10
 
                       h-[60px]
@@ -143,9 +147,8 @@ export default function CTA() {
 
                       hover:scale-[1.02]
                     "
-                  >
-                    ✦ Регистрация
-                  </button>
+                >
+                  ✦ Регистрация
                 </Link>
               </div>
             </div>

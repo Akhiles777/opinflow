@@ -13,7 +13,7 @@ const stats = [
 
 export default function Hero() {
   return (
-    <section className="px-4 pt-4 lg:px-6 lg:pt-6 bg-white dark:bg-[#1C0C4C]">
+    <section id="top" className="px-4 pt-4 lg:px-6 lg:pt-6 bg-white dark:bg-[#1C0C4C]">
       <div className="relative overflow-hidden rounded-[40px] bg-[linear-gradient(135deg,#EEE8FF_0%,#F0EAFF_50%,#F8F5FF_100%)] dark:bg-[#1A0748] min-h-[680px]">
 
         {/* Светлый фон */}
@@ -96,7 +96,7 @@ export default function Hero() {
                     ✦ Запустить опрос
                   </Link>
                   <Link
-                    href="#demo"
+                    href="/#contacts"
                     className="inline-flex items-center rounded-xl px-7 py-3.5 text-base font-medium border border-[#C8BFEF] bg-white/70 text-[#2B1B67] dark:border-white/25 dark:bg-white/10 dark:text-white backdrop-blur-sm hover:bg-white dark:hover:bg-white/18 transition-all duration-200"
                   >
                     Заказать демо

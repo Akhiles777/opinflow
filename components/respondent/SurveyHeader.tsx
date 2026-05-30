@@ -21,11 +21,11 @@ export default function SurveyHeader() {
       }
     : null;
   const links = [
-    { label: "Главная", href: "#top" },
-    { label: "Респондентам", href: "#respondents" },
-    { label: "Бизнесу", href: "#business" },
-    { label: "О нас", href: "#about" },
-    { label: "Контакты", href: "#contacts" },
+    { label: "Главная", href: "/#top" },
+    { label: "Респондентам", href: "/respondents" },
+    { label: "Бизнесу", href: "/#business" },
+    { label: "О нас", href: "/#about" },
+    { label: "Контакты", href: "/#contacts" },
   ];
 
   return (

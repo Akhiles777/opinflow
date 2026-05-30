@@ -27,7 +27,7 @@ export default function Features() {
   return (
     <section
       className="bg-white dark:bg-[#1C0C4C] px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-24"
-      id="features"
+      id="about"
     >
       <div className="mx-auto max-w-7xl">
         <RevealOnScroll>

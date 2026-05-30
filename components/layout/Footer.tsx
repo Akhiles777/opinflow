@@ -5,11 +5,11 @@ import Link from "next/link";
 import SmoothHashLink from "@/components/ui/SmoothHashLink";
 
 const navLinks = [
-  { label: "Главная", href: "#top" },
-  { label: "Респондентам", href: "#respondents", accent: true },
-  { label: "Бизнесу", href: "#business" },
-  { label: "О нас", href: "#about" },
-  { label: "Контакты", href: "#contacts" },
+  { label: "Главная", href: "/#top" },
+  { label: "Респондентам", href: "/respondents", accent: true },
+  { label: "Бизнесу", href: "/#business" },
+  { label: "О нас", href: "/#about" },
+  { label: "Контакты", href: "/#contacts" },
 ];
 
 const documentLinks = [
@@ -45,7 +45,7 @@ const documentLinks = [
 
 export default function Footer() {
   return (
-    <footer className="bg-[#FCFBFF] dark:bg-[#1C0C4C] px-3 pb-4 sm:px-4 lg:px-6 lg:pb-6">
+    <footer id="contacts" className="bg-[#FCFBFF] dark:bg-[#1C0C4C] px-3 pb-4 sm:px-4 lg:px-6 lg:pb-6">
       <div
         className="
           relative
@@ -181,22 +181,17 @@ export default function Footer() {
             <div className="mt-7 space-y-4">
               <div>
                 <p className="text-white/70 text-[15px]">Сотрудничество:</p>
-                <a href="mailto:info@potokmneny.ru" className="mt-1 inline-block text-[#E5F667] text-[16px] underline underline-offset-4 hover:text-white transition-colors">
-                  info@potokmneny.ru
-                </a>
-              </div>
-              <div>
-                <p className="text-white/70 text-[15px]">Поддержка:</p>
                 <a href="mailto:support@potokmneny.ru" className="mt-1 inline-block text-[#E5F667] text-[16px] underline underline-offset-4 hover:text-white transition-colors">
                   support@potokmneny.ru
                 </a>
               </div>
               <div>
-                <p className="text-white/70 text-[15px]">Телефон:</p>
-                <a href="tel:+79777750431" className="mt-1 inline-block text-[#E5F667] text-[16px] underline underline-offset-4 hover:text-white transition-colors">
-                  +7 977 775 04 31
+                <p className="text-white/70 text-[15px]">Правовые обращения:</p>
+                <a href="mailto:gmetalnikov1993@gmail.com" className="mt-1 inline-block text-[#E5F667] text-[16px] underline underline-offset-4 hover:text-white transition-colors">
+                gmetalnikov1993@gmail.com
                 </a>
               </div>
+              
             </div>
           </div>
 

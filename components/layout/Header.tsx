@@ -11,11 +11,11 @@ import SmoothHashLink from "@/components/ui/SmoothHashLink";
 import PublicUserMenu from "@/components/layout/PublicUserMenu";
 
 const links = [
-  { label: "Главная",      href: "#top" },
+  { label: "Главная",      href: "/#top" },
   { label: "Респондентам", href: "/respondents" },
-  { label: "Бизнесу",     href: "#business" },
-  { label: "О нас",       href: "#about" },
-  { label: "Контакты",    href: "#contacts" },
+  { label: "Бизнесу",     href: "/#business" },
+  { label: "О нас",       href: "/#about" },
+  { label: "Контакты",    href: "/#contacts" },
 ];
 
 export default function Header({ dark: _dark }: { dark?: boolean } = {}) {

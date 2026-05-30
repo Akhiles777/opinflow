@@ -14,18 +14,19 @@ export default function SmoothHashLink({ href, onClick, ...rest }: Props) {
         onClick?.(e);
         if (e.defaultPrevented) return;
 
-        
-        if (!href.startsWith("#")) return;
-        const id = href.slice(1);
+        const isSamePageHash = href.startsWith("#");
+        const isHomeHash = href.startsWith("/#") && window.location.pathname === "/";
+        if (!isSamePageHash && !isHomeHash) return;
+
+        const id = href.slice(href.indexOf("#") + 1);
         const el = document.getElementById(id);
         if (!el) return;
 
         e.preventDefault();
         el.scrollIntoView({ behavior: "smooth", block: "start" });
-        history.replaceState(null, "", href);
+        history.replaceState(null, "", isSamePageHash ? href : `/#${id}`);
       }}
       {...rest}
     />
   );
 }
-
