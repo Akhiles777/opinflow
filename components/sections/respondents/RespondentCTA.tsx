@@ -1,49 +1,196 @@
 "use client";
+
+import RevealOnScroll from "@/components/ui/RevealOnScroll";
 import Image from "next/image";
 import Link from "next/link";
-import RevealOnScroll from "@/components/ui/RevealOnScroll";
 
 export default function RespondentCTA() {
   return (
-    <section className="bg-white px-4 lg:px-6 pb-20 pt-4">
+    <section className="bg-[#FCFBFF] dark:bg-[#160840] px-4 mt-6 mb-20">
       <RevealOnScroll>
         <div
-          className="relative overflow-hidden mx-auto max-w-[1600px] rounded-[32px] lg:rounded-[42px]"
-          style={{ background: "linear-gradient(135deg, #6438D9 0%, #3B2C7B 100%)" }}
+          className="
+            relative
+            overflow-hidden
+
+            mx-auto
+            max-w-[1600px]
+
+            rounded-[32px]
+            lg:rounded-[42px]
+
+            border
+            border-[#BFAEF3]
+
+            bg-[linear-gradient(135deg,#6438D9_0%,#7B4FF0_45%,#8F67F5_100%)]
+          "
         >
-          {/* glows */}
+          {/* glow */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
             <div className="absolute -left-[10%] top-[10%] w-[420px] h-[420px] rounded-full bg-[#A98BFF]/30 blur-3xl" />
+
             <div className="absolute right-[-10%] top-[-10%] w-[520px] h-[520px] rounded-full bg-[#8E66FF]/20 blur-3xl" />
+
+            <div className="absolute bottom-[-20%] left-[30%] w-[420px] h-[420px] rounded-full bg-[#CDBDFF]/20 blur-3xl" />
           </div>
 
-          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 items-center">
+          {/* curved lines */}
+          <div className="absolute inset-0 opacity-10 pointer-events-none">
+            <div className="absolute -top-[300px] right-[-180px] w-[900px] h-[900px] rounded-full border border-white/30" />
+
+            <div className="absolute -bottom-[500px] left-[10%] w-[1000px] h-[1000px] rounded-full border border-white/20" />
+          </div>
+
+          {/* content */}
+          <div
+            className="
+              relative
+              z-10
+
+              grid
+              grid-cols-1
+              lg:grid-cols-2
+
+              items-center
+
+              gap-10
+              lg:gap-0
+            "
+          >
             {/* LEFT */}
-            <div className="px-6 sm:px-10 lg:px-16 pt-14 pb-14 lg:pb-0 lg:min-h-[500px] flex flex-col justify-center">
-              <div className="max-w-[520px]">
-                <h2 className="font-manrope text-white text-[34px] sm:text-[48px] lg:text-[60px] leading-[1.0] tracking-[-0.05em] font-extrabold">
-                  Готов начать<br />зарабатывать<br />на своём мнении?
-                </h2>
-                <p className="mt-6 text-white/75 text-[16px] sm:text-[18px] leading-[1.5] max-w-[420px]">
-                  Регистрация займёт несколько минут. Первые опросы доступны сразу после подтверждения.
-                </p>
-                <Link
-                  href="/register?role=RESPONDENT"
-                  className="mt-10 inline-flex h-[54px] items-center rounded-[16px] bg-[#E5F667] px-8 text-[16px] font-semibold text-[#1C0C4C] transition-transform hover:scale-[1.02]"
+            <div
+              className="
+                px-6
+                sm:px-10
+                lg:px-16
+
+                pt-14
+                lg:pt-0
+
+                pb-0
+                lg:pb-0
+
+                lg:min-h-[560px]
+
+                flex
+                flex-col
+                justify-center
+              "
+            >
+              <div className="max-w-[620px]">
+                <h2
+                  className="
+                    text-white
+
+                    text-[38px]
+                    sm:text-[52px]
+                    lg:text-[72px]
+
+                    leading-[0.92]
+
+                    tracking-[-0.06em]
+
+                    font-semibold
+                  "
                 >
-                  Регистрация
+                  Готовы начать исследование?
+                </h2>
+
+                <p
+                  className="
+                    mt-6
+
+                    text-white/95
+
+                    text-[17px]
+                    sm:text-[19px]
+                    lg:text-[22px]
+
+                    leading-[1.4]
+
+                    max-w-[520px]
+                  "
+                >
+                  Зарегистрируйтесь сейчас и запустите
+                  свой первый опрос за 5 минут
+                </p>
+
+                <Link href="/register?role=RESPONDENT">
+                  <button
+                    className="
+                      mt-10
+
+                      h-[60px]
+                      lg:h-[64px]
+
+                      px-7
+                      lg:px-8
+
+                      rounded-[18px]
+                      lg:rounded-[20px]
+
+                      bg-[linear-gradient(180deg,#E5F667_0%,#D9F326_100%)]
+
+                      text-[#1C0C4C]
+
+                      text-[17px]
+                      lg:text-[18px]
+
+                      font-semibold
+
+                      transition-transform
+                      duration-300
+
+                      hover:scale-[1.02]
+                    "
+                  >
+                    ✦ Регистрация
+                  </button>
                 </Link>
               </div>
             </div>
 
-            {/* RIGHT — no RevealOnScroll on outer div */}
-            <div className="relative flex items-end justify-center lg:justify-end overflow-hidden min-h-[240px] lg:min-h-[500px]">
-              <div className="relative w-full max-w-[600px] h-[240px] lg:h-[500px]">
+            {/* RIGHT */}
+            <div
+              className="
+                relative
+
+                flex
+                items-end
+                justify-center
+                lg:justify-end
+
+                min-h-[260px]
+                sm:min-h-[320px]
+                md:min-h-[420px]
+                lg:min-h-[560px]
+              "
+            >
+              <div
+                className="
+                  relative
+
+                  w-full
+
+                  h-[260px]
+                  sm:h-[320px]
+                  md:h-[420px]
+                  lg:h-[560px]
+
+                  max-w-[760px]
+                "
+              >
                 <Image
-                  src="/Respondent/img_res2.svg"
-                  alt="Платформа ПотокМнений"
+                  src="/cta.svg"
+                  alt="CTA Illustration"
                   fill
-                  className="object-contain object-bottom"
+                  priority
+                  className="
+                    object-contain
+                    object-bottom
+
+                    lg:object-bottom-right
+                  "
                 />
               </div>
             </div>

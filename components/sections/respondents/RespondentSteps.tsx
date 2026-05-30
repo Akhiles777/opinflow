@@ -4,11 +4,11 @@ import Image from "next/image";
 
 export default function RespondentSteps() {
   return (
-    <section className="bg-white pt-10 pb-20 lg:pt-12 lg:pb-28 overflow-hidden">
+    <section className="bg-white dark:bg-[#160840] pt-10 pb-20 lg:pt-12 lg:pb-28 overflow-hidden">
       <div className="mx-auto max-w-[1400px] px-6 lg:px-16">
 
         {/* Заголовок */}
-        <h2 className="text-[40px] sm:text-[54px] lg:text-[68px] font-[800] leading-none tracking-[-0.05em] text-[#1D0B57] mb-8 lg:mb-10">
+        <h2 className="text-[40px] sm:text-[54px] lg:text-[68px] font-[800] leading-none tracking-[-0.05em] text-[#1D0B57] dark:text-white mb-8 lg:mb-10">
           4 простых шага
         </h2>
 
@@ -33,11 +33,11 @@ export default function RespondentSteps() {
           ].map((step) => (
             <div
               key={step.num}
-              className={`rounded-[24px] p-6 ${step.lime ? "bg-[#DDF247]" : "bg-white border border-[#E2D9F8]"}`}
+              className={`rounded-[24px] p-6 ${step.lime ? "bg-[#DDF247]" : "bg-white dark:bg-white/[0.07] border border-[#E2D9F8] dark:border-white/10"}`}
             >
-              <span className={`text-[14px] font-[700] ${step.lime ? "text-[#4A2DB5]" : "text-[#7C5CF5]"}`}>{step.num}</span>
-              <h3 className="mt-4 whitespace-pre-line text-[20px] font-[700] leading-[1.1] tracking-[-0.04em] text-[#1D0B57]">{step.title}</h3>
-              <p className={`mt-3 text-[14px] leading-[1.55] ${step.lime ? "text-[#1D0B57]/65" : "text-[#8A80A8]"}`}>{step.desc}</p>
+              <span className={`text-[14px] font-[700] ${step.lime ? "text-[#4A2DB5]" : "text-[#7C5CF5] dark:text-[#9B7FFF]"}`}>{step.num}</span>
+              <h3 className={`mt-4 whitespace-pre-line text-[20px] font-[700] leading-[1.1] tracking-[-0.04em] text-[#1D0B57] ${step.lime ? "" : "dark:text-white"}`}>{step.title}</h3>
+              <p className={`mt-3 text-[14px] leading-[1.55] ${step.lime ? "text-[#1D0B57]/65" : "text-[#8A80A8] dark:text-white/50"}`}>{step.desc}</p>
             </div>
           ))}
         </div>
@@ -60,7 +60,7 @@ export default function RespondentSteps() {
               width={960}
               height={760}
               priority
-              className="w-full h-auto object-contain drop-shadow-[0_30px_60px_rgba(28,12,76,0.10)]"
+              className="w-full h-auto object-contain drop-shadow-[0_30px_60px_rgba(28,12,76,0.10)] dark:drop-shadow-[0_30px_60px_rgba(100,56,217,0.30)]"
             />
           </div>
 
@@ -71,15 +71,15 @@ export default function RespondentSteps() {
           >
             {/* 01 */}
             <div
-              className="flex-1 flex flex-col justify-between rounded-[24px] p-6 bg-white border border-[#E2D9F8] hover:-translate-y-[2px] transition-transform duration-300"
+              className="flex-1 flex flex-col justify-between rounded-[24px] p-6 bg-white dark:bg-white/[0.07] border border-[#E2D9F8] dark:border-white/10 hover:-translate-y-[2px] transition-transform duration-300"
               style={{ minHeight: "200px" }}
             >
-              <span className="text-[14px] font-[700] text-[#7C5CF5]">01</span>
+              <span className="text-[14px] font-[700] text-[#7C5CF5] dark:text-[#9B7FFF]">01</span>
               <div>
-                <h3 className="whitespace-pre-line text-[20px] lg:text-[22px] font-[700] leading-[1.1] tracking-[-0.04em] text-[#1D0B57] mt-4">
+                <h3 className="whitespace-pre-line text-[20px] lg:text-[22px] font-[700] leading-[1.1] tracking-[-0.04em] text-[#1D0B57] dark:text-white mt-4">
                   {"Зарегистрируйся\nза 1 минуту"}
                 </h3>
-                <p className="mt-3 text-[13px] lg:text-[14px] leading-[1.55] text-[#8A80A8]">
+                <p className="mt-3 text-[13px] lg:text-[14px] leading-[1.55] text-[#8A80A8] dark:text-white/50">
                   Укажи имя, почту и создай пароль
                 </p>
               </div>
@@ -87,15 +87,15 @@ export default function RespondentSteps() {
 
             {/* 02 */}
             <div
-              className="flex-1 flex flex-col justify-between rounded-[24px] p-6 bg-white border border-[#E2D9F8] hover:-translate-y-[2px] transition-transform duration-300"
+              className="flex-1 flex flex-col justify-between rounded-[24px] p-6 bg-white dark:bg-white/[0.07] border border-[#E2D9F8] dark:border-white/10 hover:-translate-y-[2px] transition-transform duration-300"
               style={{ minHeight: "200px" }}
             >
-              <span className="text-[14px] font-[700] text-[#7C5CF5]">02</span>
+              <span className="text-[14px] font-[700] text-[#7C5CF5] dark:text-[#9B7FFF]">02</span>
               <div>
-                <h3 className="whitespace-pre-line text-[20px] lg:text-[22px] font-[700] leading-[1.1] tracking-[-0.04em] text-[#1D0B57] mt-4">
+                <h3 className="whitespace-pre-line text-[20px] lg:text-[22px] font-[700] leading-[1.1] tracking-[-0.04em] text-[#1D0B57] dark:text-white mt-4">
                   {"Заполни\nинформацию о себе"}
                 </h3>
-                <p className="mt-3 text-[13px] lg:text-[14px] leading-[1.55] text-[#8A80A8]">
+                <p className="mt-3 text-[13px] lg:text-[14px] leading-[1.55] text-[#8A80A8] dark:text-white/50">
                   Никаких сложных анкет
                 </p>
               </div>
@@ -109,15 +109,15 @@ export default function RespondentSteps() {
           >
             {/* 03 */}
             <div
-              className="flex-1 flex flex-col justify-between rounded-[24px] p-6 bg-white border border-[#E2D9F8] hover:-translate-y-[2px] transition-transform duration-300"
+              className="flex-1 flex flex-col justify-between rounded-[24px] p-6 bg-white dark:bg-white/[0.07] border border-[#E2D9F8] dark:border-white/10 hover:-translate-y-[2px] transition-transform duration-300"
               style={{ minHeight: "200px" }}
             >
-              <span className="text-[14px] font-[700] text-[#7C5CF5]">03</span>
+              <span className="text-[14px] font-[700] text-[#7C5CF5] dark:text-[#9B7FFF]">03</span>
               <div>
-                <h3 className="whitespace-pre-line text-[20px] lg:text-[22px] font-[700] leading-[1.1] tracking-[-0.04em] text-[#1D0B57] mt-4">
+                <h3 className="whitespace-pre-line text-[20px] lg:text-[22px] font-[700] leading-[1.1] tracking-[-0.04em] text-[#1D0B57] dark:text-white mt-4">
                   {"Проходи опросы в\nудобное время"}
                 </h3>
-                <p className="mt-3 text-[13px] lg:text-[14px] leading-[1.55] text-[#8A80A8]">
+                <p className="mt-3 text-[13px] lg:text-[14px] leading-[1.55] text-[#8A80A8] dark:text-white/50">
                   Получай уведомления о новых опросах, которые подходят твоему профилю
                 </p>
               </div>

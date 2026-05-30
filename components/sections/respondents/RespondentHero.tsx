@@ -11,7 +11,7 @@ const checks = [
 
 export default function RespondentHero() {
   return (
-    <section className="bg-[#F5F5F7] px-3 pt-2 lg:px-5 lg:pt-3">
+    <section className="bg-[#F5F5F7] dark:bg-[#160840] px-3 pt-2 lg:px-5 lg:pt-3">
       <div
         className="
           relative
@@ -21,6 +21,7 @@ export default function RespondentHero() {
           lg:rounded-[40px]
 
           bg-[#F7F4FF]
+          dark:bg-[#2D1580]
 
           min-h-[620px]
           lg:min-h-[700px]
@@ -135,14 +136,15 @@ export default function RespondentHero() {
                 font-[800]
 
                 text-[#1E0D56]
+                dark:text-white
 
                 sm:text-[60px]
                 xl:text-[76px]
               "
             >
-              <span className="text-[#6C3CF0]">Зарабатывай</span>
+              <span className="text-[#6C3CF0] dark:text-[#9B7FFF]">Зарабатывай</span>
               <br />
-              <span className="text-[0.78em] tracking-[-0.04em] whitespace-nowrap">на своём мнении</span>
+              <span className="text-[0.78em] tracking-[-0.04em] whitespace-nowrap dark:text-white/90">на своём мнении</span>
             </h1>
 
             <p
@@ -155,6 +157,7 @@ export default function RespondentHero() {
                 leading-[1.55]
 
                 text-[#776B9D]
+                dark:text-white/60
 
                 sm:text-[17px]
               "
@@ -207,11 +210,12 @@ export default function RespondentHero() {
                       text-[15px]
 
                       text-[#675B94]
+                      dark:text-white/70
 
                       sm:text-[16px]
                     "
                   >
-                    <span className="text-[#6A3EF0]">✦</span>
+                    <span className="text-[#6A3EF0] dark:text-[#9B7FFF]">✦</span>
                     {item}
                   </li>
                 ))}

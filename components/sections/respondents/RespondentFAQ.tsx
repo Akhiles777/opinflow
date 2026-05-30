@@ -31,8 +31,8 @@ function Arrow({ active }: { active: boolean }) {
     <div
       className={`flex items-center justify-center w-10 h-10 rounded-full border transition-colors duration-200 shrink-0 ${
         active
-          ? "border-[#6438D9] text-[#6438D9] bg-white"
-          : "border-[#DAD4F3] text-[#1C0C4C] bg-white/70"
+          ? "border-[#6438D9] text-[#6438D9] bg-white dark:bg-white/15 dark:border-[#9B7FFF] dark:text-[#9B7FFF]"
+          : "border-[#DAD4F3] text-[#1C0C4C] bg-white/70 dark:border-white/20 dark:text-white/50 dark:bg-white/5"
       }`}
     >
       <svg
@@ -58,10 +58,10 @@ export default function RespondentFAQ() {
   const [activeIndex, setActiveIndex] = React.useState<number | null>(1);
 
   return (
-    <section className="bg-[#FCFBFF] px-4 py-12 lg:py-16">
-      <div className="mx-auto max-w-[1780px] rounded-[28px] border border-[#DDD6F6] bg-[#FCFBFF] px-5 sm:px-7 lg:px-10 py-8 lg:py-10">
+    <section className="bg-[#FCFBFF] dark:bg-[#1A0A4A] px-4 py-12 lg:py-16">
+      <div className="mx-auto max-w-[1780px] rounded-[28px] border border-[#DDD6F6] dark:border-white/10 bg-[#FCFBFF] dark:bg-[#1A0A4A] px-5 sm:px-7 lg:px-10 py-8 lg:py-10">
         <RevealOnScroll>
-          <h2 className="text-center font-manrope text-[28px] sm:text-[36px] lg:text-[44px] leading-[0.95] tracking-[-0.04em] font-extrabold text-[#24115D] mb-6 lg:mb-8">
+          <h2 className="text-center font-manrope text-[28px] sm:text-[36px] lg:text-[44px] leading-[0.95] tracking-[-0.04em] font-extrabold text-[#24115D] dark:text-white mb-6 lg:mb-8">
             Частые вопросы
           </h2>
         </RevealOnScroll>
@@ -74,8 +74,8 @@ export default function RespondentFAQ() {
                 <div
                   className={`rounded-[18px] border overflow-hidden transition-colors duration-300 ease-out ${
                     active
-                      ? "border-[#D8D0F4] bg-[#F3EEFF]"
-                      : "border-[#DDD6F6] bg-white/90"
+                      ? "border-[#D8D0F4] bg-[#F3EEFF] dark:border-white/20 dark:bg-white/10"
+                      : "border-[#DDD6F6] bg-white/90 dark:border-white/10 dark:bg-white/5"
                   }`}
                 >
                   <button
@@ -83,7 +83,7 @@ export default function RespondentFAQ() {
                     onClick={() => setActiveIndex(active ? null : index)}
                     className="w-full flex items-center justify-between gap-4 px-4 sm:px-5 lg:px-6 py-4 text-left"
                   >
-                    <span className="text-[15px] sm:text-[17px] lg:text-[19px] leading-snug tracking-[-0.03em] font-medium text-[#24115D]">
+                    <span className="text-[15px] sm:text-[17px] lg:text-[19px] leading-snug tracking-[-0.03em] font-medium text-[#24115D] dark:text-white">
                       {faq.q}
                     </span>
                     <Arrow active={active} />
@@ -95,7 +95,7 @@ export default function RespondentFAQ() {
                     }`}
                   >
                     <div className="px-4 sm:px-5 lg:px-6 pb-4">
-                      <div className="rounded-[14px] border border-[#E2DCF7] bg-white px-4 py-3 text-[14px] lg:text-[15px] leading-[1.5] text-[#4A3B7A]">
+                      <div className="rounded-[14px] border border-[#E2DCF7] dark:border-white/10 bg-white dark:bg-white/8 px-4 py-3 text-[14px] lg:text-[15px] leading-[1.5] text-[#4A3B7A] dark:text-white/65">
                         {faq.a}
                       </div>
                     </div>
