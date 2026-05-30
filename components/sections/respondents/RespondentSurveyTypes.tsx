@@ -1,100 +1,164 @@
 "use client";
+
 import Image from "next/image";
 import Link from "next/link";
-import RevealOnScroll from "@/components/ui/RevealOnScroll";
 
 const surveys = [
-  { image: "/Respondent/img_res5.svg", title: "Оценка нового дизайна упаковки сока", time: "7 минут", pay: "85 ₽", audience: "Женщины 18–35 лет" },
-  { image: "/Respondent/img_res4.svg", title: "Отношение к электромобилям в РФ", time: "12 минут", pay: "150 ₽", audience: "Автовладельцы" },
-  { image: "/Respondent/img_res3.png", title: "Предпочтения в доставке еды", time: "5 минут", pay: "45 ₽", audience: "Все респонденты" },
-  { image: "/Respondent/img_res2.svg", title: "Удобство мобильного приложения банка", time: "10 минут", pay: "120 ₽", audience: "Пользователи смартфонов" },
+  {
+    title: "Оценка нового дизайна упаковки сока",
+    time: "7 минут",
+    pay: "85 ₽",
+    audience: "Женщины 18–35 лет",
+    image: "/Respondent/img_res2.svg",
+  },
+  {
+    title: "Отношение к электромобилям в РФ",
+    time: "12 минут",
+    pay: "150 ₽",
+    audience: "Автовладельцы",
+    image: "/Respondent/img_res3.svg",
+  },
+  {
+    title: "Предпочтения в доставке еды",
+    time: "5 минут",
+    pay: "45 ₽",
+    audience: "Все респонденты",
+    image: "/Respondent/img_res4.svg",
+  },
+  {
+    title: "Удобство мобильного приложения банка",
+    time: "10 минут",
+    pay: "120 ₽",
+    audience: "Пользователи смартфонов",
+    image: "/Respondent/img_res5.svg",
+  },
 ];
 
-function ClockIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="shrink-0">
-      <circle cx="12" cy="12" r="9" stroke="#9B8FC9" strokeWidth="1.8" />
-      <path d="M12 7v5l3 3" stroke="#9B8FC9" strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
-  );
-}
-function CoinIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="shrink-0">
-      <circle cx="12" cy="12" r="9" stroke="#9B8FC9" strokeWidth="1.8" />
-      <path d="M12 7v10M9.5 9.5C9.5 8.4 10.6 7.5 12 7.5s2.5.9 2.5 2-.9 2-2.5 2-2.5.9-2.5 2 1.1 2.5 2.5 2.5 2.5-.9 2.5-2" stroke="#9B8FC9" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  );
-}
-function PeopleIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="shrink-0">
-      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="#9B8FC9" strokeWidth="1.8" strokeLinecap="round" />
-      <circle cx="9" cy="7" r="4" stroke="#9B8FC9" strokeWidth="1.8" />
-      <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="#9B8FC9" strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
-  );
-}
+const balls = [
+  { top: "12px",  left: "20px",  size: 16, color: "#7B5ED4", opacity: 0.75 },
+  { top: "44px",  right: "36px", size: 11, color: "#C8FF00", opacity: 1 },
+  { top: "30%",   left: "10%",   size: 9,  color: "#9575D4", opacity: 0.55 },
+  { bottom: "36px", left: "22%", size: 17, color: "#6B4EC0", opacity: 0.45 },
+  { bottom: "20px", right: "20%",size: 13, color: "#C8FF00", opacity: 0.85 },
+  { top: "22%",   right: "16%",  size: 8,  color: "#C8FF00", opacity: 0.9 },
+  { bottom: "18%", right: "6%",  size: 20, color: "#8B6FD4", opacity: 0.35 },
+  { top: "55%",   left: "38%",   size: 10, color: "#7B5ED4", opacity: 0.5 },
+];
 
-export default function RespondentSurveyTypes() {
+export default function RespondentSurveys() {
   return (
-    <section className="bg-white px-4 py-16 lg:py-24">
-      <div className="mx-auto max-w-[1400px] px-2 lg:px-6">
+    <section className="bg-white py-16 lg:py-24">
+      <div className="mx-auto max-w-[1400px] px-6 lg:px-16">
 
-        <RevealOnScroll>
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-5 mb-10 lg:mb-14">
-            <h2 className="font-manrope text-[32px] sm:text-[44px] lg:text-[58px] leading-[0.95] tracking-[-0.04em] font-extrabold text-[#1C0C4C]">
-              Какие опросы ты<br />будешь проходить
-            </h2>
-            <Link
-              href="/register?role=RESPONDENT"
-              className="inline-flex shrink-0 items-center gap-2 rounded-full bg-[#E5F667] px-5 py-2.5 text-[14px] font-semibold text-[#1C0C4C] transition-transform hover:scale-[1.02]"
+        {/* Шапка */}
+        <div className="flex items-start justify-between gap-6 mb-10 lg:mb-12">
+          <h2
+            className="font-manrope font-[800] text-[#1D0B57] leading-[1.0] tracking-[-0.04em]"
+            style={{ fontSize: "clamp(32px, 4vw, 54px)" }}
+          >
+            Какие опросы ты<br />будешь проходить
+          </h2>
+
+       <Link
+  href="/respondent/surveys"
+  className="flex-shrink-0 inline-flex items-center gap-4 rounded-full bg-[#6438D9] pl-7 pr-3 py-3 text-[16px] font-[600] text-white transition-all hover:bg-[#5530C4] hover:scale-[1.02] mt-2"
+>
+  Все доступные опросы
+  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#6438D9] text-[18px] font-[700]">
+    →
+  </span>
+</Link>
+        </div>
+
+        {/* 2×2 сетка */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-5">
+          {surveys.map((survey) => (
+            <div
+              key={survey.title}
+              className="group rounded-[20px] overflow-hidden border border-[#EBE5F5] transition-all duration-300 hover:-translate-y-[3px] hover:shadow-[0_16px_48px_rgba(100,56,217,0.10)] cursor-pointer"
             >
-              Все доступные опросы
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                <path d="M7 17L17 7M17 7H7M17 7v10" stroke="#1C0C4C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </Link>
-          </div>
-        </RevealOnScroll>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 lg:gap-6">
-          {surveys.map((s, i) => (
-            <RevealOnScroll key={s.title} delay={i * 80}>
-              <div className="rounded-[28px] border border-[#E8E2F5] bg-white overflow-hidden flex flex-col transition-shadow hover:shadow-[0_8px_32px_rgba(100,56,217,0.10)]">
-                <div className="flex items-center justify-center bg-[#EFEBFF] h-[200px] sm:h-[240px]">
-                  <Image
-                    src={s.image}
-                    alt={s.title}
-                    width={220}
-                    height={180}
-                    className="object-contain w-[200px] h-[160px]"
+              {/* ===== ВЕРХ — лавандовый с картинкой на весь блок ===== */}
+              <div
+                className="relative w-full overflow-hidden"
+                style={{ height: "280px", backgroundColor: "#EAE3FF" }}
+              >
+                {/* Декоративные шары */}
+                {balls.map((b, i) => (
+                  <div
+                    key={i}
+                    className="absolute rounded-full pointer-events-none"
+                    style={{
+                      top: b.top,
+                      left: b.left,
+                      right: (b as any).right,
+                      bottom: (b as any).bottom,
+                      width: b.size,
+                      height: b.size,
+                      background: b.color,
+                      opacity: b.opacity,
+                    }}
                   />
-                </div>
-                <div className="p-5 lg:p-6 flex flex-col gap-3">
-                  <div className="text-[16px] font-semibold text-[#1C0C4C] leading-[1.3]">{s.title}</div>
-                  <div className="flex flex-wrap gap-x-4 gap-y-2">
-                    <div className="flex items-center gap-1.5">
-                      <ClockIcon />
-                      <span className="text-[13px] text-[#9B8FC9]">Время</span>
-                      <span className="text-[13px] font-semibold text-[#1C0C4C]">{s.time}</span>
+                ))}
+
+                {/* Центральное свечение */}
+                <div
+                  className="absolute inset-0 pointer-events-none"
+                  style={{
+                    background: "radial-gradient(ellipse at 50% 55%, rgba(255,255,255,0.22) 0%, transparent 60%)",
+                  }}
+                />
+
+                {/* Иллюстрация — на весь блок, object-cover */}
+                <Image
+                  src={survey.image}
+                  alt={survey.title}
+                  fill
+                  className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                />
+              </div>
+
+              {/* ===== НИЗ — белый с текстом ===== */}
+              <div className="bg-white px-6 py-5">
+
+                {/* Заголовок */}
+                <h3 className="text-[18px] lg:text-[20px] font-[700] text-[#1D0B57] leading-[1.25] mb-5">
+                  {survey.title}
+                </h3>
+
+                {/* Статы горизонтально */}
+                <div className="flex flex-wrap items-start gap-x-6 gap-y-3">
+
+                  <div className="flex flex-col gap-[6px]">
+                    <div className="flex items-center gap-[7px]">
+                      <Image src="/Respondent/icon/clock.svg" alt="" width={18} height={18} />
+                      <span className="text-[14px] text-[#9585C8] font-[500]">Время прохождения</span>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <CoinIcon />
-                      <span className="text-[13px] text-[#9B8FC9]">Оплата</span>
-                      <span className="text-[13px] font-semibold text-[#6438D9]">{s.pay}</span>
+                    <span className="text-[17px] font-[700] text-[#1D0B57]">{survey.time}</span>
+                  </div>
+
+                  <div className="flex flex-col gap-[6px]">
+                    <div className="flex items-center gap-[7px]">
+                      <Image src="/Respondent/icon/moneys.svg" alt="" width={18} height={18} />
+                      <span className="text-[14px] text-[#9585C8] font-[500]">Оплата</span>
                     </div>
+                    <span className="text-[17px] font-[700] text-[#1D0B57]">{survey.pay}</span>
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <PeopleIcon />
-                    <span className="text-[13px] text-[#9B8FC9]">Аудитория</span>
-                    <span className="text-[13px] font-semibold text-[#1C0C4C]">{s.audience}</span>
+
+                  <div className="flex flex-col gap-[6px]">
+                    <div className="flex items-center gap-[7px]">
+                      <Image src="/Respondent/icon/profile.svg" alt="" width={18} height={18} />
+                      <span className="text-[14px] text-[#9585C8] font-[500]">Респонденты</span>
+                    </div>
+                    <span className="text-[17px] font-[700] text-[#1D0B57]">{survey.audience}</span>
                   </div>
+
                 </div>
               </div>
-            </RevealOnScroll>
+
+            </div>
           ))}
         </div>
+
       </div>
     </section>
   );

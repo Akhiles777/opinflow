@@ -5,32 +5,32 @@ import RevealOnScroll from "@/components/ui/RevealOnScroll";
 
 const features = [
   {
-    icon: "/WhyChoose-icon/icons 2.svg",
+    icon: "/Respondent/icon/icons 2.svg",
     title: "Честные выплаты",
     desc: "Цена указана заранее — никаких сюрпризов",
   },
   {
-    icon: "/WhyChoose-icon/icons 3.svg",
+    icon: "/Respondent/icon/icons 3.svg",
     title: "Быстро и удобно",
     desc: "Опросы занимают 3–15 минут. Проходи в любое время",
   },
   {
-    icon: "/WhyChoose-icon/icons 4.svg",
+    icon: "/Respondent/icon/icon 4.svg",
     title: "Только релевантные опросы",
     desc: "Получай предложения, которые подходят твоему возрасту, городу и интересам",
   },
   {
-    icon: "/WhyChoose-icon/icons 5.svg",
+    icon: "/Respondent/icon/icons 5.svg",
     title: "Безопасность данных",
     desc: "Твоя анонимность защищена. Мы не передаём личные данные третьим лицам",
   },
   {
-    icon: "/WhyChoose-icon/icons 6.svg",
+    icon: "/Respondent/icon/icons 6.svg",
     title: "Бонусы за активность",
     desc: "Реферальная программа, ежедневные квесты и повышенные ставки для профи",
   },
   {
-    icon: "/WhyChoose-icon/icons 7.svg",
+    icon: "/Respondent/icon/icons 7.svg",
     title: "Прозрачная статистика",
     desc: "Следи за заработком, пройденными опросами и рейтингом в личном кабинете",
   },
@@ -38,14 +38,19 @@ const features = [
 
 export default function RespondentWhyChoose() {
   return (
-    <section
-      className="relative py-16 lg:py-24 overflow-hidden"
-      style={{ background: "linear-gradient(180deg, #EDE8FF 0%, #F0ECFF 100%)" }}
-    >
-      {/* Glow blobs */}
-      <div className="absolute top-[-80px] left-[10%] w-[400px] h-[400px] rounded-full bg-[#C4B0FF]/20 blur-[100px] pointer-events-none" />
-      <div className="absolute bottom-[-60px] right-[5%] w-[350px] h-[350px] rounded-full bg-[#B49DFF]/15 blur-[90px] pointer-events-none" />
-      <div className="absolute top-[40%] left-[50%] -translate-x-1/2 w-[500px] h-[300px] rounded-full bg-[#9B7FFF]/10 blur-[120px] pointer-events-none" />
+    <section className="bg-white px-3 py-3 lg:px-5 lg:py-5">
+      <div
+        className="relative overflow-hidden mx-auto max-w-[1600px] rounded-[36px] py-16 lg:py-24"
+        style={{
+          background: "linear-gradient(180deg, rgba(237,232,255,0.45) 0%, rgba(240,236,255,0.35) 100%)",
+          border: "1.5px solid rgba(255, 255, 255, 0.75)",
+          boxShadow: "0 0 0 1px rgba(200,185,255,0.15), 0 4px 40px rgba(140,100,255,0.06)",
+        }}
+      >
+        {/* Glow blobs */}
+        <div className="absolute top-[-80px] left-[10%] w-[400px] h-[400px] rounded-full bg-[#C4B0FF]/20 blur-[100px] pointer-events-none" />
+        <div className="absolute bottom-[-60px] right-[5%] w-[350px] h-[350px] rounded-full bg-[#B49DFF]/15 blur-[90px] pointer-events-none" />
+        <div className="absolute top-[40%] left-[50%] -translate-x-1/2 w-[500px] h-[300px] rounded-full bg-[#9B7FFF]/10 blur-[120px] pointer-events-none" />
 
       <div className="relative z-10 mx-auto max-w-[1400px] px-6 lg:px-16">
 
@@ -63,11 +68,11 @@ export default function RespondentWhyChoose() {
               <div
                 className="flex flex-col h-full rounded-[28px] p-6 lg:p-7 transition-transform duration-300 hover:-translate-y-[3px]"
                 style={{
-                  background: "rgba(255, 255, 255, 0.50)",
-                  backdropFilter: "blur(24px)",
-                  WebkitBackdropFilter: "blur(24px)",
-                  border: "1.5px solid rgba(255, 255, 255, 0.85)",
-                  boxShadow: "0 8px 32px rgba(100, 56, 217, 0.08), inset 0 1px 0 rgba(255,255,255,1)",
+                  background: "rgba(255, 255, 255, 0.12)",
+                  backdropFilter: "blur(20px)",
+                  WebkitBackdropFilter: "blur(20px)",
+                  border: "1.5px solid rgba(255, 255, 255, 0.88)",
+                  boxShadow: "0 8px 32px rgba(100, 56, 217, 0.07), inset 0 1px 0 rgba(255,255,255,1)",
                 }}
               >
                 <div
@@ -91,6 +96,7 @@ export default function RespondentWhyChoose() {
             </RevealOnScroll>
           ))}
         </div>
+      </div>
       </div>
     </section>
   );
