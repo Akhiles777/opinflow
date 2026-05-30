@@ -59,14 +59,12 @@ export default function RespondentSurveys() {
             Какие опросы ты<br />будешь проходить
           </h2>
 
-       <Link
+<Link
   href="/respondent/surveys"
-  className="flex-shrink-0 inline-flex items-center gap-4 rounded-full bg-[#6438D9] pl-7 pr-3 py-3 text-[16px] font-[600] text-white transition-all hover:bg-[#5530C4] hover:scale-[1.02] mt-2"
+  className="flex-shrink-0 inline-flex items-center gap-3 rounded-full bg-[#6438D9] px-5 py-[11px] text-[15px] font-[600] text-white transition-all hover:bg-[#5530C4] hover:scale-[1.02]"
 >
   Все доступные опросы
-  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#6438D9] text-[18px] font-[700]">
-    →
-  </span>
+  <Image src="/Respondent/icon/arrow-circle-right.svg" alt="" width={24} height={24} />
 </Link>
         </div>
 
