@@ -1,9 +1,9 @@
 import * as React from "react";
-import { Wallet, ListChecks, ClipboardList, UserPlus } from "lucide-react";
 import PageHeader from "@/components/dashboard/PageHeader";
 import StatCard from "@/components/dashboard/StatCard";
 import SurveyCard from "@/components/dashboard/SurveyCard";
 import EmptyState from "@/components/dashboard/EmptyState";
+import DashboardGlyph from "@/components/dashboard/DashboardGlyph";
 import { formatRub, getRespondentOverviewData } from "@/lib/dashboard-data";
 import { requireRole } from "@/lib/auth-utils";
 
@@ -20,11 +20,11 @@ export default async function RespondentOverviewPage() {
       value: formatRub(data.balance),
       trend: data.earnedToday > 0 ? `+${formatRub(data.earnedToday)} сегодня` : "Сегодня начислений не было",
       trendUp: data.earnedToday > 0,
-      icon: <Wallet className="w-5 h-5" />,
+      icon: <DashboardGlyph name="wallet" />,
     },
-    { label: "Опросов пройдено", value: String(data.completedCount), icon: <ListChecks className="w-5 h-5" /> },
-    { label: "Доступных опросов", value: String(data.availableCount), icon: <ClipboardList className="w-5 h-5" /> },
-    { label: "Приглашено друзей", value: String(data.referralCount), icon: <UserPlus className="w-5 h-5" /> },
+    { label: "Опросов пройдено", value: String(data.completedCount), icon: <DashboardGlyph name="checklist" /> },
+    { label: "Доступных опросов", value: String(data.availableCount), icon: <DashboardGlyph name="survey" /> },
+    { label: "Приглашено друзей", value: String(data.referralCount), icon: <DashboardGlyph name="referral" /> },
   ];
 
   return (

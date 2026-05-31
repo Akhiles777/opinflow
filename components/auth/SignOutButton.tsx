@@ -1,9 +1,12 @@
+import { LogOut } from "lucide-react";
+
 export default function SignOutButton() {
   return (
     <a
       href="/logout"
-      className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white/70 transition-colors hover:bg-white/8 hover:text-white"
+      className="flex h-[52px] w-full items-center justify-center gap-2 rounded-[16px] border border-[#4A3185] bg-white/[0.07] px-4 text-[14px] font-semibold text-white/86 transition-all hover:bg-white/[0.11] hover:text-white"
     >
+      <LogOut className="h-[18px] w-[18px]" />
       Выйти
     </a>
   );

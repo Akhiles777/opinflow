@@ -1,5 +1,3 @@
-import * as React from "react";
-import Badge from "@/components/dashboard/Badge";
 import Link from "next/link";
 
 type Status = "available" | "in-progress" | "completed";
@@ -10,11 +8,29 @@ type Props = {
   reward?: number | null;
   duration?: number | null;
   questions?: number | null;
+  maxResponses?: number | null;
+  currentResponses?: number | null;
   clientRating?: number;
+  clientName?: string;
   status: Status;
   meta?: string;
-  link: string
+  link: string;
+  suitable?: boolean;
 };
+
+function Badge({ label, variant }: { label: string; variant: "green" | "purple" | "yellow" | "gray" }) {
+  const styles = {
+    green:  "bg-green-500/10 text-green-600 border border-green-500 dark:text-green-400",
+    purple: "bg-[#6D3AE2]/10 text-[#6D3AE2] border border-[#6D3AE2] dark:text-[#A98BFF] dark:border-[#6D3AE2]",
+    yellow: "bg-orange-500/10 text-orange-500 border border-orange-400",
+    gray:   "bg-dash-bg text-dash-muted border border-dash-border",
+  };
+  return (
+    <span className={`inline-flex items-center rounded-[6px] px-2 py-1 text-[12px] font-semibold leading-none ${styles[variant]}`}>
+      {label}
+    </span>
+  );
+}
 
 export default function SurveyCard({
   category,
@@ -22,62 +38,89 @@ export default function SurveyCard({
   reward,
   duration,
   questions,
+  maxResponses,
+  currentResponses,
   clientRating,
+  clientName,
   status,
   meta,
-  link
+  link,
+  suitable = false,
 }: Props) {
-  const statusBadge =
-    status === "available"
-      ? { v: "active" as const, t: "Доступен" }
-      : status === "in-progress"
-      ? { v: "pending" as const, t: "В работе" }
-      : { v: "completed" as const, t: "Завершён" };
+  const progress =
+    typeof maxResponses === "number" && maxResponses > 0 && typeof currentResponses === "number"
+      ? Math.min((currentResponses / maxResponses) * 100, 100)
+      : 0;
 
   return (
-    <div className="bg-dash-card border border-dash-border rounded-2xl p-6 hover:border-brand/30 hover:shadow-md transition-all duration-200 cursor-pointer group">
-   <Link href={link}>
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <Badge variant={statusBadge.v}>{statusBadge.t}</Badge>
-            <span className="text-sm text-dash-muted font-body truncate">
-              {category}
-            </span>
+    <div className="rounded-[18px] border border-dash-border bg-dash-card p-6 transition-all duration-200 hover:border-[#6D3AE2]/40">
+      {/* Top row: badges + price */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex flex-wrap gap-1.5">
+          {status === "available" && <Badge label="Доступен" variant="green" />}
+          {status === "in-progress" && <Badge label="В работе" variant="yellow" />}
+          {status === "completed" && <Badge label="Завершён" variant="gray" />}
+          {suitable && <Badge label="Подходит Вам" variant="purple" />}
+        </div>
+        {typeof reward === "number" && (
+          <div className="shrink-0 text-right">
+            <p className="text-[24px] font-semibold leading-none text-dash-heading tabular-nums">{reward} ₽</p>
+            {typeof duration === "number" && (
+              <p className="mt-1 text-[13px] font-medium text-dash-muted">~ {duration} мин</p>
+            )}
           </div>
-          <p className="mt-3 font-display text-xl text-dash-heading leading-snug">
-            {title}
-          </p>
-        </div>
-        <div className="shrink-0 text-left sm:text-right">
-          {typeof reward === "number" ? (
-            <p className="font-display text-2xl text-brand tabular-nums font-bold">
-              {reward} ₽
-            </p>
-          ) : (
-            <p className="text-sm font-semibold text-dash-muted font-body">
-              {meta ?? "Без дополнительной информации"}
-            </p>
-          )}
-          {typeof clientRating === "number" ? (
-            <p className="text-sm text-dash-muted font-body mt-1">
-              Рейтинг: {clientRating.toFixed(1)}
-            </p>
-          ) : null}
-        </div>
+        )}
       </div>
 
-      <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-base text-dash-muted font-body">
-          {typeof duration === "number" && typeof questions === "number"
-            ? `~${duration} минут · ${questions} вопросов`
-            : meta ?? "Данные по исследованию появятся позже"}
-        </p>
-        <span className="text-base font-semibold text-brand opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
-          {status === "in-progress" ? "Продолжить →" : "Начать →"}
-        </span>
+      {/* Title */}
+      <p className="mt-6 line-clamp-2 text-[20px] font-semibold leading-[1.15] text-dash-heading">
+        {title}
+      </p>
+
+      {/* Category */}
+      <p className="mt-1 text-[14px] font-medium text-dash-muted">{category}</p>
+      {meta ? <p className="mt-3 text-[13px] font-medium text-dash-muted">{meta}</p> : null}
+
+      {/* Stats row */}
+      <div className="mt-6 flex items-center justify-between text-[14px] font-medium text-dash-muted">
+        {typeof questions === "number" && <span>{questions} вопросов</span>}
+        {typeof maxResponses === "number" && typeof currentResponses === "number" && (
+          <span>{currentResponses}/{maxResponses} респондентов</span>
+        )}
       </div>
-   </Link>
+
+      {/* Progress bar */}
+      {typeof maxResponses === "number" && maxResponses > 0 && (
+        <div className="mt-3 h-[5px] overflow-hidden rounded-full bg-[repeating-linear-gradient(to_right,rgba(109,58,226,0.26)_0_18px,transparent_18px_23px)]">
+          <div
+            className="h-full rounded-full bg-[#6D3AE2] transition-all"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      )}
+
+      {/* Bottom row: author + button */}
+      <div className="mt-6 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-1.5 text-[15px] text-dash-muted">
+          {clientName && (
+            <>
+              <span className="font-medium text-dash-heading">{clientName}</span>
+              {typeof clientRating === "number" && (
+                <span className="flex items-center gap-1 rounded-[6px] border border-[#6D3AE2]/35 bg-[#6D3AE2]/10 px-1.5 py-1 text-[13px] text-dash-heading">
+                  <span className="text-[14px] text-amber-400">★</span>
+                  <span>{clientRating.toFixed(1)}</span>
+                </span>
+              )}
+            </>
+          )}
+        </div>
+        <Link
+          href={link}
+          className="shrink-0 rounded-[10px] bg-[#6D3AE2] px-5 py-3 text-[14px] font-semibold text-white transition-all hover:bg-[#7B4FF0] active:scale-[0.98]"
+        >
+          Пройти опрос
+        </Link>
+      </div>
     </div>
   );
 }

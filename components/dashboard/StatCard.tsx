@@ -10,25 +10,19 @@ type Props = {
 
 export default function StatCard({ icon, label, value, trend, trendUp }: Props) {
   return (
-    <div className="bg-dash-card border border-dash-border rounded-2xl p-6 hover:shadow-md transition-shadow">
+    <div className="rounded-[18px] border border-dash-border bg-dash-card p-5 transition-all duration-200 hover:border-[#6D3AE2]/35">
       {icon ? (
-        <div className="w-10 h-10 bg-brand/10 rounded-xl text-brand mb-4 flex items-center justify-center">
+        <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-[#6D3AE2] text-white shadow-[0_8px_20px_rgba(109,58,226,0.30)]">
           {icon}
         </div>
       ) : null}
-      <p className="text-base text-dash-muted font-body mb-1">{label}</p>
-      <p className="font-display text-3xl text-dash-heading font-bold tabular-nums sm:text-4xl">
+      <p className="font-display text-[28px] font-bold leading-none text-dash-heading tabular-nums">
         {value}
       </p>
+      <p className="mt-1.5 text-[13px] font-medium text-dash-muted">{label}</p>
       {trend ? (
-        <p
-          className={[
-            "text-sm mt-2 font-body",
-            trendUp ? "text-green-600 dark:text-green-400" : "text-red-500 dark:text-red-400",
-          ].join(" ")}
-        >
-          {trendUp ? "↑ " : "↓ "}
-          {trend}
+        <p className={["mt-2 text-[12px] font-medium", trendUp ? "text-green-500 dark:text-green-400" : "text-red-500 dark:text-red-400"].join(" ")}>
+          {trendUp ? "↑ " : "↓ "}{trend}
         </p>
       ) : null}
     </div>

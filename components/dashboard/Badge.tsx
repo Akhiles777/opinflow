@@ -16,24 +16,24 @@ type Props = {
 
 const styles: Record<Variant, string> = {
   active:
-    "bg-green-50 text-green-700 border-green-200 dark:bg-green-500/10 dark:text-green-200 dark:border-green-500/20",
+    "bg-green-500/10 text-green-600 border-green-500 dark:text-green-400",
   pending:
-    "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-500/10 dark:text-yellow-200 dark:border-yellow-500/20",
+    "bg-orange-500/10 text-orange-500 border-orange-400",
   rejected:
-    "bg-red-50 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-200 dark:border-red-500/20",
+    "bg-red-500/10 text-red-500 border-red-300 dark:border-red-500/40",
   draft:
-    "bg-gray-100 text-gray-600 border-gray-200 dark:bg-white/5 dark:text-white/60 dark:border-white/10",
+    "bg-dash-bg text-dash-muted border-dash-border",
   moderation:
-    "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-200 dark:border-blue-500/20",
+    "bg-[#6D3AE2]/10 text-[#6D3AE2] border-[#6D3AE2] dark:text-[#A98BFF]",
   completed:
-    "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-500/10 dark:text-purple-200 dark:border-purple-500/20",
+    "bg-[#6D3AE2] text-white border-[#6D3AE2]",
 };
 
 export default function Badge({ variant, children, className }: Props) {
   return (
     <span
       className={[
-        "inline-flex items-center border rounded-full px-2.5 py-0.5 text-xs font-semibold font-body",
+        "inline-flex items-center rounded-[6px] border px-2 py-1 text-xs font-semibold leading-none",
         styles[variant],
         className,
       ]
@@ -44,4 +44,3 @@ export default function Badge({ variant, children, className }: Props) {
     </span>
   );
 }
-

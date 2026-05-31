@@ -3,9 +3,7 @@
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Modal from "@/components/dashboard/Modal";
-import Badge from "@/components/dashboard/Badge";
 import { createWithdrawalAction } from "@/actions/payments";
-import { analyzeSurveyResponses } from "@/lib/ai-analysis";
 
 type WithdrawalMethod = "CARD" | "SBP" | "WALLET";
 
@@ -36,20 +34,56 @@ function formatRub(amount: number) {
   return `${new Intl.NumberFormat("ru-RU").format(amount)} ₽`;
 }
 
-function mapRequestStatus(status: Props["withdrawalRequests"][number]["status"]) {
-  return status === "COMPLETED"
-    ? { v: "completed" as const, t: "Выплачено" }
-    : status === "PROCESSING"
-      ? { v: "pending" as const, t: "В обработке" }
-      : status === "PENDING"
-        ? { v: "pending" as const, t: "Ожидание" }
-        : { v: "rejected" as const, t: status === "REJECTED" ? "Отклонено" : "Ошибка" };
-}
-
-
 function maskCard(value: string) {
   const digits = value.replace(/\D/g, "").slice(0, 19);
   return digits.replace(/(\d{4})(?=\d)/g, "$1 ").trim();
+}
+
+function shortId(id: string) {
+  const digits = id.replace(/\D/g, "");
+  if (digits.length >= 8) return digits.slice(0, 9);
+  return id.slice(-9).toUpperCase();
+}
+
+type WithdrawalStatus = Props["withdrawalRequests"][number]["status"];
+
+function mapStatus(s: WithdrawalStatus): { label: string; cls: string } {
+  if (s === "COMPLETED") return { label: "Платёж направлен", cls: "border border-green-500 bg-green-500/10 text-green-400" };
+  if (s === "PROCESSING") return { label: "В работе", cls: "border border-amber-500 bg-amber-500/10 text-amber-400" };
+  if (s === "PENDING") return { label: "Ожидание", cls: "border border-amber-500 bg-amber-500/10 text-amber-400" };
+  if (s === "REJECTED") return { label: "Отклонено", cls: "border border-red-500 bg-red-500/10 text-red-400" };
+  return { label: "Ошибка", cls: "border border-red-500 bg-red-500/10 text-red-400" };
+}
+
+const S = { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.75", strokeLinecap: "round" as const, strokeLinejoin: "round" as const, width: 20, height: 20 };
+
+function IconEarned() {
+  return (
+    <svg {...S}>
+      <circle cx="12" cy="12" r="9" />
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 3v2M12 19v2M3 12h2M19 12h2" />
+    </svg>
+  );
+}
+function IconAvailable() {
+  return (
+    <svg {...S}>
+      <rect x="2" y="6" width="20" height="13" rx="3" />
+      <path d="M2 10h20M6 15h4" />
+    </svg>
+  );
+}
+function IconWithdrawn() {
+  return (
+    <svg {...S}>
+      <path d="M4 7h16a1.5 1.5 0 0 1 1.5 1.5v9A1.5 1.5 0 0 1 20 19H4a1.5 1.5 0 0 1-1.5-1.5V8A1.5 1.5 0 0 1 4 7Z" />
+      <path d="M4 7V5.5A2.5 2.5 0 0 1 6.5 3H17" />
+      <path d="M16 13h2" />
+      <circle cx="16.5" cy="13" r=".6" fill="currentColor" stroke="none" />
+      <path d="M12 10.5v3M10.5 12l1.5 1.5 1.5-1.5" />
+    </svg>
+  );
 }
 
 export default function RespondentWalletClient({
@@ -77,7 +111,7 @@ export default function RespondentWalletClient({
   const [isLoading, startTransition] = useTransition();
 
   const numericAmount = useMemo(() => Number(amount.replace(/[^\d]/g, "")), [amount]);
-  const earningTransactions = transactions.filter((item) => item.type === "Начисление");
+  const earningTransactions = transactions.filter((t) => t.type === "Начисление");
 
   function clearSbpPrefetchState() {
     setSbpBanksList([]);
@@ -88,318 +122,230 @@ export default function RespondentWalletClient({
   }
 
   function chooseWithdrawMethod(next: WithdrawalMethod) {
-    if (method === "SBP" && next !== "SBP") {
-      clearSbpPrefetchState();
-    }
+    if (method === "SBP" && next !== "SBP") clearSbpPrefetchState();
     setMethod(next);
   }
 
   useEffect(() => {
-    if (!showWithdrawModal || method !== "SBP") {
-      return;
-    }
-
+    if (!showWithdrawModal || method !== "SBP") return;
     let cancelled = false;
-
     (async () => {
       setSbpBanksHint(null);
       setSbpContractForbidden(false);
       setSbpListLoading(true);
-      const res = await fetch("/api/payments/sbp-banks", {
-        credentials: "include",
-        cache: "no-store",
-      });
+      const res = await fetch("/api/payments/sbp-banks", { credentials: "include", cache: "no-store" });
       const data = (await res.json().catch(() => ({}))) as {
         banks?: Array<{ bank_id: string; name: string }>;
-        error?: string;
-        detail?: string | null;
-        yukassaCode?: string | null;
-        sbpAvailability?: string;
-        userMessage?: string;
-        merchantHint?: string;
-        technical?: string;
+        error?: string; detail?: string | null; yukassaCode?: string | null;
+        sbpAvailability?: string; userMessage?: string; merchantHint?: string; technical?: string;
       };
       if (cancelled) return;
       setSbpListLoading(false);
-
       if (data.sbpAvailability === "contract_forbidden") {
-        setSbpBanksList([]);
-        setBankId("");
-        setSbpContractForbidden(true);
-        const msg =
-          typeof data.userMessage === "string" && data.userMessage.trim()
-            ? data.userMessage.trim()
-            : "Вывод через СБП сейчас недоступен. Выберите карту или ЮMoney.";
-        setSbpBanksHint(msg);
+        setSbpBanksList([]); setBankId(""); setSbpContractForbidden(true);
+        setSbpBanksHint(typeof data.userMessage === "string" && data.userMessage.trim() ? data.userMessage.trim() : "Вывод через СБП сейчас недоступен. Выберите карту или ЮMoney.");
         return;
       }
-
       if (Array.isArray(data.banks) && data.banks.length > 0) {
         setSbpBanksList(data.banks);
-        setBankId((previous) =>
-          previous && data.banks!.some((bank) => bank.bank_id === previous)
-            ? previous
-            : data.banks![0].bank_id,
-        );
+        setBankId((prev) => prev && data.banks!.some((b) => b.bank_id === prev) ? prev : data.banks![0].bank_id);
         return;
       }
-
-      setSbpBanksList([]);
-      setBankId("");
-      const fallback =
-        data.error === "PAYOUTS_NOT_CONFIGURED"
-          ? "Список банков СБП недоступен: на сервере не настроены YUKASSA_PAYOUT_AGENT_ID и YUKASSA_PAYOUT_SECRET_KEY (шлюз выплат, не магазин оплаты)."
-          : data.error === "UNAUTHORIZED"
-            ? "Сессия недействительна. Обновите страницу и войдите снова."
-            : res.ok && data.sbpAvailability === "available"
-              ? "Список банков СБП пока пуст. Проверьте выплаты в ЮKassa или повторите позже."
-              : "Не удалось загрузить список банков ЮKassa для СБП.";
-      const tail =
-        typeof data.detail === "string" && data.detail.trim()
-          ? ` Технически: ${data.detail.trim()}`
-          : res.status === 401
-            ? " Проверьте авторизацию."
-            : "";
+      setSbpBanksList([]); setBankId("");
+      const fallback = data.error === "PAYOUTS_NOT_CONFIGURED" ? "Список банков СБП недоступен: не настроены ключи выплат." : data.error === "UNAUTHORIZED" ? "Сессия недействительна. Обновите страницу." : "Не удалось загрузить список банков ЮKassa для СБП.";
+      const tail = typeof data.detail === "string" && data.detail.trim() ? ` Технически: ${data.detail.trim()}` : "";
       setSbpBanksHint(`${fallback}${tail}`);
     })();
-
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [showWithdrawModal, method]);
 
   function resetModal() {
-    setShowWithdrawModal(false);
-    setStep(1);
-    setMethod("CARD");
-    setAmount("500");
-    setCardNumber("");
-    setPhone("");
-    clearSbpPrefetchState();
-    setWalletNumber("");
-    setError(null);
+    setShowWithdrawModal(false); setStep(1); setMethod("CARD"); setAmount("500");
+    setCardNumber(""); setPhone(""); clearSbpPrefetchState(); setWalletNumber(""); setError(null);
   }
 
   function buildRequisites(): Record<string, string> {
-    if (method === "CARD") {
-      return { cardNumber: cardNumber.replace(/\s/g, "") };
-    }
-
-    if (method === "SBP") {
-      return { phone, bankId };
-    }
-
+    if (method === "CARD") return { cardNumber: cardNumber.replace(/\s/g, "") };
+    if (method === "SBP") return { phone, bankId };
     return { walletNumber };
   }
 
   function handleSubmit() {
-    setError(null);
-    setSuccessMessage(null);
-
-    if (numericAmount < 500) {
-      setError("Минимальная сумма вывода — 500 ₽");
-      return;
-    }
-
-    if (numericAmount > balance) {
-      setError("Сумма вывода не может превышать текущий баланс");
-      return;
-    }
-
+    setError(null); setSuccessMessage(null);
+    if (numericAmount < 500) { setError("Минимальная сумма вывода — 500 ₽"); return; }
+    if (numericAmount > balance) { setError("Сумма вывода не может превышать текущий баланс"); return; }
     const cardDigits = cardNumber.replace(/\D/g, "");
-    if ((method === "CARD" && (cardDigits.length < 16 || cardDigits.length > 19))) {
-      setError("Укажите номер карты 16–19 цифр (как принимает API ЮKassa). Для многих сценариев удобнее вывод через СБП или кошелёк ЮMoney.");
-      return;
-    }
-
-    if (method === "SBP" && phone.trim().length < 10) {
-      setError("Введите номер телефона для СБП");
-      return;
-    }
-
-    if (method === "SBP" && sbpContractForbidden) {
-      setError(
-        "СБП для вывода на этой площадке отключён на стороне ЮKassa. Выберите «Банковская карту» или «ЮMoney» на первом шаге.",
-      );
-      return;
-    }
-
-    if (method === "SBP" && !bankId) {
-      setError("Выберите банк из списка ЮKassa (список подгружается автоматически)");
-      return;
-    }
-
+    if (method === "CARD" && (cardDigits.length < 16 || cardDigits.length > 19)) { setError("Укажите номер карты 16–19 цифр"); return; }
+    if (method === "SBP" && phone.trim().length < 10) { setError("Введите номер телефона для СБП"); return; }
+    if (method === "SBP" && sbpContractForbidden) { setError("СБП для вывода отключён на стороне ЮKassa. Выберите карту или ЮMoney."); return; }
+    if (method === "SBP" && !bankId) { setError("Выберите банк из списка"); return; }
     const walletDigits = walletNumber.replace(/\D/g, "");
-    if (method === "WALLET" && (walletDigits.length < 11 || walletDigits.length > 33)) {
-      setError("Номер кошелька ЮMoney — от 11 до 33 цифр без пробелов. Это не номер банковской карты.");
-      return;
-    }
-
+    if (method === "WALLET" && (walletDigits.length < 11 || walletDigits.length > 33)) { setError("Номер кошелька ЮMoney — от 11 до 33 цифр"); return; }
     startTransition(async () => {
-      const result = await createWithdrawalAction({
-        amount: numericAmount,
-        method,
-        requisites: buildRequisites(),
-      });
-
-      if (result.error) {
-        setError(result.error);
-        return;
-      }
-
+      const result = await createWithdrawalAction({ amount: numericAmount, method, requisites: buildRequisites() });
+      if (result.error) { setError(result.error); return; }
       resetModal();
       setSuccessMessage("Заявка на вывод создана. Статус выплаты обновится автоматически.");
       router.refresh();
-      
     });
   }
 
+  const inputCls = "h-12 w-full rounded-xl border border-dash-border bg-dash-bg px-4 text-[14px] text-dash-body outline-none focus:border-[#6D3AE2]/50 focus:ring-2 focus:ring-[#6D3AE2]/10 transition-colors";
+
   return (
     <div className="space-y-5">
-      {successMessage ? (
-        <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-sm font-medium text-emerald-600 dark:text-emerald-300">
+      {successMessage && (
+        <div className="rounded-[14px] border border-green-500/20 bg-green-500/10 p-4 text-[13px] font-medium text-green-400">
           {successMessage}
         </div>
-      ) : null}
+      )}
 
-      <section className="rounded-3xl border border-dash-border bg-dash-card p-6 sm:p-8">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div className="min-w-0">
-            <div className="text-xs uppercase tracking-[0.2em] text-dash-muted">Доступный баланс</div>
-            <div className="mt-3 font-display text-4xl text-dash-heading sm:text-5xl">{formatRub(balance)}</div>
-            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-dash-muted">
-              Вознаграждения за опросы поступают сюда. Отправляйте заявки на вывод и отслеживайте их статус в одном месте.
-            </p>
-          </div>
+      {/* ── TOP ROW: баланс (1fr) + 3 стат-карточки (2fr) ─────────────── */}
+      <div className="grid gap-5 lg:grid-cols-[1fr_2fr]">
 
-          <div className="flex w-full flex-col gap-3 lg:w-auto lg:items-end">
+        {/* Баланс */}
+        <div className="rounded-[18px] border border-dash-border bg-dash-card p-6">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="text-[36px] font-bold leading-none text-[#6D3AE2]">{formatRub(balance)}</p>
+              <p className="mt-2 text-[13px] font-medium text-dash-muted">Доступный баланс</p>
+              <p className="mt-3 max-w-[280px] text-[13px] leading-[1.5] text-dash-muted">
+                Вознаграждения за опросы поступают сюда. Отправляйте заявки на вывод и отслеживайте их статус в одном месте. Минимальная сумма вывода — 500&nbsp;₽
+              </p>
+            </div>
             <button
               type="button"
               onClick={() => setShowWithdrawModal(true)}
               disabled={balance < 500}
-              className="inline-flex w-full items-center justify-center rounded-2xl bg-brand px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-mid disabled:cursor-not-allowed disabled:opacity-50 lg:w-auto"
+              className="shrink-0 self-start rounded-xl bg-[#6D3AE2] px-5 py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-[#7B4FF0] disabled:cursor-not-allowed disabled:opacity-50"
             >
               Вывести средства
             </button>
-            <div className="text-xs text-dash-muted">Минимальная сумма вывода — 500 ₽</div>
           </div>
         </div>
 
-        <div className="mt-6 grid gap-3 md:grid-cols-3">
+        {/* 3 стат-карточки */}
+        <div className="grid grid-cols-3 gap-4">
           {[
-            { label: "Заработано", value: formatRub(totalEarned) },
-            { label: "Доступно сейчас", value: formatRub(balance) },
-            { label: "Уже выведено", value: formatRub(totalSpent) },
-          ].map((item) => (
-            <div key={item.label} className="rounded-2xl border border-dash-border bg-dash-bg p-4">
-              <div className="text-xs uppercase tracking-[0.16em] text-dash-muted">{item.label}</div>
-              <div className="mt-2 text-xl font-semibold text-dash-heading">{item.value}</div>
+            { label: "Заработано", value: totalEarned, icon: <IconEarned /> },
+            { label: "Доступно сейчас", value: balance, icon: <IconAvailable /> },
+            { label: "Уже выведено", value: totalSpent, icon: <IconWithdrawn /> },
+          ].map(({ label, value, icon }) => (
+            <div key={label} className="flex flex-col rounded-[18px] border border-dash-border bg-dash-card p-5">
+              <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-[12px] bg-[#6D3AE2]/15 text-[#6D3AE2]">
+                {icon}
+              </div>
+              <p className="text-[22px] font-bold leading-none text-dash-heading">{formatRub(value)}</p>
+              <p className="mt-1.5 text-[12px] font-medium text-dash-muted">{label}</p>
             </div>
           ))}
         </div>
-      </section>
+      </div>
 
-      <div className="grid items-start gap-5 xl:grid-cols-[360px_minmax(0,1fr)]">
-        <section className="rounded-2xl border border-dash-border bg-dash-card p-5 sm:p-6">
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between gap-3">
-              <div className="text-sm font-semibold text-dash-heading">Заявки на вывод</div>
-              <div className="rounded-full bg-dash-bg px-2.5 py-1 text-xs font-medium text-dash-muted">
-                {withdrawalRequests.length}
-              </div>
-            </div>
-            <div className="text-sm text-dash-muted">
-              Статус всех заявок на вывод средств.
-            </div>
+      {/* ── BOTTOM ROW: таблицы ──────────────────────────────────────────── */}
+      <div className="grid gap-5 lg:grid-cols-2">
+
+        {/* Заявки на вывод */}
+        <div className="rounded-[18px] border border-dash-border bg-dash-card p-6">
+          <div className="mb-1 flex items-center gap-2">
+            <h2 className="text-[16px] font-semibold text-dash-heading">Заявки на вывод</h2>
+            <span className="rounded-full bg-dash-border px-2 py-0.5 text-[12px] font-medium text-dash-muted">
+              {withdrawalRequests.length}
+            </span>
           </div>
+          <p className="mb-5 text-[13px] text-dash-muted">Статус всех заявок на вывод средств.</p>
 
-          <div className="mt-5 space-y-3">
-            {withdrawalRequests.length > 0 ? (
-              withdrawalRequests.map((item) => {
-                const status = mapRequestStatus(item.status);
-                return (
-                  <div key={item.id} className="rounded-2xl border border-dash-border bg-dash-bg p-4">
-                    <div className="flex flex-col gap-3">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="text-sm font-semibold text-dash-heading">
-                            {formatRub(item.amount)} · {item.method}
-                          </div>
-                          <div className="mt-1 text-sm text-dash-muted">{item.date}</div>
-                        </div>
-                        <Badge variant={status.v}>{status.t}</Badge>
-                      </div>
-                      <div className="text-sm text-dash-muted">{item.requisitesMasked}</div>
-                      {item.adminNote ? <div className="text-sm text-red-500">{item.adminNote}</div> : null}
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
-              <div className="rounded-2xl border border-dash-border bg-dash-bg p-5 text-sm leading-relaxed text-dash-muted">
-                Пока заявок нет. Когда вы отправите первую заявку, она появится здесь со статусом обработки.
-              </div>
-            )}
+          {withdrawalRequests.length > 0 ? (
+            <table className="w-full text-[13px]">
+              <thead>
+                <tr className="border-b border-dash-border">
+                  {["ЗАЯВКА №", "ДАТА", "СУММА", "СТАТУС"].map((h) => (
+                    <th key={h} className="pb-3 text-left text-[11px] font-semibold uppercase tracking-wider text-dash-muted first:pl-0">
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {withdrawalRequests.map((item) => {
+                  const { label, cls } = mapStatus(item.status);
+                  return (
+                    <tr key={item.id} className="border-b border-dash-border/50 last:border-0">
+                      <td className="py-3.5 font-mono text-dash-body">{shortId(item.id)}</td>
+                      <td className="py-3.5 text-dash-muted">{item.date.slice(0, 8)}</td>
+                      <td className="py-3.5 font-medium text-dash-heading">{formatRub(item.amount)}</td>
+                      <td className="py-3.5">
+                        <span className={`inline-flex rounded px-2 py-0.5 text-[11px] font-semibold ${cls}`}>
+                          {label}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          ) : (
+            <p className="py-4 text-[13px] text-dash-muted">
+              Пока заявок нет. Когда вы отправите первую заявку, она появится здесь.
+            </p>
+          )}
+        </div>
+
+        {/* История начислений */}
+        <div className="rounded-[18px] border border-dash-border bg-dash-card p-6">
+          <div className="mb-1 flex items-center gap-2">
+            <h2 className="text-[16px] font-semibold text-dash-heading">История начислений</h2>
+            <span className="rounded-full bg-dash-border px-2 py-0.5 text-[12px] font-medium text-dash-muted">
+              {earningTransactions.length}
+            </span>
           </div>
-        </section>
+          <p className="mb-5 text-[13px] text-dash-muted">
+            Все вознаграждения за успешно пройденные опросы отображаются здесь.
+          </p>
 
-        <div className="grid gap-5">
-          <section className="rounded-2xl border border-dash-border bg-dash-card p-5 sm:p-6">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <div className="text-sm font-semibold text-dash-heading">История начислений</div>
-                <div className="mt-1 text-sm text-dash-muted">
-                  Все вознаграждения за успешно пройденные опросы отображаются здесь.
-                </div>
-              </div>
-              <div className="rounded-full bg-dash-bg px-2.5 py-1 text-xs font-medium text-dash-muted">
-                {earningTransactions.length} операций
-              </div>
-            </div>
-
-            <div className="mt-5 space-y-3">
-              {earningTransactions.length > 0 ? (
-                earningTransactions.map((item) => (
-                  <div key={item.id} className="rounded-2xl border border-dash-border bg-dash-bg p-4">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                      <div className="min-w-0">
-                        <div className="text-sm font-semibold text-dash-heading">{item.description}</div>
-                        <div className="mt-1 text-sm text-dash-muted">{item.date}</div>
-                      </div>
-                      <div className="shrink-0 text-base font-semibold text-emerald-500">+{formatRub(Math.abs(item.amount))}</div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="rounded-2xl border border-dash-border bg-dash-bg p-5 text-sm leading-relaxed text-dash-muted">
-                  Начислений пока нет. После первых завершённых опросов здесь появится история ваших вознаграждений.
-                </div>
-              )}
-            </div>
-          </section>
+          {earningTransactions.length > 0 ? (
+            <table className="w-full text-[13px]">
+              <thead>
+                <tr className="border-b border-dash-border">
+                  {["ОПРОС", "ДАТА", "СУММА"].map((h) => (
+                    <th key={h} className="pb-3 text-left text-[11px] font-semibold uppercase tracking-wider text-dash-muted first:pl-0">
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {earningTransactions.map((item) => (
+                  <tr key={item.id} className="border-b border-dash-border/50 last:border-0">
+                    <td className="max-w-[180px] truncate py-3.5 text-dash-body">{item.description}</td>
+                    <td className="py-3.5 text-dash-muted">{item.date.slice(0, 8)}</td>
+                    <td className="py-3.5 font-medium text-green-400">+{formatRub(Math.abs(item.amount))}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <p className="py-4 text-[13px] text-dash-muted">
+              Начислений пока нет. После первых завершённых опросов здесь появится история вознаграждений.
+            </p>
+          )}
         </div>
       </div>
 
+      {/* ── МОДАЛКА ВЫВОДА ───────────────────────────────────────────────── */}
       <Modal
         open={showWithdrawModal}
         title="Вывод средств"
-        onClose={() => {
-          if (!isLoading) resetModal();
-        }}
+        onClose={() => { if (!isLoading) resetModal(); }}
         footer={
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="text-sm text-dash-muted">Минимальная сумма — 500 ₽</div>
+            <div className="text-[13px] text-dash-muted">Минимальная сумма — 500 ₽</div>
             {step === 1 ? (
               <button
                 type="button"
                 onClick={() => setStep(2)}
                 disabled={method === "SBP" && (sbpListLoading || sbpContractForbidden)}
-                title={
-                  method === "SBP" && sbpContractForbidden
-                    ? "СБП временно недоступен для этой платформы"
-                    : undefined
-                }
-                className="rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-mid disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-xl bg-[#6D3AE2] px-5 py-2.5 text-[13px] font-semibold text-white hover:bg-[#7B4FF0] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Далее →
               </button>
@@ -408,7 +354,7 @@ export default function RespondentWalletClient({
                 type="button"
                 onClick={handleSubmit}
                 disabled={isLoading}
-                className="rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-mid disabled:opacity-60"
+                className="rounded-xl bg-[#6D3AE2] px-5 py-2.5 text-[13px] font-semibold text-white hover:bg-[#7B4FF0] disabled:opacity-60"
               >
                 {isLoading ? "Отправляем..." : "Подать заявку"}
               </button>
@@ -420,8 +366,8 @@ export default function RespondentWalletClient({
           <div className="grid gap-3">
             <div className="grid gap-3 md:grid-cols-3">
               {[
-                { value: "CARD" as const, title: "Банковская карта", text: "Перевод на карту российского банка" },
-                { value: "SBP" as const, title: "СБП", text: "Перевод по номеру телефона" },
+                { value: "CARD" as const, title: "Банковская карта", text: "Перевод на карту" },
+                { value: "SBP" as const, title: "СБП", text: "По номеру телефона" },
                 { value: "WALLET" as const, title: "ЮMoney", text: "Перевод на кошелёк" },
               ].map((item) => {
                 const active = method === item.value;
@@ -430,122 +376,61 @@ export default function RespondentWalletClient({
                     key={item.value}
                     type="button"
                     onClick={() => chooseWithdrawMethod(item.value)}
-                    className={[
-                      "rounded-2xl border p-4 text-left transition-colors",
-                      active
-                        ? "border-brand bg-brand/10"
-                        : "border-dash-border bg-dash-bg hover:border-brand/30",
-                    ].join(" ")}
+                    className={["rounded-[14px] border p-4 text-left transition-colors", active ? "border-[#6D3AE2] bg-[#6D3AE2]/10" : "border-dash-border bg-dash-bg hover:border-[#6D3AE2]/30"].join(" ")}
                   >
-                    <div className="text-sm font-semibold text-dash-heading">{item.title}</div>
-                    <div className="mt-2 text-sm text-dash-muted">{item.text}</div>
+                    <div className="text-[13px] font-semibold text-dash-heading">{item.title}</div>
+                    <div className="mt-1 text-[12px] text-dash-muted">{item.text}</div>
                   </button>
                 );
               })}
             </div>
-            {method === "SBP" ? (
-              <div
-                className={[
-                  "rounded-xl border px-4 py-3 text-sm",
-                  sbpContractForbidden || (sbpBanksHint && !sbpListLoading)
-                    ? "border-amber-500/25 bg-amber-500/10 text-amber-900 dark:text-amber-100"
-                    : "border-dash-border bg-dash-bg text-dash-muted",
-                ].join(" ")}
-              >
-                {sbpBanksHint ? (
-                  sbpBanksHint
-                ) : sbpListLoading ? (
-                  "Проверяем доступность выплат через СБП…"
-                ) : sbpBanksList.length > 0 ? (
-                  <>
-                    Списки участников СБП получены от ЮKassa ({sbpBanksList.length}&nbsp;
-                    банков). Перейдите дальше, чтобы указать телефон и сумму.
-                  </>
-                ) : (
-                  "Не удалось получить участников СБП. Выберите другой способ вывода или повторите позже."
-                )}
+            {method === "SBP" && (
+              <div className={["rounded-xl border px-4 py-3 text-[13px]", sbpContractForbidden || (sbpBanksHint && !sbpListLoading) ? "border-amber-500/25 bg-amber-500/10 text-amber-200" : "border-dash-border bg-dash-bg text-dash-muted"].join(" ")}>
+                {sbpBanksHint ? sbpBanksHint : sbpListLoading ? "Проверяем доступность СБП…" : sbpBanksList.length > 0 ? `Список банков получен (${sbpBanksList.length}). Перейдите далее.` : "Не удалось получить банки. Выберите другой способ."}
               </div>
-            ) : null}
+            )}
           </div>
         ) : (
           <div className="space-y-4">
-            {method === "CARD" ? (
+            {method === "CARD" && (
               <label className="grid gap-2">
-                <span className="text-sm font-medium text-dash-heading">Номер карты</span>
-                <input
-                  value={cardNumber}
-                  onChange={(event) => setCardNumber(maskCard(event.target.value))}
-                  className="h-12 rounded-xl border border-dash-border bg-dash-bg px-4 text-base text-dash-body outline-none focus:border-brand/40"
-                  placeholder="0000 0000 0000 0000"
-                />
+                <span className="text-[13px] font-medium text-dash-heading">Номер карты</span>
+                <input value={cardNumber} onChange={(e) => setCardNumber(maskCard(e.target.value))} className={inputCls} placeholder="0000 0000 0000 0000" />
               </label>
-            ) : null}
-
-            {method === "SBP" ? (
+            )}
+            {method === "SBP" && (
               <>
                 <label className="grid gap-2">
-                  <span className="text-sm font-medium text-dash-heading">Номер телефона</span>
-                  <input
-                    value={phone}
-                    onChange={(event) => setPhone(event.target.value)}
-                    className="h-12 rounded-xl border border-dash-border bg-dash-bg px-4 text-base text-dash-body outline-none focus:border-brand/40"
-                    placeholder="+7 999 123-45-67"
-                  />
+                  <span className="text-[13px] font-medium text-dash-heading">Номер телефона</span>
+                  <input value={phone} onChange={(e) => setPhone(e.target.value)} className={inputCls} placeholder="+7 999 123-45-67" />
                 </label>
-
                 <label className="grid gap-2">
-                  <span className="text-sm font-medium text-dash-heading">Банк (участник СБП)</span>
-                  {sbpBanksHint ? (
-                    <div className="rounded-xl border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-200">
-                      {sbpBanksHint}
-                    </div>
-                  ) : null}
-                  {sbpBanksList.length > 0 ? (
-                    <select
-                      value={bankId}
-                      onChange={(event) => setBankId(event.target.value)}
-                      className="h-12 rounded-xl border border-dash-border bg-dash-bg px-4 text-base text-dash-body outline-none focus:border-brand/40"
-                    >
-                      {sbpBanksList.map((bank) => (
-                        <option key={bank.bank_id} value={bank.bank_id}>
-                          {bank.name}
-                        </option>
-                      ))}
+                  <span className="text-[13px] font-medium text-dash-heading">Банк (участник СБП)</span>
+                  {sbpBanksHint && <div className="rounded-xl border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-[13px] text-amber-200">{sbpBanksHint}</div>}
+                  {sbpBanksList.length > 0 && (
+                    <select value={bankId} onChange={(e) => setBankId(e.target.value)} className={inputCls}>
+                      {sbpBanksList.map((b) => <option key={b.bank_id} value={b.bank_id}>{b.name}</option>)}
                     </select>
-                  ) : sbpContractForbidden ? null : sbpListLoading || !sbpBanksHint ? (
-                    <div className="rounded-xl border border-dash-border bg-dash-bg px-4 py-3 text-sm text-dash-muted">
-                      {sbpListLoading ? "Загружаем список банков ЮKassa…" : "Не удалось показать банки. См. сообщение выше."}
+                  )}
+                  {!sbpContractForbidden && sbpBanksList.length === 0 && (
+                    <div className="rounded-xl border border-dash-border bg-dash-bg px-4 py-3 text-[13px] text-dash-muted">
+                      {sbpListLoading ? "Загружаем список банков…" : "Не удалось показать банки."}
                     </div>
-                  ) : null}
+                  )}
                 </label>
               </>
-            ) : null}
-
-            {method === "WALLET" ? (
+            )}
+            {method === "WALLET" && (
               <label className="grid gap-2">
-                <span className="text-sm font-medium text-dash-heading">Номер кошелька</span>
-                <input
-                  value={walletNumber}
-                  onChange={(event) => setWalletNumber(event.target.value)}
-                  className="h-12 rounded-xl border border-dash-border bg-dash-bg px-4 text-base text-dash-body outline-none focus:border-brand/40"
-                  placeholder="11–33 цифр номера ЮMoney…"
-                />
+                <span className="text-[13px] font-medium text-dash-heading">Номер кошелька</span>
+                <input value={walletNumber} onChange={(e) => setWalletNumber(e.target.value)} className={inputCls} placeholder="11–33 цифр номера ЮMoney…" />
               </label>
-            ) : null}
-
+            )}
             <label className="grid gap-2">
-              <span className="text-sm font-medium text-dash-heading">Сумма </span>
-              <input
-                type="number"
-                min={500}
-                max={balance}
-                value={amount}
-                onChange={(event) => setAmount(event.target.value)}
-                className="h-12 rounded-xl border border-dash-border bg-dash-bg px-4 text-base text-dash-body outline-none focus:border-brand/40"
-              />
+              <span className="text-[13px] font-medium text-dash-heading">Сумма</span>
+              <input type="number" min={500} max={balance} value={amount} onChange={(e) => setAmount(e.target.value)} className={inputCls} />
             </label>
-
-            {error ? <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-500">{error}</div> : null}
+            {error && <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-[13px] text-red-400">{error}</div>}
           </div>
         )}
       </Modal>

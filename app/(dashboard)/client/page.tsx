@@ -1,10 +1,10 @@
 import * as React from "react";
-import { TrendingUp, Wallet, BarChart3, Layers } from "lucide-react";
 import PageHeader from "@/components/dashboard/PageHeader";
 import StatCard from "@/components/dashboard/StatCard";
 import DataTable, { Column } from "@/components/dashboard/DataTable";
 import Badge from "@/components/dashboard/Badge";
 import EmptyState from "@/components/dashboard/EmptyState";
+import DashboardGlyph from "@/components/dashboard/DashboardGlyph";
 import { formatRub, getClientOverviewData, mapSurveyStatus } from "@/lib/dashboard-data";
 import { requireRole } from "@/lib/auth-utils";
 
@@ -44,16 +44,16 @@ export default async function ClientOverviewPage() {
   const session = await requireRole("CLIENT");
   const data = await getClientOverviewData(session.user.id);
   const stats = [
-    { label: "Баланс", value: formatRub(data.balance), icon: <Wallet className="w-5 h-5" /> },
-    { label: "Активных опросов", value: String(data.activeCount), icon: <Layers className="w-5 h-5" /> },
+    { label: "Баланс", value: formatRub(data.balance), icon: <DashboardGlyph name="wallet" /> },
+    { label: "Активных опросов", value: String(data.activeCount), icon: <DashboardGlyph name="layers" /> },
     {
       label: "Всего ответов",
       value: String(data.totalResponses),
       trend: data.totalResponses > 0 ? "Ответы собраны из реальных опросов" : "Пока нет ответов",
       trendUp: data.totalResponses > 0,
-      icon: <TrendingUp className="w-5 h-5" />,
+      icon: <DashboardGlyph name="trend" />,
     },
-    { label: "На модерации", value: String(data.moderationCount), icon: <BarChart3 className="w-5 h-5" /> },
+    { label: "На модерации", value: String(data.moderationCount), icon: <DashboardGlyph name="moderation" /> },
   ];
   const surveys: SurveyRow[] = data.surveys.map((survey) => ({
     id: survey.id,

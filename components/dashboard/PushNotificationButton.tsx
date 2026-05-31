@@ -15,19 +15,13 @@ export default function PushNotificationButton() {
     <button
       onClick={subscribe}
       disabled={isLoading}
-      className="flex items-center gap-2 px-3 py-2 rounded-lg
-                 text-sm text-brand hover:bg-brand/10
-                 border border-brand/20 transition-colors
-                 disabled:opacity-60 disabled:cursor-not-allowed"
-      title="Включить push-уведомления"
+      className="flex h-10 w-10 items-center justify-center rounded-[10px] border border-dash-border bg-[#EFEAFF] text-dash-heading transition-colors hover:border-[#6D3AE2]/50 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white/[0.07] dark:text-white"
+      title={isLoading ? 'Подключаем...' : 'Включить push-уведомления'}
     >
       {isLoading
-        ? <Loader2 className="w-4 h-4 animate-spin" />
-        : <Bell className="w-4 h-4" />
+        ? <Loader2 className="h-5 w-5 animate-spin" />
+        : <Bell className="h-5 w-5" />
       }
-      <span className="hidden sm:inline">
-        {isLoading ? 'Подключаем...' : 'Уведомления'}
-      </span>
     </button>
   )
 }

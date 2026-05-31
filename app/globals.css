@@ -12,13 +12,13 @@
   --site-heading: #111827;
   --site-body: #374151;
 
-  --dash-sidebar: #1F0A5A;
-  --dash-bg: #F5F3FF;
-  --dash-card: #ffffff;
-  --dash-border: #EDE8F8;
-  --dash-muted: #7B7399;
+  --dash-sidebar: #1C0C4C;
+  --dash-bg: #FAF7FB;
+  --dash-card: #FFFFFF;
+  --dash-border: #DDD2FF;
+  --dash-muted: #82769F;
   --dash-heading: #1C0C4C;
-  --dash-body: #4A3B7A;
+  --dash-body: #33215F;
 }
 
 .dark {
@@ -30,13 +30,13 @@
   --site-heading: #ffffff;
   --site-body: rgba(255, 255, 255, 0.92);
 
-  --dash-sidebar: #160840;
-  --dash-bg: #160840;
-  --dash-card: #1F0E5C;
-  --dash-border: rgba(255, 255, 255, 0.08);
-  --dash-muted: rgba(255, 255, 255, 0.50);
+  --dash-sidebar: #1C0C4C;
+  --dash-bg: #2D1B5D;
+  --dash-card: #38207A;
+  --dash-border: rgba(196, 174, 255, 0.22);
+  --dash-muted: rgba(255, 255, 255, 0.62);
   --dash-heading: #ffffff;
-  --dash-body: rgba(255, 255, 255, 0.80);
+  --dash-body: rgba(255, 255, 255, 0.86);
 }
 
 body {
@@ -58,12 +58,12 @@ html {
 .dashboard-root textarea,
 .dashboard-root select,
 .dashboard-root button {
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-manrope), var(--font-geist), sans-serif;
 }
 
 .dashboard-root .font-display,
 .dashboard-root .font-body {
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-manrope), var(--font-geist), sans-serif;
 }
 
 [id] {
