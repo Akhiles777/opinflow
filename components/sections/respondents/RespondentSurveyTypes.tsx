@@ -61,7 +61,7 @@ export default function RespondentSurveys() {
 
 <Link
   href="/surveys"
-  className="flex-shrink-0 inline-flex items-center gap-3 rounded-full bg-[#6438D9] px-5 py-[11px] text-[15px] font-[600] text-white transition-all hover:bg-[#5530C4] hover:scale-[1.02]"
+  className="flex-shrink-0  inline-flex items-center gap-3 rounded-full bg-[#6438D9] px-5 py-[11px] text-[15px] font-[600] text-white transition-all hover:bg-[#5530C4] hover:scale-[1.02]"
 >
   Все доступные опросы
   <Image src="/Respondent/icon/arrow-circle-right.svg" alt="" width={24} height={24} />
