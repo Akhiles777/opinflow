@@ -1,4 +1,4 @@
-export const DEFAULT_EXPERT_REVIEW_PRICE = 15000;
+export const DEFAULT_EXPERT_REVIEW_PRICE = 25000;
 
 export const EXPERT_OPTIONS = [
   "А. Сидорова",

@@ -66,7 +66,7 @@ function GlassCard({
       {/* content */}
       <div className="relative z-10">
         <span className="text-[15px] font-bold tracking-[0.08em] text-[#8E88A8] dark:text-white/60">
-          {audience.id}
+       
         </span>
         <h3 className="mt-4 font-manrope text-[30px] leading-[1.1] tracking-[-1px] font-bold text-[#241152] dark:text-white">
           {audience.title}{" "}

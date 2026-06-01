@@ -9,6 +9,21 @@ import { useTheme } from "next-themes";
 
 import SmoothHashLink from "@/components/ui/SmoothHashLink";
 import PublicUserMenu from "@/components/layout/PublicUserMenu";
+import type { Role } from "@prisma/client";
+
+function getDashboardHref(role?: Role | null) {
+  if (role === "ADMIN")  return "/admin";
+  if (role === "CLIENT") return "/client";
+  return "/respondent";
+}
+
+function getInitialsMobile(name?: string | null, email?: string | null) {
+  const src = (name?.trim() || email?.split("@")[0] || "PM");
+  const parts = src.split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "PM";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return `${parts[0][0] ?? ""}${parts[1][0] ?? ""}`.toUpperCase();
+}
 
 const links = [
   { label: "Главная",      href: "/#top" },
@@ -141,8 +156,8 @@ export default function Header({ dark: _dark }: { dark?: boolean } = {}) {
               </button>
             </div>
 
-            {/* Кнопки входа */}
-            {!user && (
+            {/* Войти / Регистрация — для незалогиненных */}
+            {!user ? (
               <div className="mt-3 flex flex-col gap-3">
                 <Link
                   href="/login"
@@ -158,6 +173,39 @@ export default function Header({ dark: _dark }: { dark?: boolean } = {}) {
                 >
                   Регистрация
                 </Link>
+              </div>
+            ) : (
+              /* Пользователь залогинен — показываем кабинет и выход */
+              <div className="mt-3 flex flex-col gap-3 border-t border-[#EDE8F8] pt-4 dark:border-white/10">
+                <div className="flex items-center gap-3 px-1">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-[#6438D9]/30 bg-[#F0ECFF] dark:border-[#A98BFF]/40 dark:bg-white/10">
+                    {user.image ? (
+                      <img src={user.image} alt={user.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="text-[12px] font-bold text-[#6438D9] dark:text-[#A98BFF]">
+                        {getInitialsMobile(user.name, user.email)}
+                      </span>
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-[14px] font-semibold text-[#2B1B67] dark:text-white">{user.name}</p>
+                    <p className="truncate text-[12px] text-[#6E6884] dark:text-white/50">{user.email}</p>
+                  </div>
+                </div>
+
+                <Link
+                  href={getDashboardHref(user.role)}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="h-[46px] rounded-[14px] border flex items-center justify-center text-[16px] font-medium border-[#DDD5F5] bg-[#F5F2FF] text-[#2B1B67] dark:border-white/20 dark:bg-white/10 dark:text-white"
+                >
+                  Мой кабинет
+                </Link>
+                <a
+                  href="/logout"
+                  className="h-[46px] rounded-[14px] border flex items-center justify-center text-[16px] font-medium border-[#EDE8F8] text-[#6E6884] transition-colors hover:border-[#FFCCCC] hover:bg-[#FFF0F0] hover:text-[#C0392B] dark:border-white/12 dark:text-white/55 dark:hover:text-red-400"
+                >
+                  Выйти
+                </a>
               </div>
             )}
           </div>

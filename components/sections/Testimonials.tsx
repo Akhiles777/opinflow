@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import RevealOnScroll from "@/components/ui/RevealOnScroll";
 
@@ -22,20 +23,22 @@ type CaseSlide = {
   titleAfter: string;
   summary: string;
   result: string;
+  extended?: React.ReactNode;
   logo?: string;
   logoAlt?: string;
-  logoTone?: "light" | "dark";
+  caseUrl?: string;
   quote: string;
   quoteName: string;
   quoteRole: string;
   quoteCompany: string;
 };
 
+/* ── Полные тексты отзывов ── */
 const reviewCards: ReviewItem[] = [
   {
     id: "eyfel",
     brand: "EYFEL",
-    text: "Контакт с аудиторией всегда у нас был вслепую, пока мы не решили сначала изучить реальные запросы аудитории, а не полагаться на внутренние гипотезы. Благодаря структурированным опросам мы точно поняли, какой посыл, акция и формат подачи информации действительно важны для нашей ЦА.",
+    text: "Контакт с аудиторией всегда у нас был вслепую, пока мы не решили сначала изучить реальные запросы аудитории, а не полагаться на внутренние гипотезы. Благодаря структурированным опросам мы точно поняли, какой посыл, акция и формат подачи информации действительно важны для нашей ЦА. Это позволило выстроить коммуникацию на языке потребителя.",
     name: "Хвостов М.Р.",
     role: "Маркетолог",
     company: "EYFEL",
@@ -44,7 +47,7 @@ const reviewCards: ReviewItem[] = [
   {
     id: "alluri",
     brand: "ALLURI",
-    text: "Разрабатывая отдельный бренд специально под логику маркетплейсов, мы сразу поняли: здесь побеждает не только качество, но и точное соответствие алгоритмам выбора покупателя. Предварительное исследование дало нам чёткую картину того, как люди смотрят карточки и на каком этапе принимают решение о корзине.",
+    text: "Разрабатывая отдельный бренд специально под логику маркетплейсов, мы сразу поняли: здесь побеждает не только качество, но и точное соответствие алгоритмам выбора покупателя. Предварительное исследование дало нам чёткую картину того, как люди смотрят карточки, какие формулировки в составе ищут и на каком этапе принимают решение о корзине. Мы сформировали ассортимент, упаковку и цену строго под требования аудитории. Запуск прошёл гладко, потому что мы всё знали заранее.",
     name: "Хегай И.В.",
     role: "Бренд-менеджер",
     company: "ALLURI",
@@ -61,6 +64,35 @@ const reviewCards: ReviewItem[] = [
   },
 ];
 
+/* ── Расширенный контент для ANGFA ── */
+const angfaExtended = (
+  <div className="mt-6 space-y-5 border-t border-[#D0C7EE]/60 pt-6 dark:border-white/10">
+    <div>
+      <p className="text-[13px] font-semibold uppercase tracking-[0.16em] text-[#8A80A8] dark:text-white/40">
+        Инструмент
+      </p>
+      <p className="mt-2 text-[15px] leading-[1.65] text-[#4F417A] dark:text-white/65">
+        За 6 месяцев до старта мы запустили опросы среди <strong className="text-[#24115D] dark:text-white">6&nbsp;000+ респондентов</strong>, регулярно покупающих уходовую косметику в России. Спрашивали не «нравится ли вам Япония?», а конкретно: за какую проблему волос готовы платить 8&nbsp;000&nbsp;₽ вместо 800&nbsp;₽, где ищут отзывы, какая упаковка удобнее.
+      </p>
+    </div>
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      {[
+        { label: "Матрица продуктов", text: "Убрали 40% ассортимента, нерелевантного рынку — сделали ставку на то, что закрывает реальные запросы." },
+        { label: "Ценовая политика", text: "Три уровня: доступная, ядро и премиум — без крайностей «слишком дорого» и «размывает репутацию»." },
+        { label: "Стратегия контакта", text: "68% покупателей изучают разборы в Telegram. Перераспределили медиабюджет до первого рубля." },
+      ].map(({ label, text }) => (
+        <div key={label} className="rounded-[18px] bg-white/50 p-4 dark:bg-white/5">
+          <p className="text-[13px] font-semibold text-[#24115D] dark:text-white">{label}</p>
+          <p className="mt-1.5 text-[13px] leading-[1.6] text-[#4F417A] dark:text-white/55">{text}</p>
+        </div>
+      ))}
+    </div>
+    <p className="text-[14px] leading-[1.65] text-[#4F417A] dark:text-white/60">
+      Маркетинг — это система. «ПотокМнений» дал нам не просто цифры, а язык, на котором говорит наша аудитория. Мы не привезли «японский каталог» — мы привезли решение конкретных запросов.
+    </p>
+  </div>
+);
+
 const slides: CaseSlide[] = [
   {
     id: "angfa",
@@ -71,9 +103,10 @@ const slides: CaseSlide[] = [
     summary:
       "До вывода бренда на рынок команда проверила упаковку, ожидания аудитории и сценарии выбора товара. Исследование помогло сократить число дорогих гипотез ещё до закупок и производства.",
     result: "Итог: запуск за 4 месяца и экономия более 5 000 000 ₽.",
+    extended: angfaExtended,
     logo: "/Testimonials2/logo-white (1).png",
     logoAlt: "ANGFA",
-    logoTone: "light",
+    caseUrl: "/blog/angfa",
     quote:
       "Без проб и ошибок: сначала мы собрали ответы аудитории, а уже потом принимали решения по продукту и коммуникации. Это сняло лишние расходы на тесты вслепую и ускорило выход на рынок.",
     quoteName: "Ливенцев В.В.",
@@ -87,8 +120,18 @@ const slides: CaseSlide[] = [
     highlight: "точную продуктовую матрицу",
     titleAfter: "до выхода на маркетплейсы",
     summary:
-      "Команда заранее выяснила, как покупатели читают карточки, на что смотрят в составе и какие обещания действительно влияют на решение о покупке. Это позволило выстроить ассортимент и упаковку под реальные ожидания.",
+      "Команда заранее выяснила, как покупатели читают карточки, на что смотрят в составе и какие обещания действительно влияют на решение о покупке.",
     result: "Итог: запуск прошёл без хаотичных переработок карточек и цены.",
+    extended: (
+      <div className="mt-6 space-y-4 border-t border-[#D0C7EE]/60 pt-6 dark:border-white/10">
+        <p className="text-[15px] leading-[1.65] text-[#4F417A] dark:text-white/65">
+          Предварительное исследование дало чёткую картину: как люди смотрят карточки, какие формулировки в составе ищут и на каком этапе принимают решение о корзине. Ассортимент, упаковка и цена были выстроены строго под требования аудитории — ещё до первой поставки.
+        </p>
+        <p className="text-[14px] leading-[1.6] text-[#4F417A] dark:text-white/55">
+          Запуск прошёл гладко, потому что ключевые решения были приняты заранее, а не после первых ошибок на живом рынке.
+        </p>
+      </div>
+    ),
     quote:
       "Мы сформировали ассортимент, упаковку и цену строго под требования аудитории. Запуск прошёл гладко, потому что ключевые решения были приняты заранее, а не после первых ошибок.",
     quoteName: "Хегай И.В.",
@@ -104,9 +147,18 @@ const slides: CaseSlide[] = [
     summary:
       "Опросы помогли команде перейти от внутренних гипотез к понятным сигналам рынка: какие акции воспринимаются лучше, какой посыл работает и что действительно важно покупателю.",
     result: "Итог: коммуникация стала точнее и ближе к реальному запросу ЦА.",
+    extended: (
+      <div className="mt-6 space-y-4 border-t border-[#D0C7EE]/60 pt-6 dark:border-white/10">
+        <p className="text-[15px] leading-[1.65] text-[#4F417A] dark:text-white/65">
+          До исследования команда полагалась на внутренние гипотезы. После — получила конкретные данные: какой посыл вызывает доверие, какой формат акции воспринимается как выгода, а не как манипуляция. Реклама заговорила на языке потребителя.
+        </p>
+        <p className="text-[14px] leading-[1.6] text-[#4F417A] dark:text-white/55">
+          Структурированные опросы дали то, что не могут дать внутренние совещания: прямую речь аудитории без фильтров.
+        </p>
+      </div>
+    ),
     logo: "/Testimonials2/logo_black_crop.svg",
     logoAlt: "EYFEL",
-    logoTone: "dark",
     quote:
       "Благодаря структурированным опросам мы точно поняли, какой посыл, акция и формат подачи информации действительно важны для нашей ЦА. Это позволило выстроить коммуникацию на языке потребителя.",
     quoteName: "Хвостов М.Р.",
@@ -215,9 +267,7 @@ function ArrowButton({ direction, onClick }: { direction: "prev" | "next"; onCli
       aria-label={direction === "prev" ? "Предыдущий отзыв" : "Следующий отзыв"}
       className="flex h-12 w-12 items-center justify-center rounded-full border border-[#D8CEF5] bg-white text-[#2C1A67] dark:border-white/20 dark:bg-white/10 dark:text-white transition-all duration-200 hover:border-[#B9ACEC] hover:bg-[#F7F4FF] dark:hover:border-white/35 dark:hover:bg-white/18"
     >
-      <span className="text-[20px] leading-none">
-        {direction === "prev" ? "‹" : "›"}
-      </span>
+      <span className="text-[20px] leading-none">{direction === "prev" ? "‹" : "›"}</span>
     </button>
   );
 }
@@ -230,19 +280,39 @@ function ReviewAvatar({ item }: { item: ReviewItem }) {
   );
 }
 
+const EXPAND_LIMIT = 220;
+
+/* ── ИСПРАВЛЕННЫЙ КОМПОНЕНТ КАРТОЧКИ С ЛОКАЛЬНЫМ СОСТОЯНИЕМ ── */
 function ReviewCard({ item }: { item: ReviewItem }) {
+  const [expanded, setExpanded] = useState(false);
+  const isLong = item.text.length > EXPAND_LIMIT;
+  const displayText = !expanded && isLong
+    ? item.text.slice(0, EXPAND_LIMIT).trimEnd() + "…"
+    : item.text;
+
   return (
-    <article className="flex min-h-[300px] flex-col justify-between rounded-[34px] border border-[#D8CEF5] dark:border-white/12 dark:bg-white/5 dark:backdrop-blur-sm p-6 lg:min-h-[320px] lg:p-7">
-      <p className="text-[16px] leading-[1.54] tracking-[-0.02em] text-[#35236B] dark:text-white/80 sm:text-[17px] lg:text-[18px]">
-        {item.text}
-      </p>
-      <div className="mt-8 flex items-center gap-4">
+    <article className="flex flex-col justify-between rounded-[34px] border border-[#D8CEF5] dark:border-white/12 dark:bg-white/5 dark:backdrop-blur-sm p-6 lg:p-7">
+      <div>
+        <p className="text-[16px] leading-[1.6] tracking-[-0.02em] text-[#35236B] dark:text-white/80 sm:text-[17px]">
+          {displayText}
+        </p>
+        {isLong && (
+          <button
+            type="button"
+            onClick={() => setExpanded(!expanded)}
+            className="mt-3 text-[14px] font-semibold text-[#6438D9] transition-colors hover:text-[#4E28B5] dark:text-[#A98BFF] dark:hover:text-white"
+          >
+            {expanded ? "Свернуть ↑" : "Читать далее →"}
+          </button>
+        )}
+      </div>
+      <div className="mt-6 flex items-center gap-4">
         <ReviewAvatar item={item} />
         <div>
-          <div className="text-[20px] font-semibold tracking-[-0.04em] text-[#24115D] dark:text-white">
+          <div className="text-[18px] font-semibold tracking-[-0.04em] text-[#24115D] dark:text-white sm:text-[20px]">
             {item.name}
           </div>
-          <div className="mt-1 text-[16px] text-[#8A80A8] dark:text-white/50">
+          <div className="mt-1 text-[15px] text-[#8A80A8] dark:text-white/50 sm:text-[16px]">
             {item.role} · {item.company}
           </div>
         </div>
@@ -276,7 +346,7 @@ function MosaicTile({ tile }: { tile: MosaicTile }) {
   return (
     <>
       <div className={`${tile.lightBg} dark:hidden`}>
-        <div className={`flex h-12 w-12 items-center justify-center rounded-[16px] text-[22px] font-semibold ${tile.badgeClass ?? "bg-[#D8EB16] text-white"}`}>
+        <div className={`flex h-12 w-12 items-center justify-center rounded-2xl text-[22px] font-semibold ${tile.badgeClass ?? "bg-[#D8EB16] text-white"}`}>
           {tile.badge}
         </div>
         <div>
@@ -285,7 +355,7 @@ function MosaicTile({ tile }: { tile: MosaicTile }) {
         </div>
       </div>
       <div className={`${tile.darkBg} hidden dark:flex`}>
-        <div className={`flex h-12 w-12 items-center justify-center rounded-[16px] text-[22px] font-semibold ${tile.badgeClass ?? "bg-[#1C0C4C]/20 text-[#1C0C4C]"}`}>
+        <div className={`flex h-12 w-12 items-center justify-center rounded-2xl text-[22px] font-semibold ${tile.badgeClass ?? "bg-[#1C0C4C]/20 text-[#1C0C4C]"}`}>
           {tile.badge}
         </div>
         <div>
@@ -297,21 +367,48 @@ function MosaicTile({ tile }: { tile: MosaicTile }) {
   );
 }
 
+function CaseLogo({ slide }: { slide: CaseSlide }) {
+  if (!slide.logo) {
+    return (
+      <span className="text-[40px] font-semibold tracking-[-0.08em] text-[#6D6788] dark:text-white/50 sm:text-[54px] lg:text-[64px]">
+        {slide.brand}
+      </span>
+    );
+  }
+  return (
+    <Image
+      src={slide.logo}
+      alt={slide.logoAlt ?? slide.brand}
+      width={160}
+      height={60}
+      className="max-h-13 w-auto object-contain dark:invert dark:opacity-80"
+    />
+  );
+}
+
 export default function Testimonials() {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [caseExpanded, setCaseExpanded] = useState(false);
 
   const activeSlide = slides[activeIndex];
 
-  const orderedReviews = useMemo(() => {
-    return reviewCards.map((_, index) => reviewCards[(activeIndex + index) % reviewCards.length]);
-  }, [activeIndex]);
+  const orderedReviews = useMemo(
+    () => reviewCards.map((_, i) => reviewCards[(activeIndex + i) % reviewCards.length]),
+    [activeIndex],
+  );
 
-  const goPrev = () => setActiveIndex((c) => (c === 0 ? slides.length - 1 : c - 1));
-  const goNext = () => setActiveIndex((c) => (c === slides.length - 1 ? 0 : c + 1));
+  const goPrev = () => {
+    setActiveIndex((c) => (c === 0 ? slides.length - 1 : c - 1));
+    setCaseExpanded(false);
+  };
+  const goNext = () => {
+    setActiveIndex((c) => (c === slides.length - 1 ? 0 : c + 1));
+    setCaseExpanded(false);
+  };
 
   return (
     <section className="overflow-hidden bg-[#FCFBFF] dark:bg-[#1C0C4C] px-4 py-20 sm:px-6 lg:px-8 lg:py-24">
-      <div className="mx-auto max-w-[1350px]">
+      <div className="mx-auto max-w-337.5">
         <RevealOnScroll>
           <div className="flex items-start justify-between gap-6">
             <h2 className="text-[44px] font-semibold leading-[0.9] tracking-[-0.07em] text-[#24115D] dark:text-white sm:text-[58px] lg:text-[72px]">
@@ -326,8 +423,8 @@ export default function Testimonials() {
 
         <RevealOnScroll delay={80}>
           <div className="mt-10 grid grid-cols-1 gap-5 xl:grid-cols-3">
-            {orderedReviews.map((item) => (
-              <ReviewCard key={`${activeSlide.id}-${item.id}`} item={item} />
+            {orderedReviews.map((item, idx) => (
+              <ReviewCard key={`${activeSlide.id}-${item.id}-${idx}`} item={item} />
             ))}
           </div>
         </RevealOnScroll>
@@ -345,44 +442,60 @@ export default function Testimonials() {
             <RevealOnScroll delay={160}>
               <article
                 key={`${activeSlide.id}-case`}
-                className="flex min-h-[460px] flex-col justify-between rounded-[38px] bg-[#EFECFA] dark:bg-white/8 dark:border dark:border-white/10 dark:backdrop-blur-sm p-6 transition-all duration-300 sm:p-8 lg:min-h-[500px] lg:p-9"
+                className="flex flex-col justify-between rounded-[38px] bg-[#EFECFA] dark:bg-white/8 dark:border dark:border-white/10 dark:backdrop-blur-sm p-6 transition-all duration-300 sm:p-8 lg:p-9"
               >
                 <div>
                   <h3 className="max-w-[15ch] text-[30px] font-semibold leading-[1.02] tracking-[-0.06em] text-[#24115D] dark:text-white sm:text-[36px] lg:max-w-[14ch] lg:text-[54px] lg:leading-[0.95]">
                     {activeSlide.titleBefore}{" "}
-                    <span className="box-decoration-clone rounded-[16px] bg-[#EAF45D] dark:bg-[#D9F326] dark:text-[#1C0C4C] px-2 py-0.5">
+                    <span className="box-decoration-clone rounded-2xl bg-[#EAF45D] dark:bg-[#D9F326] dark:text-[#1C0C4C] px-2 py-0.5">
                       {activeSlide.highlight}
                     </span>{" "}
                     {activeSlide.titleAfter}
                   </h3>
-                  <p className="mt-5 max-w-[34rem] text-[15px] leading-[1.62] text-[#4F417A] dark:text-white/65 sm:text-[16px] lg:mt-6 lg:text-[18px]">
+                  <p className="mt-5 max-w-136 text-[15px] leading-[1.62] text-[#4F417A] dark:text-white/65 sm:text-[16px] lg:mt-6 lg:text-[18px]">
                     {activeSlide.summary}
                   </p>
-                  <p className="mt-4 max-w-[30rem] text-[15px] leading-[1.5] text-[#24115D] dark:text-white/80 sm:text-[16px]">
+                  <p className="mt-4 max-w-120 text-[15px] leading-normal text-[#24115D] dark:text-white/80 sm:text-[16px]">
                     {activeSlide.result}
                   </p>
+
+                  {activeSlide.extended && (
+                    <>
+                      <div
+                        className={[
+                          "overflow-hidden transition-all duration-500",
+                          caseExpanded ? "max-h-150 opacity-100" : "max-h-0 opacity-0",
+                        ].join(" ")}
+                      >
+                        {activeSlide.extended}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setCaseExpanded((v) => !v)}
+                        className="mt-5 inline-flex items-center gap-1.5 text-[14px] font-semibold text-[#6438D9] transition-colors hover:text-[#4E28B5] dark:text-[#A98BFF] dark:hover:text-white"
+                      >
+                        {caseExpanded ? "Свернуть ↑" : "Читать далее →"}
+                      </button>
+                    </>
+                  )}
                 </div>
 
-                <div className="mt-10 flex flex-wrap items-end justify-between gap-5">
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8A80A8] dark:text-white/40 sm:text-[12px]">
-                    {activeSlide.brand}
-                  </span>
-                  <div className="flex max-w-full items-center justify-end">
-                    {activeSlide.logo ? (
-                      <div className={activeSlide.logoTone === "light" ? "rounded-[22px] bg-[#2B1768] px-4 py-3 shadow-[0_12px_30px_rgba(40,18,94,0.18)]" : ""}>
-                        <Image
-                          src={activeSlide.logo}
-                          alt={activeSlide.logoAlt ?? activeSlide.brand}
-                          width={220}
-                          height={82}
-                          className="max-h-[58px] w-auto max-w-full object-contain sm:max-h-[68px] lg:max-h-[76px]"
-                        />
-                      </div>
-                    ) : (
-                      <span className="text-[40px] font-semibold tracking-[-0.08em] text-[#6D6788] dark:text-white/50 sm:text-[54px] lg:text-[64px]">
-                        {activeSlide.brand}
-                      </span>
+                <div className="mt-8 flex flex-wrap items-end justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8A80A8] dark:text-white/40 sm:text-[12px]">
+                      {activeSlide.brand}
+                    </span>
+                    {activeSlide.caseUrl && (
+                      <Link
+                        href={activeSlide.caseUrl}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-[#C4B8EC] bg-white/70 px-4 py-1.5 text-[13px] font-semibold text-[#6438D9] transition-all hover:border-[#6438D9] hover:bg-white dark:border-white/20 dark:bg-white/10 dark:text-white/80 dark:hover:bg-white/15 dark:hover:text-white"
+                      >
+                        Полный кейс →
+                      </Link>
                     )}
+                  </div>
+                  <div className="flex w-auto shrink-0 items-center justify-end">
+                    <CaseLogo slide={activeSlide} />
                   </div>
                 </div>
               </article>

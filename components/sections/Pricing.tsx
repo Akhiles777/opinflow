@@ -5,7 +5,7 @@ import Link from "next/link";
 const plans = [
   {
     name: "Basic",
-    subtitle: "20% комиссия площадки",
+    subtitle: "25% комиссия площадки",
     features: [
       "Все возможности площадки",
       "Углубленная ИИ-аналитика",
