@@ -55,6 +55,30 @@ function mapWithdrawalStatus(status: WithdrawalRow["status"]) {
         : { v: "rejected" as const, t: status === "REJECTED" ? "Отклонено" : "Ошибка" };
 }
 
+function FinanceStatCard({
+  icon,
+  value,
+  label,
+}: {
+  icon: string;
+  value: string;
+  label: string;
+}) {
+  return (
+    <div className="h-[168px] rounded-[16px] border border-[#DCD2FF] bg-white px-6 py-6 dark:border-dash-border dark:bg-dash-card">
+      <img src={icon} alt="" width={50} height={50} className="h-[50px] w-[50px]" aria-hidden="true" />
+
+      <div className="mt-7 text-[30px] font-bold leading-none tracking-[-0.02em] text-[#1C0C4C] dark:text-white">
+        {value}
+      </div>
+
+      <div className="mt-1 text-[16px] font-medium leading-tight text-[#82769F] dark:text-white/62">
+        {label}
+      </div>
+    </div>
+  );
+}
+
 export default function AdminFinanceClient({ stats, commissionRate, transactions, withdrawals }: Props) {
   const router = useRouter();
   const [tab, setTab] = useState<"transactions" | "withdrawals">("transactions");
@@ -65,6 +89,27 @@ export default function AdminFinanceClient({ stats, commissionRate, transactions
   const [commissionPercent, setCommissionPercent] = useState(String(Math.round(commissionRate * 1000) / 10));
   const [isPending, startTransition] = useTransition();
   const [syncInfo, setSyncInfo] = useState<string | null>(null);
+  const financeStats = [
+    {
+      icon: "/cabinets/admin/icon.svg",
+      label: "Оборот за месяц",
+      value: formatRub(stats.turnover),
+    },
+    {
+      icon: "/cabinets/admin/icon_com.svg",
+      label: "Комиссия платформы",
+      value: formatRub(stats.commission),
+    },
+    {
+      icon: "/cabinets/admin/icon_res.svg",
+      label: "Выплачено респондентам",
+      value: formatRub(stats.paidOut),
+    },
+  ];
+  const primaryButton = "rounded-[10px] bg-[#6D3AE2] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#7B4FF0] disabled:opacity-60";
+  const ghostButton = "rounded-[10px] border border-dash-border bg-dash-bg/70 px-4 py-2 text-sm font-semibold text-dash-heading transition-colors hover:border-[#6D3AE2]/35 disabled:opacity-60";
+  const activePill = "rounded-[8px] bg-[#6D3AE2] px-4 py-2 text-sm font-semibold text-white";
+  const idlePill = "rounded-[8px] border border-dash-border bg-dash-bg/70 px-4 py-2 text-sm font-semibold text-dash-heading transition-colors hover:border-[#6D3AE2]/35";
 
   const filteredWithdrawals = useMemo(
     () => withdrawals.filter((item) => statusFilter === "ALL" || item.status === statusFilter),
@@ -130,13 +175,18 @@ export default function AdminFinanceClient({ stats, commissionRate, transactions
 
   return (
     <div className="space-y-8">
-      <div className="rounded-2xl border border-dash-border bg-dash-card p-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <div className="text-sm font-semibold text-dash-heading">Комиссия платформы</div>
-            <div className="mt-1 text-sm text-dash-muted">Используется при расчёте бюджета новых опросов.</div>
+      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-[1.8fr_1fr_1fr_1fr]">
+        {/* Комиссия */}
+        <div className="rounded-[16px] border border-[#DCD2FF] bg-white p-6 dark:border-dash-border dark:bg-dash-card">
+          <div className="text-[30px] font-bold text-dash-heading">
+            Комиссия платформы
           </div>
-          <div className="flex w-full gap-3 lg:w-auto">
+
+          <div className="mt-2 text-sm text-dash-muted">
+            Используется при расчёте бюджета новых опросов.
+          </div>
+
+          <div className="mt-6 flex gap-3">
             <input
               type="number"
               min={0}
@@ -144,47 +194,39 @@ export default function AdminFinanceClient({ stats, commissionRate, transactions
               step={0.1}
               value={commissionPercent}
               onChange={(event) => setCommissionPercent(event.target.value)}
-              className="h-11 w-full rounded-xl border border-dash-border bg-dash-bg px-4 text-sm text-dash-body outline-none focus:border-brand/40 lg:w-40"
+              className="h-12 flex-1 rounded-[10px] border border-[#DCD2FF] bg-[#FAF7FB] px-4 text-sm font-medium text-[#1C0C4C] outline-none transition-colors placeholder:text-[#82769F] focus:border-[#6D3AE2] dark:border-dash-border dark:bg-white/[0.07] dark:text-white"
             />
+
             <button
               type="button"
               onClick={handleSaveCommission}
               disabled={isPending}
-              className="rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-mid disabled:opacity-60"
+              className="h-12 rounded-[10px] bg-[#6D3AE2] px-6 text-sm font-semibold text-white transition-colors hover:bg-[#7B4FF0] disabled:opacity-60"
             >
               Сохранить
             </button>
           </div>
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
-        {[
-          { label: "Оборот за месяц", value: formatRub(stats.turnover) },
-          { label: "Комиссия платформы", value: formatRub(stats.commission) },
-          { label: "Выплачено респондентам", value: formatRub(stats.paidOut) },
-        ].map((item) => (
-          <div key={item.label} className="rounded-2xl border border-dash-border bg-dash-card p-6">
-            <div className="text-sm uppercase tracking-[0.18em] text-dash-muted">{item.label}</div>
-            <div className="mt-4 text-3xl font-display font-bold text-dash-heading">{item.value}</div>
-          </div>
+        {financeStats.map((item) => (
+          <FinanceStatCard key={item.label} icon={item.icon} value={item.value} label={item.label} />
         ))}
       </div>
 
-      <div className="rounded-2xl border border-dash-border bg-dash-card p-6">
+      <div className="rounded-[18px] border border-dash-border bg-dash-card p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
               onClick={() => setTab("transactions")}
-              className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${tab === "transactions" ? "bg-brand text-white" : "border border-dash-border bg-dash-bg text-dash-heading"}`}
+              className={tab === "transactions" ? activePill : idlePill}
             >
               Транзакции
             </button>
             <button
               type="button"
               onClick={() => setTab("withdrawals")}
-              className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${tab === "withdrawals" ? "bg-brand text-white" : "border border-dash-border bg-dash-bg text-dash-heading"}`}
+              className={tab === "withdrawals" ? activePill : idlePill}
             >
               Заявки на вывод
             </button>
@@ -201,7 +243,7 @@ export default function AdminFinanceClient({ stats, commissionRate, transactions
                 type="button"
                 onClick={handleSyncPayoutStatuses}
                 disabled={isPending}
-                className="rounded-full border border-dash-border bg-dash-bg px-4 py-2 text-sm font-semibold text-dash-heading transition-colors hover:border-brand/30 disabled:opacity-60"
+                className={ghostButton}
               >
                 Обновить статусы выплат
               </button>
@@ -210,7 +252,7 @@ export default function AdminFinanceClient({ stats, commissionRate, transactions
                   key={item}
                   type="button"
                   onClick={() => setStatusFilter(item)}
-                  className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${statusFilter === item ? "bg-brand text-white" : "border border-dash-border bg-dash-bg text-dash-heading"}`}
+                  className={statusFilter === item ? activePill : idlePill}
                 >
                   {item === "ALL"
                     ? "Все"
@@ -239,7 +281,7 @@ export default function AdminFinanceClient({ stats, commissionRate, transactions
         {tab === "transactions" ? (
           <div className="mt-6 grid gap-3">
             {transactions.map((row) => (
-              <div key={row.id} className="rounded-2xl border border-dash-border bg-dash-bg p-4">
+              <div key={row.id} className="rounded-[14px] border border-dash-border bg-dash-bg/60 p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <div className="text-sm font-semibold text-dash-heading">{row.user}</div>
@@ -259,7 +301,7 @@ export default function AdminFinanceClient({ stats, commissionRate, transactions
             {filteredWithdrawals.map((row) => {
               const status = mapWithdrawalStatus(row.status);
               return (
-                <div key={row.id} className="rounded-2xl border border-dash-border bg-dash-bg p-4">
+                <div key={row.id} className="rounded-[14px] border border-dash-border bg-dash-bg/60 p-4">
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div>
                       <div className="text-sm font-semibold text-dash-heading">{row.user}</div>
@@ -276,7 +318,7 @@ export default function AdminFinanceClient({ stats, commissionRate, transactions
                             type="button"
                             onClick={() => handleApprove(row.id)}
                             disabled={isPending}
-                            className="rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-mid disabled:opacity-60"
+                            className={primaryButton}
                           >
                             Одобрить
                           </button>
@@ -284,7 +326,7 @@ export default function AdminFinanceClient({ stats, commissionRate, transactions
                             type="button"
                             onClick={() => setRejectTarget(row)}
                             disabled={isPending}
-                            className="rounded-xl border border-dash-border bg-white px-4 py-2 text-sm font-semibold text-dash-heading transition-colors hover:border-red-500/30 hover:text-red-500 dark:bg-dash-card disabled:opacity-60"
+                            className="rounded-[10px] border border-dash-border bg-dash-card px-4 py-2 text-sm font-semibold text-dash-heading transition-colors hover:border-red-500/30 hover:text-red-500 disabled:opacity-60"
                           >
                             Отклонить
                           </button>
@@ -314,7 +356,7 @@ export default function AdminFinanceClient({ stats, commissionRate, transactions
               type="button"
               onClick={handleReject}
               disabled={isPending}
-              className="rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-mid disabled:opacity-60"
+              className={primaryButton}
             >
               {isPending ? "Сохраняем..." : "Отклонить"}
             </button>
@@ -327,7 +369,7 @@ export default function AdminFinanceClient({ stats, commissionRate, transactions
             value={rejectReason}
             onChange={(event) => setRejectReason(event.target.value)}
             rows={5}
-            className="w-full rounded-2xl border border-dash-border bg-dash-bg px-4 py-3 text-sm text-dash-body outline-none focus:border-brand/40"
+            className="w-full rounded-[14px] border border-dash-border bg-dash-bg/70 px-4 py-3 text-sm text-dash-body outline-none focus:border-[#6D3AE2]/50"
             placeholder="Например: неверные реквизиты или недостаточно данных для выплаты"
           />
         </div>

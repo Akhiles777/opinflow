@@ -14,39 +14,44 @@ export default async function AdminModerationPage({
 
   const status = activeTab === "approved" ? "ACTIVE" : activeTab === "rejected" ? "REJECTED" : "PENDING_MODERATION";
 
-  const surveys = await prisma.survey.findMany({
-    where: { status },
-    select: {
-      id: true,
-      title: true,
-      status: true,
-      budget: true,
-      createdAt: true,
-      moderationNote: true,
-      creator: {
-        select: {
-          name: true,
-          email: true,
-          clientProfile: { select: { companyName: true } },
+  const [surveys, pendingCount, approvedCount, rejectedCount] = await Promise.all([
+    prisma.survey.findMany({
+      where: { status },
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        budget: true,
+        createdAt: true,
+        moderationNote: true,
+        creator: {
+          select: {
+            name: true,
+            email: true,
+            clientProfile: { select: { companyName: true } },
+          },
+        },
+        questions: {
+          orderBy: { order: "asc" },
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            type: true,
+            required: true,
+            mediaUrl: true,
+            options: true,
+            settings: true,
+            logic: true,
+          },
         },
       },
-      questions: {
-        orderBy: { order: "asc" },
-        select: {
-          id: true,
-          title: true,
-          description: true,
-          type: true,
-          required: true,
-          mediaUrl: true,
-          options: true,
-          settings: true,
-          logic: true,
-        },
-      },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.survey.count({ where: { status: "PENDING_MODERATION" } }),
+    prisma.survey.count({ where: { status: "ACTIVE" } }),
+    prisma.survey.count({ where: { status: "REJECTED" } }),
+  ]);
 
   return (
     <div>
@@ -56,7 +61,11 @@ export default async function AdminModerationPage({
       />
 
       <div className="mt-8">
-        <AdminModerationClient surveys={surveys.map((survey) => ({ ...survey, budget: survey.budget ? Number(survey.budget) : null }))} activeTab={activeTab} />
+        <AdminModerationClient
+          surveys={surveys.map((survey) => ({ ...survey, budget: survey.budget ? Number(survey.budget) : null }))}
+          activeTab={activeTab}
+          counts={{ pending: pendingCount, approved: approvedCount, rejected: rejectedCount }}
+        />
       </div>
     </div>
   );

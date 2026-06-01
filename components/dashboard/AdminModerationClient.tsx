@@ -3,13 +3,11 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { SurveyStatus } from "@prisma/client";
-import Badge from "@/components/dashboard/Badge";
-import DataTable, { type Column } from "@/components/dashboard/DataTable";
 import Modal from "@/components/dashboard/Modal";
 import QuestionRenderer from "@/components/survey-player/QuestionRenderer";
 import { approveSurveyAction, rejectSurveyAction } from "@/actions/surveys";
 import { QUESTION_TYPE_LABELS, type Question } from "@/types/survey";
-import { getSurveyStatusMeta, mapSurveyQuestion } from "@/lib/survey-mappers";
+import { mapSurveyQuestion } from "@/lib/survey-mappers";
 
 type ModerationQuestion = Parameters<typeof mapSurveyQuestion>[0];
 
@@ -41,13 +39,35 @@ type ModerationSurvey = {
 type Props = {
   surveys: ModerationSurvey[];
   activeTab: "pending" | "approved" | "rejected";
+  counts: Record<"pending" | "approved" | "rejected", number>;
 };
 
 function formatDate(date: Date) {
   return new Intl.DateTimeFormat("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric" }).format(date);
 }
 
-export default function AdminModerationClient({ surveys, activeTab }: Props) {
+function getStatusView(status: SurveyStatus) {
+  if (status === "ACTIVE") {
+    return {
+      label: "Активен",
+      className: "border-[#18C93F] bg-[#E9FFE8] text-[#14B133]",
+    };
+  }
+
+  if (status === "REJECTED") {
+    return {
+      label: "Отклонён",
+      className: "border-[#FF3B30] bg-[#FFF0EF] text-[#F13028]",
+    };
+  }
+
+  return {
+    label: "На проверке",
+    className: "border-[#F1B23A] bg-[#FFF7E7] text-[#B97700]",
+  };
+}
+
+export default function AdminModerationClient({ surveys, activeTab, counts }: Props) {
   const router = useRouter();
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [rejectId, setRejectId] = useState<string | null>(null);
@@ -60,51 +80,6 @@ export default function AdminModerationClient({ surveys, activeTab }: Props) {
     () => current?.questions.map((question) => mapSurveyQuestion(question)) ?? [],
     [current],
   );
-
-  const columns: Column<ModerationSurvey>[] = [
-    { key: "title", header: "Название", cell: (survey) => survey.title, className: "max-w-[320px] lg:max-w-[420px]" },
-    {
-      key: "creator",
-      header: "Заказчик",
-      cell: (survey) => survey.creator.clientProfile?.companyName || survey.creator.name || survey.creator.email,
-    },
-    { key: "questions", header: "Вопросов", cell: (survey) => <span className="tabular-nums">{survey.questions.length}</span> },
-    {
-      key: "budget",
-      header: "Бюджет",
-      cell: (survey) => <span className="tabular-nums font-semibold">{survey.budget ? `${survey.budget.toLocaleString("ru-RU")} ₽` : "—"}</span>,
-    },
-    { key: "date", header: "Дата", cell: (survey) => formatDate(survey.createdAt) },
-    {
-      key: "status",
-      header: "Статус",
-      cell: (survey) => {
-        const meta = getSurveyStatusMeta(survey.status);
-        return <Badge variant={meta.variant}>{meta.label}</Badge>;
-      },
-    },
-    {
-      key: "actions",
-      header: "Действия",
-      cell: (survey) => (
-        <div className="flex flex-wrap gap-3">
-          <button type="button" onClick={() => { setError(null); setPreviewId(survey.id); }} className="text-sm font-semibold text-brand hover:underline">
-            Просмотреть
-          </button>
-          {survey.status === "PENDING_MODERATION" ? (
-            <>
-              <button type="button" onClick={() => handleApprove(survey.id)} className="text-sm font-semibold text-green-700 hover:underline dark:text-green-400">
-                Одобрить
-              </button>
-              <button type="button" onClick={() => { setError(null); setRejectReason(""); setRejectId(survey.id); }} className="text-sm font-semibold text-red-600 hover:underline dark:text-red-400">
-                Отклонить
-              </button>
-            </>
-          ) : null}
-        </div>
-      ),
-    },
-  ];
 
   function changeTab(tab: Props["activeTab"]) {
     const value = tab === "pending" ? "pending" : tab === "approved" ? "approved" : "rejected";
@@ -140,31 +115,104 @@ export default function AdminModerationClient({ surveys, activeTab }: Props) {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap gap-2">
+      <div className="inline-flex max-w-full overflow-x-auto rounded-[20px] border border-[#D8CCFF] bg-white p-1 shadow-[0_1px_0_rgba(83,55,160,0.08)] dark:border-white/10 dark:bg-white/5">
         {[
-          { key: "pending" as const, label: "На проверке" },
-          { key: "approved" as const, label: "Одобренные" },
-          { key: "rejected" as const, label: "Отклонённые" },
+          { key: "pending" as const, label: "На проверке", count: counts.pending },
+          { key: "approved" as const, label: "Одобренные", count: counts.approved },
+          { key: "rejected" as const, label: "Отклонённые", count: counts.rejected },
         ].map((tab) => (
           <button
             key={tab.key}
             type="button"
             onClick={() => changeTab(tab.key)}
             className={[
-              "rounded-xl border px-4 py-2 text-sm font-semibold transition-colors",
+              "flex h-11 shrink-0 items-center gap-3 rounded-[14px] px-5 text-[16px] font-semibold leading-none transition-colors",
               activeTab === tab.key
-                ? "border-brand/30 bg-brand/10 text-brand"
-                : "border-dash-border bg-dash-card text-dash-muted hover:bg-dash-bg hover:text-dash-heading",
+                ? "bg-[#6D35E3] text-white shadow-sm"
+                : "bg-[#F0EBFF] text-[#201050] hover:bg-[#E9E1FF]",
             ].join(" ")}
           >
             {tab.label}
+            <span
+              className={[
+                "flex h-6 min-w-6 items-center justify-center rounded-full px-2 text-sm font-bold",
+                activeTab === tab.key ? "bg-white/20 text-white" : "bg-[#DCD5F0] text-[#352267]",
+              ].join(" ")}
+            >
+              {tab.count}
+            </span>
           </button>
         ))}
       </div>
 
       {error ? <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-500">{error}</div> : null}
 
-      <DataTable columns={columns} rows={surveys} keyForRow={(survey) => survey.id} />
+      <div className="min-h-[560px] rounded-[20px] border border-[#D8CCFF] bg-white px-6 py-7 dark:border-white/10 dark:bg-white/[0.04]">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[1080px] border-collapse text-left">
+            <thead>
+              <tr className="text-[13px] font-semibold uppercase tracking-[0.02em] text-[#7C7696]">
+                <th className="w-[28%] px-0 pb-4">Название</th>
+                <th className="w-[12%] px-3 pb-4">Заказчик</th>
+                <th className="w-[8%] px-3 pb-4">Вопросов</th>
+                <th className="w-[14%] px-3 pb-4">Бюджет</th>
+                <th className="w-[10%] px-3 pb-4">Дата</th>
+                <th className="w-[28%] px-3 pb-4">Статус действия</th>
+              </tr>
+            </thead>
+            <tbody className="text-[16px] text-[#170B49] dark:text-white">
+              {surveys.map((survey, index) => {
+                const status = getStatusView(survey.status);
+
+                return (
+                  <tr
+                    key={survey.id}
+                    className={[
+                      "border-t border-[#DCD2FF]",
+                      index % 2 === 0 ? "bg-[#F8F5FA] dark:bg-white/[0.04]" : "bg-white dark:bg-transparent",
+                    ].join(" ")}
+                  >
+                    <td className="max-w-[360px] truncate py-2.5 pr-4 font-medium">{survey.title}</td>
+                    <td className="px-3 py-2.5">
+                      <span className="block max-w-[180px] truncate">
+                        {survey.creator.clientProfile?.companyName || survey.creator.name || survey.creator.email}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2.5 tabular-nums">{survey.questions.length}</td>
+                    <td className="px-3 py-2.5 text-[22px] font-bold tabular-nums">
+                      {survey.budget ? `${survey.budget.toLocaleString("ru-RU")} ₽` : "—"}
+                    </td>
+                    <td className="px-3 py-2.5 tabular-nums">{formatDate(survey.createdAt)}</td>
+                    <td className="px-3 py-2.5">
+                      <div className="flex items-center gap-0">
+                        <span className={`inline-flex h-7 items-center rounded-lg border px-2.5 text-xs font-medium ${status.className}`}>
+                          {status.label}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setError(null);
+                            setPreviewId(survey.id);
+                          }}
+                          className="-ml-1 inline-flex h-8 items-center rounded-[10px] border border-[#CFC3F5] bg-[#EFEAFF] px-3 text-sm font-semibold text-[#25134F] shadow-sm transition-colors hover:bg-[#E7DEFF]"
+                        >
+                          Просмотреть
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {surveys.length === 0 ? (
+          <div className="flex min-h-[360px] items-center justify-center rounded-2xl border border-dashed border-[#D8CCFF] text-center text-[#7C7696] dark:border-white/10 dark:text-white/60">
+            В этом разделе пока нет опросов
+          </div>
+        ) : null}
+      </div>
 
       <Modal
         open={Boolean(previewId)}

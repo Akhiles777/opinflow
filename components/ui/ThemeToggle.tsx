@@ -1,8 +1,8 @@
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
 import { useTheme } from "next-themes";
-import { Moon, Sun } from "lucide-react";
 
 type Props = {
   tone?: "site" | "dash";
@@ -18,8 +18,8 @@ export default function ThemeToggle({ tone = "site" }: Props) {
   const isDark = theme === "dark";
   const cls =
     tone === "dash"
-      ? "w-9 h-9 rounded-[10px] border border-dash-border bg-dash-card flex items-center justify-center text-dash-muted hover:text-dash-heading transition-all duration-200"
-      : "w-9 h-9 rounded-lg border border-site-border bg-site-card flex items-center justify-center text-site-muted hover:text-site-heading hover:bg-site-section transition-all duration-200";
+      ? "flex h-10 w-10 items-center justify-center rounded-[10px] border border-[#D8CCFF] bg-[#EFEAFF] transition-all duration-200 hover:bg-[#E7DEFF] dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/15"
+      : "flex h-10 w-10 items-center justify-center rounded-[10px] border border-site-border bg-site-card transition-all duration-200 hover:bg-site-section";
 
   return (
     <button
@@ -28,7 +28,7 @@ export default function ThemeToggle({ tone = "site" }: Props) {
       className={cls}
       aria-label="Переключить тему"
     >
-      {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+      <Image src="/theme.svg" alt="" width={40} height={40} className="block" />
     </button>
   );
 }
