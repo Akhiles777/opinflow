@@ -12,7 +12,7 @@ export default function StatCard({ icon, label, value, trend, trendUp }: Props) 
   return (
     <div className="rounded-[18px] border border-dash-border bg-dash-card p-5 transition-all duration-200 hover:border-[#6D3AE2]/35">
       {icon ? (
-        <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-[#6D3AE2] text-white shadow-[0_8px_20px_rgba(109,58,226,0.30)]">
+        <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-linear-to-b from-[#9C7DEA] to-[#6438D9] text-white shadow-[0_8px_20px_rgba(100,56,217,0.32)]">
           {icon}
         </div>
       ) : null}

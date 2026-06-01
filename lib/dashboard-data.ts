@@ -199,8 +199,8 @@ export async function getWalletData(userId: string) {
 }
 
 export async function getRespondentReferralData(userId: string) {
-  const [user, referrals, bonusTransactions] = await Promise.all([
-    prisma.user.findUnique({ where: { id: userId }, select: { referralCode: true } }),
+  const [countInvited, referrals, bonusTransactions] = await Promise.all([
+    prisma.referral.count({ where: { senderId: userId } }),
     prisma.referral.findMany({
       where: { senderId: userId },
       orderBy: { createdAt: "desc" },
@@ -221,20 +221,17 @@ export async function getRespondentReferralData(userId: string) {
         wallet: { userId },
         type: "BONUS",
         status: "COMPLETED",
-        description: "Реферальный бонус",
       },
       select: { amount: true },
     }),
   ]);
 
-  const invitedCount = referrals.length;
-  const registeredCount = referrals.filter((r) => r.bonusPaid).length;
+  const registeredCount = referrals.length;
   const earned = bonusTransactions.reduce((sum, item) => sum + Number(item.amount), 0);
-  const referralCode = user?.referralCode ?? userId.slice(0, 10);
 
   return {
-    referralCode,
-    invitedCount,
+    referralCode: userId.slice(0, 10),
+    invitedCount: countInvited,
     registeredCount,
     earned,
     referrals: referrals.map((item) => {
@@ -242,7 +239,7 @@ export async function getRespondentReferralData(userId: string) {
       return {
         name: `${displayName.slice(0, 1)}***`,
         date: formatDate(item.receiver.createdAt),
-        status: item.bonusPaid ? "Бонус выплачен" : "Зарегистрирован",
+        status: item.receiver.status === "ACTIVE" ? "Активен" : "Зарегистрирован",
         bonus: item.bonusPaid ? 150 : 0,
       };
     }),
