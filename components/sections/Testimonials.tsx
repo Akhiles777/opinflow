@@ -33,7 +33,6 @@ type CaseSlide = {
   quoteCompany: string;
 };
 
-/* ── Полные тексты отзывов ── */
 const reviewCards: ReviewItem[] = [
   {
     id: "eyfel",
@@ -64,7 +63,6 @@ const reviewCards: ReviewItem[] = [
   },
 ];
 
-/* ── Расширенный контент для ANGFA ── */
 const angfaExtended = (
   <div className="mt-6 space-y-5 border-t border-[#D0C7EE]/60 pt-6 dark:border-white/10">
     <div>
@@ -72,7 +70,11 @@ const angfaExtended = (
         Инструмент
       </p>
       <p className="mt-2 text-[15px] leading-[1.65] text-[#4F417A] dark:text-white/65">
-        За 6 месяцев до старта мы запустили опросы среди <strong className="text-[#24115D] dark:text-white">6&nbsp;000+ респондентов</strong>, регулярно покупающих уходовую косметику в России. Спрашивали не «нравится ли вам Япония?», а конкретно: за какую проблему волос готовы платить 8&nbsp;000&nbsp;₽ вместо 800&nbsp;₽, где ищут отзывы, какая упаковка удобнее.
+        За 6 месяцев до старта мы запустили опросы среди{" "}
+        <strong className="text-[#24115D] dark:text-white">6&nbsp;000+ респондентов</strong>,
+        регулярно покупающих уходовую косметику в России. Спрашивали не «нравится ли вам Япония?»,
+        а конкретно: за какую проблему волос готовы платить 8&nbsp;000&nbsp;₽ вместо 800&nbsp;₽,
+        где ищут отзывы, какая упаковка удобнее.
       </p>
     </div>
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -88,7 +90,8 @@ const angfaExtended = (
       ))}
     </div>
     <p className="text-[14px] leading-[1.65] text-[#4F417A] dark:text-white/60">
-      Маркетинг — это система. «ПотокМнений» дал нам не просто цифры, а язык, на котором говорит наша аудитория. Мы не привезли «японский каталог» — мы привезли решение конкретных запросов.
+      Маркетинг — это система. «ПотокМнений» дал нам не просто цифры, а язык, на котором говорит
+      наша аудитория. Мы не привезли «японский каталог» — мы привезли решение конкретных запросов.
     </p>
   </div>
 );
@@ -125,10 +128,13 @@ const slides: CaseSlide[] = [
     extended: (
       <div className="mt-6 space-y-4 border-t border-[#D0C7EE]/60 pt-6 dark:border-white/10">
         <p className="text-[15px] leading-[1.65] text-[#4F417A] dark:text-white/65">
-          Предварительное исследование дало чёткую картину: как люди смотрят карточки, какие формулировки в составе ищут и на каком этапе принимают решение о корзине. Ассортимент, упаковка и цена были выстроены строго под требования аудитории — ещё до первой поставки.
+          Предварительное исследование дало чёткую картину: как люди смотрят карточки, какие
+          формулировки в составе ищут и на каком этапе принимают решение о корзине. Ассортимент,
+          упаковка и цена были выстроены строго под требования аудитории — ещё до первой поставки.
         </p>
         <p className="text-[14px] leading-[1.6] text-[#4F417A] dark:text-white/55">
-          Запуск прошёл гладко, потому что ключевые решения были приняты заранее, а не после первых ошибок на живом рынке.
+          Запуск прошёл гладко, потому что ключевые решения были приняты заранее, а не после первых
+          ошибок на живом рынке.
         </p>
       </div>
     ),
@@ -150,10 +156,13 @@ const slides: CaseSlide[] = [
     extended: (
       <div className="mt-6 space-y-4 border-t border-[#D0C7EE]/60 pt-6 dark:border-white/10">
         <p className="text-[15px] leading-[1.65] text-[#4F417A] dark:text-white/65">
-          До исследования команда полагалась на внутренние гипотезы. После — получила конкретные данные: какой посыл вызывает доверие, какой формат акции воспринимается как выгода, а не как манипуляция. Реклама заговорила на языке потребителя.
+          До исследования команда полагалась на внутренние гипотезы. После — получила конкретные
+          данные: какой посыл вызывает доверие, какой формат акции воспринимается как выгода, а не
+          как манипуляция. Реклама заговорила на языке потребителя.
         </p>
         <p className="text-[14px] leading-[1.6] text-[#4F417A] dark:text-white/55">
-          Структурированные опросы дали то, что не могут дать внутренние совещания: прямую речь аудитории без фильтров.
+          Структурированные опросы дали то, что не могут дать внутренние совещания: прямую речь
+          аудитории без фильтров.
         </p>
       </div>
     ),
@@ -282,13 +291,13 @@ function ReviewAvatar({ item }: { item: ReviewItem }) {
 
 const EXPAND_LIMIT = 220;
 
-/* ── ИСПРАВЛЕННЫЙ КОМПОНЕНТ КАРТОЧКИ С ЛОКАЛЬНЫМ СОСТОЯНИЕМ ── */
+// ✅ ИСПРАВЛЕНИЕ: каждая карточка имеет свой независимый useState(false)
+// key={item.id} гарантирует что при смене слайда стейт сбрасывается для каждой карточки отдельно
 function ReviewCard({ item }: { item: ReviewItem }) {
   const [expanded, setExpanded] = useState(false);
   const isLong = item.text.length > EXPAND_LIMIT;
-  const displayText = !expanded && isLong
-    ? item.text.slice(0, EXPAND_LIMIT).trimEnd() + "…"
-    : item.text;
+  const displayText =
+    !expanded && isLong ? item.text.slice(0, EXPAND_LIMIT).trimEnd() + "…" : item.text;
 
   return (
     <article className="flex flex-col justify-between rounded-[34px] border border-[#D8CEF5] dark:border-white/12 dark:bg-white/5 dark:backdrop-blur-sm p-6 lg:p-7">
@@ -299,7 +308,7 @@ function ReviewCard({ item }: { item: ReviewItem }) {
         {isLong && (
           <button
             type="button"
-            onClick={() => setExpanded(!expanded)}
+            onClick={() => setExpanded((v) => !v)}
             className="mt-3 text-[14px] font-semibold text-[#6438D9] transition-colors hover:text-[#4E28B5] dark:text-[#A98BFF] dark:hover:text-white"
           >
             {expanded ? "Свернуть ↑" : "Читать далее →"}
@@ -321,7 +330,7 @@ function ReviewCard({ item }: { item: ReviewItem }) {
   );
 }
 
-function MosaicTile({ tile }: { tile: MosaicTile }) {
+function MosaicTileComponent({ tile }: { tile: MosaicTile }) {
   if (tile.kind === "logo") {
     const darkImgClass = `h-full max-h-[70px] w-full object-contain opacity-65${tile.invertOnDark ? " invert" : ""}`;
     return (
@@ -392,6 +401,10 @@ export default function Testimonials() {
 
   const activeSlide = slides[activeIndex];
 
+  // ✅ orderedReviews пересчитывается при смене activeIndex
+  // ReviewCard получает key={item.id} — каждая карточка независима
+  // При смене слайда карточки НЕ пересоздаются (key стабилен = item.id)
+  // Поэтому expanded у каждой карточки сохраняется независимо
   const orderedReviews = useMemo(
     () => reviewCards.map((_, i) => reviewCards[(activeIndex + i) % reviewCards.length]),
     [activeIndex],
@@ -422,9 +435,12 @@ export default function Testimonials() {
         </RevealOnScroll>
 
         <RevealOnScroll delay={80}>
-          <div className="mt-10 grid grid-cols-1 gap-5 xl:grid-cols-3">
-            {orderedReviews.map((item, idx) => (
-              <ReviewCard key={`${activeSlide.id}-${item.id}-${idx}`} item={item} />
+          <div className="mt-10 grid grid-cols-1 gap-5 xl:grid-cols-3 xl:items-start">
+            {orderedReviews.map((item) => (
+              // ✅ key={item.id} — стабильный, не зависит от activeIndex
+              // Каждая карточка живёт своим независимым useState
+              // Нажатие "Читать далее" на одной НЕ затрагивает другие
+              <ReviewCard key={item.id} item={item} />
             ))}
           </div>
         </RevealOnScroll>
@@ -433,7 +449,7 @@ export default function Testimonials() {
           <RevealOnScroll delay={120}>
             <div className="grid grid-cols-3 auto-rows-[110px] gap-4 sm:auto-rows-[125px] lg:auto-rows-[132px]">
               {mosaicTiles.map((tile, index) => (
-                <MosaicTile key={`${tile.kind}-${index}`} tile={tile} />
+                <MosaicTileComponent key={`${tile.kind}-${index}`} tile={tile} />
               ))}
             </div>
           </RevealOnScroll>
@@ -464,7 +480,7 @@ export default function Testimonials() {
                       <div
                         className={[
                           "overflow-hidden transition-all duration-500",
-                          caseExpanded ? "max-h-150 opacity-100" : "max-h-0 opacity-0",
+                          caseExpanded ? "max-h-[600px] opacity-100" : "max-h-0 opacity-0",
                         ].join(" ")}
                       >
                         {activeSlide.extended}
