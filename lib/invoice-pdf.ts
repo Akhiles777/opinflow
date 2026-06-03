@@ -294,13 +294,10 @@ export async function generateCorporateInvoicePdf(input: InvoicePdfInput) {
     color: colors.hdr, borderColor: colors.line, borderWidth: 0.8,
   });
   page.drawText("Итого:", {
-    x: cX[5] + 4, y: y - 14, size: 8.5, font: bold, color: colors.text,
+    x: cX[4] + 4, y: y - 14, size: 8.5, font: bold, color: colors.text,
   });
   page.drawText(`${formatRub(input.amount)} руб.`, {
     x: cX[6] + 4, y: y - 14, size: 8.5, font: bold, color: colors.text,
-  });
-  page.drawText("Без НДС", {
-    x: cX[5] + 4, y: y - 14, size: 8.5, font: regular, color: colors.muted,
   });
 
   y -= 20 + 22;

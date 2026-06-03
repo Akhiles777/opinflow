@@ -2,7 +2,7 @@
 import { useMemo, useState, useTransition } from "react";
 import Modal from "@/components/dashboard/Modal";
 import Badge from "@/components/dashboard/Badge";
-import { createDepositAction } from "@/actions/payments";
+import { createCorporateInvoiceAction, createDepositAction } from "@/actions/payments";
 
 type Props = {
   balance: number;
@@ -59,28 +59,43 @@ export default function ClientWalletClient({ balance, transactions, payments, pa
 
   function handleDeposit() {
     setError(null);
-
-    if (depositMethod === "INVOICE") {
-      if (!normalizedAmount || normalizedAmount < 100) {
-        setError("Минимальная сумма — 100 ₽");
+    startTransition(async () => {
+      if (depositMethod === "INVOICE") {
+        const result = (await createCorporateInvoiceAction(normalizedAmount)) as any;
+        if (result?.error || !result?.downloadUrl) {
+          setError(result?.error ?? "Не удалось сформировать счёт");
+          return;
+        }
+        try {
+          const res = await fetch(result.downloadUrl);
+          if (!res.ok) {
+            let msg = "Не удалось сформировать счёт";
+            try { const d = await res.json(); msg = d.error || msg; } catch { /* ignore */ }
+            setError(msg);
+            return;
+          }
+          const blob = await res.blob();
+          const objectUrl = URL.createObjectURL(blob);
+          const anchor = document.createElement("a");
+          anchor.href = objectUrl;
+          anchor.download = `invoice_${normalizedAmount}.pdf`;
+          document.body.appendChild(anchor);
+          anchor.click();
+          document.body.removeChild(anchor);
+          setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+          setShowDepositModal(false);
+        } catch {
+          setError("Ошибка при скачивании счёта. Попробуйте ещё раз.");
+        }
         return;
       }
-      const link = document.createElement("a");
-      link.href = `/api/invoices/draft?amount=${normalizedAmount}`;
-      link.download = `invoice_${normalizedAmount}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      setShowDepositModal(false);
-      return;
-    }
 
-    startTransition(async () => {
       const result = await createDepositAction(normalizedAmount);
       if (result.error || !result.confirmationUrl) {
         setError(result.error ?? "Не удалось создать платёж");
         return;
       }
+
       window.location.href = result.confirmationUrl;
     });
   }
@@ -186,7 +201,7 @@ export default function ClientWalletClient({ balance, transactions, payments, pa
         open={showDepositModal}
         title="Пополнение баланса"
         onClose={() => {
-          if (!isLoading || depositMethod === "INVOICE") {
+          if (!isLoading) {
             setShowDepositModal(false);
             setError(null);
           }
@@ -197,13 +212,15 @@ export default function ClientWalletClient({ balance, transactions, payments, pa
             <button
               type="button"
               onClick={handleDeposit}
-              disabled={depositMethod === "CARD" && isLoading}
+              disabled={isLoading}
               className="rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-mid disabled:opacity-60"
             >
-              {depositMethod === "INVOICE"
-                ? "Скачать счёт PDF"
-                : isLoading
-                  ? "Создаём платёж..."
+              {isLoading
+                ? depositMethod === "INVOICE"
+                  ? "Формируем счёт..."
+                  : "Создаём платёж..."
+                : depositMethod === "INVOICE"
+                  ? "Скачать счёт PDF"
                   : "Перейти к оплате"}
             </button>
           </div>
