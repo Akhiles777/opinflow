@@ -55,7 +55,7 @@ const reviewCards: ReviewItem[] = [
   {
     id: "angfa",
     brand: "ANGFA",
-    text: "Мы заранее протестировали гипотезы запуска и поняли, какие барьеры мешают покупке, какие формулировки вызывают доверие и как должен выглядеть первый продукт для локального рынка. Это дало возможность сократить риск дорогих ошибок до старта продаж.",
+    text: "Перед первым запуском в России мы провели масштабное исследование на «ПотокМнений» — 6 000+ респондентов, регулярно покупающих уходовую косметику. Получили чёткую картину барьеров, ценовых ожиданий и каналов доверия. Результат: стратегические решения по ассортименту, ценообразованию и медиа ещё до того, как первый контейнер пересёк границу. Это дало возможность сократить риск дорогих ошибок и войти в рынок в 3 раза быстрее прогноза.",
     name: "Ливенцев В.В.",
     role: "CMO ANGFA в России и СНГ",
     company: "ANGFA",
@@ -300,7 +300,7 @@ function ReviewCard({ item }: { item: ReviewItem }) {
     !expanded && isLong ? item.text.slice(0, EXPAND_LIMIT).trimEnd() + "…" : item.text;
 
   return (
-    <article className="flex flex-col justify-between rounded-[34px] border border-[#D8CEF5] dark:border-white/12 dark:bg-white/5 dark:backdrop-blur-sm p-6 lg:p-7">
+    <article className="flex flex-col justify-between rounded-[34px] border border-[#D8CEF5] dark:border-white/12 dark:bg-white/5 dark:backdrop-blur-sm p-7 lg:p-9 min-h-65">
       <div>
         <p className="text-[16px] leading-[1.6] tracking-[-0.02em] text-[#35236B] dark:text-white/80 sm:text-[17px]">
           {displayText}
@@ -445,7 +445,7 @@ export default function Testimonials() {
           </div>
         </RevealOnScroll>
 
-        <div className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-[420px_1fr]">
+        <div className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-[360px_1fr]">
           <RevealOnScroll delay={120}>
             <div className="grid grid-cols-3 auto-rows-[110px] gap-4 sm:auto-rows-[125px] lg:auto-rows-[132px]">
               {mosaicTiles.map((tile, index) => (
@@ -520,7 +520,7 @@ export default function Testimonials() {
             <RevealOnScroll delay={220}>
               <article
                 key={`${activeSlide.id}-quote`}
-                className="min-h-[320px] rounded-[38px] bg-[#EFECFA] dark:bg-white/8 dark:border dark:border-white/10 dark:backdrop-blur-sm p-3 transition-all duration-300 sm:p-4 lg:min-h-[400px] lg:p-5"
+                className="min-h-[320px] min-w-55 rounded-[38px] bg-[#EFECFA] dark:bg-white/8 dark:border dark:border-white/10 dark:backdrop-blur-sm p-3 transition-all duration-300 sm:p-4 lg:min-h-100 lg:p-5"
               >
                 <div className="flex h-full flex-col justify-between rounded-[30px] bg-white dark:bg-white/8 p-4 sm:p-5 lg:p-6">
                   <p className="text-[16px] leading-[1.6] text-[#35236B] dark:text-white/80 sm:text-[17px] lg:text-[18px]">

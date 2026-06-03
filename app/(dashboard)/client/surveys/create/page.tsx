@@ -1,5 +1,5 @@
-import PageHeader from "@/components/dashboard/PageHeader";
 import SurveyBuilder from "@/components/survey-builder/SurveyBuilder";
+import PageHeader from "@/components/dashboard/PageHeader";
 import { requireRole } from "@/lib/auth-utils";
 import { getCommissionRate } from "@/lib/platform-settings";
 import { prisma } from "@/lib/prisma";
@@ -17,9 +17,13 @@ export default async function ClientSurveyCreatePage() {
         title="Создать опрос"
         subtitle="Соберите структуру исследования, настройте аудиторию и сразу увидите бюджет запуска."
       />
-
-      <div className="mt-8">
-        <SurveyBuilder balance={Number(wallet?.balance ?? 0)} commissionRate={commissionRate} />
+      <div className="mt-6">
+        <SurveyBuilder
+          balance={Number(wallet?.balance ?? 0)}
+          commissionRate={commissionRate}
+          userName={session.user.name ?? null}
+          userEmail={session.user.email ?? null}
+        />
       </div>
     </div>
   );

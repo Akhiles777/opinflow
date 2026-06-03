@@ -46,7 +46,7 @@ export default function ClientProfileForm({ profile }: { profile: ClientProfileD
   return (
     <form action={formAction} className="mt-8 grid grid-cols-1 gap-6">
       <div className="rounded-2xl border border-dash-border bg-dash-card p-6">
-        <p className="text-sm font-semibold text-dash-heading font-body">Информация о компании</p>
+        <p className="text-[20px] font-semibold text-dash-heading font-body">Информация о компании</p>
         <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
           <Field label="Название компании" name="companyName" defaultValue={profile.companyName} placeholder="ООО ПотокМнений" />
           <Field label="ИНН" name="inn" defaultValue={profile.inn} placeholder="7700000000" />
@@ -57,7 +57,7 @@ export default function ClientProfileForm({ profile }: { profile: ClientProfileD
       </div>
 
       <div className="rounded-2xl border border-dash-border bg-dash-card p-6">
-        <p className="text-sm font-semibold text-dash-heading font-body">Банковские реквизиты</p>
+        <p className="text-[20px] font-semibold text-dash-heading font-body">Банковские реквизиты</p>
         <p className="mt-2 text-sm text-dash-muted font-body">
           Реквизиты нужны для выставления счётов и документооборота.
         </p>
@@ -67,15 +67,13 @@ export default function ClientProfileForm({ profile }: { profile: ClientProfileD
           <Field label="БИК" name="bankBik" defaultValue={profile.bankBik} placeholder="0445..." />
           <Field label="Юридический адрес" name="legalAddress" defaultValue={profile.legalAddress} placeholder="Москва, ..." />
         </div>
-      </div>
-
-      {state.error ? <p className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-400">{state.error}</p> : null}
-      {state.success ? <p className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm text-emerald-400">{state.message}</p> : null}
-
-      <div>
-        <button type="submit" disabled={isPending} className="rounded-xl bg-brand px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-dark disabled:opacity-60">
-          {isPending ? "Сохраняем..." : "Сохранить"}
-        </button>
+        {state.error ? <p className="mt-4 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-400">{state.error}</p> : null}
+        {state.success ? <p className="mt-4 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm text-emerald-400">{state.message}</p> : null}
+        <div className="mt-6 flex justify-end">
+          <button type="submit" disabled={isPending} className="rounded-xl bg-brand px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-dark disabled:opacity-60">
+            {isPending ? "Сохраняем..." : "Сохранить изменения"}
+          </button>
+        </div>
       </div>
     </form>
   );

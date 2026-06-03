@@ -4,6 +4,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { X } from "lucide-react";
 import type { DashboardViewer } from "@/lib/dashboard-data";
 import SignOutButton from "@/components/auth/SignOutButton";
+import Link from "next/link";
 
 type IconName =
   | "overview"
@@ -148,8 +149,12 @@ export default function Sidebar({
       >
         {/* Logo */}
         <div className="flex h-[88px] shrink-0 items-center gap-3 px-5">
-          <img src="/logo2.png" alt="ПотокМнений" width={54} height={54} className="h-[54px] w-[54px] object-contain" />
+
+          
+            <img src="/logo2.png" alt="ПотокМнений" width={54} height={54} className="h-[54px] w-[54px] object-contain" />
           <span className="text-[16px] font-semibold tracking-[-0.02em] text-white">ПотокМнений</span>
+         
+
           <button
             type="button"
             onClick={onCloseMobileMenu}

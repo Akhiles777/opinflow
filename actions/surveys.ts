@@ -900,3 +900,32 @@ export async function loadDraftAction(surveyId: string) {
 
   return { success: true, survey };
 }
+
+export async function deleteSurveyAction(surveyId: string) {
+  const session = await requireRole("CLIENT");
+  const survey = await prisma.survey.findUnique({
+    where: { id: surveyId },
+    select: { id: true, creatorId: true, status: true },
+  });
+  if (!survey || survey.creatorId !== session.user.id) {
+    return { error: "Опрос не найден" };
+  }
+  if (survey.status === "ACTIVE") {
+    return { error: "Нельзя удалить активный опрос" };
+  }
+  try {
+    await prisma.$transaction(async (tx) => {
+      await tx.surveyQuestion.deleteMany({ where: { surveyId } });
+      await tx.surveySession.deleteMany({ where: { surveyId } });
+      await tx.surveyResponse.deleteMany({ where: { surveyId } });
+      await tx.surveyAnalysis.deleteMany({ where: { surveyId } });
+      await tx.survey.delete({ where: { id: surveyId } });
+    });
+    revalidatePath("/client");
+    revalidatePath("/client/surveys");
+    return { success: true };
+  } catch (error) {
+    console.error("[deleteSurveyAction]", error);
+    return { error: "Не удалось удалить опрос" };
+  }
+}

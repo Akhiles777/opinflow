@@ -28,7 +28,7 @@ function getInitialsMobile(name?: string | null, email?: string | null) {
 const links = [
   { label: "Главная",      href: "/#top" },
   { label: "Респондентам", href: "/respondents" },
-  { label: "Бизнесу",     href: "/#business" },
+  { label: "Бизнесу",     href: "/#top" },
   { label: "О нас",       href: "/#about" },
   { label: "Контакты",    href: "/#contacts" },
 ];

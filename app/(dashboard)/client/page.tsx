@@ -1,88 +1,123 @@
-import * as React from "react";
+import Image from "next/image";
 import PageHeader from "@/components/dashboard/PageHeader";
-import StatCard from "@/components/dashboard/StatCard";
-import DataTable, { Column } from "@/components/dashboard/DataTable";
 import Badge from "@/components/dashboard/Badge";
 import EmptyState from "@/components/dashboard/EmptyState";
-import DashboardGlyph from "@/components/dashboard/DashboardGlyph";
+import DeleteSurveyButton from "@/components/dashboard/DeleteSurveyButton";
 import { formatRub, getClientOverviewData, mapSurveyStatus } from "@/lib/dashboard-data";
 import { requireRole } from "@/lib/auth-utils";
 
-type SurveyRow = {
-  id: string;
-  title: string;
-  answered: number;
-  status: ReturnType<typeof mapSurveyStatus>;
-};
-
-const columns: Column<SurveyRow>[] = [
-  { key: "title", header: "Название", cell: (r) => r.title, className: "max-w-[320px] lg:max-w-[520px]" },
-  {
-    key: "answers",
-    header: "Ответов",
-    cell: (r) => <span className="tabular-nums font-semibold">{r.answered}</span>,
-  },
-  {
-    key: "status",
-    header: "Статус",
-    cell: (r) => <Badge variant={r.status.v}>{r.status.t}</Badge>,
-  },
-  {
-    key: "actions",
-    header: "Действия",
-    cell: (row) => (
-      <div className="flex flex-wrap gap-3">
-        <a href={`/client/surveys/${row.id}`} className="text-sm font-semibold text-brand hover:underline">
-          Открыть
-        </a>
-      </div>
-    ),
-  },
+const STAT_ICONS = [
+  "/cabinets/client/Icons_money 24px.svg",
+  "/cabinets/client/document-text.svg",
+  "/cabinets/client/Icons_vsego 24px.svg",
+  "/cabinets/client/search-status.svg",
 ];
+const STAT_LABELS = ["Баланс", "Активных опросов", "Всего ответов", "На модерации"];
 
 export default async function ClientOverviewPage() {
   const session = await requireRole("CLIENT");
   const data = await getClientOverviewData(session.user.id);
-  const stats = [
-    { label: "Баланс", value: formatRub(data.balance), icon: <DashboardGlyph name="wallet" /> },
-    { label: "Активных опросов", value: String(data.activeCount), icon: <DashboardGlyph name="layers" /> },
-    {
-      label: "Всего ответов",
-      value: String(data.totalResponses),
-      trend: data.totalResponses > 0 ? "Ответы собраны из реальных опросов" : "Пока нет ответов",
-      trendUp: data.totalResponses > 0,
-      icon: <DashboardGlyph name="trend" />,
-    },
-    { label: "На модерации", value: String(data.moderationCount), icon: <DashboardGlyph name="moderation" /> },
+
+  const statValues = [
+    formatRub(data.balance),
+    String(data.activeCount),
+    String(data.totalResponses),
+    String(data.moderationCount),
   ];
-  const surveys: SurveyRow[] = data.surveys.map((survey) => ({
-    id: survey.id,
-    title: survey.title,
-    answered: survey.responses,
-    status: mapSurveyStatus(survey.status),
-  }));
 
   return (
     <div>
-      <PageHeader title="Обзор" subtitle="Сводка по опросам и эффективности кампаний." />
+      <PageHeader
+        title="Обзор"
+        subtitle="Сводка по опросам и эффективности кампаний."
+        right={
+          <a
+            href="/client/surveys/create"
+            className="inline-flex items-center gap-2 rounded-xl bg-[#7244F5] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_6px_18px_rgba(114,68,245,0.45)] transition-all hover:bg-[#6238DC] hover:shadow-[0_6px_18px_rgba(114,68,245,0.6)]"
+          >
+            <Image src="/icons/add-square.svg" width={18} height={18} alt="" />
+            Создать опрос
+          </a>
+        }
+      />
 
-      <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
-        {stats.map((s) => (
-          <StatCard key={s.label} icon={s.icon} label={s.label} value={s.value} trend={s.trend} trendUp={s.trendUp} />
+      {/* Stat cards */}
+      <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {STAT_LABELS.map((label, i) => (
+          <div key={label} className="rounded-[18px] border border-dash-border bg-dash-card p-5">
+            <div className="mb-4 flex h-[44px] w-[44px] items-center justify-center rounded-[12px] bg-[#6D3AE2]">
+              <Image
+                src={STAT_ICONS[i]}
+                width={20}
+                height={20}
+                alt=""
+                style={{ filter: "brightness(0) invert(1)" }}
+              />
+            </div>
+            <p className="font-display text-[28px] font-bold leading-none text-dash-heading tabular-nums">
+              {statValues[i]}
+            </p>
+            <p className="mt-1.5 text-[13px] text-dash-muted">{label}</p>
+          </div>
         ))}
       </div>
 
-      <div className="mt-10">
-        <p className="text-sm font-semibold text-dash-heading mb-4 font-body">
-          Ваши опросы
-        </p>
-        {surveys.length > 0 ? (
-          <DataTable columns={columns} rows={surveys} keyForRow={(r) => r.id} />
+      {/* Surveys table */}
+      <div className="mt-8 rounded-[18px] border border-dash-border bg-dash-card">
+        <div className="border-b border-dash-border px-6 py-4">
+          <h2 className="text-[17px] font-semibold text-dash-heading">Ваши опросы</h2>
+        </div>
+        {data.surveys.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-dash-border bg-dash-bg/40">
+                  <th className="px-6 py-3 text-[11px] font-semibold uppercase tracking-wider text-dash-muted">Название</th>
+                  <th className="px-6 py-3 text-[11px] font-semibold uppercase tracking-wider text-dash-muted">Ответов</th>
+                  <th className="px-6 py-3 text-[11px] font-semibold uppercase tracking-wider text-dash-muted">Статус</th>
+                  <th className="px-6 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-dash-muted">Действия</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-dash-border">
+                {data.surveys.map((survey) => {
+                  const status = mapSurveyStatus(survey.status);
+                  return (
+                    <tr key={survey.id} className="transition-colors hover:bg-dash-bg/30">
+                      <td className="px-6 py-3 text-[15px] font-medium text-dash-body">{survey.title}</td>
+                      <td className="px-6 py-3 text-[15px] tabular-nums text-dash-body">{survey.responses}</td>
+                      <td className="px-6 py-3">
+                        <Badge variant={status.v}>{status.t}</Badge>
+                      </td>
+                      <td className="px-6 py-3">
+                        <div className="flex items-center justify-end gap-2">
+                          <a
+                            href={`/client/surveys/${survey.id}`}
+                            className="rounded-lg border border-[#DDD2FF] bg-[#EEE8FF] px-5 py-1.5 text-[13px] font-semibold text-[#6D3AE2] transition-colors hover:bg-[#E4D8FF]"
+                          >
+                            Открыть
+                          </a>
+                          <a
+                            href={`/client/surveys/${survey.id}`}
+                            className="rounded-lg border border-[#DDD2FF] bg-[#EEE8FF] px-5 py-1.5 text-[13px] font-semibold text-[#6D3AE2] transition-colors hover:bg-[#E4D8FF]"
+                          >
+                            Статистика
+                          </a>
+                          <DeleteSurveyButton surveyId={survey.id} />
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         ) : (
-          <EmptyState
-            title="Опросов пока нет"
-            description="Создайте первый опрос, и здесь появится сводка по ответам и статусам."
-          />
+          <div className="p-6">
+            <EmptyState
+              title="Опросов пока нет"
+              description="Создайте первый опрос, и здесь появится сводка по ответам и статусам."
+            />
+          </div>
         )}
       </div>
     </div>

@@ -655,29 +655,29 @@ export default function StepQuestions({ questions, onChange, draft }: Props) {
         </SortableContext>
       </DndContext>
 
-      <div className="relative">
-        <button
-          type="button"
-          onClick={() => setShowTypeMenu((value) => !value)}
-          className="w-full rounded-2xl border-2 border-dashed border-dash-border bg-dash-bg p-6 text-sm font-semibold text-dash-muted transition-colors hover:border-brand/40 hover:bg-brand/5 hover:text-dash-heading"
-        >
-          + Добавить вопрос
-        </button>
-
+      <div>
         {showTypeMenu ? (
-          <div className="absolute left-0 right-0 top-[calc(100%+12px)] z-20 grid gap-2 rounded-2xl border border-dash-border bg-dash-card p-3 shadow-xl lg:right-auto lg:w-[320px]">
+          <div className="mb-3 grid grid-cols-2 gap-2 rounded-2xl border border-dash-border bg-dash-bg p-3 sm:grid-cols-3">
             {QUESTION_TYPES.map((type) => (
               <button
                 key={type}
                 type="button"
                 onClick={() => addQuestion(type)}
-                className="rounded-xl px-4 py-3 text-left text-sm font-semibold text-dash-heading transition-colors hover:bg-dash-bg hover:text-brand"
+                className="rounded-xl border border-dash-border bg-dash-card px-4 py-3 text-left text-[13px] font-semibold text-dash-heading transition-colors hover:border-[#DDD2FF] hover:bg-[#EEE8FF] hover:text-[#6D3AE2]"
               >
                 {QUESTION_TYPE_LABELS[type]}
               </button>
             ))}
           </div>
         ) : null}
+
+        <button
+          type="button"
+          onClick={() => setShowTypeMenu((value) => !value)}
+          className="w-full rounded-2xl border-2 border-dashed border-[#DDD2FF] bg-[#F8F5FF] p-5 text-[14px] font-semibold text-[#6D3AE2] transition-colors hover:border-[#7244F5] hover:bg-[#EEE8FF]"
+        >
+          {showTypeMenu ? "✕ Закрыть" : "+ Добавить вопрос"}
+        </button>
       </div>
     </div>
   );

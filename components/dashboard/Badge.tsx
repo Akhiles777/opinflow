@@ -16,7 +16,7 @@ type Props = {
 
 const styles: Record<Variant, string> = {
   active:
-    "bg-green-500/10 text-green-600 border-green-500 dark:text-green-400",
+    "bg-green-500 text-white border-green-500",
   pending:
     "bg-orange-500/10 text-orange-500 border-orange-400",
   rejected:
@@ -24,16 +24,16 @@ const styles: Record<Variant, string> = {
   draft:
     "bg-dash-bg text-dash-muted border-dash-border",
   moderation:
-    "bg-[#6D3AE2]/10 text-[#6D3AE2] border-[#6D3AE2] dark:text-[#A98BFF]",
+    "bg-white text-dash-muted border-dash-border",
   completed:
-    "bg-[#6D3AE2] text-white border-[#6D3AE2]",
+    "bg-white text-[#6D3AE2] border-[#6D3AE2]",
 };
 
 export default function Badge({ variant, children, className }: Props) {
   return (
     <span
       className={[
-        "inline-flex items-center rounded-[6px] border px-2 py-1 text-xs font-semibold leading-none",
+        "inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold leading-none",
         styles[variant],
         className,
       ]

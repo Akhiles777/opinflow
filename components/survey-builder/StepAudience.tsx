@@ -37,22 +37,8 @@ function toggleItem(list: string[], value: string) {
   return list.includes(value) ? list.filter((item) => item !== value) : [...list, value];
 }
 
-function estimateReach(draft: SurveyDraft) {
-  let reach = 25000;
-  if (draft.targetGender !== "any") reach *= 0.7;
-  if (draft.targetAgeMin > 18 || draft.targetAgeMax < 65) reach *= 0.7;
-  if (draft.targetCities.length > 0) reach *= 0.7;
-  if (draft.targetIncomes.length > 0) reach *= 0.7;
-  if (draft.targetInterests.length > 0) reach *= 0.7;
-  if (draft.targetHasChildren !== "any") reach *= 0.7;
-  if (draft.targetEmploymentStatuses.length > 0) reach *= 0.7;
-  if (draft.targetIndustries.length > 0) reach *= 0.7;
-  if (draft.targetMaritalStatuses.length > 0) reach *= 0.7;
-  return Math.max(500, Math.round(reach));
-}
 
 export default function StepAudience({ draft, onChange }: Props) {
-  const reach = estimateReach(draft);
   const [ageMinInput, setAgeMinInput] = useState(String(draft.targetAgeMin));
   const [ageMaxInput, setAgeMaxInput] = useState(String(draft.targetAgeMax));
 
@@ -85,8 +71,7 @@ export default function StepAudience({ draft, onChange }: Props) {
   }
 
   return (
-    <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_300px] xl:items-start">
-      <div className="space-y-8">
+    <div className="space-y-8">
         <div className="space-y-3">
           <div className="text-sm font-medium text-dash-muted">Пол</div>
           <div className="flex flex-wrap gap-3">
@@ -328,15 +313,5 @@ export default function StepAudience({ draft, onChange }: Props) {
           </div>
         </div>
       </div>
-
-      <aside className="h-fit rounded-2xl border border-white/8 bg-surface-900 p-6 text-white xl:sticky xl:top-6">
-        <div className="text-sm uppercase tracking-[0.22em] text-white/35">Подбор аудитории</div>
-        <div className="mt-4 font-display text-3xl font-bold text-white">~{reach.toLocaleString("ru-RU")}</div>
-        <div className="mt-2 text-base text-white/60">Расчётный охват</div>
-        <p className="mt-5 text-sm leading-relaxed text-white/45">
-          Это примерная оценка доступной аудитории на основе выбранных фильтров. Чем жёстче сегментация, тем ниже доступный охват и тем дольше может идти набор.
-        </p>
-      </aside>
-    </div>
   );
 }

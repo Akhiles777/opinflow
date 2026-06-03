@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createSurveyAction } from "@/actions/surveys";
@@ -12,29 +13,18 @@ import { EMPTY_DRAFT, type SurveyDraft } from "@/types/survey";
 type Props = {
   balance: number;
   commissionRate: number;
+  userName?: string | null;
+  userEmail?: string | null;
 };
 
-const steps = [
-  { id: 1, title: "Основное" },
-  { id: 2, title: "Вопросы" },
-  { id: 3, title: "Аудитория" },
-  { id: 4, title: "Бюджет" },
-] as const;
+const STEP_TITLES = ["Основное", "Вопросы", "Аудитория", "Бюджет"];
+const DRAFT_KEY = "opinflow:client-survey-draft:v1";
 
-const DRAFT_STORAGE_KEY = "opinflow:client-survey-draft:v1";
-
-type PersistedDraftState = {
-  step: number;
-  draft: SurveyDraft;
-};
+type PersistedDraft = { step: number; draft: SurveyDraft };
 
 function normalizeDraft(value: unknown): SurveyDraft | null {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return null;
-  }
-
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   const raw = value as Partial<SurveyDraft>;
-
   return {
     ...EMPTY_DRAFT,
     ...raw,
@@ -42,26 +32,16 @@ function normalizeDraft(value: unknown): SurveyDraft | null {
     targetCities: Array.isArray(raw.targetCities) ? raw.targetCities : EMPTY_DRAFT.targetCities,
     targetIncomes: Array.isArray(raw.targetIncomes) ? raw.targetIncomes : EMPTY_DRAFT.targetIncomes,
     targetInterests: Array.isArray(raw.targetInterests) ? raw.targetInterests : EMPTY_DRAFT.targetInterests,
-    targetEmploymentStatuses: Array.isArray(raw.targetEmploymentStatuses)
-      ? raw.targetEmploymentStatuses
-      : EMPTY_DRAFT.targetEmploymentStatuses,
+    targetEmploymentStatuses: Array.isArray(raw.targetEmploymentStatuses) ? raw.targetEmploymentStatuses : EMPTY_DRAFT.targetEmploymentStatuses,
     targetIndustries: Array.isArray(raw.targetIndustries) ? raw.targetIndustries : EMPTY_DRAFT.targetIndustries,
-    targetMaritalStatuses: Array.isArray(raw.targetMaritalStatuses)
-      ? raw.targetMaritalStatuses
-      : EMPTY_DRAFT.targetMaritalStatuses,
+    targetMaritalStatuses: Array.isArray(raw.targetMaritalStatuses) ? raw.targetMaritalStatuses : EMPTY_DRAFT.targetMaritalStatuses,
     title: typeof raw.title === "string" ? raw.title : EMPTY_DRAFT.title,
     description: typeof raw.description === "string" ? raw.description : EMPTY_DRAFT.description,
     category: typeof raw.category === "string" ? raw.category : EMPTY_DRAFT.category,
-    targetGender:
-      raw.targetGender === "male" || raw.targetGender === "female" || raw.targetGender === "any"
-        ? raw.targetGender
-        : EMPTY_DRAFT.targetGender,
+    targetGender: raw.targetGender === "male" || raw.targetGender === "female" || raw.targetGender === "any" ? raw.targetGender : EMPTY_DRAFT.targetGender,
     targetAgeMin: typeof raw.targetAgeMin === "number" ? raw.targetAgeMin : EMPTY_DRAFT.targetAgeMin,
     targetAgeMax: typeof raw.targetAgeMax === "number" ? raw.targetAgeMax : EMPTY_DRAFT.targetAgeMax,
-    targetHasChildren:
-      raw.targetHasChildren === "yes" || raw.targetHasChildren === "no" || raw.targetHasChildren === "any"
-        ? raw.targetHasChildren
-        : EMPTY_DRAFT.targetHasChildren,
+    targetHasChildren: raw.targetHasChildren === "yes" || raw.targetHasChildren === "no" || raw.targetHasChildren === "any" ? raw.targetHasChildren : EMPTY_DRAFT.targetHasChildren,
     maxResponses: typeof raw.maxResponses === "number" ? raw.maxResponses : EMPTY_DRAFT.maxResponses,
     reward: typeof raw.reward === "number" ? raw.reward : EMPTY_DRAFT.reward,
     startsAt: typeof raw.startsAt === "string" ? raw.startsAt : EMPTY_DRAFT.startsAt,
@@ -69,7 +49,21 @@ function normalizeDraft(value: unknown): SurveyDraft | null {
   };
 }
 
-export default function SurveyBuilder({ balance, commissionRate }: Props) {
+function estimateReach(draft: SurveyDraft) {
+  let reach = 25000;
+  if (draft.targetGender !== "any") reach *= 0.7;
+  if (draft.targetAgeMin > 18 || draft.targetAgeMax < 65) reach *= 0.7;
+  if (draft.targetCities.length > 0) reach *= 0.7;
+  if (draft.targetIncomes.length > 0) reach *= 0.7;
+  if (draft.targetInterests.length > 0) reach *= 0.7;
+  if (draft.targetHasChildren !== "any") reach *= 0.7;
+  if (draft.targetEmploymentStatuses.length > 0) reach *= 0.7;
+  if (draft.targetIndustries.length > 0) reach *= 0.7;
+  if (draft.targetMaritalStatuses.length > 0) reach *= 0.7;
+  return Math.max(500, Math.round(reach));
+}
+
+export default function SurveyBuilder({ balance, commissionRate, userName, userEmail }: Props) {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [draft, setDraft] = useState<SurveyDraft>(EMPTY_DRAFT);
@@ -78,55 +72,36 @@ export default function SurveyBuilder({ balance, commissionRate }: Props) {
   const [hydrated, setHydrated] = useState(false);
   const [isSubmitting, startTransition] = useTransition();
 
-  const totalBudget = useMemo(
-    () => draft.maxResponses * draft.reward * (1 + commissionRate),
-    [commissionRate, draft.maxResponses, draft.reward],
-  );
+  const totalBase = draft.maxResponses * draft.reward;
+  const commission = Math.round(totalBase * commissionRate);
+  const totalBudget = totalBase + commission;
+  const hasEnough = balance >= totalBudget;
+  const reach = useMemo(() => estimateReach(draft), [draft]);
 
+  const initials = (userName || userEmail || "UX").slice(0, 2).toUpperCase();
+  const displayName = userName || (userEmail ? userEmail.split("@")[0] : "UX");
+
+  // Restore draft from localStorage
   useEffect(() => {
     try {
-      const raw = window.localStorage.getItem(DRAFT_STORAGE_KEY);
-      if (!raw) {
-        setHydrated(true);
-        return;
-      }
-
-      const parsed = JSON.parse(raw) as Partial<PersistedDraftState>;
-      const restoredDraft = normalizeDraft(parsed.draft);
-      const restoredStep =
-        typeof parsed.step === "number" && parsed.step >= 1 && parsed.step <= 4 ? parsed.step : 1;
-
-      if (restoredDraft) {
-        setDraft(restoredDraft);
-        setStep(restoredStep);
-        setDraftStatus("Черновик восстановлен");
-      }
-    } catch {
-      window.localStorage.removeItem(DRAFT_STORAGE_KEY);
-    } finally {
-      setHydrated(true);
-    }
+      const raw = window.localStorage.getItem(DRAFT_KEY);
+      if (!raw) { setHydrated(true); return; }
+      const parsed = JSON.parse(raw) as Partial<PersistedDraft>;
+      const restored = normalizeDraft(parsed.draft);
+      const restoredStep = typeof parsed.step === "number" && parsed.step >= 1 && parsed.step <= 4 ? parsed.step : 1;
+      if (restored) { setDraft(restored); setStep(restoredStep); setDraftStatus("Черновик восстановлен"); }
+    } catch { window.localStorage.removeItem(DRAFT_KEY); }
+    finally { setHydrated(true); }
   }, []);
 
+  // Auto-save draft
   useEffect(() => {
-    if (!hydrated) {
-      return;
-    }
-
-    const saveTimer = window.setTimeout(() => {
-      window.localStorage.setItem(
-        DRAFT_STORAGE_KEY,
-        JSON.stringify({
-          step,
-          draft,
-        } satisfies PersistedDraftState),
-      );
-      setDraftStatus((current) => (current === "Черновик восстановлен" ? current : "Черновик сохранён"));
+    if (!hydrated) return;
+    const timer = window.setTimeout(() => {
+      window.localStorage.setItem(DRAFT_KEY, JSON.stringify({ step, draft } satisfies PersistedDraft));
+      setDraftStatus((cur) => cur === "Черновик восстановлен" ? cur : "Черновик сохранён");
     }, 300);
-
-    return () => {
-      window.clearTimeout(saveTimer);
-    };
+    return () => window.clearTimeout(timer);
   }, [draft, step, hydrated]);
 
   function updateDraft(patch: Partial<SurveyDraft>) {
@@ -135,183 +110,207 @@ export default function SurveyBuilder({ balance, commissionRate }: Props) {
   }
 
   function clearDraft() {
-    window.localStorage.removeItem(DRAFT_STORAGE_KEY);
+    window.localStorage.removeItem(DRAFT_KEY);
     setDraft(EMPTY_DRAFT);
     setStep(1);
     setError(null);
     setDraftStatus("Черновик очищен");
   }
 
-  function validateStep(currentStep: number) {
-    if (currentStep === 1) {
+  function validateStep(s: number) {
+    if (s === 1) {
       if (draft.title.trim().length < 5) return "Название должно содержать минимум 5 символов";
       if (!draft.category.trim()) return "Выберите категорию";
     }
-
-    if (currentStep === 2) {
+    if (s === 2) {
       if (draft.questions.length < 1) return "Добавьте хотя бы один вопрос";
-      for (const question of draft.questions) {
-        if (!question.title.trim()) return "У каждого вопроса должен быть заполнен заголовок";
-        if (["SINGLE_CHOICE", "MULTIPLE_CHOICE", "RANKING"].includes(question.type) && question.options.filter((item) => item.trim()).length < 2) {
+      for (const q of draft.questions) {
+        if (!q.title.trim()) return "У каждого вопроса должен быть заполнен заголовок";
+        if (["SINGLE_CHOICE", "MULTIPLE_CHOICE", "RANKING"].includes(q.type) && q.options.filter((o) => o.trim()).length < 2) {
           return "У вопросов с вариантами должно быть минимум 2 варианта ответа";
         }
-        if (question.type === "MATRIX") {
-          if (question.matrixRows.filter((item) => item.trim()).length < 1) {
-            return "У матричного вопроса должна быть хотя бы одна строка";
-          }
-          if (question.matrixCols.filter((item) => item.trim()).length < 2) {
-            return "У матричного вопроса должно быть минимум 2 столбца";
-          }
+        if (q.type === "MATRIX") {
+          if (q.matrixRows.filter((r) => r.trim()).length < 1) return "У матричного вопроса должна быть хотя бы одна строка";
+          if (q.matrixCols.filter((c) => c.trim()).length < 2) return "У матричного вопроса должно быть минимум 2 столбца";
         }
       }
     }
-
-    if (currentStep === 3) {
-      if (draft.targetAgeMin > draft.targetAgeMax) {
-        return "Минимальный возраст не может быть больше максимального";
-      }
-    }
-
-    if (currentStep === 4) {
+    if (s === 3 && draft.targetAgeMin > draft.targetAgeMax) return "Минимальный возраст не может быть больше максимального";
+    if (s === 4) {
       if (draft.maxResponses < 10) return "Минимум 10 респондентов";
       if (draft.reward < 20) return "Минимальное вознаграждение — 20 ₽";
       if (!draft.endsAt) return "Укажите дату окончания";
-      if (draft.startsAt && draft.endsAt && draft.endsAt < draft.startsAt) {
-        return "Дата окончания должна быть позже даты начала";
-      }
+      if (draft.startsAt && draft.endsAt && draft.endsAt < draft.startsAt) return "Дата окончания должна быть позже даты начала";
     }
-
     return null;
   }
 
   function goNext() {
-    const validationError = validateStep(step);
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
+    const err = validateStep(step);
+    if (err) { setError(err); return; }
     setError(null);
-    setStep((prev) => Math.min(prev + 1, 4));
+    setStep((p) => Math.min(p + 1, 4));
   }
 
   function handleSubmit() {
-    const validationError = validateStep(4);
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
-
+    const err = validateStep(4);
+    if (err) { setError(err); return; }
     startTransition(async () => {
       try {
         const result = await createSurveyAction(draft);
-        if (result.error || !result.success) {
-          setError(result.error ?? "Не удалось создать опрос");
-          return;
-        }
-
-        window.localStorage.removeItem(DRAFT_STORAGE_KEY);
-        setDraftStatus(null);
+        if (result.error || !result.success) { setError(result.error ?? "Не удалось создать опрос"); return; }
+        window.localStorage.removeItem(DRAFT_KEY);
         router.push(`/client/surveys/${result.surveyId}`);
-      } catch {
-        setError("Не удалось создать опрос. Попробуйте ещё раз.");
-      }
+      } catch { setError("Не удалось создать опрос. Попробуйте ещё раз."); }
     });
   }
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-2xl border border-dash-border bg-dash-card p-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="grid flex-1 gap-4 md:grid-cols-4">
-            {steps.map((item, index) => {
-              const active = item.id === step;
-              const done = item.id < step;
-              return (
-                <div key={item.id} className="flex items-center gap-3">
-                  <div className={[
-                    "flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold",
-                    active
-                      ? "bg-brand text-white"
-                      : done
-                        ? "bg-brand/20 text-brand"
-                        : "bg-dash-border text-dash-muted",
-                  ].join(" ")}>
-                    {done ? "✓" : item.id}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-sm font-semibold text-dash-heading">{item.title}</div>
-                    {index < steps.length - 1 ? (
-                      <div className={[
-                        "mt-2 h-1 rounded-full",
-                        done ? "bg-brand/30" : "bg-dash-border",
-                      ].join(" ")} />
-                    ) : null}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+    <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_296px] lg:items-start">
 
-          <div className="flex flex-wrap items-center gap-3 lg:justify-end">
-            {draftStatus ? <div className="text-sm font-medium text-dash-muted">{draftStatus}</div> : null}
+      {/* ── Main card ───────────────────────────────────────── */}
+      <div className="rounded-[18px] border border-dash-border bg-dash-card">
+
+        {/* Step header */}
+        <div className="flex items-center justify-between border-b border-dash-border px-6 py-4">
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-[18px] font-bold text-[#7244F5]">{step}/4</span>
+            <span className="ml-1 text-[18px] font-semibold text-dash-heading">{STEP_TITLES[step - 1]}</span>
+          </div>
+          <button
+            type="button"
+            onClick={clearDraft}
+            className="rounded-xl border border-dash-border bg-dash-bg px-4 py-2 text-[13px] font-semibold text-dash-muted transition-colors hover:text-dash-heading"
+          >
+            Очистить черновик
+          </button>
+        </div>
+
+        {/* Step content */}
+        <div className="min-h-110 p-6">
+          {step === 1 ? <StepBasic draft={draft} onChange={updateDraft} /> : null}
+          {step === 2 ? <StepQuestions draft={draft} questions={draft.questions} onChange={(q) => updateDraft({ questions: q })} /> : null}
+          {step === 3 ? <StepAudience draft={draft} onChange={updateDraft} /> : null}
+          {step === 4 ? <StepBudget draft={draft} onChange={updateDraft} /> : null}
+        </div>
+
+        {/* Error */}
+        {error ? (
+          <div className="mx-6 mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] font-medium text-red-500">
+            {error}
+          </div>
+        ) : null}
+
+        {/* Nav buttons */}
+        <div className="flex items-center justify-between border-t border-dash-border px-6 py-4">
+          <button
+            type="button"
+            onClick={() => { setError(null); setStep((p) => Math.max(p - 1, 1)); }}
+            disabled={step === 1}
+            className="rounded-xl border border-dash-border bg-dash-card px-5 py-2.5 text-[13px] font-semibold text-dash-heading transition-colors hover:bg-dash-bg disabled:pointer-events-none disabled:opacity-40"
+          >
+            Назад
+          </button>
+
+          {step < 4 ? (
             <button
               type="button"
-              onClick={clearDraft}
-              className="rounded-xl border border-dash-border bg-dash-bg px-4 py-2 text-sm font-semibold text-dash-heading transition-colors hover:border-brand/30 hover:text-brand"
+              onClick={goNext}
+              className="rounded-xl bg-[#7244F5] px-6 py-2.5 text-[13px] font-semibold text-white shadow-[0_6px_18px_rgba(114,68,245,0.4)] transition-all hover:bg-[#6238DC]"
             >
-              Очистить черновик
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="rounded-2xl border border-dash-border bg-dash-card p-6 sm:p-8">
-        {step === 1 ? <StepBasic draft={draft} onChange={updateDraft} /> : null}
-        {step === 2 ? <StepQuestions draft={draft} questions={draft.questions} onChange={(questions) => updateDraft({ questions })} /> : null}
-        {step === 3 ? <StepAudience draft={draft} onChange={updateDraft} /> : null}
-        {step === 4 ? <StepBudget draft={draft} balance={balance} commissionRate={commissionRate} onChange={updateDraft} /> : null}
-      </div>
-
-      {error ? (
-        <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm font-medium text-red-500">
-          {error}
-        </div>
-      ) : null}
-
-      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <button
-          type="button"
-          onClick={() => {
-            setError(null);
-            setStep((prev) => Math.max(prev - 1, 1));
-          }}
-          className={[
-            "rounded-xl border px-5 py-3 text-sm font-semibold transition-colors",
-            step === 1
-              ? "pointer-events-none border-dash-border bg-dash-bg text-dash-muted opacity-50"
-              : "border-dash-border bg-dash-bg text-dash-heading hover:border-brand/30 hover:text-brand",
-          ].join(" ")}
-        >
-          Назад
-        </button>
-
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="text-sm text-dash-muted">Итого к списанию: {totalBudget.toLocaleString("ru-RU")} ₽</div>
-          {step < 4 ? (
-            <button type="button" onClick={goNext} className="rounded-xl bg-brand px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-mid">
               Далее
             </button>
           ) : (
             <button
               type="button"
               onClick={handleSubmit}
-              disabled={isSubmitting || balance < totalBudget}
-              className="rounded-xl bg-brand px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-mid disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={isSubmitting || !hasEnough}
+              className="rounded-xl bg-[#7244F5] px-6 py-2.5 text-[13px] font-semibold text-white shadow-[0_6px_18px_rgba(114,68,245,0.4)] transition-all hover:bg-[#6238DC] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isSubmitting ? "Публикуем..." : "Опубликовать"}
             </button>
           )}
         </div>
+      </div>
+
+      {/* ── Right sidebar ────────────────────────────────────── */}
+      <div className="space-y-4 lg:sticky lg:top-6">
+
+        {step === 1 ? (
+          /* User card */
+          <div className="rounded-[18px] border border-dash-border bg-dash-card p-5">
+            <div className="flex h-30 items-center justify-center rounded-xl bg-dash-bg">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#EEE8FF] text-[20px] font-semibold text-[#7244F5]">
+                {initials}
+              </div>
+            </div>
+            <div className="mt-4">
+              <p className="text-[15px] font-semibold text-dash-heading">{displayName}</p>
+              {userEmail ? <p className="mt-0.5 text-[13px] text-dash-muted">{userEmail}</p> : null}
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Итог бюджета */}
+            <div className="rounded-[18px] border border-dash-border bg-dash-card p-5">
+              <p className="text-[16px] font-semibold text-dash-heading">Итог бюджета</p>
+
+              <div className="mt-4 space-y-2">
+                <div className="flex justify-between text-[14px] text-dash-body">
+                  <span>{draft.maxResponses} × {draft.reward} ₽</span>
+                  <span>{totalBase.toLocaleString("ru-RU")} ₽</span>
+                </div>
+                <div className="flex justify-between text-[13px] text-dash-muted">
+                  <span>Комиссия платформы ({Math.round(commissionRate * 100)}%)</span>
+                  <span>{commission.toLocaleString("ru-RU")} ₽</span>
+                </div>
+              </div>
+
+              <div className="my-3 border-t border-dash-border" />
+
+              <div className="flex items-baseline justify-between">
+                <span className="text-[14px] text-dash-muted">Итого</span>
+                <span className="text-[28px] font-bold leading-none text-[#7244F5] tabular-nums">
+                  {totalBudget.toLocaleString("ru-RU")} ₽
+                </span>
+              </div>
+
+              {!hasEnough ? (
+                <div className="mt-4 rounded-xl border border-dashed border-red-300 bg-red-50 px-3 py-2.5 text-[12px] text-red-500">
+                  Недостаточно средств. Пополните баланс.
+                </div>
+              ) : null}
+
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
+                <Link
+                  href="/client/wallet"
+                  className="rounded-xl border border-dash-border bg-dash-bg px-4 py-2 text-[13px] font-semibold text-dash-heading transition-colors hover:bg-dash-card"
+                >
+                  Пополнить баланс
+                </Link>
+                <span className="text-[12px] text-dash-muted">
+                  Баланс кошелька: {balance.toLocaleString("ru-RU")} ₽
+                </span>
+              </div>
+            </div>
+
+            {/* Подбор аудитории */}
+            <div className="rounded-[18px] border border-dash-border bg-dash-card p-5">
+              <p className="text-[16px] font-semibold text-dash-heading">Подбор аудитории</p>
+              <p className="mt-3 text-[32px] font-bold text-[#7244F5] tabular-nums">
+                ~{reach.toLocaleString("ru-RU")}
+              </p>
+              <p className="mt-0.5 text-[13px] text-dash-muted">Расчётный охват</p>
+              <p className="mt-3 text-[13px] leading-relaxed text-dash-muted">
+                Это примерная оценка доступной аудитории на основе выбранных фильтров. Чем жёстче сегментация, тем ниже доступный охват и тем дольше может идти набор.
+              </p>
+            </div>
+          </>
+        )}
+
+        {draftStatus ? (
+          <p className="text-center text-[12px] text-dash-muted">{draftStatus}</p>
+        ) : null}
       </div>
     </div>
   );
