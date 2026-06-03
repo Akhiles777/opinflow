@@ -395,7 +395,7 @@ function rubles(amount: number): string {
     if (t >= 11 && t <= 19) return "копеек";
     if (u === 1) return "копейка";
     if (u >= 2 && u <= 4) return "копейки";
-    return "kopеек";
+    return "копеек";
   }
 
   const millions  = Math.floor(rub / 1_000_000);
