@@ -1,5 +1,5 @@
 export const SERVICE_PROVIDER_DETAILS = {
-  companyName: "Индивидуальный предприниматель Метальников Георгий Алексеевич",
+  companyName: "ИП Метальников Георгий Алексеевич",
   inn: "772788080067",
   ogrnip: "323774600044710",
   bankAccount: "40802810300000686048",

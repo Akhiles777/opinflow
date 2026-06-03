@@ -20,6 +20,7 @@ export type InvoicePdfInput = {
   invoiceDate: Date;
   amount: number;
   serviceDescription: string;
+  tableServiceName?: string;
   seller: PartyDetails;
   buyer: PartyDetails;
 };
@@ -176,11 +177,10 @@ export async function generateCorporateInvoicePdf(input: InvoicePdfInput) {
 
   let sy = y - 28;
   for (const line of sellerLines) {
-    drawWrappedText({
+    sy = drawWrappedText({
       page, text: line, x: marginX + 8, y: sy, maxWidth: 226,
       size: 8.5, font: regular, color: colors.text, lineHeight: 12,
-    });
-    sy -= 14;
+    }) - 3;
   }
 
   // Buyer: companyName, ИНН, КПП — только эти три поля
@@ -192,11 +192,10 @@ export async function generateCorporateInvoicePdf(input: InvoicePdfInput) {
 
   let by = y - 28;
   for (const line of buyerLines) {
-    drawWrappedText({
+    by = drawWrappedText({
       page, text: line, x: marginX + 258, y: by, maxWidth: 220,
       size: 8.5, font: regular, color: colors.text, lineHeight: 12,
-    });
-    by -= 14;
+    }) - 3;
   }
 
   y -= blockH + 18;
@@ -270,7 +269,7 @@ export async function generateCorporateInvoicePdf(input: InvoicePdfInput) {
   // Row data
   const rowData = [
     "1",
-    input.serviceDescription,
+    input.tableServiceName ?? input.serviceDescription,
     formatRub(input.amount),
     "1",
     "услуга",
@@ -351,21 +350,6 @@ export async function generateCorporateInvoicePdf(input: InvoicePdfInput) {
     });
     y -= 13;
   }
-
-  y -= 30;
-
-  // ── Подписи ─────────────────────────────────────────────────────────────────
-  page.drawLine({
-    start: { x: marginX, y: y + 10 }, end: { x: marginX + pageW, y: y + 10 },
-    thickness: 0.5, color: colors.line,
-  });
-
-  page.drawText("Руководитель ________________________", {
-    x: marginX, y, size: 9, font: regular, color: colors.muted,
-  });
-  page.drawText("Бухгалтер ________________________", {
-    x: marginX + 280, y, size: 9, font: regular, color: colors.muted,
-  });
 
   return Buffer.from(await pdf.save());
 }

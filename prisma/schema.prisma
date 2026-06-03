@@ -37,6 +37,7 @@ model User {
   expertReviewRequests ExpertReviewRequest[]
   pushSubscriptions PushSubscription[]
   notifications     Notification[]
+  invoices          Invoice[]
   @@map("users")
 }
 
@@ -537,4 +538,15 @@ model PlatformSettings {
   updatedAt         DateTime @updatedAt
 
   @@map("platform_settings")
+}
+
+model Invoice {
+  id        Int      @id @default(autoincrement())
+  paymentId String?
+  userId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("invoices")
 }

@@ -45,11 +45,17 @@ export async function GET(
       ? metadata.invoiceNumber.trim()
       : payment.id.slice(0, 8).toUpperCase();
 
+  const rawDescription = payment.description || "Пополнение баланса платформы «ПотокМнений»";
+  const shortDescription = rawDescription.length > 60
+    ? rawDescription.slice(0, 57) + "…"
+    : rawDescription;
+
   const pdfBuffer = await generateCorporateInvoicePdf({
     invoiceNumber,
     invoiceDate: payment.createdAt,
     amount: Number(payment.amount),
-    serviceDescription: payment.description || "Пополнение внутреннего баланса платформы «ПотокМнений»",
+    serviceDescription: rawDescription,
+    tableServiceName: shortDescription,
     seller: {
       companyName: typeof seller.companyName === "string" ? seller.companyName : SERVICE_PROVIDER_DETAILS.companyName,
       inn: typeof seller.inn === "string" ? seller.inn : SERVICE_PROVIDER_DETAILS.inn,

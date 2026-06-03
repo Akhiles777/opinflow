@@ -28,13 +28,18 @@ export async function GET(request: Request) {
   });
 
   const now = new Date();
-  const invoiceNumber = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}-${session.user.id.slice(0, 6).toUpperCase()}`;
+
+  const invoiceRecord = await prisma.invoice.create({
+    data: { userId: session.user.id },
+  });
+  const invoiceNumber = String(invoiceRecord.id);
 
   const pdfBuffer = await generateCorporateInvoicePdf({
     invoiceNumber,
     invoiceDate: now,
     amount,
-    serviceDescription: "Пополнение внутреннего баланса платформы «ПотокМнений» и доступ к цифровым сервисам на условиях публичной оферты для Заказчика",
+    serviceDescription: "Пополнение баланса платформы «ПотокМнений»",
+    tableServiceName: "Пополнение баланса платформы «ПотокМнений»",
     seller: {
       companyName: SERVICE_PROVIDER_DETAILS.companyName,
       inn: SERVICE_PROVIDER_DETAILS.inn,
