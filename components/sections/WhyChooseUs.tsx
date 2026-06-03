@@ -46,7 +46,7 @@ export default function WhyChooseUs() {
           <RevealOnScroll delay={200}>
             <div className="relative overflow-hidden rounded-[30px] border border-[#E9E3FA] dark:border-white/10 bg-white/45 dark:bg-white/6 backdrop-blur-2xl min-h-[500px]">
               <Image
-                src="/Wholts.svg"
+                src="/img_why_choose.svg"
                 alt="Поток мнений"
                 fill
                 priority

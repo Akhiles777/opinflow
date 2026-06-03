@@ -35,7 +35,7 @@ export default function SurveyHeader() {
           <div className="flex items-center gap-2.5">
             <div className="relative h-10 w-10 overflow-hidden">
               <Image
-                src="/favicon.png"
+                src="/logo2.png"
                 alt="ПотокМнений"
                 fill
                 sizes="40px"

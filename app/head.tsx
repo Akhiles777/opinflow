@@ -1,7 +1,4 @@
 export default function Head() {
-
-  const gasan = 'gasan'
-
   return (
     <>
       <title>ПотокМнений</title>
@@ -9,8 +6,8 @@ export default function Head() {
         name="description"
         content="Платформа маркетинговых исследований: зарабатывайте на опросах или проводите исследования с ИИ-аналитикой."
       />
-      <link rel="icon" href="/favicon.png" type="image/png" />
-      <link rel="apple-touch-icon" href="/favicon.png" />
+      <link rel="icon" href="/favicon.ico" />
+      <link rel="apple-touch-icon" href="/logo2.png" />
     </>
   );
 }
