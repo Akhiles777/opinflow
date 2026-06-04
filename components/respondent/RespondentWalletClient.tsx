@@ -249,26 +249,26 @@ export default function RespondentWalletClient({
 
         {/* Заявки на вывод */}
         <div className="rounded-[18px] border border-dash-border bg-dash-card">
-          <div className="border-b border-dash-border px-6 py-4">
+          <div className="border-b border-dash-border px-4 py-4 sm:px-6">
             <div className="flex items-center gap-2">
-              <h2 className="text-[17px] font-semibold text-dash-heading">Заявки на вывод</h2>
+              <h2 className="text-[16px] font-semibold text-dash-heading sm:text-[17px]">Заявки на вывод</h2>
               {withdrawalRequests.length > 0 && (
                 <span className="flex h-6 w-6 items-center justify-center rounded-full bg-dash-bg text-[12px] font-semibold text-dash-muted">
                   {withdrawalRequests.length}
                 </span>
               )}
             </div>
-            <p className="mt-0.5 text-[13px] text-dash-muted">Статус всех заявок на вывод средств.</p>
+            <p className="mt-0.5 text-[12px] text-dash-muted sm:text-[13px]">Статус всех заявок на вывод средств.</p>
           </div>
           {withdrawalRequests.length > 0 ? (
             <div className="overflow-x-auto">
-              <table className="w-full text-left">
+              <table className="w-full min-w-[420px] text-left">
                 <thead>
                   <tr className="border-b border-dash-border bg-dash-bg/40">
-                    <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-dash-muted">Заявка №</th>
-                    <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-dash-muted">Дата</th>
-                    <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-dash-muted">Сумма</th>
-                    <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-dash-muted">Статус</th>
+                    <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-dash-muted sm:px-5">Заявка №</th>
+                    <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-dash-muted sm:px-5">Дата</th>
+                    <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-dash-muted sm:px-5">Сумма</th>
+                    <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-dash-muted sm:px-5">Статус</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-dash-border">
@@ -276,11 +276,11 @@ export default function RespondentWalletClient({
                     const st = mapStatus(req.status);
                     return (
                       <tr key={req.id} className="transition-colors hover:bg-dash-bg/30">
-                        <td className="px-5 py-4 text-[13px] font-medium text-dash-body">{shortId(req.id)}</td>
-                        <td className="whitespace-nowrap px-5 py-4 text-[13px] text-dash-body">{req.date}</td>
-                        <td className="px-5 py-4 text-[14px] font-semibold tabular-nums text-dash-body">{formatRub(req.amount)}</td>
-                        <td className="px-5 py-4">
-                          <span className={`inline-flex items-center rounded-full border px-3 py-1 text-[12px] font-semibold ${st.cls}`}>
+                        <td className="px-4 py-3 text-[12px] font-medium text-dash-body sm:px-5 sm:py-4 sm:text-[13px]">{shortId(req.id)}</td>
+                        <td className="whitespace-nowrap px-4 py-3 text-[12px] text-dash-body sm:px-5 sm:py-4 sm:text-[13px]">{req.date}</td>
+                        <td className="px-4 py-3 text-[13px] font-semibold tabular-nums text-dash-body sm:px-5 sm:py-4 sm:text-[14px]">{formatRub(req.amount)}</td>
+                        <td className="px-4 py-3 sm:px-5 sm:py-4">
+                          <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold sm:px-3 sm:py-1 sm:text-[12px] ${st.cls}`}>
                             {st.label}
                           </span>
                         </td>
@@ -291,9 +291,9 @@ export default function RespondentWalletClient({
               </table>
             </div>
           ) : (
-            <div className="m-4 flex min-h-50 items-center justify-center rounded-b-[18px] border-2 border-dashed border-dash-border p-8 text-center">
-              <p className="text-[14px] text-dash-muted">
-                Пока заявок нет. Когда вы отправите первую заявку, она появится здесь со статусом обработки.
+            <div className="flex min-h-32 items-center justify-center p-6 text-center">
+              <p className="text-[13px] text-dash-muted">
+                Пока заявок нет. Когда вы отправите первую заявку, она появится здесь.
               </p>
             </div>
           )}
@@ -301,44 +301,44 @@ export default function RespondentWalletClient({
 
         {/* История начислений */}
         <div className="rounded-[18px] border border-dash-border bg-dash-card">
-          <div className="border-b border-dash-border px-6 py-4">
+          <div className="border-b border-dash-border px-4 py-4 sm:px-6">
             <div className="flex items-center gap-2">
-              <h2 className="text-[17px] font-semibold text-dash-heading">История начислений</h2>
+              <h2 className="text-[16px] font-semibold text-dash-heading sm:text-[17px]">История начислений</h2>
               {earningTransactions.length > 0 && (
                 <span className="flex h-6 w-6 items-center justify-center rounded-full bg-dash-bg text-[12px] font-semibold text-dash-muted">
                   {earningTransactions.length}
                 </span>
               )}
             </div>
-            <p className="mt-0.5 text-[13px] text-dash-muted">
+            <p className="mt-0.5 text-[12px] text-dash-muted sm:text-[13px]">
               Все вознаграждения за успешно пройденные опросы.
             </p>
           </div>
           {earningTransactions.length > 0 ? (
             <div className="overflow-x-auto">
-              <table className="w-full text-left">
+              <table className="w-full min-w-[360px] text-left">
                 <thead>
                   <tr className="border-b border-dash-border bg-dash-bg/40">
-                    <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-dash-muted">Опрос</th>
-                    <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-dash-muted">Дата</th>
-                    <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-dash-muted">Сумма</th>
+                    <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-dash-muted sm:px-5">Опрос</th>
+                    <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-dash-muted sm:px-5">Дата</th>
+                    <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-dash-muted sm:px-5">Сумма</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-dash-border">
                   {earningTransactions.map((item) => (
                     <tr key={item.id} className="transition-colors hover:bg-dash-bg/30">
-                      <td className="max-w-45 truncate px-5 py-4 text-[13px] text-dash-body">{item.description}</td>
-                      <td className="whitespace-nowrap px-5 py-4 text-[13px] text-dash-body">{item.date}</td>
-                      <td className="px-5 py-4 text-[14px] font-semibold tabular-nums text-green-400">+{formatRub(Math.abs(item.amount))}</td>
+                      <td className="max-w-36 truncate px-4 py-3 text-[12px] text-dash-body sm:max-w-45 sm:px-5 sm:py-4 sm:text-[13px]">{item.description}</td>
+                      <td className="whitespace-nowrap px-4 py-3 text-[12px] text-dash-body sm:px-5 sm:py-4 sm:text-[13px]">{item.date}</td>
+                      <td className="px-4 py-3 text-[13px] font-semibold tabular-nums text-green-500 dark:text-green-400 sm:px-5 sm:py-4 sm:text-[14px]">+{formatRub(Math.abs(item.amount))}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           ) : (
-            <div className="m-4 flex min-h-50 items-center justify-center rounded-b-[18px] border-2 border-dashed border-dash-border p-8 text-center">
-              <p className="text-[14px] text-dash-muted">
-                Начислений пока нет. После первых завершённых опросов здесь появится история вознаграждений.
+            <div className="flex min-h-32 items-center justify-center p-6 text-center">
+              <p className="text-[13px] text-dash-muted">
+                Начислений пока нет. После первых завершённых опросов здесь появится история.
               </p>
             </div>
           )}

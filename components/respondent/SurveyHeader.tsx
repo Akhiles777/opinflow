@@ -89,7 +89,7 @@ export default function SurveyHeader() {
 
       <div
         className={[
-          "bg-site-bg/95 backdrop-blur-xl lg:hidden",
+          "border-t border-site-border bg-site-bg/95 backdrop-blur-xl lg:hidden",
           mobileMenuOpen ? "block" : "hidden",
         ].join(" ")}
       >
@@ -111,7 +111,7 @@ export default function SurveyHeader() {
           </nav>
           {user ? (
             <div className="grid gap-3  pt-2">
-              <div className="flex items-center gap-3 rounded-2xl border border-site-border bg-site-card px-3 py-3">
+              <div className="flex items-center gap-3 rounded-2xl border border-site-border bg-site-card px-3 py-3 dark:bg-site-section">
                 {user.image ? (
                   <img src={user.image} alt={user.name} className="h-12 w-12 rounded-full object-cover" />
                 ) : (

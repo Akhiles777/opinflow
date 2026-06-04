@@ -23,7 +23,7 @@ export default async function RespondentReferralPage() {
       <PageHeader title="Рефералы" subtitle="Ссылка, статистика и приглашённые пользователи." />
 
       {/* Top row: link card + 3 stat cards */}
-      <div className="mt-8 grid grid-cols-1 gap-4 xl:grid-cols-[1fr_auto]">
+      <div className="mt-8 grid grid-cols-1 gap-4 lg:grid-cols-[1fr_auto]">
         {/* Referral link card */}
         <div className="rounded-[18px] border border-dash-border bg-dash-card p-6">
           <h2 className="text-[17px] font-semibold text-dash-heading">Ваша реферальная ссылка</h2>
@@ -39,7 +39,7 @@ export default async function RespondentReferralPage() {
         </div>
 
         {/* 3 stat mini-cards */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 gap-2 sm:gap-3 lg:grid-cols-1 lg:gap-4">
           {([
             {
               label: "Приглашено",
@@ -73,12 +73,12 @@ export default async function RespondentReferralPage() {
               ),
             },
           ] as const).map((s) => (
-            <div key={s.label} className="min-w-30 rounded-[18px] border border-dash-border bg-dash-card p-5">
-              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-[#EEE8FF] text-[#6438D9] dark:bg-[#6D3AE2]/20 dark:text-[#A98BFF]">
-                {s.icon}
+            <div key={s.label} className="rounded-[14px] border border-dash-border bg-dash-card p-3 sm:p-4 lg:min-w-36 lg:rounded-[18px] lg:p-5">
+              <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-[10px] bg-[#EEE8FF] text-[#6438D9] dark:bg-[#6D3AE2]/20 dark:text-[#A98BFF] sm:h-9 sm:w-9 lg:mb-3 lg:h-10 lg:w-10 lg:rounded-xl">
+                <span className="[&>svg]:h-4 [&>svg]:w-4 sm:[&>svg]:h-4.5 sm:[&>svg]:w-4.5 lg:[&>svg]:h-5 lg:[&>svg]:w-5">{s.icon}</span>
               </div>
-              <p className="text-[24px] font-bold tabular-nums text-dash-heading">{s.value}</p>
-              <p className="mt-1 text-[13px] text-dash-muted">{s.label}</p>
+              <p className="text-[20px] font-bold tabular-nums text-dash-heading sm:text-[22px] lg:text-[24px]">{s.value}</p>
+              <p className="mt-0.5 truncate text-[11px] text-dash-muted sm:text-[12px] lg:mt-1 lg:text-[13px]">{s.label}</p>
             </div>
           ))}
         </div>

@@ -135,14 +135,14 @@ export default function Sidebar({
         aria-label="Закрыть меню"
         onClick={onCloseMobileMenu}
         className={[
-          "fixed inset-0 z-40 bg-black/50 transition-opacity lg:hidden",
+          "fixed inset-0 z-40 bg-black/50 dark:bg-black/70 transition-opacity lg:hidden",
           mobileMenuOpen ? "opacity-100" : "pointer-events-none opacity-0",
         ].join(" ")}
       />
 
       <aside
         className={[
-          "fixed inset-y-0 left-0 z-50 flex w-[297px] max-w-[86vw] shrink-0 flex-col border border-[#4A3185] bg-dash-sidebar text-white shadow-[0_18px_70px_rgba(28,12,76,0.18)] transition-transform duration-300 lg:static lg:z-auto lg:m-5 lg:h-[calc(100vh-40px)] lg:max-w-none lg:translate-x-0 lg:rounded-[18px]",
+          "fixed inset-y-0 left-0 z-50 flex w-[297px] max-w-[86vw] shrink-0 flex-col border border-[#4A3185] bg-[#1C0C4C] text-white shadow-[0_18px_70px_rgba(28,12,76,0.35)] dark:border-white/10 dark:shadow-[4px_0_40px_rgba(0,0,0,0.6)] transition-transform duration-300 lg:static lg:z-auto lg:m-5 lg:h-[calc(100vh-40px)] lg:max-w-none lg:translate-x-0 lg:rounded-[18px]",
           mobileMenuOpen ? "translate-x-0" : "-translate-x-full",
         ].join(" ")}
       >
