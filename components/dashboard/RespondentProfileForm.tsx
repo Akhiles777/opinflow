@@ -40,15 +40,6 @@ const interestOptions = [
 
 const initialState = { success: false, error: "", message: "" };
 
-function getProfileInitials(name: string | null) {
-  const normalized = name?.trim() ?? "";
-  if (!normalized) {
-    return "П";
-  }
-
-  return normalized.slice(0, 2).toUpperCase();
-}
-
 function completionRatio(profile: RespondentProfileData) {
   const filled = [
     profile.gender,
@@ -71,9 +62,12 @@ export default function RespondentProfileForm({ profile }: { profile: Respondent
   const router = useRouter();
   const [state, formAction, isPending] = useActionState(updateRespondentProfileAction, initialState);
   const completion = useMemo(() => completionRatio(profile), [profile]);
+  const completionPercent = Math.min(100, Math.round(completion * 100));
+
   const [selectedGender, setSelectedGender] = React.useState(profile.gender ?? "");
   const [selectedInterests, setSelectedInterests] = React.useState<string[]>(profile.interests);
   const [previewUrl, setPreviewUrl] = React.useState<string | null>(profile.image);
+  const [showBanner, setShowBanner] = React.useState(true);
   const objectUrlRef = React.useRef<string | null>(null);
 
   React.useEffect(() => {
@@ -127,28 +121,48 @@ export default function RespondentProfileForm({ profile }: { profile: Respondent
     setPreviewUrl(objectUrl);
   }
 
-  const completionProfile = Math.min(100, Math.round(completion * 100));
+  const fieldCls = "h-11 w-full rounded-xl border border-dash-border bg-dash-bg px-4 text-[14px] text-dash-body outline-none transition-colors focus:border-[#7244F5]/40";
 
   return (
-    <div>
-      {completion < 0.5 ? (
-        <div className="rounded-2xl mt-2 border border-amber-500/20 bg-amber-500/10 p-4 text-sm text-amber-300 font-body">
-          Заполните профиль полностью — вам будут доступны больше опросов.
+    <form action={formAction}>
+      {/* Dismissible banner */}
+      {showBanner && (
+        <div className="mt-6 flex items-center justify-between rounded-[14px] border border-[#DDD2FF] bg-[#F3EEFF] px-5 py-3">
+          <p className="text-[14px] font-medium text-[#6D3AE2]">
+            Заполните профиль полностью — вам будут доступны больше опросов
+          </p>
+          <button
+            type="button"
+            onClick={() => setShowBanner(false)}
+            className="ml-4 shrink-0 text-[#6D3AE2] opacity-60 hover:opacity-100"
+            aria-label="Закрыть"
+          >
+            ✕
+          </button>
         </div>
-      ) : null}
+      )}
 
-      <form action={formAction} className="mt-8 grid grid-cols-1 items-start gap-6 xl:grid-cols-[360px_1fr]">
-        <div className="grid gap-4 self-start xl:sticky xl:top-6">
-          <div className="rounded-2xl border border-dash-border bg-dash-card p-6">
-            <label className="group relative block h-36 w-full cursor-pointer overflow-hidden rounded-3xl border border-dash-border bg-dash-bg">
-              {previewUrl ? (
-                <img src={previewUrl} alt="Фото профиля" className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center bg-brand/10 text-3xl font-bold text-brand font-body">
-                  {getProfileInitials(profile.userName)}
-                </div>
-              )}
-              <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+      {/* 2-column layout */}
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[280px_1fr] lg:items-start">
+
+        {/* Left column: avatar card + completion card */}
+        <div className="space-y-4">
+          {/* Avatar card */}
+          <div className="rounded-[18px] border border-dash-border bg-dash-card p-5">
+            <label className="group relative block cursor-pointer overflow-hidden rounded-xl">
+              <div className="flex h-50 items-center justify-center rounded-xl bg-dash-bg">
+                {previewUrl ? (
+                  <img src={previewUrl} alt="Avatar" className="h-full w-full rounded-xl object-cover" />
+                ) : (
+                  <div className="flex flex-col items-center gap-2 text-dash-muted">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="opacity-40">
+                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                      <circle cx="12" cy="13" r="4" />
+                    </svg>
+                  </div>
+                )}
+              </div>
+              <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/50 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                 <span className="rounded-full bg-white/92 px-3 py-1 text-xs font-semibold text-slate-900">
                   Выберите фото
                 </span>
@@ -161,78 +175,79 @@ export default function RespondentProfileForm({ profile }: { profile: Respondent
                 className="sr-only"
               />
             </label>
-            <p className="mt-5 font-display text-2xl text-dash-heading">{profile.userName ?? "Пользователь"}</p>
-            <p className="mt-1 text-sm text-dash-muted font-body">{profile.userEmail}</p>
+            <div className="mt-4">
+              <p className="text-[17px] font-semibold text-dash-heading">{profile.userName || "Пользователь"}</p>
+              <p className="mt-0.5 text-[13px] text-dash-muted">{profile.userEmail}</p>
+            </div>
           </div>
 
-          <div className="rounded-2xl border border-dash-border bg-dash-card p-6">
-            <p className="text-xs uppercase tracking-[0.2em] text-dash-muted font-body">Заполнение профиля</p>
-            <div className="mt-3 flex items-end justify-between gap-4">
-              <p className="text-4xl font-display text-dash-heading">{completionProfile}%</p>
-              <div className="rounded-full border border-dash-border px-3 py-1 text-xs font-semibold text-dash-muted">
-                Профиль заполнен
-              </div>
-            </div>
-            <p className="mt-4 text-sm leading-relaxed text-dash-muted font-body">
+          {/* Completion card */}
+          <div className="rounded-[18px] border border-dash-border bg-dash-card p-5">
+            <p className="text-[26px] font-bold text-dash-heading tabular-nums">{completionPercent}%</p>
+            <p className="mt-0.5 text-[14px] font-semibold text-dash-muted">Заполнение профиля</p>
+            <p className="mt-3 text-[13px] leading-relaxed text-dash-muted">
               Чем полнее анкета, тем больше релевантных опросов и приглашений вы будете получать.
             </p>
+            <div className="mt-4 h-2 overflow-hidden rounded-full bg-dash-bg">
+              <div className="h-full rounded-full bg-[#7244F5] transition-all" style={{ width: `${completionPercent}%` }} />
+            </div>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-dash-border bg-dash-card p-6">
-          <p className="text-sm font-semibold text-dash-heading font-body">Анкета респондента</p>
-          <div className="mt-6 grid gap-6">
+        {/* Right column: questionnaire form */}
+        <div className="rounded-[18px] border border-dash-border bg-dash-card p-6">
+          <h2 className="text-[18px] font-semibold text-dash-heading">Анкета респондента</h2>
+          <div className="mt-5 space-y-5">
+
+            {/* Gender */}
             <div>
-              <p className="mb-3 text-sm text-dash-muted font-body">Пол</p>
+              <p className="mb-2 text-[13px] text-dash-muted">Пол</p>
               <div className="flex flex-wrap gap-2">
-                {[
-                  { label: "Мужской", value: "male" },
-                  { label: "Женский", value: "female" },
-                  { label: "Другое", value: "other" },
-                ].map((option) => (
+                {["male", "female", "other"].map((v) => (
                   <button
-                    key={option.value}
+                    key={v}
                     type="button"
-                    onClick={() => setSelectedGender(option.value)}
+                    onClick={() => setSelectedGender(v)}
                     className={[
-                      "rounded-xl border px-4 py-2.5 text-sm font-semibold transition-colors",
-                      selectedGender === option.value
-                        ? "border-brand/30 bg-brand/10 text-brand"
-                        : "border-dash-border bg-dash-bg text-dash-body hover:text-dash-heading",
+                      "rounded-xl border px-5 py-2 text-[14px] font-semibold transition-colors",
+                      selectedGender === v
+                        ? "border-[#7244F5] bg-[#7244F5] text-white"
+                        : "border-dash-border bg-dash-card text-dash-muted hover:border-[#7244F5]/40 hover:text-dash-heading",
                     ].join(" ")}
                   >
-                    {option.label}
+                    {v === "male" ? "Мужской" : v === "female" ? "Женский" : "Другое"}
                   </button>
                 ))}
               </div>
               <input type="hidden" name="gender" value={selectedGender} />
             </div>
 
+            {/* Grid fields */}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <label className="grid gap-2">
-                <span className="text-sm text-dash-muted font-body">Дата рождения</span>
+                <span className="text-[13px] text-dash-muted">Дата рождения</span>
                 <input
                   name="birthDate"
                   type="date"
                   defaultValue={profile.birthDate ?? ""}
-                  className="h-11 rounded-xl border border-dash-border bg-dash-bg px-3 text-sm text-dash-body"
+                  className={fieldCls}
                 />
               </label>
               <label className="grid gap-2">
-                <span className="text-sm text-dash-muted font-body">Город</span>
+                <span className="text-[13px] text-dash-muted">Город</span>
                 <input
                   name="city"
                   defaultValue={profile.city ?? ""}
                   placeholder="Москва"
-                  className="h-11 rounded-xl border border-dash-border bg-dash-bg px-3 text-sm text-dash-body placeholder:text-dash-muted"
+                  className={fieldCls}
                 />
               </label>
               <label className="grid gap-2">
-                <span className="text-sm text-dash-muted font-body">Уровень дохода</span>
+                <span className="text-[13px] text-dash-muted">Уровень дохода</span>
                 <select
                   name="income"
                   defaultValue={profile.income ?? ""}
-                  className="h-11 rounded-xl border border-dash-border bg-dash-bg px-3 text-sm text-dash-body"
+                  className={fieldCls}
                 >
                   <option value="">Не выбрано</option>
                   <option value="under30k">до 30 000 ₽</option>
@@ -242,11 +257,11 @@ export default function RespondentProfileForm({ profile }: { profile: Respondent
                 </select>
               </label>
               <label className="grid gap-2">
-                <span className="text-sm text-dash-muted font-body">Образование</span>
+                <span className="text-[13px] text-dash-muted">Образование</span>
                 <select
                   name="education"
                   defaultValue={profile.education ?? ""}
-                  className="h-11 rounded-xl border border-dash-border bg-dash-bg px-3 text-sm text-dash-body"
+                  className={fieldCls}
                 >
                   <option value="">Не выбрано</option>
                   <option value="school">Школа</option>
@@ -257,11 +272,11 @@ export default function RespondentProfileForm({ profile }: { profile: Respondent
                 </select>
               </label>
               <label className="grid gap-2">
-                <span className="text-sm text-dash-muted font-body">Есть дети</span>
+                <span className="text-[13px] text-dash-muted">Есть дети</span>
                 <select
                   name="hasChildren"
                   defaultValue={profile.hasChildren ?? ""}
-                  className="h-11 rounded-xl border border-dash-border bg-dash-bg px-3 text-sm text-dash-body"
+                  className={fieldCls}
                 >
                   <option value="">Не выбрано</option>
                   <option value="yes">Да</option>
@@ -269,11 +284,11 @@ export default function RespondentProfileForm({ profile }: { profile: Respondent
                 </select>
               </label>
               <label className="grid gap-2">
-                <span className="text-sm text-dash-muted font-body">Статус занятости</span>
+                <span className="text-[13px] text-dash-muted">Статус занятости</span>
                 <select
                   name="employmentStatus"
                   defaultValue={profile.employmentStatus ?? ""}
-                  className="h-11 rounded-xl border border-dash-border bg-dash-bg px-3 text-sm text-dash-body"
+                  className={fieldCls}
                 >
                   <option value="">Не выбрано</option>
                   <option value="working">Работает</option>
@@ -281,11 +296,11 @@ export default function RespondentProfileForm({ profile }: { profile: Respondent
                 </select>
               </label>
               <label className="grid gap-2">
-                <span className="text-sm text-dash-muted font-body">Сфера деятельности</span>
+                <span className="text-[13px] text-dash-muted">Сфера деятельности</span>
                 <select
                   name="industry"
                   defaultValue={profile.industry ?? ""}
-                  className="h-11 rounded-xl border border-dash-border bg-dash-bg px-3 text-sm text-dash-body"
+                  className={fieldCls}
                 >
                   <option value="">Не выбрано</option>
                   <option value="it">IT и технологии</option>
@@ -301,11 +316,11 @@ export default function RespondentProfileForm({ profile }: { profile: Respondent
                 </select>
               </label>
               <label className="grid gap-2">
-                <span className="text-sm text-dash-muted font-body">Семейное положение</span>
+                <span className="text-[13px] text-dash-muted">Семейное положение</span>
                 <select
                   name="maritalStatus"
                   defaultValue={profile.maritalStatus ?? ""}
-                  className="h-11 rounded-xl border border-dash-border bg-dash-bg px-3 text-sm text-dash-body"
+                  className={fieldCls}
                 >
                   <option value="">Не выбрано</option>
                   <option value="single">Холост / не замужем</option>
@@ -314,8 +329,9 @@ export default function RespondentProfileForm({ profile }: { profile: Respondent
               </label>
             </div>
 
+            {/* Interests */}
             <div>
-              <p className="mb-3 text-sm text-dash-muted font-body">Интересы</p>
+              <p className="mb-2 text-[13px] text-dash-muted">Интересы</p>
               <div className="flex flex-wrap gap-2">
                 {interestOptions.map((interest) => {
                   const active = selectedInterests.includes(interest);
@@ -324,12 +340,11 @@ export default function RespondentProfileForm({ profile }: { profile: Respondent
                       key={interest}
                       type="button"
                       onClick={() => toggleInterest(interest)}
-                      className={[
-                        "rounded-full border px-4 py-2 text-sm transition-colors",
+                      className={
                         active
-                          ? "border-brand/30 bg-brand/10 text-brand"
-                          : "border-dash-border bg-dash-bg text-dash-body hover:text-dash-heading",
-                      ].join(" ")}
+                          ? "rounded-xl border border-[#7244F5] bg-[#7244F5] px-4 py-2 text-[13px] font-semibold text-white"
+                          : "rounded-xl border border-dash-border bg-dash-card px-4 py-2 text-[13px] font-semibold text-dash-muted hover:border-[#7244F5]/40"
+                      }
                     >
                       {interest}
                     </button>
@@ -343,27 +358,27 @@ export default function RespondentProfileForm({ profile }: { profile: Respondent
           </div>
 
           {state.error ? (
-            <p className="mt-5 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-400">
+            <p className="mt-5 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-[13px] text-red-400">
               {state.error}
             </p>
           ) : null}
           {state.success ? (
-            <p className="mt-5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm text-emerald-400">
+            <p className="mt-5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-[13px] text-emerald-400">
               {state.message}
             </p>
           ) : null}
 
-          <div className="mt-6 flex flex-col gap-2 sm:flex-row">
+          <div className="mt-6 flex justify-end">
             <button
               type="submit"
               disabled={isPending}
-              className="rounded-xl bg-brand px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-dark disabled:opacity-60"
+              className="rounded-xl bg-[#7244F5] px-6 py-2.5 text-sm font-semibold text-white shadow-[0_6px_18px_rgba(114,68,245,0.45)] transition-all hover:bg-[#6238DC] disabled:opacity-60"
             >
               {isPending ? "Сохраняем..." : "Сохранить изменения"}
             </button>
           </div>
         </div>
-      </form>
-    </div>
+      </div>
+    </form>
   );
 }

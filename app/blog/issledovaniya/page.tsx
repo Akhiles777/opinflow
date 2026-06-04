@@ -18,10 +18,10 @@ export default function IssledovaniyaPage() {
 
         {/* ── Breadcrumb ── */}
         <Link
-          href="/blog"
+          href="/"
           className="inline-flex items-center gap-1.5 text-[14px] font-semibold text-[#6438D9] transition-colors hover:text-[#4E28B5] dark:text-[#A98BFF] dark:hover:text-white"
         >
-          ← Все материалы
+          ← На главную
         </Link>
 
         {/* ── Header ── */}
@@ -153,10 +153,10 @@ export default function IssledovaniyaPage() {
 
         <div className="mt-10">
           <Link
-            href="/blog"
+            href="/"
             className="text-[14px] font-semibold text-[#6438D9] transition-colors hover:text-[#4E28B5] dark:text-[#A98BFF] dark:hover:text-white"
           >
-            ← Все материалы
+            ← На главную
           </Link>
         </div>
       </article>
