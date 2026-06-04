@@ -74,12 +74,12 @@ export default async function RespondentReferralPage() {
               ),
             },
           ] as const).map((s) => (
-            <div key={s.label} className="rounded-[18px] border border-dash-border bg-dash-card p-4 lg:w-40 lg:p-5">
+            <div key={s.label} className="overflow-hidden rounded-[18px] border border-dash-border bg-dash-card p-4 lg:w-40 lg:p-5">
               <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-[#EEE8FF] text-[#6438D9] dark:bg-[#6D3AE2]/20 dark:text-[#A98BFF]">
                 {s.icon}
               </div>
               <p className="text-[22px] font-bold tabular-nums text-dash-heading lg:text-[24px]">{s.value}</p>
-              <p className="mt-1 text-[12px] text-dash-muted lg:text-[13px]">{s.label}</p>
+              <p className="mt-1 truncate text-[12px] text-dash-muted lg:text-[13px]">{s.label}</p>
             </div>
           ))}
         </div>
