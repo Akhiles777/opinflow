@@ -22,10 +22,11 @@ export default async function RespondentReferralPage() {
     <div>
       <PageHeader title="Рефералы" subtitle="Ссылка, статистика и приглашённые пользователи." />
 
-      {/* Top row: link card + 3 stat cards */}
-      <div className="mt-8 grid grid-cols-1 gap-4 lg:grid-cols-[1fr_auto]">
+      {/* Top row: link card + 3 stat cards (all in one row on lg+) */}
+      <div className="mt-8 flex flex-col gap-4 lg:flex-row lg:items-stretch">
+
         {/* Referral link card */}
-        <div className="rounded-[18px] border border-dash-border bg-dash-card p-6">
+        <div className="flex-1 rounded-[18px] border border-dash-border bg-dash-card p-6">
           <h2 className="text-[17px] font-semibold text-dash-heading">Ваша реферальная ссылка</h2>
           <p className="mt-1 text-[13px] text-dash-muted">Отправляйте ссылку друзьям и получайте вознаграждения.</p>
           <div className="mt-4 flex flex-col gap-2 sm:flex-row">
@@ -38,8 +39,8 @@ export default async function RespondentReferralPage() {
           </div>
         </div>
 
-        {/* 3 stat mini-cards */}
-        <div className="grid grid-cols-3 gap-2 sm:gap-3 lg:grid-cols-1 lg:gap-4">
+        {/* 3 stat cards: row below on mobile, row alongside link card on lg+ */}
+        <div className="grid grid-cols-3 gap-3 lg:flex lg:flex-row lg:gap-4">
           {([
             {
               label: "Приглашено",
@@ -73,12 +74,12 @@ export default async function RespondentReferralPage() {
               ),
             },
           ] as const).map((s) => (
-            <div key={s.label} className="rounded-[14px] border border-dash-border bg-dash-card p-3 sm:p-4 lg:min-w-36 lg:rounded-[18px] lg:p-5">
-              <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-[10px] bg-[#EEE8FF] text-[#6438D9] dark:bg-[#6D3AE2]/20 dark:text-[#A98BFF] sm:h-9 sm:w-9 lg:mb-3 lg:h-10 lg:w-10 lg:rounded-xl">
-                <span className="[&>svg]:h-4 [&>svg]:w-4 sm:[&>svg]:h-4.5 sm:[&>svg]:w-4.5 lg:[&>svg]:h-5 lg:[&>svg]:w-5">{s.icon}</span>
+            <div key={s.label} className="rounded-[18px] border border-dash-border bg-dash-card p-4 lg:w-40 lg:p-5">
+              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-[#EEE8FF] text-[#6438D9] dark:bg-[#6D3AE2]/20 dark:text-[#A98BFF]">
+                {s.icon}
               </div>
-              <p className="text-[20px] font-bold tabular-nums text-dash-heading sm:text-[22px] lg:text-[24px]">{s.value}</p>
-              <p className="mt-0.5 truncate text-[11px] text-dash-muted sm:text-[12px] lg:mt-1 lg:text-[13px]">{s.label}</p>
+              <p className="text-[22px] font-bold tabular-nums text-dash-heading lg:text-[24px]">{s.value}</p>
+              <p className="mt-1 text-[12px] text-dash-muted lg:text-[13px]">{s.label}</p>
             </div>
           ))}
         </div>
@@ -119,12 +120,10 @@ export default async function RespondentReferralPage() {
             </table>
           </div>
         ) : (
-          <div className="p-6">
-            <div className="flex min-h-45 items-center justify-center rounded-xl border-2 border-dashed border-dash-border p-6 text-center">
-              <p className="text-[14px] text-dash-muted">
-                Вы ещё никого не пригласили. Поделитесь ссылкой с друзьями.
-              </p>
-            </div>
+          <div className="flex min-h-36 items-center justify-center p-6 text-center">
+            <p className="text-[14px] text-dash-muted">
+              Вы ещё никого не пригласили. Поделитесь ссылкой с друзьями.
+            </p>
           </div>
         )}
       </div>
