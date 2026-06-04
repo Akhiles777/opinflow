@@ -40,14 +40,42 @@ export default async function RespondentReferralPage() {
 
         {/* 3 stat mini-cards */}
         <div className="grid grid-cols-3 gap-4">
-          {[
-            { label: "Приглашено", value: String(data.invitedCount), icon: "/cabinets/icons/sidebar/menu icon_referal 20px.svg" },
-            { label: "Зарегистрировалось", value: String(data.registeredCount), icon: "/cabinets/icons/sidebar/menu icon_users 20px.svg" },
-            { label: "Заработано", value: formatRub(data.earned), icon: "/cabinets/icons/sidebar/menu icon_money 20px.svg" },
-          ].map((s) => (
+          {([
+            {
+              label: "Приглашено",
+              value: String(data.invitedCount),
+              icon: (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+                  <path d="M8 12H16M12 16V8" />
+                  <path d="M9 22H15C20 22 22 20 22 15V9C22 4 20 2 15 2H9C4 2 2 4 2 9V15C2 20 4 22 9 22Z" />
+                </svg>
+              ),
+            },
+            {
+              label: "Зарегистрировалось",
+              value: String(data.registeredCount),
+              icon: (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+                  <path d="M8.5 12L10.5 14.5L15.5 9" />
+                  <path d="M9 22H15C20 22 22 20 22 15V9C22 4 20 2 15 2H9C4 2 2 4 2 9V15C2 20 4 22 9 22Z" />
+                </svg>
+              ),
+            },
+            {
+              label: "Заработано",
+              value: formatRub(data.earned),
+              icon: (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+                  <path d="M19.3 7.92V13.07C19.3 16.15 17.54 17.47 14.9 17.47H6.11C4.61 16.89 1.71 15.29 1.71 13.07V7.92C1.71 4.84 3.47 3.52 6.11 3.52H14.9C17.14 3.52 18.75 4.47 19.18 6.64C19.25 7.04 19.3 7.45 19.3 7.92Z" />
+                  <path d="M22.3 10.92V16.07C22.3 19.15 20.54 20.47 17.9 20.47H9.11C8.37 20.47 7.7 20.37 7.12 20.15C5.93 19.71 5.12 18.8 4.83 17.34C5.23 17.43 5.66 17.47 6.11 17.47H14.9C17.54 17.47 19.3 16.15 19.3 13.07V7.92C19.3 7.45 19.26 7.03 19.18 6.64C21.08 7.04 22.3 8.38 22.3 10.92Z" />
+                  <circle cx="10.5" cy="10.5" r="2.64" />
+                </svg>
+              ),
+            },
+          ] as const).map((s) => (
             <div key={s.label} className="min-w-30 rounded-[18px] border border-dash-border bg-dash-card p-5">
-              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-[#EEE8FF] dark:bg-[#6D3AE2]/20">
-                <img src={s.icon} alt="" width={20} height={20} className="h-5 w-5" style={{ filter: "invert(28%) sepia(64%) saturate(970%) hue-rotate(243deg) brightness(80%) contrast(95%)" }} />
+              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-[#EEE8FF] text-[#6438D9] dark:bg-[#6D3AE2]/20 dark:text-[#A98BFF]">
+                {s.icon}
               </div>
               <p className="text-[24px] font-bold tabular-nums text-dash-heading">{s.value}</p>
               <p className="mt-1 text-[13px] text-dash-muted">{s.label}</p>

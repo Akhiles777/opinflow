@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import EmptyState from "@/components/dashboard/EmptyState";
 import Modal from "@/components/dashboard/Modal";
@@ -316,6 +317,8 @@ export default function SurveyFeedClient({
   variant = "site",
 }: Props) {
   const isDash = variant === "dash";
+  const searchParams = useSearchParams();
+  const searchQuery = searchParams.get("q")?.toLowerCase().trim() ?? "";
   const [tab, setTab] = useState<Tab>(initialTab);
   const [sort, setSort] = useState<SortKey>("recommended");
   const [complaintSessionId, setComplaintSessionId] = useState<string | null>(null);
@@ -328,7 +331,8 @@ export default function SurveyFeedClient({
   useEffect(() => { setTab(initialTab); }, [initialTab]);
 
   const sortedAvailable = useMemo(() => {
-    const list = [...available];
+    let list = [...available];
+    if (searchQuery) list = list.filter((s) => s.title.toLowerCase().includes(searchQuery) || (s.category ?? "").toLowerCase().includes(searchQuery));
     if (sort === "date") return list.sort((l, r) => (toSafeDate(r.createdAt)?.getTime() ?? 0) - (toSafeDate(l.createdAt)?.getTime() ?? 0));
     if (sort === "reward") return list.sort((l, r) => Number(r.reward ?? 0) - Number(l.reward ?? 0));
     if (sort === "time") return list.sort((l, r) => (l.estimatedTime ?? l.questions.length * 2) - (r.estimatedTime ?? r.questions.length * 2));
@@ -336,20 +340,33 @@ export default function SurveyFeedClient({
       if (Number(r.recommended) !== Number(l.recommended)) return Number(r.recommended) - Number(l.recommended);
       return (toSafeDate(r.createdAt)?.getTime() ?? 0) - (toSafeDate(l.createdAt)?.getTime() ?? 0);
     });
-  }, [available, sort]);
+  }, [available, sort, searchQuery]);
+
+  const sortedInProgress = useMemo(() => {
+    let list = [...inProgress];
+    if (searchQuery) list = list.filter((s) => s.survey.title.toLowerCase().includes(searchQuery) || (s.survey.category ?? "").toLowerCase().includes(searchQuery));
+    if (sort === "reward") return list.sort((l, r) => Number(r.survey.reward ?? 0) - Number(l.survey.reward ?? 0));
+    if (sort === "time") return list.sort((l, r) => (l.survey.estimatedTime ?? l.survey.questions.length * 2) - (r.survey.estimatedTime ?? r.survey.questions.length * 2));
+    return list.sort((l, r) => (toSafeDate(r.startedAt)?.getTime() ?? 0) - (toSafeDate(l.startedAt)?.getTime() ?? 0));
+  }, [inProgress, sort, searchQuery]);
+
+  const filteredCompleted = useMemo(() => {
+    if (!searchQuery) return completed;
+    return completed.filter((s) => s.survey.title.toLowerCase().includes(searchQuery));
+  }, [completed, searchQuery]);
 
   const tabItems = useMemo(() =>
     mode === "mine"
       ? [
-          { value: "inprogress" as const, label: "В работе", count: inProgress.length },
-          { value: "completed" as const, label: "Завершённые", count: completed.length },
+          { value: "inprogress" as const, label: "В работе", count: sortedInProgress.length },
+          { value: "completed" as const, label: "Завершённые", count: filteredCompleted.length },
         ]
       : [
-          { value: "available" as const, label: "Доступные", count: available.length },
-          { value: "inprogress" as const, label: "В работе", count: inProgress.length },
-          { value: "completed" as const, label: "Завершённые", count: completed.length },
+          { value: "available" as const, label: "Доступные", count: sortedAvailable.length },
+          { value: "inprogress" as const, label: "В работе", count: sortedInProgress.length },
+          { value: "completed" as const, label: "Завершённые", count: filteredCompleted.length },
         ],
-    [available.length, inProgress.length, completed.length, mode],
+    [sortedAvailable.length, sortedInProgress.length, filteredCompleted.length, mode],
   );
 
   const complaintTarget = useMemo(() => completed.find((item) => item.id === complaintSessionId) ?? null, [completed, complaintSessionId]);
@@ -507,7 +524,7 @@ export default function SurveyFeedClient({
       {tab === "inprogress" && (
         inProgress.length > 0 ? (
           <div className={`grid grid-cols-1 gap-4 ${isDash ? "xl:grid-cols-3 lg:grid-cols-2" : "lg:grid-cols-2"}`}>
-            {inProgress.map((session) =>
+            {sortedInProgress.map((session) =>
               isDash ? (
                 <DashSurveyCard
                   key={session.id}
@@ -560,10 +577,10 @@ export default function SurveyFeedClient({
 
       {/* ── Completed tab ────────────────────────────────────────────────── */}
       {tab === "completed" && (
-        completed.length > 0 ? (
+        filteredCompleted.length > 0 ? (
           <div className={`overflow-hidden rounded-[18px] border ${isDash ? "border-dash-border bg-dash-card" : "border-site-border bg-site-card"}`}>
             <div className={`divide-y ${isDash ? "divide-dash-border" : "divide-site-border"}`}>
-              {completed.map((item) => (
+              {filteredCompleted.map((item) => (
                 <div key={item.id} className="flex flex-col gap-3 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <div className={`font-semibold ${isDash ? "text-dash-heading" : "text-site-heading"}`}>

@@ -4,7 +4,6 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { X } from "lucide-react";
 import type { DashboardViewer } from "@/lib/dashboard-data";
 import SignOutButton from "@/components/auth/SignOutButton";
-import Link from "next/link";
 
 type IconName =
   | "overview"
@@ -69,7 +68,7 @@ const respondentNav: NavSection[] = [
     title: "Респондент",
     items: [
       { label: "Обзор",         href: "/respondent",         icon: "overview" },
-      { label: "Лента опросов", href: "/surveys",            icon: "feed" },
+      { label: "Лента опросов", href: "/respondent/feed",     icon: "feed" },
       { label: "Мои опросы",    href: "/respondent/surveys", icon: "mine" },
     ],
   },
