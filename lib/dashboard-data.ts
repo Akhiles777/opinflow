@@ -122,6 +122,14 @@ export async function getRespondentOverviewData(userId: string) {
           category: true,
           title: true,
           status: true,
+          reward: true,
+          maxResponses: true,
+          creator: {
+            select: { name: true },
+          },
+          questions: {
+            select: { id: true },
+          },
           sessions: {
             where: { userId },
             orderBy: { startedAt: "desc" },
@@ -154,10 +162,16 @@ export async function getRespondentOverviewData(userId: string) {
       id: survey.id,
       category: survey.category || "Исследование",
       title: survey.title,
+      reward: survey.reward ?? null,
+      duration: survey.questions.length > 0 ? Math.max(3, Math.round(survey.questions.length * 0.5)) : null,
+      questions: survey.questions.length,
+      maxResponses: survey.maxResponses ?? null,
+      currentResponses: survey._count.sessions,
+      clientName: survey.creator?.name ?? null,
+      suitable: true,
       status: survey.sessions[0]?.status === "IN_PROGRESS" || survey.status === "PAUSED"
         ? ("in-progress" as const)
         : ("available" as const),
-      meta: `${survey._count.sessions} ответов`,
     })),
   };
 }

@@ -51,6 +51,7 @@ export default async function RespondentMySurveysPage({
           initialTab={initialTab}
           showIntro={false}
           mode="mine"
+          variant="dash"
         />
       </div>
     </div>

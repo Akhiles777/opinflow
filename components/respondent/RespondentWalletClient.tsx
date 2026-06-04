@@ -55,35 +55,10 @@ function mapStatus(s: WithdrawalStatus): { label: string; cls: string } {
   return { label: "Ошибка", cls: "border border-red-500 bg-red-500/10 text-red-400" };
 }
 
-const S = { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.75", strokeLinecap: "round" as const, strokeLinejoin: "round" as const, width: 20, height: 20 };
+const ICON_FILTER = "invert(28%) sepia(64%) saturate(970%) hue-rotate(243deg) brightness(80%) contrast(95%)";
 
-function IconEarned() {
-  return (
-    <svg {...S}>
-      <circle cx="12" cy="12" r="9" />
-      <circle cx="12" cy="12" r="4" />
-      <path d="M12 3v2M12 19v2M3 12h2M19 12h2" />
-    </svg>
-  );
-}
-function IconAvailable() {
-  return (
-    <svg {...S}>
-      <rect x="2" y="6" width="20" height="13" rx="3" />
-      <path d="M2 10h20M6 15h4" />
-    </svg>
-  );
-}
-function IconWithdrawn() {
-  return (
-    <svg {...S}>
-      <path d="M4 7h16a1.5 1.5 0 0 1 1.5 1.5v9A1.5 1.5 0 0 1 20 19H4a1.5 1.5 0 0 1-1.5-1.5V8A1.5 1.5 0 0 1 4 7Z" />
-      <path d="M4 7V5.5A2.5 2.5 0 0 1 6.5 3H17" />
-      <path d="M16 13h2" />
-      <circle cx="16.5" cy="13" r=".6" fill="currentColor" stroke="none" />
-      <path d="M12 10.5v3M10.5 12l1.5 1.5 1.5-1.5" />
-    </svg>
-  );
+function StatIcon({ src }: { src: string }) {
+  return <img src={src} alt="" width={20} height={20} className="h-5 w-5" style={{ filter: ICON_FILTER }} />;
 }
 
 export default function RespondentWalletClient({
@@ -111,7 +86,7 @@ export default function RespondentWalletClient({
   const [isLoading, startTransition] = useTransition();
 
   const numericAmount = useMemo(() => Number(amount.replace(/[^\d]/g, "")), [amount]);
-  const earningTransactions = transactions.filter((t) => t.type === "Начисление");
+  const earningTransactions = transactions.filter((t) => t.amount > 0);
 
   function clearSbpPrefetchState() {
     setSbpBanksList([]);
@@ -200,24 +175,24 @@ export default function RespondentWalletClient({
         </div>
       )}
 
-      {/* ── TOP ROW: баланс (1fr) + 3 стат-карточки (2fr) ─────────────── */}
-      <div className="grid gap-5 lg:grid-cols-[1fr_2fr]">
+      {/* ── TOP ROW: баланс + 3 стат-карточки ──────────────────────────── */}
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[500px_1fr]">
 
         {/* Баланс */}
-        <div className="rounded-[18px] border border-dash-border bg-dash-card p-6">
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+        <div className="max-w-135 rounded-[18px] border border-dash-border bg-dash-card p-6">
+          <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-[36px] font-bold leading-none text-[#6D3AE2]">{formatRub(balance)}</p>
-              <p className="mt-2 text-[13px] font-medium text-dash-muted">Доступный баланс</p>
-              <p className="mt-3 max-w-[280px] text-[13px] leading-[1.5] text-dash-muted">
-                Вознаграждения за опросы поступают сюда. Отправляйте заявки на вывод и отслеживайте их статус в одном месте. Минимальная сумма вывода — 500&nbsp;₽
+              <p className="text-[38px] font-bold leading-none text-[#7244F5] tabular-nums">{formatRub(balance)}</p>
+              <p className="mt-1.5 text-[13px] font-semibold text-dash-muted">Доступный баланс</p>
+              <p className="mt-2 max-w-xs text-[12px] leading-relaxed text-dash-muted">
+                Вознаграждения за опросы поступают сюда. Отправляйте заявки на вывод и отслеживайте их статус в одном месте. Минимальная сумма вывода — 500 ₽
               </p>
             </div>
             <button
               type="button"
               onClick={() => setShowWithdrawModal(true)}
               disabled={balance < 500}
-              className="shrink-0 self-start rounded-xl bg-[#6D3AE2] px-5 py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-[#7B4FF0] disabled:cursor-not-allowed disabled:opacity-50"
+              className="shrink-0 rounded-xl bg-[#7244F5] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_6px_18px_rgba(114,68,245,0.45)] transition-all hover:bg-[#6238DC] disabled:cursor-not-allowed disabled:opacity-50"
             >
               Вывести средства
             </button>
@@ -225,109 +200,120 @@ export default function RespondentWalletClient({
         </div>
 
         {/* 3 стат-карточки */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {[
-            { label: "Заработано", value: totalEarned, icon: <IconEarned /> },
-            { label: "Доступно сейчас", value: balance, icon: <IconAvailable /> },
-            { label: "Уже выведено", value: totalSpent, icon: <IconWithdrawn /> },
-          ].map(({ label, value, icon }) => (
-            <div key={label} className="flex flex-col rounded-[18px] border border-dash-border bg-dash-card p-5">
-              <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-[12px] bg-[#6D3AE2]/15 text-[#6D3AE2]">
-                {icon}
+            { label: "Заработано",    value: formatRub(totalEarned), src: "/cabinets/icons/sidebar/menu icon_money 20px.svg" },
+            { label: "Доступно сейчас", value: formatRub(balance),   src: "/cabinets/icons/sidebar/menu icon_survey 20px.svg" },
+            { label: "Уже выведено",  value: formatRub(totalSpent),  src: "/cabinets/icons/sidebar/menu icon_my_survey 20px.svg" },
+          ].map((card) => (
+            <div key={card.label} className="rounded-[18px] border border-dash-border bg-dash-card p-5">
+              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-[#EEE8FF] dark:bg-[#6D3AE2]/20">
+                <StatIcon src={card.src} />
               </div>
-              <p className="text-[22px] font-bold leading-none text-dash-heading">{formatRub(value)}</p>
-              <p className="mt-1.5 text-[12px] font-medium text-dash-muted">{label}</p>
+              <p className="text-[26px] font-bold leading-none text-dash-heading tabular-nums">{card.value}</p>
+              <p className="mt-1.5 text-[13px] text-dash-muted">{card.label}</p>
             </div>
           ))}
         </div>
       </div>
 
       {/* ── BOTTOM ROW: таблицы ──────────────────────────────────────────── */}
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2">
 
         {/* Заявки на вывод */}
-        <div className="rounded-[18px] border border-dash-border bg-dash-card p-6">
-          <div className="mb-1 flex items-center gap-2">
-            <h2 className="text-[16px] font-semibold text-dash-heading">Заявки на вывод</h2>
-            <span className="rounded-full bg-dash-border px-2 py-0.5 text-[12px] font-medium text-dash-muted">
-              {withdrawalRequests.length}
-            </span>
+        <div className="rounded-[18px] border border-dash-border bg-dash-card">
+          <div className="border-b border-dash-border px-6 py-4">
+            <div className="flex items-center gap-2">
+              <h2 className="text-[17px] font-semibold text-dash-heading">Заявки на вывод</h2>
+              {withdrawalRequests.length > 0 && (
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-dash-bg text-[12px] font-semibold text-dash-muted">
+                  {withdrawalRequests.length}
+                </span>
+              )}
+            </div>
+            <p className="mt-0.5 text-[13px] text-dash-muted">Статус всех заявок на вывод средств.</p>
           </div>
-          <p className="mb-5 text-[13px] text-dash-muted">Статус всех заявок на вывод средств.</p>
-
           {withdrawalRequests.length > 0 ? (
-            <table className="w-full text-[13px]">
-              <thead>
-                <tr className="border-b border-dash-border">
-                  {["ЗАЯВКА №", "ДАТА", "СУММА", "СТАТУС"].map((h) => (
-                    <th key={h} className="pb-3 text-left text-[11px] font-semibold uppercase tracking-wider text-dash-muted first:pl-0">
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {withdrawalRequests.map((item) => {
-                  const { label, cls } = mapStatus(item.status);
-                  return (
-                    <tr key={item.id} className="border-b border-dash-border/50 last:border-0">
-                      <td className="py-3.5 font-mono text-dash-body">{shortId(item.id)}</td>
-                      <td className="py-3.5 text-dash-muted">{item.date.slice(0, 8)}</td>
-                      <td className="py-3.5 font-medium text-dash-heading">{formatRub(item.amount)}</td>
-                      <td className="py-3.5">
-                        <span className={`inline-flex rounded px-2 py-0.5 text-[11px] font-semibold ${cls}`}>
-                          {label}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="border-b border-dash-border bg-dash-bg/40">
+                    <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-dash-muted">Заявка №</th>
+                    <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-dash-muted">Дата</th>
+                    <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-dash-muted">Сумма</th>
+                    <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-dash-muted">Статус</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-dash-border">
+                  {withdrawalRequests.map((req) => {
+                    const st = mapStatus(req.status);
+                    return (
+                      <tr key={req.id} className="transition-colors hover:bg-dash-bg/30">
+                        <td className="px-5 py-4 text-[13px] font-medium text-dash-body">{shortId(req.id)}</td>
+                        <td className="whitespace-nowrap px-5 py-4 text-[13px] text-dash-body">{req.date}</td>
+                        <td className="px-5 py-4 text-[14px] font-semibold tabular-nums text-dash-body">{formatRub(req.amount)}</td>
+                        <td className="px-5 py-4">
+                          <span className={`inline-flex items-center rounded-full border px-3 py-1 text-[12px] font-semibold ${st.cls}`}>
+                            {st.label}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           ) : (
-            <p className="py-4 text-[13px] text-dash-muted">
-              Пока заявок нет. Когда вы отправите первую заявку, она появится здесь.
-            </p>
+            <div className="m-4 flex min-h-50 items-center justify-center rounded-b-[18px] border-2 border-dashed border-dash-border p-8 text-center">
+              <p className="text-[14px] text-dash-muted">
+                Пока заявок нет. Когда вы отправите первую заявку, она появится здесь со статусом обработки.
+              </p>
+            </div>
           )}
         </div>
 
         {/* История начислений */}
-        <div className="rounded-[18px] border border-dash-border bg-dash-card p-6">
-          <div className="mb-1 flex items-center gap-2">
-            <h2 className="text-[16px] font-semibold text-dash-heading">История начислений</h2>
-            <span className="rounded-full bg-dash-border px-2 py-0.5 text-[12px] font-medium text-dash-muted">
-              {earningTransactions.length}
-            </span>
-          </div>
-          <p className="mb-5 text-[13px] text-dash-muted">
-            Все вознаграждения за успешно пройденные опросы отображаются здесь.
-          </p>
-
-          {earningTransactions.length > 0 ? (
-            <table className="w-full text-[13px]">
-              <thead>
-                <tr className="border-b border-dash-border">
-                  {["ОПРОС", "ДАТА", "СУММА"].map((h) => (
-                    <th key={h} className="pb-3 text-left text-[11px] font-semibold uppercase tracking-wider text-dash-muted first:pl-0">
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {earningTransactions.map((item) => (
-                  <tr key={item.id} className="border-b border-dash-border/50 last:border-0">
-                    <td className="max-w-[180px] truncate py-3.5 text-dash-body">{item.description}</td>
-                    <td className="py-3.5 text-dash-muted">{item.date.slice(0, 8)}</td>
-                    <td className="py-3.5 font-medium text-green-400">+{formatRub(Math.abs(item.amount))}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <p className="py-4 text-[13px] text-dash-muted">
-              Начислений пока нет. После первых завершённых опросов здесь появится история вознаграждений.
+        <div className="rounded-[18px] border border-dash-border bg-dash-card">
+          <div className="border-b border-dash-border px-6 py-4">
+            <div className="flex items-center gap-2">
+              <h2 className="text-[17px] font-semibold text-dash-heading">История начислений</h2>
+              {earningTransactions.length > 0 && (
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-dash-bg text-[12px] font-semibold text-dash-muted">
+                  {earningTransactions.length}
+                </span>
+              )}
+            </div>
+            <p className="mt-0.5 text-[13px] text-dash-muted">
+              Все вознаграждения за успешно пройденные опросы.
             </p>
+          </div>
+          {earningTransactions.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="border-b border-dash-border bg-dash-bg/40">
+                    <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-dash-muted">Опрос</th>
+                    <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-dash-muted">Дата</th>
+                    <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-dash-muted">Сумма</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-dash-border">
+                  {earningTransactions.map((item) => (
+                    <tr key={item.id} className="transition-colors hover:bg-dash-bg/30">
+                      <td className="max-w-45 truncate px-5 py-4 text-[13px] text-dash-body">{item.description}</td>
+                      <td className="whitespace-nowrap px-5 py-4 text-[13px] text-dash-body">{item.date}</td>
+                      <td className="px-5 py-4 text-[14px] font-semibold tabular-nums text-green-400">+{formatRub(Math.abs(item.amount))}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="m-4 flex min-h-50 items-center justify-center rounded-b-[18px] border-2 border-dashed border-dash-border p-8 text-center">
+              <p className="text-[14px] text-dash-muted">
+                Начислений пока нет. После первых завершённых опросов здесь появится история вознаграждений.
+              </p>
+            </div>
           )}
         </div>
       </div>

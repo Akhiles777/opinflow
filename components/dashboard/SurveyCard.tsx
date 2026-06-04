@@ -26,7 +26,7 @@ function Badge({ label, variant }: { label: string; variant: "green" | "purple" 
     gray:   "bg-dash-bg text-dash-muted border border-dash-border",
   };
   return (
-    <span className={`inline-flex items-center rounded-[6px] px-2 py-1 text-[12px] font-semibold leading-none ${styles[variant]}`}>
+    <span className={`inline-flex items-center rounded-full px-2 py-1 text-[12px] font-semibold leading-none ${styles[variant]}`}>
       {label}
     </span>
   );
@@ -116,7 +116,7 @@ export default function SurveyCard({
         </div>
         <Link
           href={link}
-          className="shrink-0 rounded-[10px] bg-[#6D3AE2] px-5 py-3 text-[14px] font-semibold text-white transition-all hover:bg-[#7B4FF0] active:scale-[0.98]"
+          className="shrink-0 rounded-xl bg-[#7244F5] px-5 py-2.5 text-[14px] font-semibold text-white shadow-[0_6px_18px_rgba(114,68,245,0.45)] transition-all hover:bg-[#6238DC]"
         >
           Пройти опрос
         </Link>
