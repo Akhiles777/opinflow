@@ -3,7 +3,7 @@
 import * as React from "react";
 import Image from "next/image";
 import { Menu, X } from "lucide-react";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import Button from "@/components/ui/Button";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import SmoothHashLink from "@/components/ui/SmoothHashLink";
@@ -132,15 +132,13 @@ export default function SurveyHeader() {
               >
                 Личный кабинет
               </Button>
-              <a
-                href="/logout"
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                }}
+              <button
+                type="button"
+                onClick={() => void signOut({ callbackUrl: "/" })}
                 className="inline-flex w-full items-center justify-center rounded-xl border border-site-border bg-site-card px-5 py-2.5 text-sm font-medium text-site-heading transition-all duration-200 hover:bg-site-section hover:border-site-border/80"
               >
                 Выйти
-              </a>
+              </button>
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-2 pt-2 sm:grid-cols-2">

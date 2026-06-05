@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
 import { LogOut, LayoutDashboard, User, Wallet, Users, Shield } from "lucide-react";
 import type { Role } from "@prisma/client";
 
@@ -125,15 +126,16 @@ export default function PublicUserMenu({ name, email, image, role }: Props) {
 
           {/* Logout */}
           <div className="mt-2 pt-2 border-t border-[#EDE8F8] dark:border-white/10">
-            <a
-              href="/logout"
+            <button
+              type="button"
+              onClick={() => void signOut({ callbackUrl: "/" })}
               className="flex w-full items-center gap-3 rounded-[14px] border border-[#EDE8F8] dark:border-white/12 px-3.5 py-3 text-[15px] font-medium text-[#6E6884] dark:text-white/55 transition-all duration-150 hover:bg-[#FFF0F0] dark:hover:bg-white/8 hover:text-[#C0392B] dark:hover:text-red-400 hover:border-[#FFCCCC] dark:hover:border-red-400/30"
             >
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-[#F5F2FF] dark:bg-white/10">
-                <LogOut className="h-[18px] w-[18px]" />
+                <LogOut className="h-4.5 w-4.5" />
               </span>
               Выйти
-            </a>
+            </button>
           </div>
         </div>
       )}
