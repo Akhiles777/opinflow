@@ -59,19 +59,19 @@ const svgProps = { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", s
 
 function IconEarned() {
   return (
-   <img src={'/cabinets/respondent/wallet-1.svg'} alt="Заработано" className="h-5 w-5" /> 
+   <img src={'/cabinets/respondent/wallet-1.svg'} alt="Заработано" className="h-7 w-7" /> 
   );
 }
 
 function IconAvailable() {
   return (
-<img src={'/cabinets/respondent/wallet-2.svg'} alt="Доступно сейчас" className="h-5 w-5" />
+<img src={'/cabinets/respondent/wallet-2.svg'} alt="Доступно сейчас" className="h-7 w-7" />
   );
 }
 
 function IconWithdrawn() {
   return (
- <img src={'/cabinets/respondent/wallet-3.svg'} alt="Уже выведено" className="h-5 w-5" />
+ <img src={'/cabinets/respondent/wallet-3.svg'} alt="Уже выведено" className="h-7 w-7" />
   );
 }
 

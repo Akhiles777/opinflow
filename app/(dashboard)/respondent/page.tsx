@@ -6,10 +6,10 @@ import { formatRub, getRespondentOverviewData } from "@/lib/dashboard-data";
 import { requireRole } from "@/lib/auth-utils";
 
 const STAT_ICONS = [
-  "/cabinets/icons/sidebar/menu icon_money 20px.svg",
-  "/cabinets/icons/sidebar/menu icon_my_survey 20px.svg",
-  "/cabinets/icons/sidebar/menu icon_survey 20px.svg",
-  "/cabinets/icons/sidebar/menu icon_referal 20px.svg",
+  "/cabinets/respondent/home-1.svg",
+  "/cabinets/respondent/home-2.svg",
+  "/cabinets/respondent/home-3.svg",
+  "/cabinets/respondent/home-4.svg",
 ];
 
 export default async function RespondentOverviewPage() {
