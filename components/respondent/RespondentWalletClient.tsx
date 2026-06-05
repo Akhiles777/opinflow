@@ -59,32 +59,19 @@ const svgProps = { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", s
 
 function IconEarned() {
   return (
-    <svg {...svgProps}>
-      <path d="M19.3 7.92V13.07C19.3 16.15 17.54 17.47 14.9 17.47H6.11C5.66 17.47 5.23 17.43 4.83 17.34C4.58 17.3 4.34 17.23 4.12 17.15C2.62 16.59 1.71 15.29 1.71 13.07V7.92C1.71 4.84 3.47 3.52 6.11 3.52H14.9C17.14 3.52 18.75 4.47 19.18 6.64C19.25 7.04 19.3 7.45 19.3 7.92Z" />
-      <path d="M22.3 10.92V16.07C22.3 19.15 20.54 20.47 17.9 20.47H9.11C8.37 20.47 7.7 20.37 7.12 20.15C5.93 19.71 5.12 18.8 4.83 17.34C5.23 17.43 5.66 17.47 6.11 17.47H14.9C17.54 17.47 19.3 16.15 19.3 13.07V7.92C19.3 7.45 19.26 7.03 19.18 6.64C21.08 7.04 22.3 8.38 22.3 10.92Z" />
-      <circle cx="10.5" cy="10.5" r="2.64" />
-    </svg>
+   <img src={'/cabinets/respondent/wallet-1.svg'} alt="Заработано" className="h-5 w-5" /> 
   );
 }
 
 function IconAvailable() {
   return (
-    <svg {...svgProps}>
-      <rect x="2" y="6" width="20" height="14" rx="2.5" />
-      <path d="M2 10h20" />
-      <path d="M6 14.5h3" />
-      <path d="M11 14.5h1" />
-    </svg>
+<img src={'/cabinets/respondent/wallet-2.svg'} alt="Доступно сейчас" className="h-5 w-5" />
   );
 }
 
 function IconWithdrawn() {
   return (
-    <svg {...svgProps}>
-      <path d="M9 22h6c5 0 7-2 7-7V9c0-5-2-7-7-7H9C4 2 2 4 2 9v6c0 5 2 7 7 7z" />
-      <path d="M8.5 12h7" />
-      <path d="M12 8.5l3.5 3.5-3.5 3.5" />
-    </svg>
+ <img src={'/cabinets/respondent/wallet-3.svg'} alt="Уже выведено" className="h-5 w-5" />
   );
 }
 
@@ -233,12 +220,12 @@ export default function RespondentWalletClient({
             { label: "Доступно сейчас", value: formatRub(balance),   icon: <IconAvailable /> },
             { label: "Уже выведено",  value: formatRub(totalSpent),  icon: <IconWithdrawn /> },
           ] as const).map((card) => (
-            <div key={card.label} className="rounded-[18px] border border-dash-border bg-dash-card p-5">
-              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-[#EEE8FF] text-[#6438D9] dark:bg-[#6D3AE2]/20 dark:text-[#A98BFF]">
+            <div key={card.label} className="flex flex-col justify-center rounded-[18px] border border-dash-border bg-dash-card p-6">
+              <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-[#EEE8FF] text-[#6438D9] dark:bg-[#6D3AE2]/20 dark:text-[#A98BFF]">
                 {card.icon}
               </div>
-              <p className="text-[26px] font-bold leading-none text-dash-heading tabular-nums">{card.value}</p>
-              <p className="mt-1.5 text-[13px] text-dash-muted">{card.label}</p>
+              <p className="text-[32px] font-bold leading-none text-dash-heading tabular-nums">{card.value}</p>
+              <p className="mt-2 text-[14px] text-dash-muted">{card.label}</p>
             </div>
           ))}
         </div>
