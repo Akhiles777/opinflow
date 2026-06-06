@@ -11,6 +11,7 @@ type Props = {
   balance: number;
   totalEarned: number;
   totalSpent: number;
+  minWithdrawal: number;
   transactions: Array<{
     id: string;
     date: string;
@@ -79,6 +80,7 @@ export default function RespondentWalletClient({
   balance,
   totalEarned,
   totalSpent,
+  minWithdrawal,
   transactions,
   withdrawalRequests,
 }: Props) {
@@ -86,7 +88,7 @@ export default function RespondentWalletClient({
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [step, setStep] = useState<1 | 2>(1);
   const [method, setMethod] = useState<WithdrawalMethod>("CARD");
-  const [amount, setAmount] = useState("500");
+  const [amount, setAmount] = useState(() => String(minWithdrawal));
   const [cardNumber, setCardNumber] = useState("");
   const [phone, setPhone] = useState("");
   const [bankId, setBankId] = useState("");
@@ -149,7 +151,7 @@ export default function RespondentWalletClient({
   }, [showWithdrawModal, method]);
 
   function resetModal() {
-    setShowWithdrawModal(false); setStep(1); setMethod("CARD"); setAmount("500");
+    setShowWithdrawModal(false); setStep(1); setMethod("CARD"); setAmount(String(minWithdrawal));
     setCardNumber(""); setPhone(""); clearSbpPrefetchState(); setWalletNumber(""); setError(null);
   }
 
@@ -161,7 +163,7 @@ export default function RespondentWalletClient({
 
   function handleSubmit() {
     setError(null); setSuccessMessage(null);
-    if (numericAmount < 500) { setError("Минимальная сумма вывода — 500 ₽"); return; }
+    if (numericAmount < minWithdrawal) { setError(`Минимальная сумма вывода — ${formatRub(minWithdrawal)}`); return; }
     if (numericAmount > balance) { setError("Сумма вывода не может превышать текущий баланс"); return; }
     const cardDigits = cardNumber.replace(/\D/g, "");
     if (method === "CARD" && (cardDigits.length < 16 || cardDigits.length > 19)) { setError("Укажите номер карты 16–19 цифр"); return; }
@@ -199,13 +201,13 @@ export default function RespondentWalletClient({
               <p className="text-[38px] font-bold leading-none text-[#7244F5] tabular-nums">{formatRub(balance)}</p>
               <p className="mt-1.5 text-[13px] font-semibold text-dash-muted">Доступный баланс</p>
               <p className="mt-2 max-w-xs text-[12px] leading-relaxed text-dash-muted">
-                Вознаграждения за опросы поступают сюда. Отправляйте заявки на вывод и отслеживайте их статус в одном месте. Минимальная сумма вывода — 500 ₽
+                Вознаграждения за опросы поступают сюда. Отправляйте заявки на вывод и отслеживайте их статус в одном месте. Минимальная сумма вывода — {formatRub(minWithdrawal)}
               </p>
             </div>
             <button
               type="button"
               onClick={() => setShowWithdrawModal(true)}
-              disabled={balance < 500}
+              disabled={balance < minWithdrawal}
               className="shrink-0 rounded-xl bg-[#7244F5] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_6px_18px_rgba(114,68,245,0.45)] transition-all hover:bg-[#6238DC] disabled:cursor-not-allowed disabled:opacity-50"
             >
               Вывести средства
@@ -339,7 +341,7 @@ export default function RespondentWalletClient({
         onClose={() => { if (!isLoading) resetModal(); }}
         footer={
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="text-[13px] text-dash-muted">Минимальная сумма — 500 ₽</div>
+            <div className="text-[13px] text-dash-muted">Минимальная сумма — {formatRub(minWithdrawal)}</div>
             {step === 1 ? (
               <button
                 type="button"
@@ -428,7 +430,7 @@ export default function RespondentWalletClient({
             )}
             <label className="grid gap-2">
               <span className="text-[13px] font-medium text-dash-heading">Сумма</span>
-              <input type="number" min={500} max={balance} value={amount} onChange={(e) => setAmount(e.target.value)} className={inputCls} />
+              <input type="number" min={minWithdrawal} max={balance} value={amount} onChange={(e) => setAmount(e.target.value)} className={inputCls} />
             </label>
             {error && <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-[13px] text-red-400">{error}</div>}
           </div>

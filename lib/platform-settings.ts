@@ -3,9 +3,41 @@ import { prisma } from "@/lib/prisma";
 const DEFAULT_COMMISSION_RATE = Number(process.env.NEXT_PUBLIC_COMMISSION_RATE || 0.15);
 const COMMISSION_KEY = "commission_rate";
 
+export type PlatformSettings = {
+  commissionPercent: number;
+  minWithdrawal: number;
+  minReward: number;
+  maintenanceMode: boolean;
+  adminEmail: string;
+};
+
+const DEFAULTS: PlatformSettings = {
+  commissionPercent: DEFAULT_COMMISSION_RATE * 100,
+  minWithdrawal: 500,
+  minReward: 20,
+  maintenanceMode: false,
+  adminEmail: process.env.ADMIN_EMAILS?.split(",")[0]?.trim() ?? "",
+};
+
 function normalizeRate(value: number) {
   if (!Number.isFinite(value)) return DEFAULT_COMMISSION_RATE;
   return Math.max(0, Math.min(1, value));
+}
+
+export async function getPlatformSettings(): Promise<PlatformSettings> {
+  try {
+    const row = await prisma.platformSettings.findUnique({ where: { id: "singleton" } });
+    if (!row) return DEFAULTS;
+    return {
+      commissionPercent: Number(row.commissionPercent),
+      minWithdrawal: Number(row.minWithdrawal),
+      minReward: Number(row.minReward),
+      maintenanceMode: row.maintenanceMode,
+      adminEmail: row.adminEmail,
+    };
+  } catch {
+    return DEFAULTS;
+  }
 }
 
 export async function getCommissionRate(): Promise<number> {

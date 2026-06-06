@@ -13,6 +13,7 @@ import { EMPTY_DRAFT, type SurveyDraft } from "@/types/survey";
 type Props = {
   balance: number;
   commissionRate: number;
+  minReward: number;
   userName?: string | null;
   userEmail?: string | null;
 };
@@ -63,7 +64,7 @@ function estimateReach(draft: SurveyDraft) {
   return Math.max(500, Math.round(reach));
 }
 
-export default function SurveyBuilder({ balance, commissionRate, userName, userEmail }: Props) {
+export default function SurveyBuilder({ balance, commissionRate, minReward, userName, userEmail }: Props) {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [draft, setDraft] = useState<SurveyDraft>(EMPTY_DRAFT);
@@ -138,7 +139,7 @@ export default function SurveyBuilder({ balance, commissionRate, userName, userE
     if (s === 3 && draft.targetAgeMin > draft.targetAgeMax) return "Минимальный возраст не может быть больше максимального";
     if (s === 4) {
       if (draft.maxResponses < 10) return "Минимум 10 респондентов";
-      if (draft.reward < 20) return "Минимальное вознаграждение — 20 ₽";
+      if (draft.reward < minReward) return `Минимальное вознаграждение — ${minReward} ₽`;
       if (!draft.endsAt) return "Укажите дату окончания";
       if (draft.startsAt && draft.endsAt && draft.endsAt < draft.startsAt) return "Дата окончания должна быть позже даты начала";
     }

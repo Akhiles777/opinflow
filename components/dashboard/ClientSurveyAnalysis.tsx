@@ -31,6 +31,7 @@ type Props = {
     status: "PENDING" | "ASSIGNED" | "COMPLETED" | "REJECTED";
     assignedExpert: string | null;
     reportUrl: string | null;
+    reportText: string | null;
     adminNote: string | null;
     amount: number;
   } | null;
@@ -516,7 +517,7 @@ export default function ClientSurveyAnalysis({ surveyId, analysis, quantitative,
             >
               Скачать заключение
             </a>
-          ) : (
+          ) : expertReview?.status !== "COMPLETED" ? (
             <button
               type="button"
               onClick={handleOrderExpertReview}
@@ -529,9 +530,18 @@ export default function ClientSurveyAnalysis({ surveyId, analysis, quantitative,
                   ? "Отправляем..."
                   : `Заказать детальный разбор · ${expertReviewPrice.toLocaleString("ru-RU")} ₽`}
             </button>
-          )}
+          ) : null}
         </div>
       </div>
+
+      {expertReview?.status === "COMPLETED" && expertReview.reportText && !expertReview.reportUrl ? (
+        <div className="rounded-2xl border border-dash-border bg-dash-card p-6">
+          <div className="mb-4 text-sm font-semibold text-dash-heading">Экспертное заключение</div>
+          <div className="max-h-125 overflow-y-auto whitespace-pre-wrap rounded-xl border border-dash-border bg-dash-bg px-5 py-4 text-sm leading-relaxed text-dash-body">
+            {expertReview.reportText}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

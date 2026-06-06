@@ -2,6 +2,7 @@ import PageHeader from "@/components/dashboard/PageHeader";
 import RespondentWalletClient from "@/components/respondent/RespondentWalletClient";
 import { requireRole } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
+import { getPlatformSettings } from "@/lib/platform-settings";
 
 function formatDate(date: Date) {
   return new Intl.DateTimeFormat("ru-RU", {
@@ -33,7 +34,7 @@ function maskRequisites(method: "CARD" | "SBP" | "WALLET", requisites: unknown) 
 export default async function RespondentWalletPage() {
   const session = await requireRole("RESPONDENT");
 
-  const [wallet, withdrawalRequests] = await Promise.all([
+  const [wallet, withdrawalRequests, platformSettings] = await Promise.all([
     prisma.wallet.findUnique({
       where: { userId: session.user.id },
       select: {
@@ -68,6 +69,7 @@ export default async function RespondentWalletPage() {
         createdAt: true,
       },
     }),
+    getPlatformSettings(),
   ]);
 
   return (
@@ -79,6 +81,7 @@ export default async function RespondentWalletPage() {
           balance={Number(wallet?.balance ?? 0)}
           totalEarned={Number(wallet?.totalEarned ?? 0)}
           totalSpent={Number(wallet?.totalSpent ?? 0)}
+          minWithdrawal={platformSettings.minWithdrawal}
           transactions={
             wallet?.transactions.map((item) => ({
               id: item.id,

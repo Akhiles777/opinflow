@@ -197,6 +197,7 @@ export default async function ClientSurveyDetailPage({ params }: { params: Promi
           status: true,
           assignedExpert: true,
           reportUrl: true,
+          reportText: true,
           adminNote: true,
           amount: true,
         },
@@ -384,6 +385,7 @@ export default async function ClientSurveyDetailPage({ params }: { params: Promi
         status: survey.expertReviewRequests[0].status,
         assignedExpert: survey.expertReviewRequests[0].assignedExpert,
         reportUrl: survey.expertReviewRequests[0].reportUrl,
+        reportText: survey.expertReviewRequests[0].reportText,
         adminNote: survey.expertReviewRequests[0].adminNote,
         amount: Number(survey.expertReviewRequests[0].amount),
       }

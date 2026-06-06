@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth-utils";
-import { getExpertReviewPrice, isKnownExpertName } from "@/lib/expert-review";
+import { getExpertReviewPrice, isValidExpertName } from "@/lib/expert-review";
 import { notify } from "@/lib/notifications";
 
 export async function createExpertReviewRequestAction(surveyId: string) {
@@ -93,8 +93,12 @@ export async function createExpertReviewRequestAction(surveyId: string) {
 export async function assignExpertReviewAction(requestId: string, expertName: string) {
   await requireRole("ADMIN");
 
-  if (!expertName.trim() || !isKnownExpertName(expertName.trim())) {
+  if (!expertName.trim()) {
     return { error: "Выберите эксперта из списка" };
+  }
+
+  if (!(await isValidExpertName(expertName.trim()))) {
+    return { error: "Эксперт не найден в базе" };
   }
 
   const request = await prisma.expertReviewRequest.findUnique({
@@ -205,6 +209,54 @@ export async function rejectExpertReviewAction(requestId: string, reason: string
   revalidatePath("/admin/experts");
   revalidatePath(`/client/surveys/${request.survey.id}`);
   revalidatePath("/client/wallet");
+  return { success: true };
+}
+
+export async function submitTextConclusionAction(requestId: string, text: string) {
+  await requireRole("ADMIN");
+
+  const trimmed = text.trim();
+  if (!trimmed) return { error: "Введите текст заключения" };
+  if (trimmed.length > 50000) return { error: "Текст слишком длинный (максимум 50 000 символов)" };
+
+  const request = await prisma.expertReviewRequest.findUnique({
+    where: { id: requestId },
+    select: {
+      id: true,
+      userId: true,
+      status: true,
+      survey: { select: { id: true, title: true } },
+    },
+  });
+
+  if (!request || (request.status !== "PENDING" && request.status !== "ASSIGNED")) {
+    return { error: "Заявка не найдена или уже закрыта" };
+  }
+
+  await prisma.expertReviewRequest.update({
+    where: { id: requestId },
+    data: {
+      status: "COMPLETED",
+      reportText: trimmed,
+      reportUrl: null,
+      completedAt: new Date(),
+    },
+  });
+
+  try {
+    await notify({
+      userId: request.userId,
+      type: "SYSTEM",
+      title: "Экспертный разбор готов",
+      body: `По опросу "${request.survey.title}" готово экспертное заключение.`,
+      link: `/client/surveys/${request.survey.id}`,
+    });
+  } catch (error) {
+    console.error("[expert-reviews][text-conclusion] notify error:", error);
+  }
+
+  revalidatePath("/admin/experts");
+  revalidatePath(`/client/surveys/${request.survey.id}`);
   return { success: true };
 }
 

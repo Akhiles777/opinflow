@@ -507,6 +507,7 @@ model ExpertReviewRequest {
   assignedExpert String?
   adminNote      String?
   reportUrl      String?
+  reportText     String?  @db.Text
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
   completedAt    DateTime?
@@ -546,6 +547,18 @@ model PlatformSettings {
   updatedAt         DateTime @updatedAt
 
   @@map("platform_settings")
+}
+
+model Expert {
+  id        String   @id @default(cuid())
+  name      String
+  email     String?
+  specialty String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("experts")
 }
 
 model Invoice {

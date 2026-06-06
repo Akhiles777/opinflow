@@ -1,16 +1,12 @@
 import { requireRole } from "@/lib/auth-utils";
-import { prisma } from "@/lib/prisma";
+import { getPlatformSettingsAction } from "@/actions/admin-settings";
 import PageHeader from "@/components/dashboard/PageHeader";
 import AdminSettingsClient from "@/components/dashboard/AdminSettingsClient";
 
 export default async function AdminSettingsPage() {
   await requireRole("ADMIN");
 
-  const settings = await prisma.platformSettings.upsert({
-    where: { id: "singleton" },
-    create: { id: "singleton" },
-    update: {},
-  });
+  const settings = await getPlatformSettingsAction();
 
   return (
     <div>
