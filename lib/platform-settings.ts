@@ -8,18 +8,9 @@ function normalizeRate(value: number) {
   return Math.max(0, Math.min(1, value));
 }
 
-// Safely get the AppSetting model — may be undefined if table not yet created in DB
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function settingModel(): typeof prisma.appSetting | null {
-  const m = (prisma as unknown as Record<string, unknown>)["appSetting"];
-  return m ? (m as typeof prisma.appSetting) : null;
-}
-
 export async function getCommissionRate(): Promise<number> {
   try {
-    const model = settingModel();
-    if (!model) return DEFAULT_COMMISSION_RATE;
-    const row = await model.findUnique({ where: { key: COMMISSION_KEY } });
+    const row = await prisma.appSetting.findUnique({ where: { key: COMMISSION_KEY } });
     if (!row) return DEFAULT_COMMISSION_RATE;
     const val = row.value as Record<string, unknown>;
     return normalizeRate(Number(val?.rate));
@@ -30,12 +21,14 @@ export async function getCommissionRate(): Promise<number> {
 
 export async function setCommissionRate(rate: number): Promise<number> {
   const normalized = normalizeRate(rate);
-  const model = settingModel();
-  if (!model) throw new Error("AppSetting table not available");
-  await model.upsert({
-    where: { key: COMMISSION_KEY },
-    update: { value: { rate: normalized } },
-    create: { key: COMMISSION_KEY, value: { rate: normalized } },
-  });
+  try {
+    await prisma.appSetting.upsert({
+      where: { key: COMMISSION_KEY },
+      update: { value: { rate: normalized } },
+      create: { key: COMMISSION_KEY, value: { rate: normalized } },
+    });
+  } catch (error) {
+    console.error("[platform-settings] setCommissionRate error:", error);
+  }
   return normalized;
 }

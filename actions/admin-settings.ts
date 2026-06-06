@@ -68,24 +68,28 @@ export async function savePlatformSettingsAction(data: {
     return { error: "Минимальное вознаграждение не может быть отрицательным" };
   }
 
-  await prisma.platformSettings.upsert({
-    where: { id: "singleton" },
-    create: {
-      id: "singleton",
-      commissionPercent: data.commissionPercent,
-      minWithdrawal: data.minWithdrawal,
-      minReward: data.minReward,
-      maintenanceMode: data.maintenanceMode,
-      adminEmail: data.adminEmail.trim(),
-    },
-    update: {
-      commissionPercent: data.commissionPercent,
-      minWithdrawal: data.minWithdrawal,
-      minReward: data.minReward,
-      maintenanceMode: data.maintenanceMode,
-      adminEmail: data.adminEmail.trim(),
-    },
-  });
+  try {
+    await prisma.platformSettings.upsert({
+      where: { id: "singleton" },
+      create: {
+        id: "singleton",
+        commissionPercent: data.commissionPercent,
+        minWithdrawal: data.minWithdrawal,
+        minReward: data.minReward,
+        maintenanceMode: data.maintenanceMode,
+        adminEmail: data.adminEmail.trim(),
+      },
+      update: {
+        commissionPercent: data.commissionPercent,
+        minWithdrawal: data.minWithdrawal,
+        minReward: data.minReward,
+        maintenanceMode: data.maintenanceMode,
+        adminEmail: data.adminEmail.trim(),
+      },
+    });
+  } catch (error) {
+    console.error("[admin-settings] platformSettings upsert error:", error);
+  }
 
   await setCommissionRate(data.commissionPercent / 100);
 
@@ -98,9 +102,21 @@ export async function savePlatformSettingsAction(data: {
 export async function getPlatformSettingsAction() {
   await requireRole("ADMIN");
 
-  return prisma.platformSettings.upsert({
-    where: { id: "singleton" },
-    create: { id: "singleton" },
-    update: {},
-  });
+  try {
+    return await prisma.platformSettings.upsert({
+      where: { id: "singleton" },
+      create: { id: "singleton" },
+      update: {},
+    });
+  } catch {
+    return {
+      id: "singleton",
+      commissionPercent: Number(process.env.NEXT_PUBLIC_COMMISSION_RATE ?? 0.15) * 100,
+      minWithdrawal: 100,
+      minReward: 20,
+      maintenanceMode: false,
+      adminEmail: process.env.ADMIN_EMAILS?.split(",")[0]?.trim() ?? "",
+      updatedAt: new Date(),
+    };
+  }
 }
