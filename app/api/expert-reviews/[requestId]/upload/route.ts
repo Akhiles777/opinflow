@@ -66,8 +66,8 @@ export async function POST(
     return NextResponse.json({ error: "Заявка не найдена" }, { status: 404 });
   }
 
-  if (reviewRequest.status !== "PENDING" && reviewRequest.status !== "ASSIGNED") {
-    return NextResponse.json({ error: "Заявка уже закрыта или отклонена" }, { status: 400 });
+  if (reviewRequest.status === "REJECTED") {
+    return NextResponse.json({ error: "Невозможно загрузить заключение — заявка отклонена" }, { status: 400 });
   }
 
   let reportUrl: string;

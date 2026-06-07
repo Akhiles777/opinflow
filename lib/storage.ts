@@ -161,18 +161,31 @@ export async function uploadExpertReviewReport(
 ) {
   if (!buffer || buffer.length === 0) throw new Error("EMPTY_REPORT_BUFFER");
 
-  // No Supabase configured → use local FS (dev only)
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "Supabase не настроен. Добавьте NEXT_PUBLIC_SUPABASE_URL и SUPABASE_SERVICE_ROLE_KEY в переменные окружения Vercel.",
+      );
+    }
     const { saveExpertReportLocally } = await import("@/lib/local-storage");
     return saveExpertReportLocally(requestId, buffer, extension);
+  }
+
+  // Ensure bucket exists before uploading (Supabase free tier may need it created).
+  // Wrapped in try/catch — if this check times out we still attempt the upload.
+  try {
+    await ensureBucketExists({
+      bucket: SUPABASE_REPORTS_BUCKET,
+      fileSizeLimit: "52428800",
+      mimeTypes: ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "text/plain"],
+    });
+  } catch (e) {
+    console.warn("[storage] ensureBucketExists failed (non-fatal):", e);
   }
 
   const mimeType = getReportMimeType(extension);
   const filePath = `expert-reports/${requestId}-${Date.now()}.${extension}`;
 
-  // Don't call ensureBucketExists — the bucket already exists and we don't need to
-  // re-validate mime types on every upload (service role bypasses enforcement anyway).
-  // Calling ensureBucketExists adds an extra round-trip that can also timeout.
   const response = await supabaseUploadWithRetry(
     `${SUPABASE_URL}/storage/v1/object/${SUPABASE_REPORTS_BUCKET}/${filePath}`,
     getAuthHeaders(mimeType),
@@ -182,15 +195,13 @@ export async function uploadExpertReviewReport(
   if (!response.ok) {
     const text = await response.text();
 
-    // Supabase still failing after retries → fall back to local storage in dev,
-    // or surface a clean message in production
     if (process.env.NODE_ENV !== "production") {
       console.warn("[storage] Supabase upload failed, falling back to local storage:", text);
       const { saveExpertReportLocally } = await import("@/lib/local-storage");
       return saveExpertReportLocally(requestId, buffer, extension);
     }
 
-    throw new Error(`UPLOAD_FAILED: ${text}`);
+    throw new Error(`Ошибка загрузки в Supabase: ${text}`);
   }
 
   return `${SUPABASE_URL}/storage/v1/object/public/${SUPABASE_REPORTS_BUCKET}/${filePath}`;

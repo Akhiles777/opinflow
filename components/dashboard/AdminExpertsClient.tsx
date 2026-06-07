@@ -280,7 +280,7 @@ export default function AdminExpertsClient({ experts: initialExperts, requests }
         <div className="rounded-2xl border border-dash-border bg-dash-card">
           {requests.length > 0 ? (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[720px] text-left">
+              <table className="w-full min-w-180 text-left">
                 <thead>
                   <tr className="border-b border-dash-border bg-dash-bg/40">
                     {["Заказчик", "Опрос", "Дата заказа", "Эксперт", "Статус", "Действия"].map((h) => (
@@ -293,10 +293,10 @@ export default function AdminExpertsClient({ experts: initialExperts, requests }
                 <tbody className="divide-y divide-dash-border">
                   {requests.map((row) => (
                     <tr key={row.id} className="group transition-colors hover:bg-dash-bg/30">
-                      <td className="max-w-[180px] truncate px-5 py-4 text-[13px] font-medium text-dash-body">
+                      <td className="max-w-45 truncate px-5 py-4 text-[13px] font-medium text-dash-body">
                         {row.client}
                       </td>
-                      <td className="max-w-[200px] px-5 py-4">
+                      <td className="max-w-50 px-5 py-4">
                         <span className="block truncate text-[13px] text-dash-body">{row.surveyTitle}</span>
                         <span className="text-[11px] text-dash-muted">{formatRub(row.amount)}</span>
                       </td>
@@ -307,13 +307,22 @@ export default function AdminExpertsClient({ experts: initialExperts, requests }
                       <td className="px-5 py-4">
                         <StatusBadge status={row.status} />
                         {row.adminNote && (
-                          <p className="mt-1 max-w-[140px] truncate text-[11px] text-red-400" title={row.adminNote}>
+                          <p className="mt-1 max-w-35 truncate text-[11px] text-red-400" title={row.adminNote}>
                             {row.adminNote}
                           </p>
                         )}
                       </td>
                       <td className="px-5 py-4">
                         <div className="flex flex-wrap items-center gap-2">
+                          {row.status !== "REJECTED" && (
+                            <button
+                              type="button"
+                              onClick={() => { setError(null); setUploadTarget(row); setUploadFile(null); setConclusionText(""); setUploadMode("file"); }}
+                              className="rounded-lg border border-dash-border bg-dash-bg px-3 py-1.5 text-[12px] font-semibold text-dash-body transition-colors hover:border-[#6D3AE2]/30 hover:text-[#6D3AE2]"
+                            >
+                              {row.status === "COMPLETED" ? "Обновить заключение" : "Загрузить заключение"}
+                            </button>
+                          )}
                           {(row.status === "PENDING" || row.status === "ASSIGNED") && (
                             <>
                               <button
@@ -322,13 +331,6 @@ export default function AdminExpertsClient({ experts: initialExperts, requests }
                                 className="rounded-lg border border-[#6D3AE2]/40 bg-[#6D3AE2]/10 px-3 py-1.5 text-[12px] font-semibold text-[#6D3AE2] transition-colors hover:bg-[#6D3AE2]/20"
                               >
                                 {row.expertName ? "Сменить" : "Назначить эксперта"}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => { setError(null); setUploadTarget(row); setUploadFile(null); setConclusionText(""); setUploadMode("file"); }}
-                                className="rounded-lg border border-dash-border bg-dash-bg px-3 py-1.5 text-[12px] font-semibold text-dash-body transition-colors hover:border-[#6D3AE2]/30 hover:text-[#6D3AE2]"
-                              >
-                                Загрузить заключение
                               </button>
                               <button
                                 type="button"
@@ -395,7 +397,7 @@ export default function AdminExpertsClient({ experts: initialExperts, requests }
 
           {initialExperts.length > 0 ? (
             <div className="rounded-2xl border border-dash-border bg-dash-card">
-              <table className="w-full min-w-[540px] text-left">
+              <table className="w-full min-w-135 text-left">
                 <thead>
                   <tr className="border-b border-dash-border bg-dash-bg/40">
                     {["Имя", "Email", "Специализация", "Статус", "Действия"].map((h) => (
@@ -414,7 +416,7 @@ export default function AdminExpertsClient({ experts: initialExperts, requests }
                       <td className="px-5 py-4 text-[13px] text-dash-muted">
                         {expert.email ?? <span className="text-dash-muted/50">—</span>}
                       </td>
-                      <td className="max-w-[200px] truncate px-5 py-4 text-[13px] text-dash-body">
+                      <td className="max-w-50 truncate px-5 py-4 text-[13px] text-dash-body">
                         {expert.specialty ?? <span className="text-dash-muted/50">—</span>}
                       </td>
                       <td className="px-5 py-4">
