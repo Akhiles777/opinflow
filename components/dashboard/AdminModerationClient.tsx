@@ -160,7 +160,7 @@ export default function AdminModerationClient({ surveys, activeTab, counts }: Pr
                 <th className="w-[28%] px-3 pb-4">Статус действия</th>
               </tr>
             </thead>
-            <tbody className="text-[16px] text-[#170B49] dark:text-white">
+            <tbody className="text-[14px] text-[#170B49] dark:text-white">
               {surveys.map((survey, index) => {
                 const status = getStatusView(survey.status);
 
@@ -179,12 +179,12 @@ export default function AdminModerationClient({ surveys, activeTab, counts }: Pr
                       </span>
                     </td>
                     <td className="px-3 py-2.5 tabular-nums">{survey.questions.length}</td>
-                    <td className="px-3 py-2.5 text-[22px] font-bold tabular-nums">
+                    <td className="px-3 py-2.5 font-semibold tabular-nums">
                       {survey.budget ? `${survey.budget.toLocaleString("ru-RU")} ₽` : "—"}
                     </td>
                     <td className="px-3 py-2.5 tabular-nums">{formatDate(survey.createdAt)}</td>
                     <td className="px-3 py-2.5">
-                      <div className="flex items-center gap-0">
+                      <div className="flex items-center gap-2">
                         <span className={`inline-flex h-7 items-center rounded-lg border px-2.5 text-xs font-medium ${status.className}`}>
                           {status.label}
                         </span>
@@ -194,7 +194,7 @@ export default function AdminModerationClient({ surveys, activeTab, counts }: Pr
                             setError(null);
                             setPreviewId(survey.id);
                           }}
-                          className="-ml-1 inline-flex h-8 items-center rounded-[10px] border border-[#CFC3F5] bg-[#EFEAFF] px-3 text-sm font-semibold text-[#25134F] shadow-sm transition-colors hover:bg-[#E7DEFF]"
+                          className="inline-flex h-8 items-center rounded-[10px] border border-[#CFC3F5] bg-[#EFEAFF] px-3 text-sm font-semibold text-[#25134F] shadow-sm transition-colors hover:bg-[#E7DEFF]"
                         >
                           Просмотреть
                         </button>

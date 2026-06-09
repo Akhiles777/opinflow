@@ -56,24 +56,16 @@ function mapStatus(s: WithdrawalStatus): { label: string; cls: string } {
   return { label: "Ошибка", cls: "border border-red-500 bg-red-500/10 text-red-400" };
 }
 
-const svgProps = { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round" as const, strokeLinejoin: "round" as const, className: "h-5 w-5" };
-
 function IconEarned() {
-  return (
-   <img src={'/cabinets/respondent/wallet-1.svg'} alt="Заработано" className="h-7 w-7" /> 
-  );
+  return <img src="/cabinets/respondent/wallet-1.svg" alt="Заработано" className="h-7 w-7" />;
 }
 
 function IconAvailable() {
-  return (
-<img src={'/cabinets/respondent/wallet-2.svg'} alt="Доступно сейчас" className="h-7 w-7" />
-  );
+  return <img src="/cabinets/respondent/wallet-2.svg" alt="Доступно сейчас" className="h-7 w-7" />;
 }
 
 function IconWithdrawn() {
-  return (
- <img src={'/cabinets/respondent/wallet-3.svg'} alt="Уже выведено" className="h-7 w-7" />
-  );
+  return <img src="/cabinets/respondent/wallet-3.svg" alt="Уже выведено" className="h-7 w-7" />;
 }
 
 export default function RespondentWalletClient({
@@ -143,7 +135,11 @@ export default function RespondentWalletClient({
         return;
       }
       setSbpBanksList([]); setBankId("");
-      const fallback = data.error === "PAYOUTS_NOT_CONFIGURED" ? "Список банков СБП недоступен: не настроены ключи выплат." : data.error === "UNAUTHORIZED" ? "Сессия недействительна. Обновите страницу." : "Не удалось загрузить список банков ЮKassa для СБП.";
+      const fallback = data.error === "PAYOUTS_NOT_CONFIGURED"
+        ? "Список банков СБП недоступен: не настроены ключи выплат."
+        : data.error === "UNAUTHORIZED"
+          ? "Сессия недействительна. Обновите страницу."
+          : "Не удалось загрузить список банков ЮKassa для СБП.";
       const tail = typeof data.detail === "string" && data.detail.trim() ? ` Технически: ${data.detail.trim()}` : "";
       setSbpBanksHint(`${fallback}${tail}`);
     })();
@@ -183,6 +179,12 @@ export default function RespondentWalletClient({
 
   const inputCls = "h-12 w-full rounded-xl border border-dash-border bg-dash-bg px-4 text-[14px] text-dash-body outline-none focus:border-[#6D3AE2]/50 focus:ring-2 focus:ring-[#6D3AE2]/10 transition-colors";
 
+  const statCards = [
+    { label: "Заработано",      value: formatRub(totalEarned), icon: <IconEarned /> },
+    { label: "Доступно сейчас", value: formatRub(balance),     icon: <IconAvailable /> },
+    { label: "Уже выведено",    value: formatRub(totalSpent),  icon: <IconWithdrawn /> },
+  ];
+
   return (
     <div className="space-y-5">
       {successMessage && (
@@ -191,15 +193,17 @@ export default function RespondentWalletClient({
         </div>
       )}
 
-      {/* ── TOP ROW: баланс + 3 стат-карточки ──────────────────────────── */}
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[500px_1fr]">
+      {/* ── TOP ROW: баланс + 3 стат-карточки ── */}
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[480px_1fr]">
 
-        {/* Баланс */}
-        <div className="max-w-135 rounded-[18px] border border-dash-border bg-dash-card p-6">
+        {/* Карточка баланса */}
+        <div className="rounded-[18px] border border-dash-border bg-dash-card p-6">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-[38px] font-bold leading-none text-[#7244F5] tabular-nums">{formatRub(balance)}</p>
-              <p className="mt-1.5 text-[13px] font-semibold text-dash-muted">Доступный баланс</p>
+              <p className="text-[36px] sm:text-[40px] font-bold leading-none text-[#7244F5] tabular-nums">
+                {formatRub(balance)}
+              </p>
+              <p className="mt-2 text-[13px] font-semibold text-dash-muted">Доступный баланс</p>
               <p className="mt-2 max-w-xs text-[12px] leading-relaxed text-dash-muted">
                 Вознаграждения за опросы поступают сюда. Отправляйте заявки на вывод и отслеживайте их статус в одном месте. Минимальная сумма вывода — {formatRub(minWithdrawal)}
               </p>
@@ -215,25 +219,33 @@ export default function RespondentWalletClient({
           </div>
         </div>
 
-        {/* 3 стат-карточки */}
+        {/* 3 стат-карточки — как на макете */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          {([
-            { label: "Заработано",    value: formatRub(totalEarned), icon: <IconEarned /> },
-            { label: "Доступно сейчас", value: formatRub(balance),   icon: <IconAvailable /> },
-            { label: "Уже выведено",  value: formatRub(totalSpent),  icon: <IconWithdrawn /> },
-          ] as const).map((card) => (
-            <div key={card.label} className="flex flex-col justify-center rounded-[18px] border border-dash-border bg-dash-card p-6">
-              <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-[#EEE8FF] text-[#6438D9] dark:bg-[#6D3AE2]/20 dark:text-[#A98BFF]">
+          {statCards.map((card) => (
+            <div
+              key={card.label}
+              className="flex flex-col justify-between rounded-[18px] border border-dash-border bg-dash-card p-5 xl:p-6 min-h-[140px]"
+            >
+              {/* Иконка без цветного квадрата — просто картинка */}
+              <div className="text-[#9585C8] dark:text-[#A98BFF]">
                 {card.icon}
               </div>
-              <p className="text-[32px] font-bold leading-none text-dash-heading tabular-nums">{card.value}</p>
-              <p className="mt-2 text-[14px] text-dash-muted">{card.label}</p>
+
+              {/* Число и подпись */}
+              <div className="mt-5">
+                <p className="text-[24px] sm:text-[28px] xl:text-[30px] font-bold leading-none text-dash-heading tabular-nums break-all">
+                  {card.value}
+                </p>
+                <p className="mt-1.5 text-[13px] sm:text-[14px] text-dash-muted">
+                  {card.label}
+                </p>
+              </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* ── BOTTOM ROW: таблицы ──────────────────────────────────────────── */}
+      {/* ── BOTTOM ROW: таблицы ── */}
       <div className="grid gap-4 lg:grid-cols-2">
 
         {/* Заявки на вывод */}
@@ -316,9 +328,11 @@ export default function RespondentWalletClient({
                 <tbody className="divide-y divide-dash-border">
                   {earningTransactions.map((item) => (
                     <tr key={item.id} className="transition-colors hover:bg-dash-bg/30">
-                      <td className="max-w-36 truncate px-4 py-3 text-[12px] text-dash-body sm:max-w-45 sm:px-5 sm:py-4 sm:text-[13px]">{item.description}</td>
+                      <td className="max-w-36 truncate px-4 py-3 text-[12px] text-dash-body sm:max-w-[180px] sm:px-5 sm:py-4 sm:text-[13px]">{item.description}</td>
                       <td className="whitespace-nowrap px-4 py-3 text-[12px] text-dash-body sm:px-5 sm:py-4 sm:text-[13px]">{item.date}</td>
-                      <td className="px-4 py-3 text-[13px] font-semibold tabular-nums text-green-500 dark:text-green-400 sm:px-5 sm:py-4 sm:text-[14px]">+{formatRub(Math.abs(item.amount))}</td>
+                      <td className="px-4 py-3 text-[13px] font-semibold tabular-nums text-green-500 dark:text-green-400 sm:px-5 sm:py-4 sm:text-[14px]">
+                        +{formatRub(Math.abs(item.amount))}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -334,7 +348,7 @@ export default function RespondentWalletClient({
         </div>
       </div>
 
-      {/* ── МОДАЛКА ВЫВОДА ───────────────────────────────────────────────── */}
+      {/* ── МОДАЛКА ВЫВОДА ── */}
       <Modal
         open={showWithdrawModal}
         title="Вывод средств"
@@ -368,9 +382,9 @@ export default function RespondentWalletClient({
           <div className="grid gap-3">
             <div className="grid gap-3 md:grid-cols-3">
               {[
-                { value: "CARD" as const, title: "Банковская карта", text: "Перевод на карту" },
-                { value: "SBP" as const, title: "СБП", text: "По номеру телефона" },
-                { value: "WALLET" as const, title: "ЮMoney", text: "Перевод на кошелёк" },
+                { value: "CARD" as const,   title: "Банковская карта", text: "Перевод на карту" },
+                { value: "SBP" as const,    title: "СБП",              text: "По номеру телефона" },
+                { value: "WALLET" as const, title: "ЮMoney",           text: "Перевод на кошелёк" },
               ].map((item) => {
                 const active = method === item.value;
                 return (
@@ -378,7 +392,10 @@ export default function RespondentWalletClient({
                     key={item.value}
                     type="button"
                     onClick={() => chooseWithdrawMethod(item.value)}
-                    className={["rounded-[14px] border p-4 text-left transition-colors", active ? "border-[#6D3AE2] bg-[#6D3AE2]/10" : "border-dash-border bg-dash-bg hover:border-[#6D3AE2]/30"].join(" ")}
+                    className={[
+                      "rounded-[14px] border p-4 text-left transition-colors",
+                      active ? "border-[#6D3AE2] bg-[#6D3AE2]/10" : "border-dash-border bg-dash-bg hover:border-[#6D3AE2]/30",
+                    ].join(" ")}
                   >
                     <div className="text-[13px] font-semibold text-dash-heading">{item.title}</div>
                     <div className="mt-1 text-[12px] text-dash-muted">{item.text}</div>
@@ -387,8 +404,19 @@ export default function RespondentWalletClient({
               })}
             </div>
             {method === "SBP" && (
-              <div className={["rounded-xl border px-4 py-3 text-[13px]", sbpContractForbidden || (sbpBanksHint && !sbpListLoading) ? "border-amber-500/25 bg-amber-500/10 text-amber-200" : "border-dash-border bg-dash-bg text-dash-muted"].join(" ")}>
-                {sbpBanksHint ? sbpBanksHint : sbpListLoading ? "Проверяем доступность СБП…" : sbpBanksList.length > 0 ? `Список банков получен (${sbpBanksList.length}). Перейдите далее.` : "Не удалось получить банки. Выберите другой способ."}
+              <div className={[
+                "rounded-xl border px-4 py-3 text-[13px]",
+                sbpContractForbidden || (sbpBanksHint && !sbpListLoading)
+                  ? "border-amber-500/25 bg-amber-500/10 text-amber-200"
+                  : "border-dash-border bg-dash-bg text-dash-muted",
+              ].join(" ")}>
+                {sbpBanksHint
+                  ? sbpBanksHint
+                  : sbpListLoading
+                    ? "Проверяем доступность СБП…"
+                    : sbpBanksList.length > 0
+                      ? `Список банков получен (${sbpBanksList.length}). Перейдите далее.`
+                      : "Не удалось получить банки. Выберите другой способ."}
               </div>
             )}
           </div>
@@ -408,7 +436,11 @@ export default function RespondentWalletClient({
                 </label>
                 <label className="grid gap-2">
                   <span className="text-[13px] font-medium text-dash-heading">Банк (участник СБП)</span>
-                  {sbpBanksHint && <div className="rounded-xl border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-[13px] text-amber-200">{sbpBanksHint}</div>}
+                  {sbpBanksHint && (
+                    <div className="rounded-xl border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-[13px] text-amber-200">
+                      {sbpBanksHint}
+                    </div>
+                  )}
                   {sbpBanksList.length > 0 && (
                     <select value={bankId} onChange={(e) => setBankId(e.target.value)} className={inputCls}>
                       {sbpBanksList.map((b) => <option key={b.bank_id} value={b.bank_id}>{b.name}</option>)}
@@ -432,7 +464,11 @@ export default function RespondentWalletClient({
               <span className="text-[13px] font-medium text-dash-heading">Сумма</span>
               <input type="number" min={minWithdrawal} max={balance} value={amount} onChange={(e) => setAmount(e.target.value)} className={inputCls} />
             </label>
-            {error && <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-[13px] text-red-400">{error}</div>}
+            {error && (
+              <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-[13px] text-red-400">
+                {error}
+              </div>
+            )}
           </div>
         )}
       </Modal>

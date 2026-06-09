@@ -484,7 +484,7 @@ export default function SurveyFeedClient({
                   questionCount={survey.questions.length}
                   completedCount={survey._count.sessions}
                   maxResponses={survey.maxResponses}
-                  href={`/survey/${survey.id}`}
+                  href={`/respondent/survey/${survey.id}`}
                   status="available"
                   recommended={survey.recommended}
                 />
@@ -500,7 +500,7 @@ export default function SurveyFeedClient({
                   questionCount={survey.questions.length}
                   completedCount={survey._count.sessions}
                   maxResponses={survey.maxResponses}
-                  href={`/survey/${survey.id}`}
+                  href={`/respondent/survey/${survey.id}`}
                   actionLabel="Начать →"
                   badge={survey.recommended ? "Подходит вам" : "Можно пройти"}
                 />
@@ -535,7 +535,7 @@ export default function SurveyFeedClient({
                   questionCount={session.survey.questions.length}
                   completedCount={session.survey._count?.sessions ?? 0}
                   maxResponses={session.survey.maxResponses}
-                  href={`/survey/${session.survey.id}`}
+                  href={`/respondent/survey/${session.survey.id}`}
                   status="inprogress"
                   startedAt={session.startedAt}
                 />
@@ -562,7 +562,7 @@ export default function SurveyFeedClient({
                     </div>
                   </div>
                   <div className="mt-6 flex justify-end">
-                    <Link href={`/survey/${session.survey.id}`} className="inline-flex items-center justify-center rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-mid">
+                    <Link href={`/respondent/survey/${session.survey.id}`} className="inline-flex items-center justify-center rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-mid">
                       Продолжить →
                     </Link>
                   </div>

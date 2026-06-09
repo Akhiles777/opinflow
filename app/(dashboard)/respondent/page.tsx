@@ -65,7 +65,7 @@ export default async function RespondentOverviewPage() {
                 clientName={(survey as any).clientName}
                 suitable={(survey as any).suitable ?? true}
                 status={survey.status}
-                link={`/survey/${survey.id}`}
+                link={`/respondent/survey/${survey.id}`}
               />
             ))}
           </div>

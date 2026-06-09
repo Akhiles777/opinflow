@@ -101,7 +101,10 @@ export default function SurveyPlayer({ survey, existingSessionId }: Props) {
 
   const visibleQuestions = useMemo(() => getVisibleQuestions(survey.questions, answers), [survey.questions, answers]);
   const currentQuestion = visibleQuestions[currentIndex] ?? null;
-  const filledProgressSegments = Math.max(1, Math.min(10, Math.round(((currentIndex + 1) / Math.max(visibleQuestions.length, 1)) * 10)));
+
+  // Прогресс-бар: количество заполненных сегментов (до 40 макс, по 1 на вопрос)
+  const totalSegments = Math.min(visibleQuestions.length, 40);
+  const filledSegments = Math.min(currentIndex + 1, totalSegments);
 
   useEffect(() => {
     const saved = window.localStorage.getItem(getProgressStorageKey(survey.id));
@@ -224,7 +227,7 @@ export default function SurveyPlayer({ survey, existingSessionId }: Props) {
         rewarded: String(result.rewarded),
         amount: String(result.amount),
       });
-      router.push(`/survey/${survey.id}/complete?${params.toString()}`);
+      router.push(`/respondent/survey/${survey.id}/complete?${params.toString()}`);
     });
   }
 
@@ -247,29 +250,33 @@ export default function SurveyPlayer({ survey, existingSessionId }: Props) {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  // ── INIT (загрузка) ──────────────────────────────────────────────────────
   if (stage === "INIT") {
     return (
-      <div className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center bg-site-bg px-6 py-12 text-site-body">
+      <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-6 py-12">
         <div className="flex flex-col items-center gap-4 text-center">
-          <div className="h-12 w-12 animate-spin rounded-full border-2 border-site-border border-t-brand" />
-          <p className="text-base text-site-body/85 dark:text-site-body">Загрузка опроса...</p>
+          <div className="h-12 w-12 animate-spin rounded-full border-2 border-dash-border border-t-brand" />
+          <p className="text-base text-dash-muted">Загрузка опроса...</p>
         </div>
       </div>
     );
   }
 
+  // ── ERROR ────────────────────────────────────────────────────────────────
   if (stage === "ERROR") {
     return (
-      <div className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center bg-site-bg px-6 py-12 text-site-body">
-        <div className="w-full max-w-xl rounded-3xl border border-site-border bg-site-card p-8 text-center shadow-2xl">
+      <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-6 py-12">
+        <div className="w-full max-w-xl rounded-2xl border border-dash-border bg-dash-card p-8 text-center">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-red-500/15 text-3xl text-red-400">
             ⚠️
           </div>
-          <h1 className="mt-5 font-display text-3xl font-bold text-site-heading">Не удалось открыть опрос</h1>
-          <p className="mt-3 text-base leading-relaxed text-site-body/85 dark:text-site-body">{error ?? "Попробуйте открыть другой опрос или вернитесь к ленте."}</p>
+          <h1 className="mt-5 text-2xl font-bold text-dash-heading lg:text-3xl">Не удалось открыть опрос</h1>
+          <p className="mt-3 text-base leading-relaxed text-dash-muted">
+            {error ?? "Попробуйте открыть другой опрос или вернитесь к ленте."}
+          </p>
           <Link
-            href="/surveys"
-            className="mt-7 inline-flex items-center justify-center rounded-2xl border border-site-border bg-site-section px-6 py-3 text-sm font-semibold text-site-heading transition-colors hover:bg-site-card"
+            href="/respondent/feed"
+            className="mt-7 inline-flex items-center justify-center rounded-xl border border-dash-border bg-dash-bg px-6 py-3 text-sm font-semibold text-dash-heading transition-colors hover:bg-dash-card"
           >
             Вернуться к ленте
           </Link>
@@ -278,13 +285,19 @@ export default function SurveyPlayer({ survey, existingSessionId }: Props) {
     );
   }
 
+  // ── Нет вопросов ─────────────────────────────────────────────────────────
   if (!currentQuestion) {
     return (
-      <div className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center bg-site-bg px-6 py-12 text-site-body">
-        <div className="w-full max-w-xl rounded-3xl border border-site-border bg-site-card p-8 text-center shadow-2xl">
-          <h1 className="font-display text-3xl font-bold text-site-heading">Вопросы не найдены</h1>
-          <p className="mt-3 text-base text-site-body/85 dark:text-site-body">У этого опроса пока нет доступных вопросов для прохождения.</p>
-          <Link href="/surveys" className="mt-7 inline-flex rounded-2xl border border-site-border bg-site-section px-6 py-3 text-sm font-semibold text-site-heading transition-colors hover:bg-site-card">
+      <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-6 py-12">
+        <div className="w-full max-w-xl rounded-2xl border border-dash-border bg-dash-card p-8 text-center">
+          <h1 className="text-2xl font-bold text-dash-heading lg:text-3xl">Вопросы не найдены</h1>
+          <p className="mt-3 text-base text-dash-muted">
+            У этого опроса пока нет доступных вопросов для прохождения.
+          </p>
+          <Link
+            href="/respondent/feed"
+            className="mt-7 inline-flex rounded-xl border border-dash-border bg-dash-bg px-6 py-3 text-sm font-semibold text-dash-heading transition-colors hover:bg-dash-card"
+          >
             Вернуться к ленте
           </Link>
         </div>
@@ -292,83 +305,91 @@ export default function SurveyPlayer({ survey, existingSessionId }: Props) {
     );
   }
 
+  // ── PLAYING / SUBMITTING ──────────────────────────────────────────────────
   return (
-    <div className="min-h-[calc(100vh-3.5rem)] bg-site-bg text-site-body">
-      <div className="fixed inset-x-0 top-14 z-40 grid h-0.5 grid-cols-10 gap-px bg-site-border/40">
-        {Array.from({ length: 10 }, (_, index) => (
-          <div
-            key={`survey-progress-${index}`}
-            className={index < filledProgressSegments ? "bg-brand" : "bg-site-border/40"}
-          />
-        ))}
-      </div>
-
-      <div className="mx-auto flex min-h-[calc(100vh-3.5rem)] max-w-4xl flex-col px-6 pb-10 pt-8 lg:px-8 lg:pb-12 lg:pt-9">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-sm uppercase tracking-[0.18em] text-site-body/80 dark:text-site-body">ПотокМнений</p>
-            <h1 className="mt-2 font-display text-2xl font-bold text-site-heading lg:text-3xl">{survey.title}</h1>
-          </div>
-          <div className="rounded-full border border-site-border bg-site-card px-4 py-2 text-sm font-semibold text-site-body/80 dark:text-site-body">
-            {currentIndex + 1} / {visibleQuestions.length}
-          </div>
+    <div className="min-h-[calc(100vh-4rem)] bg-dash-bg px-6 pb-10 pt-8 lg:px-8 lg:pb-12 lg:pt-9">
+      <div className="mx-auto max-w-3xl">
+        {/* Заголовок страницы */}
+        <div>
+          <p className="text-sm text-dash-muted">ПотокМнений</p>
+          <h1 className="mt-1 text-2xl font-bold text-dash-heading lg:text-3xl">{survey.title}</h1>
         </div>
 
-        <div className="mt-8">
+        {/* Карточка вопроса */}
+        <div className="mt-6 rounded-2xl border border-dash-border bg-dash-card p-8">
+          {/* Вопрос */}
+          <h2 className="text-xl font-bold text-dash-heading lg:text-2xl">{currentQuestion.title}</h2>
+          {currentQuestion.description ? (
+            <p className="mt-3 text-base leading-relaxed text-dash-muted">{currentQuestion.description}</p>
+          ) : null}
+
+          {/* Счётчик + прогресс-бар */}
+          <p className="mt-4 text-sm text-dash-muted">
+            {currentIndex + 1}/{visibleQuestions.length} ответов
+          </p>
+          <div className="mt-2 flex gap-1">
+            {Array.from({ length: totalSegments }, (_, i) => (
+              <div
+                key={`seg-${i}`}
+                className={[
+                  "h-1 flex-1 rounded-full",
+                  i < filledSegments ? "bg-brand" : "bg-dash-border",
+                ].join(" ")}
+              />
+            ))}
+          </div>
+
+          {/* Медиа */}
           {currentQuestion.mediaUrl ? (
             <img
               src={currentQuestion.mediaUrl}
               alt="Иллюстрация к вопросу"
-              className="mb-8 h-auto w-full rounded-2xl border border-site-border object-cover"
+              className="mt-6 h-auto w-full rounded-xl object-cover"
             />
           ) : null}
 
-          <div className="max-w-3xl">
-            <h2 className="font-display text-2xl font-bold text-site-heading lg:text-3xl">{currentQuestion.title}</h2>
-            {currentQuestion.description ? (
-              <p className="mt-3 text-base leading-relaxed text-site-body/85 dark:text-site-body">{currentQuestion.description}</p>
-            ) : null}
-
-            <div className="mt-8">
-              <QuestionRenderer
-                question={currentQuestion}
-                value={answers[currentQuestion.id]}
-                onChange={handleChange}
-              />
-            </div>
-
-            {error ? (
-              <div className="mt-6 rounded-2xl border border-red-500/20 bg-red-500/10 px-5 py-4 text-sm font-medium text-red-500 dark:text-red-400">
-                {error}
-              </div>
-            ) : null}
+          {/* Ответы */}
+          <div className="mt-8">
+            <QuestionRenderer
+              question={currentQuestion}
+              value={answers[currentQuestion.id]}
+              onChange={handleChange}
+            />
           </div>
-        </div>
 
-        <div className="mt-8 flex items-center justify-between gap-3 border-t border-site-border pt-5">
-          <button
-            type="button"
-            onClick={handlePrev}
-            className={[
-              "rounded-2xl border border-site-border px-5 py-3 text-sm font-semibold transition-colors",
-              currentIndex === 0 ? "pointer-events-none opacity-0" : "bg-site-card text-site-heading hover:bg-site-section",
-            ].join(" ")}
-          >
-            ← Назад
-          </button>
+          {/* Ошибка */}
+          {error ? (
+            <div className="mt-4 rounded-xl border border-red-500/20 bg-red-500/10 px-5 py-4 text-sm font-medium text-red-500 dark:text-red-400">
+              {error}
+            </div>
+          ) : null}
 
-          <button
-            type="button"
-            onClick={handleNext}
-            disabled={stage === "SUBMITTING" || isPending}
-            className="rounded-2xl bg-brand px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-mid disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {stage === "SUBMITTING" || isPending
-              ? "Сохраняем..."
-              : currentIndex === visibleQuestions.length - 1
-                ? "Завершить опрос"
-                : "Далее →"}
-          </button>
+          {/* Навигация */}
+          <div className="mt-8 flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={handlePrev}
+              className={[
+                "rounded-xl border border-dash-border px-6 py-3 text-sm font-semibold text-dash-heading transition-colors hover:bg-dash-bg",
+                currentIndex === 0 ? "pointer-events-none opacity-0" : "",
+              ].join(" ")}
+            >
+              ← Назад
+            </button>
+
+            <button
+              type="button"
+              onClick={handleNext}
+              disabled={stage === "SUBMITTING" || isPending}
+              className="rounded-xl bg-brand px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-mid disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {stage === "SUBMITTING" || isPending
+                ? "Сохраняем..."
+                : currentIndex === visibleQuestions.length - 1
+                  ? "Завершить опрос"
+                  : "Далее →"}
+            </button>
+          </div>
         </div>
       </div>
     </div>
