@@ -57,12 +57,7 @@ export default async function ClientSurveysPage() {
                     </td>
                     <td className="px-6 py-3">
                       <div className="flex items-center justify-end gap-2">
-                        <a
-                          href={`/client/surveys/${row.id}`}
-                          className="rounded-lg border border-[#DDD2FF] bg-[#EEE8FF] px-5 py-1.5 text-[13px] font-semibold text-[#6D3AE2] transition-colors hover:bg-[#E4D8FF]"
-                        >
-                          Открыть
-                        </a>
+                      
                         <a
                           href={`/client/surveys/${row.id}`}
                           className="rounded-lg border border-[#DDD2FF] bg-[#EEE8FF] px-5 py-1.5 text-[13px] font-semibold text-[#6D3AE2] transition-colors hover:bg-[#E4D8FF]"

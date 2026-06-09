@@ -196,14 +196,13 @@ async function upsertUser({ email, name, role }) {
   });
 }
 
-async function ensureWallet(userId, data) {
+async function ensureWallet(userId, initialData) {
+  // update: {} — никогда не перезаписывает существующий баланс/историю.
+  // Данные устанавливаются только при первом создании кошелька.
   return prisma.wallet.upsert({
     where: { userId },
-    update: data,
-    create: {
-      userId,
-      ...data,
-    },
+    update: {},
+    create: { userId, ...initialData },
   });
 }
 
@@ -254,10 +253,18 @@ async function clearSurveyDomain() {
   await prisma.survey.deleteMany();
 }
 
-async function resetWalletTransactions(walletIds) {
+async function forceResetWalletTransactions(walletIds) {
+  // Вызывается только при SEED_FORCE_RESET=1. Удаляет ВСЕ транзакции кошельков.
   await prisma.transaction.deleteMany({
     where: { walletId: { in: walletIds } },
   });
+}
+
+async function forceResetWalletBalances(wallets) {
+  // Вызывается только при SEED_FORCE_RESET=1. Сбрасывает балансы к начальным значениям.
+  for (const { id, balance, totalEarned, totalSpent } of wallets) {
+    await prisma.wallet.update({ where: { id }, data: { balance, totalEarned, totalSpent } });
+  }
 }
 
 function addDays(date, days) {
@@ -418,6 +425,19 @@ async function createSessionWithAnswers({ survey, userId, isValid, status, offse
 }
 
 async function main() {
+  if (process.env.NODE_ENV === "production") {
+    console.error("[seed] ЗАБЛОКИРОВАНО: нельзя запускать seed на production!");
+    process.exit(1);
+  }
+
+  const forceReset = process.env.SEED_FORCE_RESET === "1";
+  if (forceReset) {
+    console.warn("[seed] РЕЖИМ ПОЛНОГО СБРОСА: балансы и транзакции будут перезаписаны.");
+  } else {
+    console.log("[seed] Безопасный режим: существующие балансы и транзакции не затрагиваются.");
+    console.log("[seed] Для полного сброса: SEED_FORCE_RESET=1 npx prisma db seed");
+  }
+
   const respondent = await upsertUser(USERS.respondent);
   const respondent2 = await upsertUser(USERS.respondent2);
   const client = await upsertUser(USERS.client);
@@ -453,6 +473,8 @@ async function main() {
 
   await ensureClientProfile(client.id);
 
+  // Кошельки: баланс устанавливается только при первом создании.
+  // При повторном запуске seed существующие балансы и история не меняются.
   const respondentWallet = await ensureWallet(respondent.id, {
     balance: 8200,
     totalEarned: 12400,
@@ -474,8 +496,18 @@ async function main() {
     totalSpent: 0,
   });
 
+  // При force reset — сбросить балансы и транзакции к начальным значениям
+  if (forceReset) {
+    await forceResetWalletTransactions([respondentWallet.id, respondent2Wallet.id, clientWallet.id, adminWallet.id]);
+    await forceResetWalletBalances([
+      { id: respondentWallet.id, balance: 8200, totalEarned: 12400, totalSpent: 0 },
+      { id: respondent2Wallet.id, balance: 4600, totalEarned: 7600, totalSpent: 0 },
+      { id: clientWallet.id, balance: 250000, totalEarned: 0, totalSpent: 0 },
+      { id: adminWallet.id, balance: 0, totalEarned: 0, totalSpent: 0 },
+    ]);
+  }
+
   await clearSurveyDomain();
-  await resetWalletTransactions([respondentWallet.id, respondent2Wallet.id, clientWallet.id, adminWallet.id]);
   await prisma.referral.deleteMany({
     where: {
       OR: [
@@ -588,64 +620,68 @@ async function main() {
     return sum + Number(survey.budget);
   }, 0);
 
-  await prisma.wallet.update({
-    where: { id: clientWallet.id },
-    data: {
-      balance: Math.max(0, 250000 - totalClientSpent),
-      totalSpent: totalClientSpent,
-    },
-  });
-
-  await prisma.wallet.update({
-    where: { id: respondentWallet.id },
-    data: {
-      balance: Number(respondentWallet.balance) + 1800,
-      totalEarned: Number(respondentWallet.totalEarned) + 1800,
-    },
-  });
-
-  await prisma.wallet.update({
-    where: { id: respondent2Wallet.id },
-    data: {
-      balance: Number(respondent2Wallet.balance) + 2200,
-      totalEarned: Number(respondent2Wallet.totalEarned) + 2200,
-    },
-  });
-
-  await prisma.transaction.createMany({
-    data: [
-      {
-        walletId: clientWallet.id,
-        type: "DEPOSIT",
-        amount: 250000,
-        description: "Пополнение демо-кошелька для тестов",
-        status: "COMPLETED",
+  // Финальные балансы и транзакции — только при force reset,
+  // чтобы не перезаписывать реальные данные при повторном запуске seed.
+  if (forceReset) {
+    await prisma.wallet.update({
+      where: { id: clientWallet.id },
+      data: {
+        balance: Math.max(0, 250000 - totalClientSpent),
+        totalSpent: totalClientSpent,
       },
-      {
-        walletId: clientWallet.id,
-        type: "SPENDING",
-        amount: Number(totalClientSpent.toFixed(2)),
-        description: "Списание под тестовые опросы Stage 3",
-        status: "COMPLETED",
-      },
-      {
-        walletId: respondentWallet.id,
-        type: "BONUS",
-        amount: 300,
-        description: "Бонус за тестовые активности",
-        status: "COMPLETED",
-      },
-      {
-        walletId: respondent2Wallet.id,
-        type: "BONUS",
-        amount: 250,
-        description: "Бонус за тестовые активности",
-        status: "COMPLETED",
-      },
-    ],
-  });
+    });
 
-  console.log(`Seed complete: ${surveys.length} surveys created.`);
+    await prisma.wallet.update({
+      where: { id: respondentWallet.id },
+      data: {
+        balance: 8200 + 1800,
+        totalEarned: 12400 + 1800,
+      },
+    });
+
+    await prisma.wallet.update({
+      where: { id: respondent2Wallet.id },
+      data: {
+        balance: 4600 + 2200,
+        totalEarned: 7600 + 2200,
+      },
+    });
+
+    await prisma.transaction.createMany({
+      data: [
+        {
+          walletId: clientWallet.id,
+          type: "DEPOSIT",
+          amount: 250000,
+          description: "Пополнение демо-кошелька для тестов",
+          status: "COMPLETED",
+        },
+        {
+          walletId: clientWallet.id,
+          type: "SPENDING",
+          amount: Number(totalClientSpent.toFixed(2)),
+          description: "Списание под тестовые опросы Stage 3",
+          status: "COMPLETED",
+        },
+        {
+          walletId: respondentWallet.id,
+          type: "BONUS",
+          amount: 300,
+          description: "Бонус за тестовые активности",
+          status: "COMPLETED",
+        },
+        {
+          walletId: respondent2Wallet.id,
+          type: "BONUS",
+          amount: 250,
+          description: "Бонус за тестовые активности",
+          status: "COMPLETED",
+        },
+      ],
+    });
+  }
+
+  console.log(`Seed complete: ${surveys.length} surveys created.${forceReset ? " (force reset)" : ""}`);
 }
 
 main()
