@@ -194,55 +194,45 @@ export default function RespondentWalletClient({
       )}
 
       {/* ── TOP ROW: баланс + 3 стат-карточки ── */}
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[480px_1fr]">
+      <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
 
-        {/* Карточка баланса */}
-        <div className="rounded-[18px] border border-dash-border bg-dash-card p-6">
-          <div className="flex items-start justify-between gap-4">
+        {/* Карточка баланса — col-span-2 на мобайле, 1 на xl */}
+        <div className="col-span-2 xl:col-span-1 flex flex-col justify-between rounded-[18px] border border-dash-border bg-dash-card p-5 min-h-[160px]">
+          <p className="text-[26px] font-bold leading-none text-[#7244F5] tabular-nums break-all">
+            {formatRub(balance)}
+          </p>
+          <p className="mt-1 text-[13px] font-medium text-dash-muted">Доступный баланс</p>
+          <p className="mt-3 text-[12px] leading-[1.5] text-dash-muted">
+            Минимальная сумма вывода — {formatRub(minWithdrawal)}
+          </p>
+          <button
+            type="button"
+            onClick={() => setShowWithdrawModal(true)}
+            disabled={balance < minWithdrawal}
+            className="mt-4 w-full rounded-[10px] bg-[#7244F5] py-2.5 text-[13px] font-semibold text-white transition-all hover:bg-[#6238DC] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Вывести средства
+          </button>
+        </div>
+
+        {/* 3 стат-карточки */}
+        {statCards.map((card) => (
+          <div key={card.label} className="flex flex-col justify-between rounded-[18px] border border-dash-border bg-dash-card p-5 min-h-[160px]">
+            {/* Иконка вверху */}
+            <div className="flex h-[42px] w-[42px] items-center justify-center rounded-[11px] bg-[#EEE8FF] dark:bg-[#6D3AE2]/20">
+              {card.icon}
+            </div>
+            {/* Число и подпись — внизу слева */}
             <div>
-              <p className="text-[36px] sm:text-[40px] font-bold leading-none text-[#7244F5] tabular-nums">
-                {formatRub(balance)}
+              <p className="text-[28px] xl:text-[32px] font-bold leading-none text-dash-heading tabular-nums break-all">
+                {card.value}
               </p>
-              <p className="mt-2 text-[13px] font-semibold text-dash-muted">Доступный баланс</p>
-              <p className="mt-2 max-w-xs text-[12px] leading-relaxed text-dash-muted">
-                Вознаграждения за опросы поступают сюда. Отправляйте заявки на вывод и отслеживайте их статус в одном месте. Минимальная сумма вывода — {formatRub(minWithdrawal)}
+              <p className="mt-1.5 text-[14px] text-dash-muted">
+                {card.label}
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => setShowWithdrawModal(true)}
-              disabled={balance < minWithdrawal}
-              className="shrink-0 rounded-xl bg-[#7244F5] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_6px_18px_rgba(114,68,245,0.45)] transition-all hover:bg-[#6238DC] disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Вывести средства
-            </button>
           </div>
-        </div>
-
-        {/* 3 стат-карточки — как на макете */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          {statCards.map((card) => (
-            <div
-              key={card.label}
-              className="flex flex-col justify-between rounded-[18px] border border-dash-border bg-dash-card p-5 xl:p-6 min-h-[140px]"
-            >
-              {/* Иконка без цветного квадрата — просто картинка */}
-              <div className="text-[#9585C8] dark:text-[#A98BFF]">
-                {card.icon}
-              </div>
-
-              {/* Число и подпись */}
-              <div className="mt-5">
-                <p className="text-[24px] sm:text-[28px] xl:text-[30px] font-bold leading-none text-dash-heading tabular-nums break-all">
-                  {card.value}
-                </p>
-                <p className="mt-1.5 text-[13px] sm:text-[14px] text-dash-muted">
-                  {card.label}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
+        ))}
       </div>
 
       {/* ── BOTTOM ROW: таблицы ── */}
