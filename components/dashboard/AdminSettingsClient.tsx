@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Settings, Percent, Banknote, AlertTriangle, Mail, CheckCircle, Lock, AtSign } from "lucide-react";
-import { savePlatformSettingsAction, changeAdminEmailAction, changeAdminPasswordAction } from "@/actions/admin-settings";
+import { Settings, Percent, Banknote, AlertTriangle, Mail, CheckCircle, AtSign } from "lucide-react";
+import { savePlatformSettingsAction, changeAdminCredentialsAction } from "@/actions/admin-settings";
 
 type Props = {
   initialData: {
@@ -218,145 +218,128 @@ export default function AdminSettingsClient({ initialData }: Props) {
 }
 
 function AdminCredentials() {
-  const [emailForm, setEmailForm] = useState({ newEmail: "", currentPassword: "" });
-  const [passwordForm, setPasswordForm] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
-  const [emailError, setEmailError] = useState<string | null>(null);
-  const [emailSuccess, setEmailSuccess] = useState(false);
-  const [passwordError, setPasswordError] = useState<string | null>(null);
-  const [passwordSuccess, setPasswordSuccess] = useState(false);
-  const [isPendingEmail, startEmailTransition] = useTransition();
-  const [isPendingPassword, startPasswordTransition] = useTransition();
+  const [form, setForm] = useState({
+    currentPassword: "",
+    newEmail: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [error, setError] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
 
-  function handleEmailSubmit() {
-    setEmailError(null);
-    setEmailSuccess(false);
-    startEmailTransition(async () => {
-      const res = await changeAdminEmailAction(emailForm.newEmail, emailForm.currentPassword);
-      if (res.error) { setEmailError(res.error); return; }
-      setEmailSuccess(true);
-      setEmailForm({ newEmail: "", currentPassword: "" });
-      setTimeout(() => setEmailSuccess(false), 3000);
-    });
-  }
+  function handleSubmit() {
+    setError(null);
+    setSuccessMsg(null);
 
-  function handlePasswordSubmit() {
-    setPasswordError(null);
-    setPasswordSuccess(false);
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      setPasswordError("Пароли не совпадают");
+    if (!form.newEmail.trim() && !form.newPassword.trim()) {
+      setError("Введите новый email и/или новый пароль");
       return;
     }
-    startPasswordTransition(async () => {
-      const res = await changeAdminPasswordAction(passwordForm.currentPassword, passwordForm.newPassword);
-      if (res.error) { setPasswordError(res.error); return; }
-      setPasswordSuccess(true);
-      setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
-      setTimeout(() => setPasswordSuccess(false), 3000);
+    if (form.newPassword.trim() && form.newPassword !== form.confirmPassword) {
+      setError("Пароли не совпадают");
+      return;
+    }
+
+    startTransition(async () => {
+      const res = await changeAdminCredentialsAction({
+        currentPassword: form.currentPassword,
+        newEmail: form.newEmail.trim() || undefined,
+        newPassword: form.newPassword.trim() || undefined,
+      });
+
+      if (res.error) { setError(res.error); return; }
+
+      const parts: string[] = [];
+      if (res.changedEmail) parts.push("email");
+      if (res.changedPassword) parts.push("пароль");
+      setSuccessMsg(`Успешно изменено: ${parts.join(" и ")}`);
+      setForm({ currentPassword: "", newEmail: "", newPassword: "", confirmPassword: "" });
+      setTimeout(() => setSuccessMsg(null), 4000);
     });
   }
 
   const inputCls = "h-10 w-full rounded-xl border border-dash-border bg-dash-bg px-4 text-sm text-dash-body placeholder:text-dash-muted focus:outline-none focus:ring-2 focus:ring-brand/20";
 
   return (
-    <div className="mt-8 max-w-2xl space-y-6">
-      <h2 className="text-[16px] font-semibold text-dash-heading">Учётные данные администратора</h2>
+    <div className="mt-8 max-w-2xl">
+      <h2 className="mb-4 text-[16px] font-semibold text-dash-heading">Учётные данные администратора</h2>
 
-      {/* Email */}
-      <form onSubmit={(e) => { e.preventDefault(); handleEmailSubmit(); }} className="rounded-2xl border border-dash-border bg-dash-card p-6 space-y-4">
-        <div className="flex items-center gap-2 mb-2">
+      <form
+        onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}
+        className="rounded-2xl border border-dash-border bg-dash-card p-6 space-y-4"
+      >
+        <div className="flex items-center gap-2 mb-1">
           <AtSign className="h-5 w-5 text-brand" />
-          <p className="text-[15px] font-semibold text-dash-heading">Изменить email для входа</p>
+          <p className="text-[15px] font-semibold text-dash-heading">Изменить email и/или пароль</p>
         </div>
+        <p className="text-sm text-dash-muted">
+          Заполните только те поля, которые хотите изменить. Текущий пароль обязателен для подтверждения.
+        </p>
+
         <label className="block">
-          <span className="text-sm text-dash-muted">Новый email</span>
+          <span className="text-sm text-dash-muted">Текущий пароль <span className="text-red-400">*</span></span>
+          <input
+            type="password"
+            value={form.currentPassword}
+            onChange={(e) => setForm((f) => ({ ...f, currentPassword: e.target.value }))}
+            placeholder="••••••••"
+            className={`mt-1 ${inputCls}`}
+            required
+          />
+        </label>
+
+        <div className="my-1 border-t border-dash-border" />
+
+        <label className="block">
+          <span className="text-sm text-dash-muted">Новый email (необязательно)</span>
           <input
             type="email"
-            value={emailForm.newEmail}
-            onChange={(e) => setEmailForm((f) => ({ ...f, newEmail: e.target.value }))}
+            value={form.newEmail}
+            onChange={(e) => setForm((f) => ({ ...f, newEmail: e.target.value }))}
             placeholder="admin@example.ru"
             className={`mt-1 ${inputCls}`}
-            required
           />
         </label>
-        <label className="block">
-          <span className="text-sm text-dash-muted">Текущий пароль (для подтверждения)</span>
-          <input
-            type="password"
-            value={emailForm.currentPassword}
-            onChange={(e) => setEmailForm((f) => ({ ...f, currentPassword: e.target.value }))}
-            placeholder="••••••••"
-            className={`mt-1 ${inputCls}`}
-            required
-          />
-        </label>
-        {emailError && <p className="text-sm text-red-500">{emailError}</p>}
-        {emailSuccess && (
-          <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
-            <CheckCircle className="h-4 w-4 shrink-0" />
-            Email успешно изменён
-          </div>
-        )}
-        <button
-          type="submit"
-          disabled={isPendingEmail}
-          className="rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-dark disabled:opacity-50"
-        >
-          {isPendingEmail ? "Сохраняем..." : "Сменить email"}
-        </button>
-      </form>
 
-      {/* Password */}
-      <form onSubmit={(e) => { e.preventDefault(); handlePasswordSubmit(); }} className="rounded-2xl border border-dash-border bg-dash-card p-6 space-y-4">
-        <div className="flex items-center gap-2 mb-2">
-          <Lock className="h-5 w-5 text-brand" />
-          <p className="text-[15px] font-semibold text-dash-heading">Изменить пароль</p>
-        </div>
         <label className="block">
-          <span className="text-sm text-dash-muted">Текущий пароль</span>
+          <span className="text-sm text-dash-muted">Новый пароль (необязательно, мин. 8 символов)</span>
           <input
             type="password"
-            value={passwordForm.currentPassword}
-            onChange={(e) => setPasswordForm((f) => ({ ...f, currentPassword: e.target.value }))}
+            value={form.newPassword}
+            onChange={(e) => setForm((f) => ({ ...f, newPassword: e.target.value }))}
             placeholder="••••••••"
             className={`mt-1 ${inputCls}`}
-            required
           />
         </label>
-        <label className="block">
-          <span className="text-sm text-dash-muted">Новый пароль (мин. 8 символов)</span>
-          <input
-            type="password"
-            value={passwordForm.newPassword}
-            onChange={(e) => setPasswordForm((f) => ({ ...f, newPassword: e.target.value }))}
-            placeholder="••••••••"
-            className={`mt-1 ${inputCls}`}
-            required
-          />
-        </label>
-        <label className="block">
-          <span className="text-sm text-dash-muted">Повторите новый пароль</span>
-          <input
-            type="password"
-            value={passwordForm.confirmPassword}
-            onChange={(e) => setPasswordForm((f) => ({ ...f, confirmPassword: e.target.value }))}
-            placeholder="••••••••"
-            className={`mt-1 ${inputCls}`}
-            required
-          />
-        </label>
-        {passwordError && <p className="text-sm text-red-500">{passwordError}</p>}
-        {passwordSuccess && (
+
+        {form.newPassword.trim() && (
+          <label className="block">
+            <span className="text-sm text-dash-muted">Повторите новый пароль</span>
+            <input
+              type="password"
+              value={form.confirmPassword}
+              onChange={(e) => setForm((f) => ({ ...f, confirmPassword: e.target.value }))}
+              placeholder="••••••••"
+              className={`mt-1 ${inputCls}`}
+            />
+          </label>
+        )}
+
+        {error && <p className="text-sm text-red-500">{error}</p>}
+        {successMsg && (
           <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
             <CheckCircle className="h-4 w-4 shrink-0" />
-            Пароль успешно изменён
+            {successMsg}
           </div>
         )}
+
         <button
           type="submit"
-          disabled={isPendingPassword}
+          disabled={isPending}
           className="rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-dark disabled:opacity-50"
         >
-          {isPendingPassword ? "Сохраняем..." : "Сменить пароль"}
+          {isPending ? "Сохраняем..." : "Сохранить изменения"}
         </button>
       </form>
     </div>

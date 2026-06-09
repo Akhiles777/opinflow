@@ -6,6 +6,7 @@ import { Prisma } from "@prisma/client";
 import { requireRole } from "@/lib/auth-utils";
 import { setCommissionRate } from "@/lib/platform-settings";
 import { prisma } from "@/lib/prisma";
+import { notify } from "@/lib/notifications";
 
 export async function updateCommissionRateAction(ratePercent: number) {
   await requireRole("ADMIN");
@@ -123,15 +124,26 @@ export async function getPlatformSettingsAction() {
   }
 }
 
-export async function changeAdminEmailAction(newEmail: string, currentPassword: string) {
+export async function changeAdminCredentialsAction(params: {
+  currentPassword: string;
+  newEmail?: string;
+  newPassword?: string;
+}) {
   const session = await requireRole("ADMIN");
 
-  const trimmed = newEmail.trim().toLowerCase();
-  if (!trimmed || !trimmed.includes("@")) {
-    return { error: "Введите корректный email" };
-  }
-  if (!currentPassword) {
+  if (!params.currentPassword) {
     return { error: "Введите текущий пароль для подтверждения" };
+  }
+
+  const hasEmail = Boolean(params.newEmail?.trim());
+  const hasPassword = Boolean(params.newPassword?.trim());
+
+  if (!hasEmail && !hasPassword) {
+    return { error: "Укажите новый email или новый пароль" };
+  }
+
+  if (hasPassword && params.newPassword!.length < 8) {
+    return { error: "Новый пароль должен содержать не менее 8 символов" };
   }
 
   const admin = await prisma.user.findUnique({
@@ -140,63 +152,39 @@ export async function changeAdminEmailAction(newEmail: string, currentPassword: 
   });
 
   if (!admin?.passwordHash) {
-    return { error: "Невозможно изменить email для этого аккаунта" };
+    return { error: "Невозможно изменить данные для этого аккаунта" };
   }
 
-  const passwordOk = await bcrypt.compare(currentPassword, admin.passwordHash);
+  const passwordOk = await bcrypt.compare(params.currentPassword, admin.passwordHash);
   if (!passwordOk) {
     return { error: "Неверный текущий пароль" };
   }
 
-  if (admin.email === trimmed) {
-    return { error: "Новый email совпадает с текущим" };
+  const updateData: Record<string, unknown> = {};
+
+  if (hasEmail) {
+    const trimmed = params.newEmail!.trim().toLowerCase();
+    if (!trimmed.includes("@")) {
+      return { error: "Введите корректный email" };
+    }
+    if (admin.email === trimmed) {
+      return { error: "Новый email совпадает с текущим" };
+    }
+    const existing = await prisma.user.findUnique({ where: { email: trimmed }, select: { id: true } });
+    if (existing) {
+      return { error: "Этот email уже используется другим аккаунтом" };
+    }
+    updateData.email = trimmed;
   }
 
-  const existing = await prisma.user.findUnique({ where: { email: trimmed }, select: { id: true } });
-  if (existing) {
-    return { error: "Этот email уже используется другим аккаунтом" };
+  if (hasPassword) {
+    updateData.passwordHash = await bcrypt.hash(params.newPassword!, 12);
   }
 
-  await prisma.user.update({
-    where: { id: session.user.id },
-    data: { email: trimmed },
-  });
+  await prisma.user.update({ where: { id: session.user.id }, data: updateData });
 
   revalidatePath("/admin/settings");
-  return { success: true };
-}
-
-export async function changeAdminPasswordAction(currentPassword: string, newPassword: string) {
-  const session = await requireRole("ADMIN");
-
-  if (!currentPassword || !newPassword) {
-    return { error: "Заполните все поля" };
-  }
-  if (newPassword.length < 8) {
-    return { error: "Новый пароль должен содержать не менее 8 символов" };
-  }
-
-  const admin = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { id: true, passwordHash: true },
-  });
-
-  if (!admin?.passwordHash) {
-    return { error: "Невозможно изменить пароль для этого аккаунта" };
-  }
-
-  const passwordOk = await bcrypt.compare(currentPassword, admin.passwordHash);
-  if (!passwordOk) {
-    return { error: "Неверный текущий пароль" };
-  }
-
-  const newHash = await bcrypt.hash(newPassword, 12);
-  await prisma.user.update({
-    where: { id: session.user.id },
-    data: { passwordHash: newHash },
-  });
-
-  return { success: true };
+  return { success: true, changedEmail: hasEmail, changedPassword: hasPassword };
 }
 
 export async function adminAdjustBalanceAction(params: {
@@ -256,6 +244,22 @@ export async function adminAdjustBalanceAction(params: {
       },
     });
   });
+
+  try {
+    const walletPath = user.role === "RESPONDENT" ? "/respondent/wallet" : "/client/wallet";
+    await notify({
+      userId: params.userId,
+      type: "SYSTEM",
+      title: params.direction === "credit" ? "Пополнение баланса" : "Списание с баланса",
+      body:
+        params.direction === "credit"
+          ? `Администратор зачислил ${params.amount.toLocaleString("ru-RU")} ₽: ${params.note.trim()}`
+          : `Администратор списал ${params.amount.toLocaleString("ru-RU")} ₽: ${params.note.trim()}`,
+      link: walletPath,
+    });
+  } catch {
+    // не блокируем основной флоу
+  }
 
   revalidatePath(`/admin/users/${params.userId}`);
   revalidatePath("/admin/finance");
