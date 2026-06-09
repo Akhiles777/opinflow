@@ -8,8 +8,8 @@ export default function PushNotificationButton() {
   // Не поддерживается браузером
   if (typeof window !== 'undefined' && !('Notification' in window)) return null
 
-  // Уже подписан или пользователь заблокировал — прячем кнопку
-  if (isSubscribed || permission === 'denied') return null
+  // Прячем кнопку если уже подписан или пользователь уже принял решение (grant/deny)
+  if (isSubscribed || permission !== 'default') return null
 
   return (
     <button

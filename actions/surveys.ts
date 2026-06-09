@@ -6,7 +6,8 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth-utils";
 import { checkFraud } from "@/lib/antifrod";
-import { getCommissionRate } from "@/lib/platform-settings";
+import { getCommissionRate, getPlatformSettings } from "@/lib/platform-settings";
+import { sendAdminNotificationEmail } from "@/lib/email";
 import { mapSurveyQuestion } from "@/lib/survey-mappers";
 import { uploadSurveyMedia } from "@/lib/storage";
 import type { SurveyDraft } from "@/types/survey";
@@ -780,6 +781,33 @@ export async function createComplaintAction(params: {
 
   revalidatePath("/surveys");
   revalidatePath("/respondent");
+
+  try {
+    const { adminEmail } = await getPlatformSettings();
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { email: true, name: true },
+    });
+    const survey = await prisma.survey.findUnique({
+      where: { id: params.surveyId },
+      select: { title: true },
+    });
+    await sendAdminNotificationEmail(
+      adminEmail,
+      "Новая жалоба на опрос",
+      [
+        { label: "От пользователя", value: user?.name ?? user?.email ?? session.user.id },
+        { label: "Email", value: user?.email ?? "—" },
+        { label: "Опрос", value: survey?.title ?? params.surveyId },
+        { label: "Причина", value: params.reason.trim() },
+        ...(params.details?.trim() ? [{ label: "Детали", value: params.details.trim() }] : []),
+      ],
+      `${process.env.NEXTAUTH_URL ?? ""}/admin/users`,
+      "Перейти к пользователям",
+    );
+  } catch {
+    // не блокируем основной флоу
+  }
 
   return { success: true };
 }

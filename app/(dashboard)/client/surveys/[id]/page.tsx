@@ -498,7 +498,7 @@ export default async function ClientSurveyDetailPage({ params }: { params: Promi
         </div>
       ) : null}
 
-      <ClientSurveyAnalysis surveyId={survey.id} analysis={analysis} quantitative={quantBlocks} expertReview={expertReview} />
+      {survey.status === "REJECTED" ? null : <ClientSurveyAnalysis surveyId={survey.id} analysis={analysis} quantitative={quantBlocks} expertReview={expertReview} />}
 
       <div className="rounded-2xl border border-dash-border bg-dash-card p-6">
         <div className="text-sm font-semibold text-dash-heading">Ответы по вопросам</div>

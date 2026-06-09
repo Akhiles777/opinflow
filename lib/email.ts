@@ -178,6 +178,48 @@ export async function sendWithdrawalStatusEmail(
   });
 }
 
+// Системное уведомление администратору
+export async function sendAdminNotificationEmail(
+  adminEmail: string,
+  subject: string,
+  details: { label: string; value: string }[],
+  linkUrl?: string,
+  linkLabel?: string
+) {
+  if (!adminEmail.trim()) return;
+
+  const rows = details
+    .map(
+      (d) =>
+        `<tr><td style="padding:6px 12px;color:#6B7280;font-size:13px;white-space:nowrap;">${d.label}</td><td style="padding:6px 12px;color:#111827;font-size:13px;font-weight:500;">${d.value}</td></tr>`,
+    )
+    .join("");
+
+  await sendMail({
+    to: adminEmail,
+    subject: `[Админ] ${subject}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:40px 32px;">
+        <div style="background:#F3F0FF;border-radius:12px;padding:6px 14px;display:inline-block;margin-bottom:20px;">
+          <span style="color:#6D3AE2;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;">ПотокМнений · Системное уведомление</span>
+        </div>
+        <h2 style="color:#111827;margin:0 0 16px;">${subject}</h2>
+        <table style="width:100%;border-collapse:collapse;background:#F9FAFB;border-radius:10px;overflow:hidden;">
+          <tbody>${rows}</tbody>
+        </table>
+        ${
+          linkUrl
+            ? `<a href="${linkUrl}" style="display:inline-block;margin-top:24px;background:#6D3AE2;color:#fff;text-decoration:none;padding:12px 24px;border-radius:10px;font-weight:600;font-size:14px;">${linkLabel ?? "Перейти"}</a>`
+            : ""
+        }
+        <p style="color:#9CA3AF;font-size:12px;margin-top:32px;">
+          Это автоматическое письмо от платформы ПотокМнений. Не отвечайте на него.
+        </p>
+      </div>
+    `,
+  });
+}
+
 // Статус опроса (заказчику)
 export async function sendSurveyStatusEmail(
   email: string,

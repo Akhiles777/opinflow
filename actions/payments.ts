@@ -9,6 +9,8 @@ import { assertPayoutRequisitesValid, normalizeWithdrawalRequisitesForStorage } 
 import { YUKASSA_PAYOUT_HTTP_403_RU, YUKASSA_SBP_CONTRACT_FORBIDDEN_RESPONDENT_RU } from "@/lib/yukassa-payout-copy";
 import { createDepositPayment, createPayout, fetchSbpBanksForPayouts } from "@/lib/yukassa";
 import { syncProcessingWithdrawals, completeWithdrawalRequest, failWithdrawalRequest } from "@/lib/payment-processing";
+import { getPlatformSettings } from "@/lib/platform-settings";
+import { sendAdminNotificationEmail } from "@/lib/email";
 
 function withdrawalMethodToPayoutApi(method: "CARD" | "SBP" | "WALLET"): "card" | "sbp" | "wallet" {
   if (method === "CARD") return "card";
@@ -217,8 +219,28 @@ export async function createWithdrawalAction(params: {
     return { error: "Недостаточно средств для вывода" };
   }
 
-  
-  
+  try {
+    const { adminEmail } = await getPlatformSettings();
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { email: true, name: true },
+    });
+    await sendAdminNotificationEmail(
+      adminEmail,
+      "Новая заявка на вывод средств",
+      [
+        { label: "Пользователь", value: user?.name ?? user?.email ?? session.user.id },
+        { label: "Email", value: user?.email ?? "—" },
+        { label: "Сумма", value: `${params.amount.toLocaleString("ru-RU")} ₽` },
+        { label: "Метод", value: params.method },
+      ],
+      `${process.env.NEXTAUTH_URL ?? ""}/admin/finance`,
+      "Перейти к заявкам",
+    );
+  } catch {
+    // не блокируем основной флоу
+  }
+
   revalidatePath("/respondent/wallet");
   revalidatePath("/admin/finance");
   return { success: true };

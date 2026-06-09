@@ -1,6 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import bcrypt from "bcryptjs";
+import { Prisma } from "@prisma/client";
 import { requireRole } from "@/lib/auth-utils";
 import { setCommissionRate } from "@/lib/platform-settings";
 import { prisma } from "@/lib/prisma";
@@ -119,4 +121,143 @@ export async function getPlatformSettingsAction() {
       updatedAt: new Date(),
     };
   }
+}
+
+export async function changeAdminEmailAction(newEmail: string, currentPassword: string) {
+  const session = await requireRole("ADMIN");
+
+  const trimmed = newEmail.trim().toLowerCase();
+  if (!trimmed || !trimmed.includes("@")) {
+    return { error: "Введите корректный email" };
+  }
+  if (!currentPassword) {
+    return { error: "Введите текущий пароль для подтверждения" };
+  }
+
+  const admin = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { id: true, passwordHash: true, email: true },
+  });
+
+  if (!admin?.passwordHash) {
+    return { error: "Невозможно изменить email для этого аккаунта" };
+  }
+
+  const passwordOk = await bcrypt.compare(currentPassword, admin.passwordHash);
+  if (!passwordOk) {
+    return { error: "Неверный текущий пароль" };
+  }
+
+  if (admin.email === trimmed) {
+    return { error: "Новый email совпадает с текущим" };
+  }
+
+  const existing = await prisma.user.findUnique({ where: { email: trimmed }, select: { id: true } });
+  if (existing) {
+    return { error: "Этот email уже используется другим аккаунтом" };
+  }
+
+  await prisma.user.update({
+    where: { id: session.user.id },
+    data: { email: trimmed },
+  });
+
+  revalidatePath("/admin/settings");
+  return { success: true };
+}
+
+export async function changeAdminPasswordAction(currentPassword: string, newPassword: string) {
+  const session = await requireRole("ADMIN");
+
+  if (!currentPassword || !newPassword) {
+    return { error: "Заполните все поля" };
+  }
+  if (newPassword.length < 8) {
+    return { error: "Новый пароль должен содержать не менее 8 символов" };
+  }
+
+  const admin = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { id: true, passwordHash: true },
+  });
+
+  if (!admin?.passwordHash) {
+    return { error: "Невозможно изменить пароль для этого аккаунта" };
+  }
+
+  const passwordOk = await bcrypt.compare(currentPassword, admin.passwordHash);
+  if (!passwordOk) {
+    return { error: "Неверный текущий пароль" };
+  }
+
+  const newHash = await bcrypt.hash(newPassword, 12);
+  await prisma.user.update({
+    where: { id: session.user.id },
+    data: { passwordHash: newHash },
+  });
+
+  return { success: true };
+}
+
+export async function adminAdjustBalanceAction(params: {
+  userId: string;
+  amount: number;
+  direction: "credit" | "debit";
+  note: string;
+}) {
+  await requireRole("ADMIN");
+
+  if (!Number.isFinite(params.amount) || params.amount <= 0) {
+    return { error: "Сумма должна быть положительным числом" };
+  }
+  if (!params.note.trim()) {
+    return { error: "Укажите причину корректировки" };
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: params.userId },
+    select: { id: true, role: true, wallet: { select: { id: true, balance: true } } },
+  });
+
+  if (!user) return { error: "Пользователь не найден" };
+  if (user.role === "ADMIN") return { error: "Нельзя изменять баланс администратора" };
+  if (!user.wallet) return { error: "Кошелёк пользователя не найден" };
+
+  if (params.direction === "debit" && Number(user.wallet.balance) < params.amount) {
+    return { error: "Недостаточно средств на балансе пользователя" };
+  }
+
+  const decimalAmount = new Prisma.Decimal(params.amount);
+
+  await prisma.$transaction(async (tx) => {
+    await tx.wallet.update({
+      where: { id: user.wallet!.id },
+      data: {
+        balance:
+          params.direction === "credit"
+            ? { increment: decimalAmount }
+            : { decrement: decimalAmount },
+        ...(params.direction === "credit" && user.role === "RESPONDENT"
+          ? { totalEarned: { increment: decimalAmount } }
+          : {}),
+        ...(params.direction === "debit" && user.role === "CLIENT"
+          ? { totalSpent: { increment: decimalAmount } }
+          : {}),
+      },
+    });
+
+    await tx.transaction.create({
+      data: {
+        walletId: user.wallet!.id,
+        type: params.direction === "credit" ? "BONUS" : "SPENDING",
+        amount: decimalAmount,
+        description: `Корректировка баланса администратором: ${params.note.trim()}`,
+        status: "COMPLETED",
+      },
+    });
+  });
+
+  revalidatePath(`/admin/users/${params.userId}`);
+  revalidatePath("/admin/finance");
+  return { success: true };
 }

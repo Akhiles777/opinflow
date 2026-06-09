@@ -314,7 +314,7 @@ export default function AdminExpertsClient({ experts: initialExperts, requests }
                       </td>
                       <td className="px-5 py-4">
                         <div className="flex flex-wrap items-center gap-2">
-                          {row.status !== "REJECTED" && (
+                          {(row.status === "ASSIGNED" || row.status === "COMPLETED") && (
                             <button
                               type="button"
                               onClick={() => { setError(null); setUploadTarget(row); setUploadFile(null); setConclusionText(""); setUploadMode("file"); }}

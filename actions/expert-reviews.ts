@@ -6,6 +6,8 @@ import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth-utils";
 import { getExpertReviewPrice, isValidExpertName } from "@/lib/expert-review";
 import { notify } from "@/lib/notifications";
+import { getPlatformSettings } from "@/lib/platform-settings";
+import { sendAdminNotificationEmail } from "@/lib/email";
 
 export async function createExpertReviewRequestAction(surveyId: string) {
   const session = await requireRole("CLIENT");
@@ -86,6 +88,29 @@ export async function createExpertReviewRequestAction(surveyId: string) {
   revalidatePath(`/client/surveys/${surveyId}`);
   revalidatePath("/admin/experts");
   revalidatePath("/client/wallet");
+
+  try {
+    const { adminEmail } = await getPlatformSettings();
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { email: true, name: true, clientProfile: { select: { companyName: true } } },
+    });
+    const displayName = user?.clientProfile?.companyName ?? user?.name ?? user?.email ?? session.user.id;
+    await sendAdminNotificationEmail(
+      adminEmail,
+      "Новый запрос экспертного заключения",
+      [
+        { label: "Заказчик", value: displayName },
+        { label: "Email", value: user?.email ?? "—" },
+        { label: "Опрос", value: survey.title },
+        { label: "Сумма", value: `${amount.toLocaleString("ru-RU")} ₽` },
+      ],
+      `${process.env.NEXTAUTH_URL ?? ""}/admin/experts`,
+      "Перейти к заявкам",
+    );
+  } catch {
+    // не блокируем основной флоу
+  }
 
   return { success: true };
 }
@@ -229,8 +254,8 @@ export async function submitTextConclusionAction(requestId: string, text: string
     },
   });
 
-  if (!request || (request.status !== "PENDING" && request.status !== "ASSIGNED")) {
-    return { error: "Заявка не найдена или уже закрыта" };
+  if (!request || (request.status !== "ASSIGNED" && request.status !== "COMPLETED")) {
+    return { error: "Загрузить заключение можно только после назначения эксперта" };
   }
 
   await prisma.expertReviewRequest.update({

@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Mail, Calendar, Shield, ShieldOff } from "lucide-react";
+import { ArrowLeft, Mail, Calendar, Shield } from "lucide-react";
 import { requireRole } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import { formatRub } from "@/lib/dashboard-data";
@@ -8,6 +8,7 @@ import PageHeader from "@/components/dashboard/PageHeader";
 import Badge from "@/components/dashboard/Badge";
 import StatCard from "@/components/dashboard/StatCard";
 import AdminUserActions from "@/components/dashboard/AdminUserActions";
+import AdminBalanceAdjust from "@/components/dashboard/AdminBalanceAdjust";
 
 function fmt(date: Date) {
   return new Intl.DateTimeFormat("ru-RU", {
@@ -123,6 +124,15 @@ export default async function AdminUserPage({
           </>
         )}
       </div>
+
+      {/* Balance adjustment — only for non-admin users with wallets */}
+      {user.role !== "ADMIN" && user.wallet && (
+        <AdminBalanceAdjust
+          userId={user.id}
+          currentBalance={balance}
+          userName={user.name ?? user.email}
+        />
+      )}
 
       {/* Profile details */}
       {user.respondentProfile && (
