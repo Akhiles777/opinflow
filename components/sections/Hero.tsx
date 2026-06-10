@@ -39,7 +39,7 @@ export default function Hero() {
         <div className="absolute left-[420px] top-[280px] w-[18px] h-[18px] rounded-full bg-[#A78BFF]/25 dark:bg-[#A78BFF]/40 pointer-events-none hidden lg:block" />
 
         <div className="relative z-10 mx-auto max-w-[1400px] px-6 pt-10 pb-10 lg:px-16 lg:pt-14">
-          <div className="grid grid-cols-1 items-center gap-0 lg:grid-cols-[0.9fr_1.1fr]">
+          <div className="grid grid-cols-1 items-center gap-0 lg:grid-cols-[0.75fr_1.25fr]">
 
             {/* ЛЕВАЯ ЧАСТЬ */}
             <div className="max-w-[680px] lg:pt-4">
@@ -108,7 +108,7 @@ export default function Hero() {
             {/* ПРАВАЯ ЧАСТЬ */}
             <div className="relative flex items-center justify-end lg:min-h-[620px]">
               <RevealOnScroll direction="right">
-                <div className="relative w-full max-w-[820px]">
+                <div className="relative w-full max-w-[1000px]">
                   <div className="absolute right-[60px] top-[120px] h-[420px] w-[420px] rounded-full bg-[#6438D9]/8 dark:bg-[#6438D9]/20 blur-[90px] pointer-events-none" />
 
                   {/* НОУТБУК */}
