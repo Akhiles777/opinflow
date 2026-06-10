@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Mail, Calendar, Shield } from "lucide-react";
+import { ArrowLeft, Wallet, TrendingUp, ClipboardList, BadgeDollarSign } from "lucide-react";
 import { requireRole } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import { formatRub } from "@/lib/dashboard-data";
@@ -109,18 +109,18 @@ export default async function AdminUserPage({
         <StatCard
           label="Баланс"
           value={formatRub(balance)}
-          icon={<Shield className="h-5 w-5" />}
+          icon={<Wallet className="h-5 w-5" />}
         />
         {user.role === "RESPONDENT" && (
           <>
-            <StatCard label="Всего заработано" value={formatRub(totalEarned)} icon={<Mail className="h-5 w-5" />} />
-            <StatCard label="Прохождений" value={String(user.surveySessions.length)} icon={<Calendar className="h-5 w-5" />} />
+            <StatCard label="Всего заработано" value={formatRub(totalEarned)} icon={<TrendingUp className="h-5 w-5" />} />
+            <StatCard label="Прохождений" value={String(user.surveySessions.length)} icon={<ClipboardList className="h-5 w-5" />} />
           </>
         )}
         {user.role === "CLIENT" && (
           <>
-            <StatCard label="Всего потрачено" value={formatRub(totalSpent)} icon={<Mail className="h-5 w-5" />} />
-            <StatCard label="Опросов создано" value={String(user.surveysCreated.length)} icon={<Calendar className="h-5 w-5" />} />
+            <StatCard label="Всего потрачено" value={formatRub(totalSpent)} icon={<BadgeDollarSign className="h-5 w-5" />} />
+            <StatCard label="Опросов создано" value={String(user.surveysCreated.length)} icon={<ClipboardList className="h-5 w-5" />} />
           </>
         )}
       </div>
