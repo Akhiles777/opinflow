@@ -63,7 +63,7 @@ export default function RespondentSurveys() {
   className="flex-shrink-0  inline-flex items-center gap-3 rounded-full bg-[#6438D9] px-5 py-[11px] text-[15px] font-[600] text-white transition-all hover:bg-[#5530C4] hover:scale-[1.02]"
 >
   Все доступные опросы
-  <img src="/Respondent/icon/arrow-circle-right.svg" alt="" width={24} height={24} />
+  <img src="/Respondent-IOS/icon/arrow-circle-right.svg" alt="" width={24} height={24} />
 </Link>
         </div>
 
@@ -126,7 +126,7 @@ export default function RespondentSurveys() {
 
                   <div className="flex flex-col gap-[6px]">
                     <div className="flex items-center gap-[7px]">
-                      <img src="/Respondent/icon/clock.svg" alt="" width={18} height={18} />
+                      <img src="/Respondent-IOS/icon/clock.svg" alt="" width={18} height={18} />
                       <span className="text-[14px] text-[#9585C8] dark:text-white/45 font-[500]">Время прохождения</span>
                     </div>
                     <span className="text-[17px] font-[700] text-[#1D0B57] dark:text-white">{survey.time}</span>
@@ -134,7 +134,7 @@ export default function RespondentSurveys() {
 
                   <div className="flex flex-col gap-[6px]">
                     <div className="flex items-center gap-[7px]">
-                      <img src="/Respondent/icon/moneys.svg" alt="" width={18} height={18} />
+                      <img src="/Respondent-IOS/icon/moneys.svg" alt="" width={18} height={18} />
                       <span className="text-[14px] text-[#9585C8] dark:text-white/45 font-[500]">Оплата</span>
                     </div>
                     <span className="text-[17px] font-[700] text-[#1D0B57] dark:text-white">{survey.pay}</span>
@@ -142,7 +142,7 @@ export default function RespondentSurveys() {
 
                   <div className="flex flex-col gap-[6px]">
                     <div className="flex items-center gap-[7px]">
-                      <img src="/Respondent/icon/profile.svg" alt="" width={18} height={18} />
+                      <img src="/Respondent-IOS/icon/profile.svg" alt="" width={18} height={18} />
                       <span className="text-[14px] text-[#9585C8] dark:text-white/45 font-[500]">Респонденты</span>
                     </div>
                     <span className="text-[17px] font-[700] text-[#1D0B57] dark:text-white">{survey.audience}</span>
