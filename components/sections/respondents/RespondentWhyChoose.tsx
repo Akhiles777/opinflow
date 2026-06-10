@@ -39,7 +39,7 @@ export default function RespondentWhyChoose() {
   return (
     <section className="bg-white dark:bg-[#160840] px-3 py-3 lg:px-5 lg:py-5">
       <div
-        className="relative overflow-x-hidden mx-auto max-w-[1600px] rounded-[36px] py-16 lg:py-24 bg-[rgba(237,232,255,0.45)] dark:bg-[#1A0A4A] dark:border-white/10"
+        className="relative overflow-hidden mx-auto max-w-[1600px] rounded-[36px] py-16 lg:py-24 bg-[rgba(237,232,255,0.45)] dark:bg-[#1A0A4A] dark:border-white/10"
         style={{
           border: "1.5px solid rgba(255, 255, 255, 0.75)",
           boxShadow: "0 0 0 1px rgba(200,185,255,0.15), 0 4px 40px rgba(140,100,255,0.06)",
