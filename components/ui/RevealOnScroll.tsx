@@ -28,6 +28,14 @@ export default function RevealOnScroll({
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+
+    // Safari: check immediately if element is already in viewport
+    const rect = el.getBoundingClientRect();
+    if (rect.top < window.innerHeight && rect.bottom > 0) {
+      setVisible(true);
+      return;
+    }
+
     const obs = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -35,7 +43,7 @@ export default function RevealOnScroll({
           obs.disconnect();
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0 }
     );
     obs.observe(el);
     return () => obs.disconnect();
