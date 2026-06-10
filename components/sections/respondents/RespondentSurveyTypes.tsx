@@ -8,28 +8,28 @@ const surveys = [
     time: "7 минут",
     pay: "85 ₽",
     audience: "Женщины 18–35 лет",
-    image: "/Respondent/img_res2.svg",
+    image: "/Respondent-IOS/img_res2.svg",
   },
   {
     title: "Отношение к электромобилям в РФ",
     time: "12 минут",
     pay: "150 ₽",
     audience: "Автовладельцы",
-    image: "/Respondent/img_res3.svg",
+    image: "/Respondent-IOS/img_res3.svg",
   },
   {
     title: "Предпочтения в доставке еды",
     time: "5 минут",
     pay: "45 ₽",
     audience: "Все респонденты",
-    image: "/Respondent/img_res4.svg",
+    image: "/Respondent-IOS/img_res4.svg",
   },
   {
     title: "Удобство мобильного приложения банка",
     time: "10 минут",
     pay: "120 ₽",
     audience: "Пользователи смартфонов",
-    image: "/Respondent/img_res5.svg",
+    image: "/Respondent-IOS/img_res5.svg",
   },
 ];
 
