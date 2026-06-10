@@ -33,7 +33,8 @@ export async function getPlatformSettings(): Promise<PlatformSettings> {
       minWithdrawal: Number(row.minWithdrawal),
       minReward: Number(row.minReward),
       maintenanceMode: row.maintenanceMode,
-      adminEmail: row.adminEmail,
+      // Если в БД пусто — fallback на env var
+      adminEmail: row.adminEmail || process.env.ADMIN_EMAILS?.split(",")[0]?.trim() || "",
     };
   } catch {
     return DEFAULTS;

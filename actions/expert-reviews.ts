@@ -108,8 +108,8 @@ export async function createExpertReviewRequestAction(surveyId: string) {
       `${process.env.NEXTAUTH_URL ?? ""}/admin/experts`,
       "Перейти к заявкам",
     );
-  } catch {
-    // не блокируем основной флоу
+  } catch (err) {
+    console.error("[admin-notify][expert-review] email error:", err);
   }
 
   return { success: true };

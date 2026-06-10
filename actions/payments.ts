@@ -237,8 +237,8 @@ export async function createWithdrawalAction(params: {
       `${process.env.NEXTAUTH_URL ?? ""}/admin/finance`,
       "Перейти к заявкам",
     );
-  } catch {
-    // не блокируем основной флоу
+  } catch (err) {
+    console.error("[admin-notify][withdrawal] email error:", err);
   }
 
   revalidatePath("/respondent/wallet");

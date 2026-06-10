@@ -805,8 +805,8 @@ export async function createComplaintAction(params: {
       `${process.env.NEXTAUTH_URL ?? ""}/admin/users`,
       "Перейти к пользователям",
     );
-  } catch {
-    // не блокируем основной флоу
+  } catch (err) {
+    console.error("[admin-notify][complaint] email error:", err);
   }
 
   return { success: true };

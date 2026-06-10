@@ -106,9 +106,10 @@ export async function getPlatformSettingsAction() {
   await requireRole("ADMIN");
 
   try {
+    const envAdminEmail = process.env.ADMIN_EMAILS?.split(",")[0]?.trim() ?? "";
     return await prisma.platformSettings.upsert({
       where: { id: "singleton" },
-      create: { id: "singleton" },
+      create: { id: "singleton", adminEmail: envAdminEmail },
       update: {},
     });
   } catch {
