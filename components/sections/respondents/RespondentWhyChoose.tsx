@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import RevealOnScroll from "@/components/ui/RevealOnScroll";
 
 const features = [
@@ -77,7 +76,7 @@ export default function RespondentWhyChoose() {
                     boxShadow: "0 4px 14px rgba(100, 56, 217, 0.30)",
                   }}
                 >
-                  <Image src={f.icon} alt="" width={22} height={22} />
+                  <img src={f.icon} alt="" width={22} height={22} />
                 </div>
 
                 <div className="text-[17px] lg:text-[18px] font-[650] text-[#1C0C4C] dark:text-white mb-2 leading-[1.25]">
