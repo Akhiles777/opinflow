@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 
 const surveys = [
@@ -8,28 +9,28 @@ const surveys = [
     time: "7 минут",
     pay: "85 ₽",
     audience: "Женщины 18–35 лет",
-    image: "/Respondent/img_res2.svg",
+    image: "/Respondent/img_res2.png",
   },
   {
     title: "Отношение к электромобилям в РФ",
     time: "12 минут",
     pay: "150 ₽",
     audience: "Автовладельцы",
-    image: "/Respondent/img_res3.svg",
+    image: "/Respondent/img_res3.png",
   },
   {
     title: "Предпочтения в доставке еды",
     time: "5 минут",
     pay: "45 ₽",
     audience: "Все респонденты",
-    image: "/Respondent/img_res4.svg",
+    image: "/Respondent/img_res4.png",
   },
   {
     title: "Удобство мобильного приложения банка",
     time: "10 минут",
     pay: "120 ₽",
     audience: "Пользователи смартфонов",
-    image: "/Respondent/img_res5.svg",
+    image: "/Respondent/img_res5.png",
   },
 ];
 
@@ -106,10 +107,12 @@ export default function RespondentSurveys() {
                 />
 
                 {/* Иллюстрация — на весь блок, object-cover */}
-                <img
+                <Image
                   src={survey.image}
                   alt={survey.title}
-                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                  fill
+                  sizes="(max-width: 640px) 100vw, 50vw"
+                  className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
                 />
               </div>
 

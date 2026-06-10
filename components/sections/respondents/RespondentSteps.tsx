@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 
 export default function RespondentSteps() {
   return (
@@ -53,9 +54,12 @@ export default function RespondentSteps() {
               width: "62%",
             }}
           >
-            <img
-              src="/Respondent/img_res.svg"
+            <Image
+              src="/Respondent/img_res.png"
               alt="Платформа ПотокМнений"
+              width={2706}
+              height={2770}
+              sizes="62vw"
               className="w-full h-auto object-contain drop-shadow-[0_30px_60px_rgba(28,12,76,0.10)] dark:drop-shadow-[0_30px_60px_rgba(100,56,217,0.30)]"
             />
           </div>

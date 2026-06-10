@@ -1,6 +1,7 @@
 "use client";
 
 import RevealOnScroll from "@/components/ui/RevealOnScroll";
+import Image from "next/image";
 import Link from "next/link";
 
 export default function RespondentCTA() {
@@ -181,10 +182,12 @@ export default function RespondentCTA() {
                   max-w-[760px]
                 "
               >
-                <img
-                  src="/cta.svg"
+                <Image
+                  src="/cta.png"
                   alt="CTA Illustration"
-                  className="absolute inset-0 h-full w-full object-contain object-bottom lg:object-bottom-right"
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 40vw"
+                  className="object-contain object-bottom lg:object-bottom-right"
                 />
               </div>
             </div>
