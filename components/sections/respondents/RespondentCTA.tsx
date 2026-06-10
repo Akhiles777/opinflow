@@ -82,9 +82,9 @@ export default function RespondentCTA() {
                   className="
                     text-white
 
-                    text-[38px]
-                    sm:text-[52px]
-                    lg:text-[72px]
+                    text-[35px]
+                    sm:text-[48px]
+                    lg:text-[67px]
 
                     leading-[0.92]
 
@@ -93,7 +93,7 @@ export default function RespondentCTA() {
                     font-semibold
                   "
                 >
-                  Готовы начать исследование?
+                  Готовы начать исследование зарабытывать на своем мнении?
                 </h2>
 
                 <p
@@ -111,8 +111,7 @@ export default function RespondentCTA() {
                     max-w-[520px]
                   "
                 >
-                  Зарегистрируйтесь сейчас и запустите
-                  свой первый опрос за 5 минут
+                Регистрация займёт несколько минуту. Первые опросы доступны сразу после подтверждения.
                 </p>
 
                 <Link

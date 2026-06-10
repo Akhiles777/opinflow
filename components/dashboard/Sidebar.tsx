@@ -45,17 +45,17 @@ function roleForPath(pathname: string): "respondent" | "client" | "admin" {
 function DashboardIcon({ name }: { name: IconName }) {
   const basePath = "/cabinets/icons/sidebar";
   const srcByName: Record<IconName, string> = {
-    overview: `${basePath}/menu icon_home 20px.svg`,
-    feed: `${basePath}/menu icon_survey 20px.svg`,
-    mine: `${basePath}/menu icon_my_survey 20px.svg`,
-    wallet: `${basePath}/menu icon_money 20px.svg`,
-    referral: `${basePath}/menu icon_referal 20px.svg`,
-    profile: `${basePath}/menu icon_profile 20px.svg`,
-    surveys: `${basePath}/menu icon_survey 20px.svg`,
-    create: `${basePath}/menu icon_create_survey 20px.svg`,
-    settings: `${basePath}/menu icon_setting 20px.svg`,
+    overview: `${basePath}/menu-icon-home-20px.svg`,
+    feed: `${basePath}/menu-icon-survey-20px.svg`,
+    mine: `${basePath}/menu-icon-my-survey-20px.svg`,
+    wallet: `${basePath}/menu-icon-money-20px.svg`,
+    referral: `${basePath}/menu-icon-referal-20px.svg`,
+    profile: `${basePath}/menu-icon-profile-20px.svg`,
+    surveys: `${basePath}/menu-icon-survey-20px.svg`,
+    create: `${basePath}/menu-icon-create-survey-20px.svg`,
+    settings: `${basePath}/menu-icon-setting-20px.svg`,
     shield: `${basePath}/vuesax/linear/setting-3.svg`,
-    users: `${basePath}/menu icon_users 20px.svg`,
+    users: `${basePath}/menu-icon-users-20px.svg`,
     experts: `${basePath}/vuesax/linear/teacher.svg`,
     finance: `${basePath}/vuesax/linear/chart.svg`,
   };

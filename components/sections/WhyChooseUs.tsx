@@ -4,12 +4,12 @@ import Image from "next/image";
 import RevealOnScroll from "@/components/ui/RevealOnScroll";
 
 const benefits = [
-  { icon: "/WhyChoose-icon/icons 2.svg", title: "Запуск опроса за 5 минут" },
-  { icon: "/WhyChoose-icon/icons 3.svg", title: "От 1 000 ₽ за исследование" },
-  { icon: "/WhyChoose-icon/icons 4.svg", title: "Таргетированная аудитория" },
-  { icon: "/WhyChoose-icon/icons 5.svg", title: "ИИ-аналитика в реальном времени" },
-  { icon: "/WhyChoose-icon/icons 6.svg", title: "97% верифицированных данных" },
-  { icon: "/WhyChoose-icon/icons 7.svg", title: "Только проверенные респонденты" },
+  { icon: "/WhyChoose-icon/icons-2.svg", title: "Запуск опроса за 5 минут" },
+  { icon: "/WhyChoose-icon/icons-3.svg", title: "От 1 000 ₽ за исследование" },
+  { icon: "/WhyChoose-icon/icons-4.svg", title: "Таргетированная аудитория" },
+  { icon: "/WhyChoose-icon/icons-5.svg", title: "ИИ-аналитика в реальном времени" },
+  { icon: "/WhyChoose-icon/icons-6.svg", title: "97% верифицированных данных" },
+  { icon: "/WhyChoose-icon/icons-7.svg", title: "Только проверенные респонденты" },
 ];
 
 export default function WhyChooseUs() {

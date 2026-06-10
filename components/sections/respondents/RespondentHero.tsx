@@ -253,7 +253,7 @@ export default function RespondentHero() {
               "
             >
               <Image
-                src="/Слой9 1.svg"
+                src="/respondent-hero.svg"
                 alt="Платформа опросов"
                 width={1080}
                 height={820}
