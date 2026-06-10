@@ -16,48 +16,29 @@ export default function RevealOnScroll({
   className = "",
 }: RevealOnScrollProps) {
   const ref = useRef<HTMLDivElement>(null);
-  // Start VISIBLE: server renders full content, no opacity:0 in SSR HTML
-  const [visible, setVisible] = useState(true);
+  const [visible, setVisible] = useState(false);
 
   const initial =
     direction === "left"
       ? "translateX(-24px)"
       : direction === "right"
       ? "translateX(24px)"
-      : "translateY(24px)";
+      : "translateY(32px)";
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-
-    const rect = el.getBoundingClientRect();
-
-    // Element is already in viewport on load — keep it visible, no animation needed
-    if (rect.top < window.innerHeight) return;
-
-    // Element is below fold — hide it and animate when scrolled to
-    setVisible(false);
-
-    const show = () => setVisible(true);
-
     const obs = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          show();
+          setVisible(true);
           obs.disconnect();
         }
       },
-      { threshold: 0, rootMargin: "50px 0px 50px 0px" }
+      { threshold: 0.1 }
     );
     obs.observe(el);
-
-    // Absolute fallback: show after 600ms even if IO never fires (Safari bug)
-    const fallback = setTimeout(show, 600);
-
-    return () => {
-      obs.disconnect();
-      clearTimeout(fallback);
-    };
+    return () => obs.disconnect();
   }, []);
 
   return (
@@ -66,9 +47,9 @@ export default function RevealOnScroll({
       className={className}
       style={{
         opacity: visible ? 1 : 0,
-        transform: visible ? "none" : initial,
+        transform: visible ? "translate(0)" : initial,
         transition: visible
-          ? `opacity 0.7s cubic-bezier(0.16,1,0.3,1) ${delay}ms, transform 0.7s cubic-bezier(0.16,1,0.3,1) ${delay}ms`
+          ? `opacity 0.8s cubic-bezier(0.16,1,0.3,1) ${delay}ms, transform 0.8s cubic-bezier(0.16,1,0.3,1) ${delay}ms`
           : "none",
       }}
     >
