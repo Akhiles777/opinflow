@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 
 const checks = [
@@ -252,13 +251,9 @@ export default function RespondentHero() {
                 lg:max-w-[760px]
               "
             >
-              <Image
-                src="/respondent-hero.png"
+              <img
+                src="/respondent-hero.svg"
                 alt="Платформа опросов"
-                width={1672}
-                height={941}
-                priority
-                sizes="(max-width: 768px) 100vw, 50vw"
                 className="relative z-10 h-auto w-full object-contain drop-shadow-[0_30px_60px_rgba(40,16,90,0.10)]"
               />
             </div>
