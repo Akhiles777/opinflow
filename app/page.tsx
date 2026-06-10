@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 
 export default function Home() {
   return (
-    <main className="bg-white dark:bg-[#1C0C4C] text-site-body dark:text-white overflow-hidden">
+    <main className="bg-white dark:bg-[#1C0C4C] text-site-body dark:text-white overflow-x-hidden">
       <Header />
       <Hero />
       <Features />

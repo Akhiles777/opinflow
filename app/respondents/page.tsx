@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 
 export default function RespondentsPage() {
   return (
-    <main className="bg-white dark:bg-[#160840] text-site-body dark:text-white overflow-hidden">
+    <main className="bg-white dark:bg-[#160840] text-site-body dark:text-white overflow-x-hidden">
       <Header />
       <RespondentHero />
       <RespondentSteps />
