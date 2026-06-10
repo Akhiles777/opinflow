@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth-utils";
-import { notify } from "@/lib/notifications";
+import { notify, notifyAdmin } from "@/lib/notifications";
 import { assertPayoutRequisitesValid, normalizeWithdrawalRequisitesForStorage } from "@/lib/yukassa-payout-requisites";
 import { YUKASSA_PAYOUT_HTTP_403_RU, YUKASSA_SBP_CONTRACT_FORBIDDEN_RESPONDENT_RU } from "@/lib/yukassa-payout-copy";
 import { createDepositPayment, createPayout, fetchSbpBanksForPayouts } from "@/lib/yukassa";
@@ -220,16 +220,27 @@ export async function createWithdrawalAction(params: {
   }
 
   try {
-    const { adminEmail } = await getPlatformSettings();
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: { email: true, name: true },
     });
+    const userName = user?.name ?? user?.email ?? session.user.id;
+
+    // In-app уведомление для всех администраторов
+    await notifyAdmin({
+      type: "SYSTEM",
+      title: "Новая заявка на вывод средств",
+      body: `${userName} запросил вывод ${params.amount.toLocaleString("ru-RU")} ₽`,
+      link: "/admin/finance",
+    });
+
+    // Email администратору
+    const { adminEmail } = await getPlatformSettings();
     await sendAdminNotificationEmail(
       adminEmail,
       "Новая заявка на вывод средств",
       [
-        { label: "Пользователь", value: user?.name ?? user?.email ?? session.user.id },
+        { label: "Пользователь", value: userName },
         { label: "Email", value: user?.email ?? "—" },
         { label: "Сумма", value: `${params.amount.toLocaleString("ru-RU")} ₽` },
         { label: "Метод", value: params.method },
@@ -238,7 +249,7 @@ export async function createWithdrawalAction(params: {
       "Перейти к заявкам",
     );
   } catch (err) {
-    console.error("[admin-notify][withdrawal] email error:", err);
+    console.error("[admin-notify][withdrawal] error:", err);
   }
 
   revalidatePath("/respondent/wallet");

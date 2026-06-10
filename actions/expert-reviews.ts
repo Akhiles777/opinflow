@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth-utils";
 import { getExpertReviewPrice, isValidExpertName } from "@/lib/expert-review";
-import { notify } from "@/lib/notifications";
+import { notify, notifyAdmin } from "@/lib/notifications";
 import { getPlatformSettings } from "@/lib/platform-settings";
 import { sendAdminNotificationEmail } from "@/lib/email";
 
@@ -90,12 +90,22 @@ export async function createExpertReviewRequestAction(surveyId: string) {
   revalidatePath("/client/wallet");
 
   try {
-    const { adminEmail } = await getPlatformSettings();
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: { email: true, name: true, clientProfile: { select: { companyName: true } } },
     });
     const displayName = user?.clientProfile?.companyName ?? user?.name ?? user?.email ?? session.user.id;
+
+    // In-app уведомление для всех администраторов
+    await notifyAdmin({
+      type: "SYSTEM",
+      title: "Новый запрос экспертного заключения",
+      body: `${displayName} заказал экспертный разбор опроса «${survey.title}»`,
+      link: "/admin/experts",
+    });
+
+    // Email администратору
+    const { adminEmail } = await getPlatformSettings();
     await sendAdminNotificationEmail(
       adminEmail,
       "Новый запрос экспертного заключения",
@@ -109,7 +119,7 @@ export async function createExpertReviewRequestAction(surveyId: string) {
       "Перейти к заявкам",
     );
   } catch (err) {
-    console.error("[admin-notify][expert-review] email error:", err);
+    console.error("[admin-notify][expert-review] error:", err);
   }
 
   return { success: true };

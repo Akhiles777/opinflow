@@ -113,6 +113,19 @@ export async function notify(params: NotifyParams) {
   }
 }
 
+// Отправить уведомление всем активным администраторам
+export async function notifyAdmin(params: Omit<NotifyParams, 'userId'>) {
+  try {
+    const admins = await prisma.user.findMany({
+      where: { role: 'ADMIN', status: 'ACTIVE' },
+      select: { id: true },
+    })
+    await Promise.allSettled(admins.map((a) => notify({ ...params, userId: a.id })))
+  } catch (err) {
+    console.error('[notifyAdmin] error:', err)
+  }
+}
+
 // Отправить всем подходящим респондентам о новом опросе
 export async function notifyRespondentsNewSurvey(survey: {
   id: string; title: string; reward: any; estimatedTime: number | null

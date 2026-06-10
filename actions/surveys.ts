@@ -12,7 +12,7 @@ import { mapSurveyQuestion } from "@/lib/survey-mappers";
 import { uploadSurveyMedia } from "@/lib/storage";
 import type { SurveyDraft } from "@/types/survey";
 import type { LogicRule, Question } from "@/types/survey";
-import { notify, notifyRespondentsNewSurvey } from "@/lib/notifications";
+import { notify, notifyAdmin, notifyRespondentsNewSurvey } from "@/lib/notifications";
 
 function toDate(value: string) {
   return value ? new Date(value) : null;
@@ -277,6 +277,38 @@ export async function createSurveyAction(draft: SurveyDraft) {
   revalidatePath(`/client/surveys/${survey.id}`);
   revalidatePath("/admin/moderation");
   revalidatePath("/client");
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { email: true, name: true, clientProfile: { select: { companyName: true } } },
+    });
+    const displayName = user?.clientProfile?.companyName ?? user?.name ?? user?.email ?? session.user.id;
+
+    await notifyAdmin({
+      type: "SYSTEM",
+      title: "Новый опрос на модерации",
+      body: `${displayName} отправил опрос «${survey.title}» на проверку`,
+      link: "/admin/moderation",
+    });
+
+    const { adminEmail } = await getPlatformSettings();
+    await sendAdminNotificationEmail(
+      adminEmail,
+      "Новый опрос на модерации",
+      [
+        { label: "Заказчик", value: displayName },
+        { label: "Email", value: user?.email ?? "—" },
+        { label: "Название опроса", value: survey.title },
+        { label: "Бюджет", value: `${budget.toLocaleString("ru-RU")} ₽` },
+        { label: "Вопросов", value: String(draft.questions.length) },
+      ],
+      `${process.env.NEXTAUTH_URL ?? ""}/admin/moderation`,
+      "Перейти к модерации",
+    );
+  } catch (err) {
+    console.error("[admin-notify][new-survey] error:", err);
+  }
 
   return { success: true, surveyId: survey.id };
 }
@@ -783,7 +815,6 @@ export async function createComplaintAction(params: {
   revalidatePath("/respondent");
 
   try {
-    const { adminEmail } = await getPlatformSettings();
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: { email: true, name: true },
@@ -792,13 +823,26 @@ export async function createComplaintAction(params: {
       where: { id: params.surveyId },
       select: { title: true },
     });
+    const userName = user?.name ?? user?.email ?? session.user.id;
+    const surveyTitle = survey?.title ?? params.surveyId;
+
+    // In-app уведомление для всех администраторов
+    await notifyAdmin({
+      type: "SYSTEM",
+      title: "Новая жалоба на опрос",
+      body: `${userName}: «${params.reason.trim()}» — опрос «${surveyTitle}»`,
+      link: "/admin/users",
+    });
+
+    // Email администратору
+    const { adminEmail } = await getPlatformSettings();
     await sendAdminNotificationEmail(
       adminEmail,
       "Новая жалоба на опрос",
       [
-        { label: "От пользователя", value: user?.name ?? user?.email ?? session.user.id },
+        { label: "От пользователя", value: userName },
         { label: "Email", value: user?.email ?? "—" },
-        { label: "Опрос", value: survey?.title ?? params.surveyId },
+        { label: "Опрос", value: surveyTitle },
         { label: "Причина", value: params.reason.trim() },
         ...(params.details?.trim() ? [{ label: "Детали", value: params.details.trim() }] : []),
       ],
@@ -806,7 +850,7 @@ export async function createComplaintAction(params: {
       "Перейти к пользователям",
     );
   } catch (err) {
-    console.error("[admin-notify][complaint] email error:", err);
+    console.error("[admin-notify][complaint] error:", err);
   }
 
   return { success: true };
