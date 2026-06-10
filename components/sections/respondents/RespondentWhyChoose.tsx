@@ -4,32 +4,32 @@ import RevealOnScroll from "@/components/ui/RevealOnScroll";
 
 const features = [
   {
-    icon: "/Respondent/icon/icons-2.svg",
+    icon: "/Respondent-IOS/icon/icons-2.svg",
     title: "Честные выплаты",
     desc: "Цена указана заранее — никаких сюрпризов",
   },
   {
-    icon: "/Respondent/icon/icons-3.svg",
+    icon: "/Respondent-IOS/icon/icons-3.svg",
     title: "Быстро и удобно",
     desc: "Опросы занимают 3–15 минут. Проходи в любое время",
   },
   {
-    icon: "/Respondent/icon/icon-4.svg",
+    icon: "/Respondent-IOS/icon/icon-4.svg",
     title: "Только релевантные опросы",
     desc: "Получай предложения, которые подходят твоему возрасту, городу и интересам",
   },
   {
-    icon: "/Respondent/icon/icons-5.svg",
+    icon: "/Respondent-IOS/icon/icons-5.svg",
     title: "Безопасность данных",
     desc: "Твоя анонимность защищена. Мы не передаём личные данные третьим лицам",
   },
   {
-    icon: "/Respondent/icon/icons-6.svg",
+    icon: "/Respondent-IOS/icon/icons-6.svg",
     title: "Бонусы за активность",
     desc: "Реферальная программа, ежедневные квесты и повышенные ставки для профи",
   },
   {
-    icon: "/Respondent/icon/icons-7.svg",
+    icon: "/Respondent-IOS/icon/icons-7.svg",
     title: "Прозрачная статистика",
     desc: "Следи за заработком, пройденными опросами и рейтингом в личном кабинете",
   },
