@@ -107,8 +107,8 @@ const adminNav: NavSection[] = [
     title: "Управление",
     items: [
       { label: "Обзор",        href: "/admin",            icon: "overview" },
-      { label: "Модерация",       href: "/admin/moderation",           icon: "shield" },
-      { label: "Проверка ответов", href: "/admin/moderation/responses", icon: "check" },
+      { label: "Модерация опросов",       href: "/admin/moderation",           icon: "shield" },
+      { label: "Модерация ответов", href: "/admin/moderation/responses", icon: "check" },
       { label: "Пользователи",    href: "/admin/users",                 icon: "users" },
       { label: "Эксперты",     href: "/admin/experts",    icon: "experts" },
       { label: "Финансы",      href: "/admin/finance",    icon: "finance" },
