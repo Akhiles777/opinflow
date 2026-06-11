@@ -61,6 +61,15 @@ const reviewCards: ReviewItem[] = [
     company: "ANGFA",
     initials: "ЛВ",
   },
+  {
+  id: "wildberries",
+  brand: "WB",
+  text: "Раньше мы гадали, какая карточка лучше сработает на Wildberries. Теперь тестируем варианты на реальной аудитории. Конверсия в карточке выросла на 2,1%, а стоимость исследования составила копейки по сравнению с агентствами. ИИ-отчет сразу подсветил, какой именно триггер цепляет покупателей. Теперь тестируем всё здесь.",
+  name: "Терешков А.К.",
+  role: "Менеджер маркетплейсов",
+  company: "Wildberries",
+  initials: "ТК",
+},
 ];
 
 const angfaExtended = (
@@ -354,10 +363,19 @@ export default function Testimonials() {
   const [caseExpanded, setCaseExpanded] = useState(false);
   const activeSlide = slides[activeIndex];
 
-  const orderedReviews = useMemo(
-    () => reviewCards.map((_, i) => reviewCards[(activeIndex + i) % reviewCards.length]),
-    [activeIndex],
-  );
+  // Deterministic rolling window of exactly 4 items.
+  // We render 4 fixed "slots" with stable keys (slot-0..slot-3) so React does not reorder DOM nodes
+  // and no temporary duplicate/ghost card appears during transitions.
+  const orderedReviews = useMemo(() => {
+    const len = reviewCards.length;
+    const windowSize = 4;
+    const items: ReviewItem[] = [];
+    for (let slot = 0; slot < windowSize; slot++) {
+      const idx = (activeIndex + slot) % len;
+      items.push(reviewCards[idx]);
+    }
+    return items;
+  }, [activeIndex]);
 
   const goPrev = () => { setActiveIndex(c => c === 0 ? slides.length - 1 : c - 1); setCaseExpanded(false); };
   const goNext = () => { setActiveIndex(c => c === slides.length - 1 ? 0 : c + 1); setCaseExpanded(false); };
@@ -379,10 +397,15 @@ export default function Testimonials() {
           </div>
         </RevealOnScroll>
 
-        {/* Три карточки отзывов */}
+        {/* Четыре карточки отзывов (фиксированное окно) */}
         <RevealOnScroll delay={80}>
-          <div className="mt-8 grid grid-cols-1 gap-4 xl:grid-cols-3 xl:items-start">
-            {orderedReviews.map(item => <ReviewCard key={item.id} item={item} />)}
+          <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:items-start">
+            {orderedReviews.map((item, slot) => (
+              // key is stable per slot to avoid DOM node reordering; the content updates inside the slot.
+              <div key={`slot-${slot}`}>
+                <ReviewCard item={item} />
+              </div>
+            ))}
           </div>
         </RevealOnScroll>
 
