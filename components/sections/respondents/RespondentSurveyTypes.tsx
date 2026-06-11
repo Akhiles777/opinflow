@@ -60,7 +60,7 @@ export default function RespondentSurveys() {
 
 <Link
   href="/respondent/feed"
-  className="flex-shrink-0  inline-flex items-center gap-3 rounded-full bg-[#6438D9] px-5 py-[11px] text-[15px] font-[600] text-white transition-all hover:bg-[#5530C4] hover:scale-[1.02]"
+  className="flex-shrink-0   inline-flex items-center gap-3 rounded-full bg-[#6438D9] sm:px-5 px-2 text-[12.5px]  py-[11px] sm:text-[15px] font-[600] text-white transition-all hover:bg-[#5530C4] hover:scale-[1.02]"
 >
   Все доступные опросы
   <img src="/Respondent-IOS/icon/arrow-circle-right.svg" alt="" width={24} height={24} />

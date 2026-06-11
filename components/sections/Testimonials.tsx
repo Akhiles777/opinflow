@@ -457,7 +457,7 @@ export default function Testimonials() {
 
           {/* Цитата — узкая правая, той же высоты что кейс */}
           <RevealOnScroll delay={200}>
-          <article className="flex h-full min-h-[420px] flex-col justify-between rounded-[28px] border border-[#E8E3F4] bg-white p-8 lg:p-10 dark:border-white/10 dark:bg-white/8">
+          <article className="flex sm:h-117 min-h-[420px] flex-col justify-between rounded-[28px] border border-[#E8E3F4] bg-white p-8 lg:p-10 dark:border-white/10 dark:bg-white/8">
 
   {/* Текст */}
   <div>
