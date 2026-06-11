@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import RevealOnScroll from "@/components/ui/RevealOnScroll";
 
 type ReviewItem = {
@@ -89,8 +89,6 @@ const chaschinaCard: ReviewItem = {
   initials: "ЧА",
 };
 
-// Right block cycles through all reviews including Чащина; Чащина never appears in the top row.
-const rightBlockReviews: ReviewItem[] = [...reviewCards, chaschinaCard];
 
 const angfaExtended = (
   <div className="mt-5 space-y-4 border-t border-[#D0C7EE]/60 pt-5 dark:border-white/10">
@@ -268,14 +266,7 @@ const mosaicTiles: MosaicTile[] = [
 
 function ArrowButton({ direction, onClick }: { direction: "prev" | "next"; onClick: () => void }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={direction === "prev" ? "Предыдущий" : "Следующий"}
-      className="flex h-11 w-11 items-center justify-center rounded-full border border-[#D8CEF5] bg-white text-[#2C1A67] dark:border-white/20 dark:bg-white/10 dark:text-white transition-all hover:bg-[#F7F4FF] dark:hover:bg-white/18"
-    >
-      <span className="text-[18px] leading-none">{direction === "prev" ? "‹" : "›"}</span>
-    </button>
+  <div></div>
   );
 }
 
@@ -383,67 +374,14 @@ export default function Testimonials() {
   const [caseExpanded, setCaseExpanded] = useState(false);
   const activeSlide = slides[activeIndex];
 
-  // Render only the first 3 reviews in the main reviews grid.
-  // Ensure the review with id 'wildberries' is included in the review set (prioritized),
-  // but allow the first-row to be scrollable (windowed) with wrap-around.
-  // The quote/article block rendered below is the right-side 4th block — don't render the 4th review here.
-  const prioritizedId = "Wildberries";
-  const prioritized = reviewCards.find(r => r.id === prioritizedId);
-  const others = reviewCards.filter(r => r.id !== prioritizedId);
-  const arrangedReviews = prioritized ? [prioritized, ...others] : others;
-
-  // Review window (carousel) state: index of the first visible review in arrangedReviews
-  const [reviewStart, setReviewStart] = useState(0);
-  // Right block rotates through rightBlockReviews (all reviews + Чащина); starts on Чащина.
-  const [rightIndex, setRightIndex] = useState(reviewCards.length);
-  // Exclude the review that matches the active slide (avoid duplication between rows)
-  const filteredReviews = arrangedReviews.filter(r => r.id !== activeSlide.id);
-  const reviewCount = filteredReviews.length;
-  const getWindow = (arr: ReviewItem[], start: number, size: number) => {
-    if (arr.length === 0) return [] as ReviewItem[];
-  // If there are fewer items than the window size, return unique items only (no duplicates).
-  // If the count equals the window size we still allow rotation (different order), so only
-  // short-circuit when arr.length < size.
-  if (arr.length < size) return arr.slice(0, arr.length);
-    const end = start + size;
-    if (end <= arr.length) return arr.slice(start, end);
-    return arr.slice(start).concat(arr.slice(0, end % arr.length));
-  };
-  const orderedReviews = getWindow(filteredReviews, reviewStart, 3);
-
-  // Right block must never duplicate the top row — only show reviews not currently in orderedReviews.
-  const nonTopReviews = rightBlockReviews.filter(
-    (r) => !orderedReviews.some((t) => t.id === r.id),
-  );
-  const currentRightReview = nonTopReviews.length > 0
-    ? nonTopReviews[rightIndex % nonTopReviews.length]
-    : chaschinaCard;
-
-  const goPrevReviews = () => setReviewStart(s => (s === 0 ? Math.max(reviewCount - 1, 0) : s - 1));
-  const goNextReviews = () => setReviewStart(s => (reviewCount === 0 ? 0 : (s + 1) % reviewCount));
-
   const goPrev = () => {
-    setActiveIndex((current) => {
-      const newIndex = current === 0 ? slides.length - 1 : current - 1;
-      const filteredForNew = arrangedReviews.filter(r => r.id !== slides[newIndex].id);
-      const len = filteredForNew.length;
-      setReviewStart(len === 0 ? 0 : prev => (prev === 0 ? len - 1 : Math.max(0, prev - 1)));
-      setCaseExpanded(false);
-      return newIndex;
-    });
-    setRightIndex(prev => (prev === 0 ? rightBlockReviews.length - 1 : prev - 1));
+    setActiveIndex(current => (current === 0 ? slides.length - 1 : current - 1));
+    setCaseExpanded(false);
   };
 
   const goNext = () => {
-    setActiveIndex((current) => {
-      const newIndex = current === slides.length - 1 ? 0 : current + 1;
-      const filteredForNew = arrangedReviews.filter(r => r.id !== slides[newIndex].id);
-      const len = filteredForNew.length;
-      setReviewStart(len === 0 ? 0 : prev => (prev + 1) % len);
-      setCaseExpanded(false);
-      return newIndex;
-    });
-    setRightIndex(prev => (prev + 1) % rightBlockReviews.length);
+    setActiveIndex(current => (current === slides.length - 1 ? 0 : current + 1));
+    setCaseExpanded(false);
   };
 
   return (
@@ -468,7 +406,7 @@ export default function Testimonials() {
           <div className="mt-8">
             {/* header arrows control both rows; no local controls here */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:items-start">
-              {orderedReviews.map((item) => (
+              {reviewCards.slice(0, 3).map((item) => (
                 <div key={item.id}>
                   <ReviewCard item={item} />
                 </div>
@@ -557,7 +495,7 @@ export default function Testimonials() {
               <div className="flex-1 min-h-0 overflow-hidden">
                 <div className="mb-6 h-1 w-14 rounded-full bg-[#6438D9]" />
                 <p className="text-[17px] leading-[1.8] text-[#35236B] dark:text-white/80 line-clamp-6">
-                  {currentRightReview.text}
+                  {chaschinaCard.text}
                 </p>
               </div>
 
@@ -565,17 +503,17 @@ export default function Testimonials() {
               <div className="mt-8 shrink-0 border-t border-[#ECE7F7] pt-6 dark:border-white/10">
                 <div className="flex items-center gap-4">
                   <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-linear-to-b from-[#A67EFF] to-[#6D43E5] text-[16px] font-semibold text-white shadow-lg shadow-[#6438D9]/20">
-                    {currentRightReview.initials}
+                    {chaschinaCard.initials}
                   </div>
                   <div className="min-w-0">
                     <p className="text-[18px] font-semibold text-[#1C0C4C] dark:text-white">
-                      {currentRightReview.name}
+                      {chaschinaCard.name}
                     </p>
                     <p className="mt-1 text-[14px] text-[#8A80A8] dark:text-white/60">
-                      {currentRightReview.role}
+                      {chaschinaCard.role}
                     </p>
                     <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#B1A6CC] dark:text-white/30">
-                      {currentRightReview.company}
+                      {chaschinaCard.company}
                     </p>
                   </div>
                 </div>
