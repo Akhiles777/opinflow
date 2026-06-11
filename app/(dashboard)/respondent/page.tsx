@@ -35,7 +35,7 @@ export default async function RespondentOverviewPage() {
     },
     {
       label: "Приглашено друзей",
-      value: String(data.referralsCount ?? 0),
+      value: String(data.referralCount ?? 0),
       icon: STAT_ICONS[3],
     },
   ];
