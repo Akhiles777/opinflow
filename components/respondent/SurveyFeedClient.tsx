@@ -615,7 +615,7 @@ export default function SurveyFeedClient({
                       {item.response?.moderationStatus === "APPROVED" && item.survey.reward
                         ? `+${Number(item.survey.reward)} ₽`
                         : item.response?.moderationStatus === "PENDING"
-                        ? "—"
+                        ? "На модерации"
                         : "Без начисления"}
                     </div>
                     <button

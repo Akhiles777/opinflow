@@ -158,3 +158,34 @@ export async function bulkApproveResponsesAction(responseIds: string[]) {
   revalidatePath("/admin/moderation/responses");
   return { success: true, approved: responses.length };
 }
+
+export async function createAdminComplaintAction(params: {
+  userId: string;
+  surveyId: string;
+  sessionId: string;
+  reason: string;
+  details?: string;
+}) {
+  await requireAdmin();
+
+  if (!params.reason.trim()) return { error: "Укажите причину" };
+
+  const surveySession = await prisma.surveySession.findUnique({
+    where: { id: params.sessionId },
+    select: { id: true },
+  });
+  if (!surveySession) return { error: "Сессия не найдена" };
+
+  await prisma.complaint.create({
+    data: {
+      fromUserId: params.userId,
+      surveyId: params.surveyId,
+      sessionId: params.sessionId,
+      reason: params.reason,
+      details: params.details ?? null,
+    },
+  });
+
+  revalidatePath("/admin/moderation/responses");
+  return { success: true };
+}

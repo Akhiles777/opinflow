@@ -122,6 +122,10 @@ export async function getRespondentOverviewData(userId: string) {
           category: true,
           title: true,
           status: true,
+          reward: true,
+          estimatedTime: true,
+          maxResponses: true,
+          questions: { select: { id: true } },
           sessions: {
             where: { userId },
             orderBy: { startedAt: "desc" },
@@ -154,6 +158,11 @@ export async function getRespondentOverviewData(userId: string) {
       id: survey.id,
       category: survey.category || "Исследование",
       title: survey.title,
+      reward: survey.reward ? Number(survey.reward) : null,
+      duration: survey.estimatedTime ?? null,
+      questions: survey.questions.length,
+      maxResponses: survey.maxResponses ?? null,
+      currentResponses: survey._count.sessions,
       status: survey.sessions[0]?.status === "IN_PROGRESS" || survey.status === "PAUSED"
         ? ("in-progress" as const)
         : ("available" as const),

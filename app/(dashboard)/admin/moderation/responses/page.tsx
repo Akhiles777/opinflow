@@ -28,7 +28,22 @@ export default async function ResponsesModerationPage({
         moderatedAt: true,
         createdAt: true,
         survey: {
-          select: { id: true, title: true, reward: true },
+          select: {
+            id: true,
+            title: true,
+            reward: true,
+            questions: {
+              orderBy: { order: "asc" },
+              select: {
+                id: true,
+                order: true,
+                type: true,
+                title: true,
+                options: true,
+                settings: true,
+              },
+            },
+          },
         },
         user: {
           select: {
@@ -40,10 +55,20 @@ export default async function ResponsesModerationPage({
         },
         session: {
           select: {
+            id: true,
             isValid: true,
             fraudFlags: true,
             timeSpent: true,
             completedAt: true,
+            answers: {
+              orderBy: { question: { order: "asc" } },
+              select: {
+                value: true,
+                question: {
+                  select: { id: true, order: true, type: true, title: true, options: true, settings: true },
+                },
+              },
+            },
           },
         },
       },
@@ -62,11 +87,30 @@ export default async function ResponsesModerationPage({
 
   const serialized = responses.map((r) => ({
     ...r,
-    survey: { ...r.survey, reward: r.survey.reward ? Number(r.survey.reward) : null },
+    survey: {
+      ...r.survey,
+      reward: r.survey.reward ? Number(r.survey.reward) : null,
+      questions: r.survey.questions.map((q) => ({
+        ...q,
+        options: q.options as string[] | null,
+        settings: q.settings as Record<string, any> | null,
+      })),
+    },
     moderatedAt: r.moderatedAt?.toISOString() ?? null,
     createdAt: r.createdAt.toISOString(),
     session: r.session
-      ? { ...r.session, completedAt: r.session.completedAt?.toISOString() ?? null }
+      ? {
+          ...r.session,
+          completedAt: r.session.completedAt?.toISOString() ?? null,
+          answers: r.session.answers.map((a) => ({
+            value: a.value,
+            question: {
+              ...a.question,
+              options: a.question.options as string[] | null,
+              settings: a.question.settings as Record<string, any> | null,
+            },
+          })),
+        }
       : null,
   }));
 
@@ -74,7 +118,7 @@ export default async function ResponsesModerationPage({
     <div>
       <PageHeader
         title="Проверка ответов"
-        subtitle="Проверяйте ответы респондентов перед начислением вознаграждения."
+        subtitle="Просматривайте ответы респондентов и принимайте решение по выплате вознаграждения."
       />
       <div className="mt-8">
         <ResponsesModerationClient

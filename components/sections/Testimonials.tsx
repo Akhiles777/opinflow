@@ -43,6 +43,8 @@ const reviewCards: ReviewItem[] = [
     company: "EYFEL",
     initials: "ХМ",
   },
+
+
   {
     id: "alluri",
     brand: "ALLURI",
@@ -52,15 +54,7 @@ const reviewCards: ReviewItem[] = [
     company: "ALLURI",
     initials: "ХИ",
   },
-  {
-    id: "angfa",
-    brand: "ANGFA",
-    text: "Перед первым запуском в России мы провели масштабное исследование на «ПотокМнений» — 6 000+ респондентов, регулярно покупающих уходовую косметику. Получили чёткую картину барьеров, ценовых ожиданий и каналов доверия. Результат: стратегические решения по ассортименту, ценообразованию и медиа ещё до того, как первый контейнер пересёк границу.",
-    name: "Ливенцев В.В.",
-    role: "CMO ANGFA в России и СНГ",
-    company: "ANGFA",
-    initials: "ЛВ",
-  },
+
   {
   id: "wildberries",
   brand: "WB",
@@ -70,7 +64,33 @@ const reviewCards: ReviewItem[] = [
   company: "Wildberries",
   initials: "ТК",
 },
+
+
+  {
+    id: "angfa",
+    brand: "ANGFA",
+    text: "Перед первым запуском в России мы провели масштабное исследование на «ПотокМнений» — 6 000+ респондентов, регулярно покупающих уходовую косметику. Получили чёткую картину барьеров, ценовых ожиданий и каналов доверия. Результат: стратегические решения по ассортименту, ценообразованию и медиа ещё до того, как первый контейнер пересёк границу.",
+    name: "Ливенцев В.В.",
+    role: "CMO ANGFA в России и СНГ",
+    company: "ANGFA",
+    initials: "ЛВ",
+  },
+
+
 ];
+
+const chaschinaCard: ReviewItem = {
+  id: "AI",
+  brand: "AI",
+  text: "Сэкономил 300 000 руб на исследовании новой упаковки. Результат и готовые выводы от ИИ получили за 2 дня вместо месяца. Качество данных на высоте!",
+  name: "Чащина Ю.А",
+  role: "Маркетолог",
+  company: "AI",
+  initials: "ЧА",
+};
+
+// Right block cycles through all reviews including Чащина; Чащина never appears in the top row.
+const rightBlockReviews: ReviewItem[] = [...reviewCards, chaschinaCard];
 
 const angfaExtended = (
   <div className="mt-5 space-y-4 border-t border-[#D0C7EE]/60 pt-5 dark:border-white/10">
@@ -367,13 +387,15 @@ export default function Testimonials() {
   // Ensure the review with id 'wildberries' is included in the review set (prioritized),
   // but allow the first-row to be scrollable (windowed) with wrap-around.
   // The quote/article block rendered below is the right-side 4th block — don't render the 4th review here.
-  const prioritizedId = "wildberries";
+  const prioritizedId = "Wildberries";
   const prioritized = reviewCards.find(r => r.id === prioritizedId);
   const others = reviewCards.filter(r => r.id !== prioritizedId);
   const arrangedReviews = prioritized ? [prioritized, ...others] : others;
 
   // Review window (carousel) state: index of the first visible review in arrangedReviews
   const [reviewStart, setReviewStart] = useState(0);
+  // Right block rotates through rightBlockReviews (all reviews + Чащина); starts on Чащина.
+  const [rightIndex, setRightIndex] = useState(reviewCards.length);
   // Exclude the review that matches the active slide (avoid duplication between rows)
   const filteredReviews = arrangedReviews.filter(r => r.id !== activeSlide.id);
   const reviewCount = filteredReviews.length;
@@ -389,41 +411,39 @@ export default function Testimonials() {
   };
   const orderedReviews = getWindow(filteredReviews, reviewStart, 3);
 
+  // Right block must never duplicate the top row — only show reviews not currently in orderedReviews.
+  const nonTopReviews = rightBlockReviews.filter(
+    (r) => !orderedReviews.some((t) => t.id === r.id),
+  );
+  const currentRightReview = nonTopReviews.length > 0
+    ? nonTopReviews[rightIndex % nonTopReviews.length]
+    : chaschinaCard;
+
   const goPrevReviews = () => setReviewStart(s => (s === 0 ? Math.max(reviewCount - 1, 0) : s - 1));
   const goNextReviews = () => setReviewStart(s => (reviewCount === 0 ? 0 : (s + 1) % reviewCount));
 
   const goPrev = () => {
-    // compute new active slide index
     setActiveIndex((current) => {
       const newIndex = current === 0 ? slides.length - 1 : current - 1;
-      // compute filtered reviews for the new active slide (avoid duplicates)
       const filteredForNew = arrangedReviews.filter(r => r.id !== slides[newIndex].id);
       const len = filteredForNew.length;
-      if (len === 0) {
-        setReviewStart(0);
-      } else {
-        // move review window one step backward with wrap-around
-        setReviewStart(prev => (prev === 0 ? len - 1 : Math.max(0, prev - 1)));
-      }
+      setReviewStart(len === 0 ? 0 : prev => (prev === 0 ? len - 1 : Math.max(0, prev - 1)));
       setCaseExpanded(false);
       return newIndex;
     });
+    setRightIndex(prev => (prev === 0 ? rightBlockReviews.length - 1 : prev - 1));
   };
 
   const goNext = () => {
-    // compute new active slide index and advance review window
     setActiveIndex((current) => {
       const newIndex = current === slides.length - 1 ? 0 : current + 1;
       const filteredForNew = arrangedReviews.filter(r => r.id !== slides[newIndex].id);
       const len = filteredForNew.length;
-      if (len === 0) {
-        setReviewStart(0);
-      } else {
-        setReviewStart(prev => (len === 0 ? 0 : (prev + 1) % len));
-      }
+      setReviewStart(len === 0 ? 0 : prev => (prev + 1) % len);
       setCaseExpanded(false);
       return newIndex;
     });
+    setRightIndex(prev => (prev + 1) % rightBlockReviews.length);
   };
 
   return (
@@ -531,43 +551,37 @@ export default function Testimonials() {
 
           {/* Цитата — узкая правая, той же высоты что кейс */}
           <RevealOnScroll delay={200}>
-          <article className="flex sm:h-117 min-h-[420px] flex-col justify-between rounded-[28px] border border-[#E8E3F4] bg-white p-8 lg:p-10 dark:border-white/10 dark:bg-white/8">
+            <article className="flex h-full min-h-[420px] flex-col rounded-[28px] border border-[#E8E3F4] bg-white p-8 lg:p-10 dark:border-white/10 dark:bg-white/8">
 
-  {/* Текст */}
-  <div>
-    <div className="mb-6 h-1 w-14 rounded-full bg-[#6438D9]" />
+              {/* Текст */}
+              <div className="flex-1 min-h-0 overflow-hidden">
+                <div className="mb-6 h-1 w-14 rounded-full bg-[#6438D9]" />
+                <p className="text-[17px] leading-[1.8] text-[#35236B] dark:text-white/80 line-clamp-6">
+                  {currentRightReview.text}
+                </p>
+              </div>
 
-    <p className="text-[17px] leading-[1.8] text-[#35236B] dark:text-white/80">
-      {activeSlide.quote}
-    </p>
-  </div>
+              {/* Автор */}
+              <div className="mt-8 shrink-0 border-t border-[#ECE7F7] pt-6 dark:border-white/10">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-linear-to-b from-[#A67EFF] to-[#6D43E5] text-[16px] font-semibold text-white shadow-lg shadow-[#6438D9]/20">
+                    {currentRightReview.initials}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[18px] font-semibold text-[#1C0C4C] dark:text-white">
+                      {currentRightReview.name}
+                    </p>
+                    <p className="mt-1 text-[14px] text-[#8A80A8] dark:text-white/60">
+                      {currentRightReview.role}
+                    </p>
+                    <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#B1A6CC] dark:text-white/30">
+                      {currentRightReview.company}
+                    </p>
+                  </div>
+                </div>
+              </div>
 
-  {/* Автор */}
-  <div className="mt-10 border-t border-[#ECE7F7] pt-6 dark:border-white/10">
-    <div className="flex items-center gap-4">
-
-      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-b from-[#A67EFF] to-[#6D43E5] text-[16px] font-semibold text-white shadow-lg shadow-[#6438D9]/20">
-        {activeSlide.quoteName.slice(0, 1)}
-      </div>
-
-      <div className="min-w-0">
-        <p className="text-[18px] font-semibold text-[#1C0C4C] dark:text-white">
-          {activeSlide.quoteName}
-        </p>
-
-        <p className="mt-1 text-[14px] text-[#8A80A8] dark:text-white/60">
-          {activeSlide.quoteRole}
-        </p>
-
-        <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#B1A6CC] dark:text-white/30">
-          {activeSlide.quoteCompany}
-        </p>
-      </div>
-
-    </div>
-  </div>
-
-</article>
+            </article>
           </RevealOnScroll>
         </div>
       </div>

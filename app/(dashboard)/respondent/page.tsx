@@ -1,4 +1,3 @@
-import Image from "next/image";
 import PageHeader from "@/components/dashboard/PageHeader";
 import SurveyCard from "@/components/dashboard/SurveyCard";
 import EmptyState from "@/components/dashboard/EmptyState";
@@ -14,71 +13,128 @@ const STAT_ICONS = [
 
 export default async function RespondentOverviewPage() {
   const session = await requireRole("RESPONDENT");
-  const data = await getRespondentOverviewData(session.user.id);
+  const userId = session.user.id;
+
+  const data = await getRespondentOverviewData(userId);
 
   const stats = [
-    { label: "Текущий баланс", value: formatRub(data.balance) },
-    { label: "Опросов пройдено", value: String(data.completedCount) },
-    { label: "Доступных опросов", value: String(data.availableCount) },
-    { label: "Приглашено друзей", value: String(data.referralCount) },
+    {
+      label: "Текущий баланс",
+      value: formatRub(data.balance),
+      icon: STAT_ICONS[0],
+    },
+    {
+      label: "Опросов пройдено",
+      value: String(data.completedCount),
+      icon: STAT_ICONS[1],
+    },
+    {
+      label: "Доступных опросов",
+      value: String(data.availableCount),
+      icon: STAT_ICONS[2],
+    },
+    {
+      label: "Приглашено друзей",
+      value: String(data.referralsCount ?? 0),
+      icon: STAT_ICONS[3],
+    },
   ];
 
   return (
-    <div>
+    <div className="space-y-9">
       <PageHeader
         title={`Добрый день, ${data.viewer?.name ?? "Пользователь"}`}
         subtitle="Сводка по балансу и доступным опросам."
       />
 
-      <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {stats.map((s, i) => (
-          <div key={s.label} className="rounded-[18px] border border-dash-border bg-dash-card p-5">
-            <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-[#6D3AE2]">
-              <Image
-                src={STAT_ICONS[i]}
-                width={20}
-                height={20}
-                alt=""
-                style={{ filter: "brightness(0) invert(1)" }}
+      {/* Статистика */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {stats.map((item) => (
+          <div
+            key={item.label}
+            className="
+              rounded-[20px]
+              border
+              border-[#D9CEF8]
+              bg-white
+              p-5
+              min-h-[154px]
+              flex
+              flex-col
+            "
+          >
+            <div
+              className="
+                flex
+                h-[44px]
+                w-[44px]
+                items-center
+                justify-center
+                rounded-[14px]
+                bg-gradient-to-b
+                from-[#9A79FF]
+                to-[#6438D9]
+              "
+            >
+              <div
+                className="h-5 w-5 bg-white"
+                style={{
+                  WebkitMaskImage: `url('${item.icon}')`,
+                  maskImage: `url('${item.icon}')`,
+                  WebkitMaskRepeat: "no-repeat",
+                  maskRepeat: "no-repeat",
+                  WebkitMaskPosition: "center",
+                  maskPosition: "center",
+                  WebkitMaskSize: "contain",
+                  maskSize: "contain",
+                }}
               />
             </div>
-            <p className="font-display text-[28px] font-bold leading-none text-dash-heading tabular-nums">{s.value}</p>
-            <p className="mt-1.5 text-[13px] font-medium text-dash-muted">{s.label}</p>
+
+            <div className="mt-auto">
+              <div className="text-[24px] font-[700] text-[#24115E]">
+                {item.value}
+              </div>
+
+              <div className="mt-1 text-[15px] text-[#8A83A7]">
+                {item.label}
+              </div>
+            </div>
           </div>
         ))}
       </div>
 
-      <div className="mt-8">
-        <h2 className="mb-5 text-[17px] font-semibold text-dash-heading">Доступные опросы</h2>
+      {/* Опросы */}
+      <section>
+        <h2 className="mb-5 text-[22px] font-[700] text-[#24115E]">
+          Доступные опросы
+        </h2>
+
         {data.surveys.length > 0 ? (
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
-            {data.surveys.map((survey) => {
-              const s: any = survey;
-              return (
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 2xl:grid-cols-3">
+            {data.surveys.map((survey) => (
               <SurveyCard
                 key={survey.id}
                 category={survey.category}
                 title={survey.title}
-                reward={typeof s.reward === "number" ? s.reward : s.reward}
-                duration={s.duration}
-                questions={s.questions}
-                maxResponses={s.maxResponses}
-                currentResponses={s.currentResponses}
-                clientName={s.clientName}
-                suitable={s.suitable ?? true}
+                reward={survey.reward}
+                duration={survey.duration}
+                questions={survey.questions}
+                maxResponses={survey.maxResponses}
+                currentResponses={survey.currentResponses}
                 status={survey.status}
+                meta={survey.meta}
                 link={`/respondent/survey/${survey.id}`}
               />
-              );
-            })}
+            ))}
           </div>
         ) : (
           <EmptyState
             title="Пока нет доступных опросов"
-            description="Загляните позже — как только заказчики запустят новые исследования, они появятся здесь."
+            description="Загляните позже — новые исследования появятся здесь."
           />
         )}
-      </div>
+      </section>
     </div>
   );
 }

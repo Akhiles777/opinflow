@@ -73,7 +73,7 @@ export default function SurveyCard({
       </div>
 
       {/* Title */}
-      <p className="mt-6 line-clamp-2 text-[20px] font-semibold leading-[1.15] text-dash-heading">
+      <p className=" line-clamp-2 text-[20px] font-semibold leading-[1.15] text-dash-heading">
         {title}
       </p>
 
