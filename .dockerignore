@@ -1,0 +1,13 @@
+.git
+.gitignore
+.next
+.env
+.env.*
+node_modules
+*.md
+.vscode
+.idea
+prisma/seed.mjs
+prisma/create-analysis-test-data.mjs
+scripts
+backups
