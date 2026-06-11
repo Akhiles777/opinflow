@@ -138,7 +138,7 @@ export default function Hero() {
                 {/* Ноутбук */}
                 <div className="relative z-10 w-full">
                   <Image
-                    src="/laptop-1.svg"
+                    src="/laptop-1 copy.svg"
                     alt="Платформа ПотокМнений"
                     width={900}
                     height={680}

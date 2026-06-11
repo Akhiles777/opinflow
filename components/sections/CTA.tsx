@@ -184,7 +184,7 @@ export default function CTA() {
                 "
               >
                 <Image
-                  src="/cta.svg"
+                  src="/cta copy.svg"
                   alt="CTA Illustration"
                   fill
                   priority
