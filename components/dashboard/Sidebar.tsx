@@ -18,7 +18,8 @@ type IconName =
   | "shield"
   | "users"
   | "experts"
-  | "finance";
+  | "finance"
+  | "check";
 
 type NavItem = { label: string; href: string; icon: IconName };
 type NavSection = { title: string; items: NavItem[] };
@@ -58,6 +59,7 @@ function DashboardIcon({ name }: { name: IconName }) {
     users: `${basePath}/menu-icon-users-20px.svg`,
     experts: `${basePath}/vuesax/linear/teacher.svg`,
     finance: `${basePath}/vuesax/linear/chart.svg`,
+    check: `${basePath}/menu-icon-my-survey-20px.svg`,
   };
 
   return <img src={srcByName[name]} alt="" width={20} height={20} className="h-5 w-5" aria-hidden="true" />;
@@ -105,8 +107,9 @@ const adminNav: NavSection[] = [
     title: "Управление",
     items: [
       { label: "Обзор",        href: "/admin",            icon: "overview" },
-      { label: "Модерация",    href: "/admin/moderation", icon: "shield" },
-      { label: "Пользователи", href: "/admin/users",      icon: "users" },
+      { label: "Модерация",       href: "/admin/moderation",           icon: "shield" },
+      { label: "Проверка ответов", href: "/admin/moderation/responses", icon: "check" },
+      { label: "Пользователи",    href: "/admin/users",                 icon: "users" },
       { label: "Эксперты",     href: "/admin/experts",    icon: "experts" },
       { label: "Финансы",      href: "/admin/finance",    icon: "finance" },
       { label: "Настройки",    href: "/admin/settings",   icon: "settings" },

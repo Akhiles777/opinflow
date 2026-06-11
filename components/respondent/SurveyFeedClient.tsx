@@ -48,6 +48,11 @@ type CompletedSurvey = {
     title: string;
     reward: number | null;
   };
+  response?: {
+    id: string;
+    moderationStatus: string;
+    moderationNote: string | null;
+  } | null;
 };
 
 type Props = {
@@ -591,11 +596,27 @@ export default function SurveyFeedClient({
                     </div>
                   </div>
                   <div className="flex flex-wrap items-center gap-3 sm:justify-end">
+                    {item.response?.moderationStatus === "PENDING" && (
+                      <span className="rounded-full bg-yellow-100 px-3 py-1 text-[13px] font-[600] text-yellow-700">
+                        На проверке
+                      </span>
+                    )}
+                    {item.response?.moderationStatus === "REJECTED" && (
+                      <span className="rounded-full bg-red-100 px-3 py-1 text-[13px] font-[600] text-red-600">
+                        Отклонено
+                      </span>
+                    )}
                     <div className={[
                       "text-base font-semibold tabular-nums",
-                      item.status === "COMPLETED" && item.isValid ? "text-green-600 dark:text-green-400" : (isDash ? "text-dash-muted" : "text-site-body/75 dark:text-site-muted"),
+                      item.response?.moderationStatus === "APPROVED" && item.survey.reward
+                        ? "text-green-600 dark:text-green-400"
+                        : (isDash ? "text-dash-muted" : "text-site-body/75 dark:text-site-muted"),
                     ].join(" ")}>
-                      {item.status === "COMPLETED" && item.isValid ? `+${Number(item.survey.reward ?? 0)} ₽` : "Без начисления"}
+                      {item.response?.moderationStatus === "APPROVED" && item.survey.reward
+                        ? `+${Number(item.survey.reward)} ₽`
+                        : item.response?.moderationStatus === "PENDING"
+                        ? "—"
+                        : "Без начисления"}
                     </div>
                     <button
                       type="button"

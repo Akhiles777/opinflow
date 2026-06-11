@@ -280,9 +280,10 @@ model SurveySession {
   isValid     Boolean       @default(true)
   fraudFlags  String[]
 
-  survey  Survey         @relation(fields: [surveyId], references: [id], onDelete: Cascade)
-  user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  answers SurveyAnswer[]
+  survey   Survey          @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  answers  SurveyAnswer[]
+  response SurveyResponse?
 
   @@unique([surveyId, userId])
   @@map("survey_sessions")
@@ -333,13 +334,19 @@ enum ComplaintStatus {
 }
 
 model SurveyResponse {
-  id        String   @id @default(cuid())
-  surveyId  String
-  userId    String
-  createdAt DateTime @default(now())
+  id               String    @id @default(cuid())
+  surveyId         String
+  userId           String
+  sessionId        String?   @unique
+  moderationStatus String    @default("PENDING")
+  moderationNote   String?
+  moderatedAt      DateTime?
+  moderatedBy      String?
+  createdAt        DateTime  @default(now())
 
-  survey Survey @relation(fields: [surveyId], references: [id], onDelete: Cascade)
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  survey  Survey         @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  session SurveySession? @relation(fields: [sessionId], references: [id])
 
   @@unique([surveyId, userId])
   @@map("survey_responses")

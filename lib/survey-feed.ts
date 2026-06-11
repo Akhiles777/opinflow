@@ -396,6 +396,13 @@ export async function getCompletedSurveys(userId: string) {
           createdAt: true,
         },
       },
+      response: {
+        select: {
+          id: true,
+          moderationStatus: true,
+          moderationNote: true,
+        },
+      },
     },
     orderBy: { completedAt: "desc" },
     take: 50,

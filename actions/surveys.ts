@@ -472,41 +472,18 @@ export async function completeSurveyAction(params: {
       await tx.surveyAnswer.createMany({ data: answersToSave });
     }
 
-    if (fraud.isValid && survey.reward) {
-      const wallet = await tx.wallet.findUnique({ where: { userId: session.user.id } });
-      if (wallet) {
-        await tx.wallet.update({
-          where: { id: wallet.id },
-          data: {
-            balance: { increment: survey.reward },
-            totalEarned: { increment: survey.reward },
-          },
-        });
-
-        await tx.transaction.create({
-          data: {
-            walletId: wallet.id,
-            type: "EARNING",
-            amount: survey.reward,
-            description: `Опрос: \"${survey.title}\"`,
-            status: "COMPLETED",
-          },
-        });
-      }
+    // Create response record — admin will approve/reject payout manually
+    if (fraud.isValid) {
+      await tx.surveyResponse.create({
+        data: {
+          surveyId: params.surveyId,
+          userId: session.user.id,
+          sessionId: updatedSession.id,
+          moderationStatus: survey.reward ? "PENDING" : "APPROVED",
+        },
+      });
     }
   });
-
-  // Notify respondent about credited earning
-  if (fraud.isValid && survey.reward) {
-    await notify({
-      userId: session.user.id,
-      type: "EARNING_CREDITED",
-      title: "Начислено вознаграждение",
-      body: `+${Number(survey.reward)} ₽ за опрос "${survey.title}"`,
-      link: "/respondent/wallet",
-      emailData: { amount: Number(survey.reward), surveyTitle: survey.title },
-    });
-  }
 
   // Pay referral bonus after first valid survey completion
   if (fraud.isValid) {
