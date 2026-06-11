@@ -247,12 +247,12 @@ const mosaicTiles: MosaicTile[] = [
     imgClass: "h-full max-h-[54px] w-full object-contain opacity-85",
   },
   {
-    kind: "symbol",
-    label: "S.",
-    light: "rounded-[22px] bg-[#E8F573] flex items-center justify-center text-[36px] font-semibold tracking-[-0.08em]",
-    dark: "rounded-[22px] bg-[#D9F326] flex items-center justify-center text-[36px] font-semibold tracking-[-0.08em]",
-    lightText: "text-[#7B7396]",
-    darkText: "text-[#1C0C4C]",
+    kind: "logo",
+    src: "/Group.svg",
+    alt: "S",
+    light: "rounded-[22px] bg-[#E8F573] flex items-center justify-center p-3",
+    dark: "rounded-[22px] bg-[#D9F326] flex items-center justify-center p-3",
+    imgClass: "h-full max-h-[44px] w-full object-contain",
   },
   {
     kind: "symbol",

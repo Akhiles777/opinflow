@@ -373,7 +373,7 @@ export async function analyzeSurveyResponses(params: {
 
   const quantitativeSummary = params.quantitativeSummary?.trim() ?? "";
 
-  const model = "google/gemini-2.0-flash-001";
+  const model = "google/gemini-2.5-flash";
 
   console.log(`[ai-analysis] Starting analysis for "${params.surveyTitle}" with ${totalAnswers} answers using ${model}`);
 
