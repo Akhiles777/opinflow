@@ -1,6 +1,17 @@
 import OpenAI from "openai";
 import { z } from "zod";
 
+function getOpenRouter() {
+  return new OpenAI({
+    baseURL: "https://routerai.ru/api/v1",
+    apiKey: process.env.OPENROUTER_API_KEY ?? "",
+    defaultHeaders: {
+      "HTTP-Referer": process.env.NEXTAUTH_URL ?? "http://localhost:3000",
+      "X-Title": "PotokMneniy",
+    },
+  });
+}
+
 export type ThemeItem = {
   theme: string;
   count: number;
@@ -194,15 +205,6 @@ async function requestAnalysisFromModel(params: {
   openAnswers: OpenAnswerGroup[];
   quantitativeSummary: string;
 }): Promise<string> {
-  const openrouter = new OpenAI({
-    baseURL: "https://routerai.ru/api/v1",
-    apiKey: process.env.OPENROUTER_API_KEY,
-    defaultHeaders: {
-      "HTTP-Referer": process.env.NEXTAUTH_URL || "http://localhost:3000",
-      "X-Title": "PotokMneniy",
-    },
-  });
-
   const answersText = params.openAnswers
     .map(
       (group) =>
@@ -324,7 +326,7 @@ ${answersText}
 - Сумма sentiment.positive + sentiment.neutral + sentiment.negative = 100
 - Ни одно поле не должно быть пустым массивом или пустой строкой`;
 
-  const completion = await openrouter.chat.completions.create({
+  const completion = await getOpenRouter().chat.completions.create({
     model: params.model,
     temperature: 0.4,
     max_tokens: 6000,
