@@ -363,22 +363,68 @@ export default function Testimonials() {
   const [caseExpanded, setCaseExpanded] = useState(false);
   const activeSlide = slides[activeIndex];
 
-  // Deterministic rolling window of exactly 4 items.
-  // We render 4 fixed "slots" with stable keys (slot-0..slot-3) so React does not reorder DOM nodes
-  // and no temporary duplicate/ghost card appears during transitions.
-  const orderedReviews = useMemo(() => {
-    const len = reviewCards.length;
-    const windowSize = 4;
-    const items: ReviewItem[] = [];
-    for (let slot = 0; slot < windowSize; slot++) {
-      const idx = (activeIndex + slot) % len;
-      items.push(reviewCards[idx]);
-    }
-    return items;
-  }, [activeIndex]);
+  // Render only the first 3 reviews in the main reviews grid.
+  // Ensure the review with id 'wildberries' is included in the review set (prioritized),
+  // but allow the first-row to be scrollable (windowed) with wrap-around.
+  // The quote/article block rendered below is the right-side 4th block — don't render the 4th review here.
+  const prioritizedId = "wildberries";
+  const prioritized = reviewCards.find(r => r.id === prioritizedId);
+  const others = reviewCards.filter(r => r.id !== prioritizedId);
+  const arrangedReviews = prioritized ? [prioritized, ...others] : others;
 
-  const goPrev = () => { setActiveIndex(c => c === 0 ? slides.length - 1 : c - 1); setCaseExpanded(false); };
-  const goNext = () => { setActiveIndex(c => c === slides.length - 1 ? 0 : c + 1); setCaseExpanded(false); };
+  // Review window (carousel) state: index of the first visible review in arrangedReviews
+  const [reviewStart, setReviewStart] = useState(0);
+  // Exclude the review that matches the active slide (avoid duplication between rows)
+  const filteredReviews = arrangedReviews.filter(r => r.id !== activeSlide.id);
+  const reviewCount = filteredReviews.length;
+  const getWindow = (arr: ReviewItem[], start: number, size: number) => {
+    if (arr.length === 0) return [] as ReviewItem[];
+  // If there are fewer items than the window size, return unique items only (no duplicates).
+  // If the count equals the window size we still allow rotation (different order), so only
+  // short-circuit when arr.length < size.
+  if (arr.length < size) return arr.slice(0, arr.length);
+    const end = start + size;
+    if (end <= arr.length) return arr.slice(start, end);
+    return arr.slice(start).concat(arr.slice(0, end % arr.length));
+  };
+  const orderedReviews = getWindow(filteredReviews, reviewStart, 3);
+
+  const goPrevReviews = () => setReviewStart(s => (s === 0 ? Math.max(reviewCount - 1, 0) : s - 1));
+  const goNextReviews = () => setReviewStart(s => (reviewCount === 0 ? 0 : (s + 1) % reviewCount));
+
+  const goPrev = () => {
+    // compute new active slide index
+    setActiveIndex((current) => {
+      const newIndex = current === 0 ? slides.length - 1 : current - 1;
+      // compute filtered reviews for the new active slide (avoid duplicates)
+      const filteredForNew = arrangedReviews.filter(r => r.id !== slides[newIndex].id);
+      const len = filteredForNew.length;
+      if (len === 0) {
+        setReviewStart(0);
+      } else {
+        // move review window one step backward with wrap-around
+        setReviewStart(prev => (prev === 0 ? len - 1 : Math.max(0, prev - 1)));
+      }
+      setCaseExpanded(false);
+      return newIndex;
+    });
+  };
+
+  const goNext = () => {
+    // compute new active slide index and advance review window
+    setActiveIndex((current) => {
+      const newIndex = current === slides.length - 1 ? 0 : current + 1;
+      const filteredForNew = arrangedReviews.filter(r => r.id !== slides[newIndex].id);
+      const len = filteredForNew.length;
+      if (len === 0) {
+        setReviewStart(0);
+      } else {
+        setReviewStart(prev => (len === 0 ? 0 : (prev + 1) % len));
+      }
+      setCaseExpanded(false);
+      return newIndex;
+    });
+  };
 
   return (
     <section className="bg-[#FCFBFF] dark:bg-[#1C0C4C] px-4 py-16 sm:px-6 lg:px-8 lg:py-20 overflow-hidden">
@@ -399,13 +445,15 @@ export default function Testimonials() {
 
         {/* Четыре карточки отзывов (фиксированное окно) */}
         <RevealOnScroll delay={80}>
-          <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:items-start">
-            {orderedReviews.map((item, slot) => (
-              // key is stable per slot to avoid DOM node reordering; the content updates inside the slot.
-              <div key={`slot-${slot}`}>
-                <ReviewCard item={item} />
-              </div>
-            ))}
+          <div className="mt-8">
+            {/* header arrows control both rows; no local controls here */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:items-start">
+              {orderedReviews.map((item) => (
+                <div key={item.id}>
+                  <ReviewCard item={item} />
+                </div>
+              ))}
+            </div>
           </div>
         </RevealOnScroll>
 
@@ -425,16 +473,19 @@ export default function Testimonials() {
           <RevealOnScroll delay={160}>
             <article className="flex h-full flex-col justify-between rounded-[28px] bg-[#EFECFA] dark:bg-white/8 dark:border dark:border-white/10 p-7 lg:p-9">
               <div>
-                <h3 className="text-[26px] sm:text-[32px] lg:text-[38px] font-semibold leading-[1.05] tracking-[-0.04em] text-[#1C0C4C] dark:text-white">
-                  {activeSlide.titleBefore}{" "}
-                  <span
-                    className="rounded-[8px] px-1.5 py-0.5 font-semibold"
-                    style={{ background: "#E8F573", color: "#1C0C4C" }}
-                  >
-                    {activeSlide.highlight}
-                  </span>{" "}
-                  {activeSlide.titleAfter}
-                </h3>
+                <div className="flex items-start justify-between">
+                  <h3 className="text-[26px] sm:text-[32px] lg:text-[38px] font-semibold leading-[1.05] tracking-[-0.04em] text-[#1C0C4C] dark:text-white">
+                    {activeSlide.titleBefore}{" "}
+                    <span
+                      className="rounded-[8px] px-1.5 py-0.5 font-semibold"
+                      style={{ background: "#E8F573", color: "#1C0C4C" }}
+                    >
+                      {activeSlide.highlight}
+                    </span>{" "}
+                    {activeSlide.titleAfter}
+                  </h3>
+                  <div className="ml-4 flex shrink-0 items-center gap-2" />
+                </div>
 
                 <p className="mt-5 text-[15px] lg:text-[16px] leading-[1.65] text-[#4F417A] dark:text-white/65 max-w-[560px]">
                   {activeSlide.summary}
