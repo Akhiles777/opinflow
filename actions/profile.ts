@@ -28,8 +28,6 @@ function hasMissingColumnError(error: unknown, columnName: string) {
   );
 }
 
-const gasan = 'gasan'
-
 async function getTableColumns(tableName: string) {
   const rows = await prisma.$queryRawUnsafe<TableColumnRow[]>(
     `SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = $1`,
@@ -170,8 +168,8 @@ function getProfileActionErrorMessage(error: unknown, fallback: string) {
   if (error instanceof Error) {
     const message = error.message.toLowerCase();
 
-    if (message.includes("supabase_storage_not_configured")) {
-      return "Хранилище изображений не настроено. Проверьте переменные Supabase.";
+    if (message.includes("s3_not_configured")) {
+      return "Хранилище файлов не настроено. Проверьте переменные S3_ACCESS_KEY и S3_SECRET_KEY.";
     }
 
     if (message.includes("invalid_image_type")) {
@@ -182,7 +180,7 @@ function getProfileActionErrorMessage(error: unknown, fallback: string) {
       return "Изображение слишком большое. Максимальный размер файла: 5 МБ.";
     }
 
-    if (message.includes("supabase_upload_failed") || message.includes("supabase_bucket_create_failed")) {
+    if (message.includes("upload") || message.includes("s3")) {
       return "Не удалось загрузить изображение профиля. Попробуйте ещё раз.";
     }
   }
