@@ -9,6 +9,10 @@ import { updateSurveyAnalysisWithDiagnosticsFallback } from "@/lib/analysis-diag
 export const maxDuration = 60;
 
 export async function POST(request: Request) {
+  if (!process.env.OPENROUTER_API_KEY) {
+    return NextResponse.json({ error: "Not configured" }, { status: 503 });
+  }
+
   const session = await auth();
   if (!session?.user?.id || session.user.role !== "CLIENT") {
     return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });

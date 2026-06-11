@@ -1,15 +1,6 @@
 import OpenAI from "openai";
 import { z } from "zod";
 
-const openrouter = new OpenAI({
-  baseURL: "https://routerai.ru/api/v1",
-  apiKey: process.env.OPENROUTER_API_KEY,
-  defaultHeaders: {
-    "HTTP-Referer": process.env.NEXTAUTH_URL || "http://localhost:3000",
-    "X-Title": "PotokMneniy",
-  },
-});
-
 export type ThemeItem = {
   theme: string;
   count: number;
@@ -203,6 +194,15 @@ async function requestAnalysisFromModel(params: {
   openAnswers: OpenAnswerGroup[];
   quantitativeSummary: string;
 }): Promise<string> {
+  const openrouter = new OpenAI({
+    baseURL: "https://routerai.ru/api/v1",
+    apiKey: process.env.OPENROUTER_API_KEY,
+    defaultHeaders: {
+      "HTTP-Referer": process.env.NEXTAUTH_URL || "http://localhost:3000",
+      "X-Title": "PotokMneniy",
+    },
+  });
+
   const answersText = params.openAnswers
     .map(
       (group) =>
