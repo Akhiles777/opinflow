@@ -457,21 +457,43 @@ export default function Testimonials() {
 
           {/* Цитата — узкая правая, той же высоты что кейс */}
           <RevealOnScroll delay={200}>
-            <article className="flex h-full flex-col justify-center rounded-[28px] border border-[#E8E3F4] bg-white dark:border-white/10 dark:bg-white/8 p-6 lg:p-8">
-              <p className="text-[15px] lg:text-[16px] leading-[1.7] text-[#35236B] dark:text-white/80">
-                {activeSlide.quote}
-              </p>
-              <div className="mt-7 flex items-center gap-3">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(180deg,#A67EFF_0%,#6D43E5_100%)] text-[14px] font-semibold text-white">
-                  {activeSlide.quoteName.slice(0, 1)}{activeSlide.quoteName.split(" ")[0].slice(1, 2)}
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[15px] font-semibold text-[#1C0C4C] dark:text-white">{activeSlide.quoteName}</p>
-                  <p className="mt-0.5 text-[12px] text-[#8A80A8] dark:text-white/45">{activeSlide.quoteRole}</p>
-                  <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#A095BD] dark:text-white/30">{activeSlide.quoteCompany}</p>
-                </div>
-              </div>
-            </article>
+          <article className="flex h-full min-h-[420px] flex-col justify-between rounded-[28px] border border-[#E8E3F4] bg-white p-8 lg:p-10 dark:border-white/10 dark:bg-white/8">
+
+  {/* Текст */}
+  <div>
+    <div className="mb-6 h-1 w-14 rounded-full bg-[#6438D9]" />
+
+    <p className="text-[17px] leading-[1.8] text-[#35236B] dark:text-white/80">
+      {activeSlide.quote}
+    </p>
+  </div>
+
+  {/* Автор */}
+  <div className="mt-10 border-t border-[#ECE7F7] pt-6 dark:border-white/10">
+    <div className="flex items-center gap-4">
+
+      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-b from-[#A67EFF] to-[#6D43E5] text-[16px] font-semibold text-white shadow-lg shadow-[#6438D9]/20">
+        {activeSlide.quoteName.slice(0, 1)}
+      </div>
+
+      <div className="min-w-0">
+        <p className="text-[18px] font-semibold text-[#1C0C4C] dark:text-white">
+          {activeSlide.quoteName}
+        </p>
+
+        <p className="mt-1 text-[14px] text-[#8A80A8] dark:text-white/60">
+          {activeSlide.quoteRole}
+        </p>
+
+        <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#B1A6CC] dark:text-white/30">
+          {activeSlide.quoteCompany}
+        </p>
+      </div>
+
+    </div>
+  </div>
+
+</article>
           </RevealOnScroll>
         </div>
       </div>
