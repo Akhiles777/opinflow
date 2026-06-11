@@ -57,7 +57,7 @@ function getActionErrorMessage(error: unknown, fallback: string) {
     }
 
     if (message.includes("smtp_not_configured")) {
-      return "Почтовый сервис не настроен. Добавьте EMAIL_HOST, EMAIL_PORT, EMAIL_USER и EMAIL_PASS.";
+      return "Почтовый сервис не настроен. Добавьте MAIL_HOST, MAIL_PORT, MAIL_USER и MAIL_PASS.";
     }
 
     if (
@@ -65,7 +65,7 @@ function getActionErrorMessage(error: unknown, fallback: string) {
       message.includes("auth") ||
       message.includes("username and password not accepted")
     ) {
-      return "SMTP отклонил авторизацию. Проверьте EMAIL_USER и пароль приложения Яндекса.";
+      return "SMTP отклонил авторизацию. Проверьте MAIL_USER и пароль почтового ящика.";
     }
 
     if (

@@ -1,16 +1,6 @@
 import nodemailer from "nodemailer";
 
-const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST!,
-  port: Number(process.env.EMAIL_PORT!),
-  secure: true,
-  auth: {
-    user: process.env.EMAIL_USER!,
-    pass: process.env.EMAIL_PASS!,
-  },
-});
-
-const FROM = `ПотокМнений <${process.env.EMAIL_USER}>`;
+const FROM = "ПотокМнений <info@potokmneny.ru>";
 
 function getBaseUrl() {
   return process.env.NEXTAUTH_URL ?? "http://localhost:3000";
@@ -18,19 +8,32 @@ function getBaseUrl() {
 
 function assertEmailConfig() {
   if (
-    !process.env.EMAIL_HOST ||
-    !process.env.EMAIL_PORT ||
-    !process.env.EMAIL_USER ||
-    !process.env.EMAIL_PASS
+    !process.env.MAIL_HOST ||
+    !process.env.MAIL_PORT ||
+    !process.env.MAIL_USER ||
+    !process.env.MAIL_PASS
   ) {
     throw new Error("SMTP_NOT_CONFIGURED");
   }
 }
 
+function getTransporter() {
+  return nodemailer.createTransport({
+    host: process.env.MAIL_HOST!,
+    port: Number(process.env.MAIL_PORT!),
+    secure: true,
+    auth: {
+      user: process.env.MAIL_USER!,
+      pass: process.env.MAIL_PASS!,
+    },
+    tls: { rejectUnauthorized: false },
+  });
+}
+
 async function sendMail(payload: { to: string; subject: string; html: string }) {
   assertEmailConfig();
 
-  return transporter.sendMail({
+  return getTransporter().sendMail({
     from: FROM,
     to: payload.to,
     subject: payload.subject,
