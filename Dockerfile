@@ -6,6 +6,7 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 # .npmrc нужен для legacy-peer-deps (next-auth beta)
 COPY package.json package-lock.json .npmrc ./
+COPY prisma ./prisma
 RUN npm ci --ignore-scripts
 
 # ── BUILDER ───────────────────────────────────────────────────────────────────
