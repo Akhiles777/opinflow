@@ -201,6 +201,31 @@ export default function Sidebar({
           ))}
         </nav>
 
+        {role !== "admin" && (
+  <div className="mx-5 mb-4 rounded-[14px] border border-white/10 bg-white/[0.06] p-4">
+    <div className="text-[12px] font-semibold uppercase tracking-wide text-white/50">
+      Поддержка
+    </div>
+
+    <p className="mt-2 text-[13px] leading-relaxed text-white/75">
+      Если возникли вопросы или проблемы, свяжитесь с нами:
+    </p>
+
+    <a
+      href={`mailto:${
+        role === "client"
+          ? "client@potokmneny.ru"
+          : "respondent@potokmneny.ru"
+      }`}
+      className="mt-3 block break-all text-[14px] font-semibold text-[#A98BFF] hover:text-white transition-colors"
+    >
+      {role === "client"
+        ? "client@potokmneny.ru"
+        : "respondent@potokmneny.ru"}
+    </a>
+  </div>
+)}
+
         {/* Bottom — Выйти */}
         <div className="px-5 pb-5">
           <SignOutButton />
