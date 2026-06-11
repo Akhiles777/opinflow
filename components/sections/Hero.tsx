@@ -125,7 +125,7 @@ export default function Hero() {
                     href="/register?role=CLIENT"
                     className="inline-flex items-center rounded-[14px] px-7 py-3.5 text-[16px] font-[600] border border-[#C8BFEF] bg-white/70 text-[#2B1B67] dark:border-white/25 dark:bg-white/10 dark:text-white backdrop-blur-sm hover:bg-white dark:hover:bg-white/18 transition-all duration-200"
                   >
-                    Заказать дем
+                    Заказать демо
                   </Link>
                 </div>
               </RevealOnScroll>
