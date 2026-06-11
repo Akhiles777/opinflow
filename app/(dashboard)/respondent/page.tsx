@@ -52,22 +52,25 @@ export default async function RespondentOverviewPage() {
         <h2 className="mb-5 text-[17px] font-semibold text-dash-heading">Доступные опросы</h2>
         {data.surveys.length > 0 ? (
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
-            {data.surveys.map((survey) => (
+            {data.surveys.map((survey) => {
+              const s: any = survey;
+              return (
               <SurveyCard
                 key={survey.id}
                 category={survey.category}
                 title={survey.title}
-                reward={typeof survey.reward === "number" ? survey.reward : (survey as any).reward}
-                duration={(survey as any).duration}
-                questions={(survey as any).questions}
-                maxResponses={(survey as any).maxResponses}
-                currentResponses={(survey as any).currentResponses}
-                clientName={(survey as any).clientName}
-                suitable={(survey as any).suitable ?? true}
+                reward={typeof s.reward === "number" ? s.reward : s.reward}
+                duration={s.duration}
+                questions={s.questions}
+                maxResponses={s.maxResponses}
+                currentResponses={s.currentResponses}
+                clientName={s.clientName}
+                suitable={s.suitable ?? true}
                 status={survey.status}
                 link={`/respondent/survey/${survey.id}`}
               />
-            ))}
+              );
+            })}
           </div>
         ) : (
           <EmptyState
