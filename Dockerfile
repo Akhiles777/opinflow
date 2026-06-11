@@ -49,9 +49,8 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 # Prisma schema для миграций
 COPY --from=builder /app/prisma ./prisma
 
-# Prisma CLI + движок миграций (schema-engine) для entrypoint
-COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
-COPY --from=builder /app/node_modules/@prisma/engines ./node_modules/@prisma/engines
+# Все node_modules — необходимо для Prisma CLI и всех его зависимостей (@prisma/debug и др.)
+COPY --from=builder /app/node_modules ./node_modules
 
 # Entrypoint: запускает миграции, потом сервер
 COPY docker-entrypoint.sh ./
