@@ -27,12 +27,21 @@ async function checkS3(): Promise<{ ok: boolean; error?: string; hint?: string; 
     }
 
     const client = new S3Client({
-      region: "default",
+      region: "us-east-1",
       endpoint,
       credentials: { accessKeyId, secretAccessKey },
       forcePathStyle: true,
-      // Reg.ru S3 (Ceph) requires us-east-1 for SigV4 signing
     });
+
+    client.middlewareStack.add(
+      (next) => (args) => {
+        (args.request as { headers: Record<string, string> }).headers[
+          "x-amz-content-sha256"
+        ] = "UNSIGNED-PAYLOAD";
+        return next(args);
+      },
+      { step: "build", name: "unsignedPayload" },
+    );
 
     // Step 1: check bucket exists and credentials are valid
     try {
@@ -73,7 +82,18 @@ async function checkS3(): Promise<{ ok: boolean; error?: string; hint?: string; 
   }
 }
 
-async function checkEmail(): Promise<{ ok: boolean; error?: string; hint?: string; host?: string }> {
+function probePort(host: string, port: number, timeoutMs = 3000): Promise<boolean> {
+  return new Promise((resolve) => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const net = require("net") as typeof import("net");
+    const socket = net.createConnection(port, host);
+    const timer = setTimeout(() => { socket.destroy(); resolve(false); }, timeoutMs);
+    socket.on("connect", () => { clearTimeout(timer); socket.destroy(); resolve(true); });
+    socket.on("error", () => { clearTimeout(timer); resolve(false); });
+  });
+}
+
+async function checkEmail(): Promise<{ ok: boolean; error?: string; hint?: string; host?: string; openPorts?: number[] }> {
   try {
     const nodemailer = (await import("nodemailer")).default;
 
@@ -99,12 +119,25 @@ async function checkEmail(): Promise<{ ok: boolean; error?: string; hint?: strin
     return { ok: true, host: `${host}:${port}` };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    const isTimeout = msg.toLowerCase().includes("timeout") || msg.toLowerCase().includes("econnrefused");
+    const isBlocked = msg.toLowerCase().includes("timeout") || msg.toLowerCase().includes("econnrefused") || msg.toLowerCase().includes("connect");
+
+    let openPorts: number[] | undefined;
+    if (isBlocked) {
+      const mailHost = stripQuotes(process.env.MAIL_HOST ?? "mail.hosting.reg.ru");
+      const results = await Promise.all(
+        [25, 465, 587, 2525].map(async (p) => ({ p, open: await probePort(mailHost, p) }))
+      );
+      openPorts = results.filter((r) => r.open).map((r) => r.p);
+    }
+
     return {
       ok: false,
       error: msg,
-      hint: isTimeout
-        ? "Порт заблокирован. Попробуйте MAIL_PORT=587 и MAIL_HOST=smtp.hosting.reg.ru в .env.production"
+      openPorts,
+      hint: isBlocked
+        ? openPorts && openPorts.length > 0
+          ? `Открытые порты: ${openPorts.join(", ")}. Установите MAIL_PORT=${openPorts[0]} в .env.production`
+          : "Все SMTP-порты (25, 465, 587, 2525) заблокированы VPS. Обратитесь в поддержку Reg.ru для разблокировки порта 587"
         : "Проверьте MAIL_USER и MAIL_PASS",
     };
   }

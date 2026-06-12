@@ -14,8 +14,8 @@ function strip(s: string) {
 
 // Lazy factory — credentials always read from process.env at call time.
 function getS3Client(): S3Client {
-  return new S3Client({
-    region: "default",
+  const client = new S3Client({
+    region: "us-east-1",
     endpoint: strip(process.env.S3_ENDPOINT ?? "https://s3.regru.cloud"),
     credentials: {
       accessKeyId: strip(process.env.S3_ACCESS_KEY ?? ""),
@@ -23,6 +23,20 @@ function getS3Client(): S3Client {
     },
     forcePathStyle: true,
   });
+
+  // Reg.ru Ceph RadosGW rejects signed payload hashes — use UNSIGNED-PAYLOAD
+  // so the signer includes the literal string in the string-to-sign instead.
+  client.middlewareStack.add(
+    (next) => (args) => {
+      (args.request as { headers: Record<string, string> }).headers[
+        "x-amz-content-sha256"
+      ] = "UNSIGNED-PAYLOAD";
+      return next(args);
+    },
+    { step: "build", name: "unsignedPayload" },
+  );
+
+  return client;
 }
 
 export async function uploadToS3(
