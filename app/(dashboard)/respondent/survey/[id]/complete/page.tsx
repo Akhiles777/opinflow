@@ -33,8 +33,8 @@ export default async function RespondentSurveyCompletePage({
 
         {rewarded ? (
           <div className="mt-8 rounded-2xl border border-green-500/20 bg-green-500/10 px-6 py-5 text-green-400">
-            <div className="text-sm uppercase tracking-[0.22em] text-green-300/70">Начислено</div>
-            <div className="mt-2 text-4xl font-bold">+{amount} ₽</div>
+            <div className="text-sm uppercase tracking-[0.22em] text-green-300/70">Награждение в сумме</div>
+            <div className="mt-2 text-4xl font-bold">{amount} ₽</div>
           </div>
         ) : null}
 
