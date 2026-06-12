@@ -27,10 +27,11 @@ async function checkS3(): Promise<{ ok: boolean; error?: string; hint?: string; 
     }
 
     const client = new S3Client({
-      region: "ru-1",
+      region: "us-east-1",
       endpoint,
       credentials: { accessKeyId, secretAccessKey },
       forcePathStyle: true,
+      // Reg.ru S3 (Ceph) requires us-east-1 for SigV4 signing
     });
 
     // Step 1: check bucket exists and credentials are valid

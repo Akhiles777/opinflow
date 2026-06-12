@@ -15,7 +15,7 @@ function strip(s: string) {
 // Lazy factory — credentials always read from process.env at call time.
 function getS3Client(): S3Client {
   return new S3Client({
-    region: "ru-1",
+    region: "us-east-1",
     endpoint: strip(process.env.S3_ENDPOINT ?? "https://s3.regru.cloud"),
     credentials: {
       accessKeyId: strip(process.env.S3_ACCESS_KEY ?? ""),
