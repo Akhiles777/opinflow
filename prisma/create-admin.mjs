@@ -22,6 +22,7 @@ async function main() {
       status: "ACTIVE",
       passwordHash,
       emailVerified: new Date(),
+      image: null,
     },
     create: {
       email,

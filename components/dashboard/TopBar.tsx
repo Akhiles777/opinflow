@@ -47,7 +47,7 @@ export default function TopBar({
           aria-label="Профиль"
           title={viewer.email}
         >
-          {viewer.image ? (
+          {viewer.image && viewer.role !== "ADMIN" ? (
             <img src={viewer.image} alt={viewer.name} className="h-full w-full object-cover" />
           ) : (
             viewer.initials
