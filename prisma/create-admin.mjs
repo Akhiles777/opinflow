@@ -19,6 +19,7 @@ async function main() {
     where: { email },
     update: {
       role: "ADMIN",
+      status: "ACTIVE",
       passwordHash,
       emailVerified: new Date(),
     },
@@ -26,6 +27,7 @@ async function main() {
       email,
       name: "Администратор",
       role: "ADMIN",
+      status: "ACTIVE",
       passwordHash,
       emailVerified: new Date(),
     },
