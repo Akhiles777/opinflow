@@ -27,7 +27,7 @@ async function checkS3(): Promise<{ ok: boolean; error?: string; hint?: string; 
     }
 
     const client = new S3Client({
-      region: "us-east-1",
+      region: "default",
       endpoint,
       credentials: { accessKeyId, secretAccessKey },
       forcePathStyle: true,
