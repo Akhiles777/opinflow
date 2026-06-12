@@ -337,8 +337,13 @@ export async function uploadSurveyMediaAction(formData: FormData) {
       if (error.message === "MEDIA_TOO_LARGE") {
         return { error: "Изображение должно быть не больше 5 МБ" };
       }
+
+      if (error.message === "S3_NOT_CONFIGURED") {
+        return { error: "Хранилище файлов не настроено (S3_ACCESS_KEY/S3_SECRET_KEY)" };
+      }
     }
 
+    console.error("[surveys][upload-media] error:", error);
     return { error: "Не удалось загрузить изображение. Попробуйте ещё раз." };
   }
 }

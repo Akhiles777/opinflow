@@ -1,4 +1,4 @@
-import { uploadToS3, S3_ENDPOINT, S3_BUCKET } from "@/lib/s3";
+import { uploadToS3, isS3Configured, S3_ENDPOINT, S3_BUCKET } from "@/lib/s3";
 
 const REPORT_MIME_TYPES: Record<string, string> = {
   pdf: "application/pdf",
@@ -24,9 +24,17 @@ export async function uploadSurveyMedia(ownerId: string, file: File): Promise<st
   if (file.size > 5 * 1024 * 1024) throw new Error("MEDIA_TOO_LARGE");
 
   const extension = getFileExtension(file);
-  const key = `survey-media/${ownerId}/${Date.now()}-${crypto.randomUUID()}.${extension}`;
   const buffer = Buffer.from(await file.arrayBuffer());
 
+  if (!isS3Configured()) {
+    if (process.env.NODE_ENV !== "production") {
+      const { saveMediaLocally } = await import("@/lib/local-storage");
+      return saveMediaLocally(ownerId, buffer, extension);
+    }
+    throw new Error("S3_NOT_CONFIGURED");
+  }
+
+  const key = `survey-media/${ownerId}/${Date.now()}-${crypto.randomUUID()}.${extension}`;
   return uploadToS3(buffer, key, file.type || "application/octet-stream");
 }
 
@@ -44,7 +52,7 @@ export async function uploadExpertReviewReport(
 ): Promise<string> {
   if (!buffer || buffer.length === 0) throw new Error("EMPTY_REPORT_BUFFER");
 
-  if (!process.env.S3_ACCESS_KEY || !process.env.S3_SECRET_KEY) {
+  if (!isS3Configured()) {
     if (process.env.NODE_ENV !== "production") {
       const { saveExpertReportLocally } = await import("@/lib/local-storage");
       return saveExpertReportLocally(requestId, buffer, extension);

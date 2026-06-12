@@ -1,4 +1,4 @@
-import { uploadToS3 } from "@/lib/s3";
+import { uploadToS3, isS3Configured } from "@/lib/s3";
 
 function getFileExtension(file: File): string {
   const nameExt = file.name.split(".").pop()?.toLowerCase();
@@ -14,8 +14,16 @@ export async function uploadProfileAvatar(userId: string, file: File): Promise<s
   if (file.size > 5 * 1024 * 1024) throw new Error("IMAGE_TOO_LARGE");
 
   const extension = getFileExtension(file);
-  const key = `avatars/${userId}/${Date.now()}-${crypto.randomUUID()}.${extension}`;
   const buffer = Buffer.from(await file.arrayBuffer());
 
+  if (!isS3Configured()) {
+    if (process.env.NODE_ENV !== "production") {
+      const { saveAvatarLocally } = await import("@/lib/local-storage");
+      return saveAvatarLocally(userId, buffer, extension);
+    }
+    throw new Error("S3_NOT_CONFIGURED");
+  }
+
+  const key = `avatars/${userId}/${Date.now()}-${crypto.randomUUID()}.${extension}`;
   return uploadToS3(buffer, key, file.type || "application/octet-stream");
 }
