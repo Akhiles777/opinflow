@@ -6,39 +6,53 @@ function getBaseUrl() {
   return process.env.NEXTAUTH_URL ?? "http://localhost:3000";
 }
 
+// Strip surrounding quotes and whitespace that Docker env_file may preserve
+function env(key: string): string {
+  return (process.env[key] ?? "").replace(/^["']|["']$/g, "").trim();
+}
+
 function assertEmailConfig() {
-  if (
-    !process.env.MAIL_HOST ||
-    !process.env.MAIL_PORT ||
-    !process.env.MAIL_USER ||
-    !process.env.MAIL_PASS
-  ) {
+  if (!env("MAIL_HOST") || !env("MAIL_PORT") || !env("MAIL_USER") || !env("MAIL_PASS")) {
     throw new Error("SMTP_NOT_CONFIGURED");
   }
 }
 
 function getTransporter() {
+  const port = Number(env("MAIL_PORT")) || 465;
   return nodemailer.createTransport({
-    host: process.env.MAIL_HOST!,
-    port: Number(process.env.MAIL_PORT!),
-    secure: true,
+    host: env("MAIL_HOST"),
+    port,
+    secure: port === 465,
     auth: {
-      user: process.env.MAIL_USER!,
-      pass: process.env.MAIL_PASS!,
+      user: env("MAIL_USER"),
+      pass: env("MAIL_PASS"),
     },
     tls: { rejectUnauthorized: false },
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
   });
 }
 
 async function sendMail(payload: { to: string; subject: string; html: string }) {
   assertEmailConfig();
 
-  return getTransporter().sendMail({
-    from: FROM,
-    to: payload.to,
-    subject: payload.subject,
-    html: payload.html,
-  });
+  try {
+    return await getTransporter().sendMail({
+      from: FROM,
+      to: payload.to,
+      subject: payload.subject,
+      html: payload.html,
+    });
+  } catch (err) {
+    console.error("[email] sendMail failed:", {
+      host: env("MAIL_HOST"),
+      port: env("MAIL_PORT"),
+      user: env("MAIL_USER"),
+      to: payload.to,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    throw err;
+  }
 }
 
 export async function sendVerificationEmail(email: string, name: string, token: string) {
