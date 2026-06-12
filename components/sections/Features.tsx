@@ -35,7 +35,7 @@ export default function Features() {
             <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-site-heading dark:text-white">
               <span className="text-brand dark:text-[#A98BFF]">ПотокМнений</span> — это маркетплейс
               <br className="hidden sm:block" />
-              данных для вашего бизнеса
+              <span> данных</span> для вашего бизнеса
             </h2>
             <p className="mt-4 text-base sm:text-lg text-site-muted dark:text-white/85 max-w-3xl mx-auto">
               Мы объединяем бизнес и аудиторию в единой платформе. Создавайте
