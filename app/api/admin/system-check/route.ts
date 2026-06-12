@@ -10,12 +10,7 @@ function stripQuotes(s: string) {
 
 async function checkS3(): Promise<{ ok: boolean; error?: string; hint?: string; url?: string }> {
   try {
-    const {
-      S3Client,
-      PutObjectCommand,
-      DeleteObjectCommand,
-      HeadBucketCommand,
-    } = await import("@aws-sdk/client-s3");
+    const { S3Client, PutObjectCommand, DeleteObjectCommand } = await import("@aws-sdk/client-s3");
 
     const accessKeyId = stripQuotes(process.env.S3_ACCESS_KEY ?? "");
     const secretAccessKey = stripQuotes(process.env.S3_SECRET_KEY ?? "");
@@ -35,50 +30,41 @@ async function checkS3(): Promise<{ ok: boolean; error?: string; hint?: string; 
 
     client.middlewareStack.add(
       (next) => (args) => {
-        (args.request as { headers: Record<string, string> }).headers[
-          "x-amz-content-sha256"
-        ] = "UNSIGNED-PAYLOAD";
+        const req = args.request as { method?: string; headers: Record<string, string> };
+        if (req.method !== "HEAD") {
+          req.headers["x-amz-content-sha256"] = "UNSIGNED-PAYLOAD";
+        }
         return next(args);
       },
       { step: "build", name: "unsignedPayload" },
     );
 
-    // Step 1: check bucket exists and credentials are valid
+    // Test write + delete directly (HeadBucket returns empty body on Ceph → UnknownError)
+    const testKey = `_system-check/ping-${Date.now()}.txt`;
     try {
-      await client.send(new HeadBucketCommand({ Bucket: bucket }));
-    } catch (bucketErr: unknown) {
-      const msg = bucketErr instanceof Error ? bucketErr.message : String(bucketErr);
-      const code = (bucketErr as { Code?: string; name?: string }).Code ?? (bucketErr as { name?: string }).name ?? "";
-      if (code === "NoSuchBucket" || msg.includes("404") || msg.includes("NoSuchBucket")) {
-        return {
-          ok: false,
-          error: `Bucket "${bucket}" не найден`,
-          hint: `Создайте bucket с именем "${bucket}" в панели управления Reg.ru S3`,
-        };
+      await client.send(new PutObjectCommand({
+        Bucket: bucket,
+        Key: testKey,
+        Body: Buffer.from("ping"),
+        ContentType: "text/plain",
+      }));
+    } catch (putErr: unknown) {
+      const status = (putErr as { $metadata?: { httpStatusCode?: number } }).$metadata?.httpStatusCode;
+      const msg = putErr instanceof Error ? putErr.message : String(putErr);
+      if (status === 404 || msg.includes("NoSuchBucket")) {
+        return { ok: false, error: `Bucket "${bucket}" не найден`, hint: `Создайте bucket "${bucket}" в панели Reg.ru S3` };
       }
-      if (code === "403" || code === "Forbidden" || msg.includes("403") || msg.includes("Forbidden") || msg.includes("AccessDenied")) {
-        return {
-          ok: false,
-          error: "Неверные credentials (Access Denied)",
-          hint: "Проверьте S3_ACCESS_KEY и S3_SECRET_KEY в .env.production",
-        };
+      if (status === 403 || msg.includes("SignatureDoesNotMatch") || msg.includes("AccessDenied") || msg.includes("Forbidden")) {
+        return { ok: false, error: `Credentials rejected (HTTP ${status}): ${msg}`, hint: "Проверьте S3_ACCESS_KEY и S3_SECRET_KEY" };
       }
-      return { ok: false, error: `HeadBucket failed: ${msg}`, hint: "Проверьте S3_ENDPOINT и credentials" };
+      return { ok: false, error: `PutObject HTTP ${status ?? "?"}: ${msg}`, hint: "Проверьте S3_ENDPOINT и credentials" };
     }
 
-    // Step 2: test write + delete
-    const testKey = `_system-check/ping-${Date.now()}.txt`;
-    await client.send(new PutObjectCommand({
-      Bucket: bucket,
-      Key: testKey,
-      Body: Buffer.from("ping"),
-      ContentType: "text/plain",
-    }));
     await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: testKey }));
-
     return { ok: true, url: `${endpoint}/${bucket}` };
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+    const status = (err as { $metadata?: { httpStatusCode?: number } }).$metadata?.httpStatusCode;
+    return { ok: false, error: `HTTP ${status ?? "?"}: ${err instanceof Error ? err.message : String(err)}` };
   }
 }
 

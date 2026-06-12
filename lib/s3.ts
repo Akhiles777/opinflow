@@ -24,13 +24,15 @@ function getS3Client(): S3Client {
     forcePathStyle: true,
   });
 
-  // Reg.ru Ceph RadosGW rejects signed payload hashes — use UNSIGNED-PAYLOAD
-  // so the signer includes the literal string in the string-to-sign instead.
+  // Reg.ru Ceph RadosGW rejects signed payload hashes — use UNSIGNED-PAYLOAD.
+  // Skip HEAD requests: Ceph returns an empty body for HEAD errors and the
+  // SDK throws UnknownError when it can't parse them.
   client.middlewareStack.add(
     (next) => (args) => {
-      (args.request as { headers: Record<string, string> }).headers[
-        "x-amz-content-sha256"
-      ] = "UNSIGNED-PAYLOAD";
+      const req = args.request as { method?: string; headers: Record<string, string> };
+      if (req.method !== "HEAD") {
+        req.headers["x-amz-content-sha256"] = "UNSIGNED-PAYLOAD";
+      }
       return next(args);
     },
     { step: "build", name: "unsignedPayload" },
