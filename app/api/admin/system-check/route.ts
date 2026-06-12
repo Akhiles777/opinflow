@@ -10,61 +10,29 @@ function stripQuotes(s: string) {
 
 async function checkS3(): Promise<{ ok: boolean; error?: string; hint?: string; url?: string }> {
   try {
-    const { S3Client, PutObjectCommand, DeleteObjectCommand } = await import("@aws-sdk/client-s3");
+    const { uploadToS3, deleteFromS3, S3_BUCKET, S3_ENDPOINT } = await import("@/lib/s3");
 
-    const accessKeyId = stripQuotes(process.env.S3_ACCESS_KEY ?? "");
-    const secretAccessKey = stripQuotes(process.env.S3_SECRET_KEY ?? "");
-    const bucket = stripQuotes(process.env.S3_BUCKET ?? "opinflow-media");
-    const endpoint = stripQuotes(process.env.S3_ENDPOINT ?? "https://s3.regru.cloud");
-
-    if (!accessKeyId || !secretAccessKey) {
+    const ak = stripQuotes(process.env.S3_ACCESS_KEY ?? "");
+    const sk = stripQuotes(process.env.S3_SECRET_KEY ?? "");
+    if (!ak || !sk) {
       return { ok: false, error: "S3_ACCESS_KEY or S3_SECRET_KEY not set" };
     }
 
-    const client = new S3Client({
-      region: "us-east-1",
-      endpoint,
-      credentials: { accessKeyId, secretAccessKey },
-      forcePathStyle: true,
-    });
-
-    client.middlewareStack.add(
-      (next) => (args) => {
-        const req = args.request as { method?: string; headers: Record<string, string> };
-        if (req.method !== "HEAD") {
-          req.headers["x-amz-content-sha256"] = "UNSIGNED-PAYLOAD";
-        }
-        return next(args);
-      },
-      { step: "build", name: "unsignedPayload" },
-    );
-
-    // Test write + delete directly (HeadBucket returns empty body on Ceph → UnknownError)
     const testKey = `_system-check/ping-${Date.now()}.txt`;
-    try {
-      await client.send(new PutObjectCommand({
-        Bucket: bucket,
-        Key: testKey,
-        Body: Buffer.from("ping"),
-        ContentType: "text/plain",
-      }));
-    } catch (putErr: unknown) {
-      const status = (putErr as { $metadata?: { httpStatusCode?: number } }).$metadata?.httpStatusCode;
-      const msg = putErr instanceof Error ? putErr.message : String(putErr);
-      if (status === 404 || msg.includes("NoSuchBucket")) {
-        return { ok: false, error: `Bucket "${bucket}" не найден`, hint: `Создайте bucket "${bucket}" в панели Reg.ru S3` };
-      }
-      if (status === 403 || msg.includes("SignatureDoesNotMatch") || msg.includes("AccessDenied") || msg.includes("Forbidden")) {
-        return { ok: false, error: `Credentials rejected (HTTP ${status}): ${msg}`, hint: "Проверьте S3_ACCESS_KEY и S3_SECRET_KEY" };
-      }
-      return { ok: false, error: `PutObject HTTP ${status ?? "?"}: ${msg}`, hint: "Проверьте S3_ENDPOINT и credentials" };
-    }
+    await uploadToS3(Buffer.from("ping"), testKey, "text/plain");
+    await deleteFromS3(testKey);
 
-    await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: testKey }));
+    const endpoint = stripQuotes(process.env.S3_ENDPOINT ?? S3_ENDPOINT);
+    const bucket = stripQuotes(process.env.S3_BUCKET ?? S3_BUCKET);
     return { ok: true, url: `${endpoint}/${bucket}` };
   } catch (err) {
-    const status = (err as { $metadata?: { httpStatusCode?: number } }).$metadata?.httpStatusCode;
-    return { ok: false, error: `HTTP ${status ?? "?"}: ${err instanceof Error ? err.message : String(err)}` };
+    const msg = err instanceof Error ? err.message : String(err);
+    const hint = msg.includes("403") || msg.includes("Forbidden") || msg.includes("AccessDenied")
+      ? "Проверьте S3_ACCESS_KEY и S3_SECRET_KEY"
+      : msg.includes("404") || msg.includes("NoSuchBucket")
+        ? "Bucket не найден — создайте в панели Reg.ru S3"
+        : "Проверьте S3_ENDPOINT и credentials";
+    return { ok: false, error: msg, hint };
   }
 }
 
