@@ -203,6 +203,7 @@ model Survey {
   reward          Decimal?     @db.Decimal(10, 2)
   estimatedTime   Int?
   budget          Decimal?     @db.Decimal(10, 2)
+  platformFee     Decimal?     @db.Decimal(10, 2)
   targetGender    String?
   targetAgeMin    Int?
   targetAgeMax    Int?

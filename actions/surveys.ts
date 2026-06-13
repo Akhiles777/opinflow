@@ -204,6 +204,7 @@ export async function createSurveyAction(draft: SurveyDraft) {
   const estimatedTime = estimateSurveyTime(draft.questions);
   const commissionRate = await getCommissionRate();
   const budget = roundMoney(draft.maxResponses * draft.reward * (1 + commissionRate));
+  const platformFee = roundMoney(draft.maxResponses * draft.reward * commissionRate);
   const wallet = await prisma.wallet.findUnique({ where: { userId: session.user.id } });
   if (!wallet) return { error: "Кошелёк не найден" };
   if (Number(wallet.balance) < budget) {
@@ -221,6 +222,7 @@ export async function createSurveyAction(draft: SurveyDraft) {
         maxResponses: draft.maxResponses,
         reward: new Prisma.Decimal(draft.reward),
         budget: new Prisma.Decimal(budget),
+        platformFee: new Prisma.Decimal(platformFee),
         estimatedTime,
         targetGender: draft.targetGender,
         targetAgeMin: draft.targetAgeMin,
