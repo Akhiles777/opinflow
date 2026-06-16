@@ -50,6 +50,9 @@ export const metadata: Metadata = {
       { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
     ],
   },
+  verification: {
+    yandex: "5cd4001813a70d29",
+  },
 };
 
 export default function RootLayout({
