@@ -8,9 +8,18 @@ import { notify, notifyAdmin } from "@/lib/notifications";
 import { assertPayoutRequisitesValid, normalizeWithdrawalRequisitesForStorage } from "@/lib/yukassa-payout-requisites";
 import { YUKASSA_PAYOUT_HTTP_403_RU, YUKASSA_SBP_CONTRACT_FORBIDDEN_RESPONDENT_RU } from "@/lib/yukassa-payout-copy";
 import { createDepositPayment, createPayout, fetchSbpBanksForPayouts } from "@/lib/yukassa";
+import { createMozenPayout, getMozenPayoutStatus, mapMozenStatus } from "@/lib/mozen";
 import { syncProcessingWithdrawals, completeWithdrawalRequest, failWithdrawalRequest } from "@/lib/payment-processing";
 import { getPlatformSettings } from "@/lib/platform-settings";
 import { sendAdminNotificationEmail } from "@/lib/email";
+
+function getPayoutProvider(): "mozen" | "yukassa" {
+  return strip(process.env.PAYOUT_PROVIDER).toLowerCase() === "mozen" ? "mozen" : "yukassa";
+}
+
+function strip(s: string | undefined): string {
+  return (s ?? "").replace(/^["']|["']$/g, "").trim();
+}
 
 function withdrawalMethodToPayoutApi(method: "CARD" | "SBP" | "WALLET"): "card" | "sbp" | "wallet" {
   if (method === "CARD") return "card";
@@ -56,6 +65,13 @@ function yukassaPayoutDescription(message: string): string | null {
 function getPaymentErrorMessage(error: unknown, fallback: string) {
   if (!(error instanceof Error)) {
     return fallback;
+  }
+
+  if (error.message.includes("MOZEN_NOT_CONFIGURED")) {
+    return "Mozen не настроен. Укажите MOZEN_USERNAME, MOZEN_PASSWORD, MOZEN_ENDPOINT_ID и MOZEN_CREATED_BY_ID в .env.";
+  }
+  if (error.message.includes("MOZEN_LOGIN_FAILED")) {
+    return "Не удалось авторизоваться в Mozen — проверьте MOZEN_USERNAME и MOZEN_PASSWORD.";
   }
 
   if (error.message.includes("YUKASSA_NOT_CONFIGURED")) {
@@ -289,6 +305,47 @@ export async function approveWithdrawalAction(requestId: string) {
 
   const cleanedRequisites = normalizeWithdrawalRequisitesForStorage(requestRecord.method, storedRequisites);
 
+  if (getPayoutProvider() === "mozen") {
+    try {
+      const result = await createMozenPayout({
+        amount: Number(requestRecord.amount),
+        method: requestRecord.method,
+        requisites: cleanedRequisites,
+        withdrawalRequestId: requestId,
+      });
+
+      if (!result.success || !result.payoutId) {
+        return { error: result.error ?? "Не удалось отправить выплату через Mozen" };
+      }
+
+      let status: "succeeded" | "failed" | "processing" = "processing";
+      try {
+        const remote = await getMozenPayoutStatus(result.payoutId);
+        status = mapMozenStatus(remote.status);
+      } catch {
+        // leave as processing — background sync will retry the status check
+      }
+
+      if (status === "succeeded") {
+        await completeWithdrawalRequest({ requestId, payoutId: result.payoutId });
+      } else if (status === "failed") {
+        await failWithdrawalRequest({ requestId, payoutId: result.payoutId });
+      } else {
+        await prisma.withdrawalRequest.update({
+          where: { id: requestId },
+          data: { status: "PROCESSING", yukassaPayoutId: result.payoutId },
+        });
+      }
+
+      revalidatePath("/admin/finance");
+      revalidatePath("/respondent/wallet");
+      return { success: true };
+    } catch (error) {
+      console.error("[payments][mozen-approve-error]", error);
+      return { error: getPaymentErrorMessage(error, "Не удалось отправить выплату через Mozen") };
+    }
+  }
+
   if (requestRecord.method === "SBP") {
     try {
       const gate = await fetchSbpBanksForPayouts();
@@ -299,7 +356,7 @@ export async function approveWithdrawalAction(requestId: string) {
         };
       }
     } catch {
-      
+
     }
   }
 

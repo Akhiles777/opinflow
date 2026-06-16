@@ -1,7 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import { getDepositPaymentStatus, getPayoutStatus } from "@/lib/yukassa";
+import { getMozenPayoutStatus, mapMozenStatus } from "@/lib/mozen";
 import { Prisma } from "@prisma/client";
 import { notify } from "@/lib/notifications";
+
+function isMozenProvider(): boolean {
+  return (process.env.PAYOUT_PROVIDER ?? "").trim().toLowerCase() === "mozen";
+}
 
 async function creditDepositPayment(paymentId: string) {
   return prisma.$transaction(async (tx) => {
@@ -260,11 +265,25 @@ export async function syncProcessingWithdrawals(params?: { limit?: number }) {
   let failed = 0;
   let checked = 0;
 
+  const useMozen = isMozenProvider();
+
   for (const row of processing) {
     const payoutId = row.yukassaPayoutId;
     if (!payoutId) continue;
     checked += 1;
     try {
+      if (useMozen) {
+        const remote = await getMozenPayoutStatus(payoutId);
+        const status = mapMozenStatus(remote.status);
+
+        if (status === "succeeded") {
+          if (await completeWithdrawalRequest({ requestId: row.id, payoutId })) completed += 1;
+        } else if (status === "failed") {
+          if (await failWithdrawalRequest({ requestId: row.id, payoutId })) failed += 1;
+        }
+        continue;
+      }
+
       const remote = await getPayoutStatus(payoutId);
       const status = (remote.status ?? "").toLowerCase();
 
