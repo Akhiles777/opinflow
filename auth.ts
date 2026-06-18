@@ -49,9 +49,6 @@ class BlockedCredentialsError extends CredentialsSignin {
   code = "BLOCKED";
 }
 
-class NotVerifiedCredentialsError extends CredentialsSignin {
-  code = "NOT_VERIFIED";
-}
 
 class RespondentSocialOnlyCredentialsError extends CredentialsSignin {
   code = "RESPONDENT_SOCIAL_ONLY";
@@ -135,10 +132,6 @@ const providers: NonNullable<NextAuthConfig["providers"]> = [
 
       if (user.status === "BLOCKED") {
         throw new BlockedCredentialsError();
-      }
-
-      if (user.status === "PENDING_VERIFICATION") {
-        throw new NotVerifiedCredentialsError();
       }
 
       const targetRole = resolveManagedRole(user.email, user.role);

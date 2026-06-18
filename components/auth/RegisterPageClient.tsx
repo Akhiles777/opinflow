@@ -151,13 +151,13 @@ export default function RegisterPageClient({
       </p>
 
       <h1 className="mt-4 font-display text-3xl text-site-heading">
-        {state.success ? "Проверьте почту" : "Создайте аккаунт"}
+        {state.success ? "Аккаунт создан" : "Создайте аккаунт"}
       </h1>
 
       <p className="mt-3 text-sm leading-relaxed text-site-body/80">
         {state.success
-          ? "Мы создали аккаунт и отправили письмо со ссылкой для подтверждения email."
-          : "Зарегистрируйтесь по email, подтвердите адрес и войдите в свой кабинет."}
+          ? "Аккаунт успешно создан. Выполняем вход в систему."
+          : "Зарегистрируйтесь по email и войдите в свой кабинет."}
       </p>
 
       {/* SUCCESS BLOCK */}

@@ -3,14 +3,12 @@
 import * as React from "react";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
-import { resendVerificationAction } from "@/actions/auth";
 import OAuthButtons from "@/components/auth/OAuthButtons";
 
 type LoginRole = "RESPONDENT" | "CLIENT";
 
 const errorMap: Record<string, string> = {
   BLOCKED: "Ваш аккаунт заблокирован",
-  NOT_VERIFIED: "Подтвердите email. Письмо было отправлено при регистрации.",
   CredentialsSignin: "Неверный email или пароль",
   AUTH_UNAVAILABLE: "Сервис авторизации временно недоступен. Проверьте подключение к базе данных.",
   Configuration: "OAuth-вход пока не настроен. Используйте вход по email или завершите настройку провайдеров.",
@@ -45,8 +43,6 @@ export default function LoginPageClient({
       ? errorMap[initialErrorCode] ?? "Не удалось выполнить вход"
       : null,
   );
-  const [resendMessage, setResendMessage] = React.useState<string | null>(null);
-  const [pending, startTransition] = React.useTransition();
   const [credentialsPending, setCredentialsPending] = React.useState(false);
 
   React.useEffect(() => {
@@ -59,7 +55,6 @@ export default function LoginPageClient({
         ? errorMap[initialErrorCode] ?? "Не удалось выполнить вход"
         : null,
     );
-    setResendMessage(null);
   }, [initialErrorCode]);
 
   React.useEffect(() => {
@@ -74,13 +69,11 @@ export default function LoginPageClient({
 
       return currentError;
     });
-    setResendMessage(null);
   }, [role]);
 
   async function handleCredentialsLogin(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
-    setResendMessage(null);
     setCredentialsPending(true);
 
     const result = await signIn("credentials", {
@@ -97,13 +90,6 @@ export default function LoginPageClient({
     }
 
     window.location.assign(result?.url ?? callbackUrl);
-  }
-
-  function handleResend() {
-    startTransition(async () => {
-      const response = await resendVerificationAction(email);
-      setResendMessage(response.message ?? response.error ?? null);
-    });
   }
 
   return (
@@ -151,13 +137,6 @@ export default function LoginPageClient({
         </div>
 
         {error ? <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-[15px] text-red-400">{error}</div> : null}
-        {resendMessage ? <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-[15px] text-emerald-400">{resendMessage}</div> : null}
-
-        {initialErrorCode === "NOT_VERIFIED" ? (
-          <button type="button" onClick={handleResend} disabled={pending || !email} className="rounded-xl border border-brand/30 bg-brand/10 px-4 py-3 text-[15px] font-semibold text-brand transition-colors hover:bg-brand/15 disabled:opacity-60">
-            {pending ? "Отправляем..." : "Отправить повторно"}
-          </button>
-        ) : null}
 
         <button type="submit" disabled={credentialsPending} className="rounded-xl bg-brand px-6 py-3 text-[15px] font-semibold text-white transition-colors hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-60">
           {credentialsPending ? "Входим..." : "Войти"}
