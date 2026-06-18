@@ -44,11 +44,14 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
   },
   icons: {
-    apple: "/icons/icon-192.png",
+    shortcut: "/favicon.ico",
     icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icons/icon-64.png", sizes: "64x64", type: "image/png" },
       { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
       { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
     ],
+    apple: "/icons/icon-192.png",
   },
   verification: {
     yandex: "5cd4001813a70d29",
