@@ -352,7 +352,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         try {
           const currentUser = await prisma.user.findUnique({
             where: { id: user.id },
-            select: { role: true, email: true },
+            select: { role: true, email: true, referralCode: true },
           });
           const targetRole = resolveManagedRole(user.email ?? currentUser?.email ?? "", "RESPONDENT");
 
@@ -366,6 +366,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               role: targetRole,
               status: "ACTIVE",
               emailVerified: new Date(),
+              ...(!currentUser?.referralCode && {
+                referralCode: Math.random().toString(36).slice(2, 9).toUpperCase(),
+              }),
             },
           });
 

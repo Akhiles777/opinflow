@@ -208,7 +208,8 @@ export async function getWalletData(userId: string) {
 }
 
 export async function getRespondentReferralData(userId: string) {
-  const [countInvited, referrals, bonusTransactions] = await Promise.all([
+  const [user, countInvited, referrals, bonusTransactions] = await Promise.all([
+    prisma.user.findUnique({ where: { id: userId }, select: { referralCode: true } }),
     prisma.referral.count({ where: { senderId: userId } }),
     prisma.referral.findMany({
       where: { senderId: userId },
@@ -239,7 +240,7 @@ export async function getRespondentReferralData(userId: string) {
   const earned = bonusTransactions.reduce((sum, item) => sum + Number(item.amount), 0);
 
   return {
-    referralCode: userId.slice(0, 10),
+    referralCode: user?.referralCode ?? "",
     invitedCount: countInvited,
     registeredCount,
     earned,

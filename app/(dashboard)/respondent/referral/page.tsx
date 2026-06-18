@@ -12,6 +12,7 @@ type Row = {
 export default async function RespondentReferralPage() {
   const session = await requireRole("RESPONDENT");
   const data = await getRespondentReferralData(session.user.id);
+  const baseUrl = (process.env.NEXTAUTH_URL ?? "https://potokmneny.ru").replace(/\/$/, "");
   const rows: Row[] = data.referrals.map((item) => ({
     name: item.name,
     date: item.date,
@@ -32,10 +33,10 @@ export default async function RespondentReferralPage() {
           <div className="mt-4 flex flex-col gap-2 sm:flex-row">
             <input
               readOnly
-              value={`https://opinflow-xi.vercel.app/register?ref=${data.referralCode}`}
+              value={`${baseUrl}/register?ref=${data.referralCode}`}
               className="h-11 min-w-0 flex-1 rounded-xl border border-dash-border bg-dash-bg px-4 text-[14px] text-dash-body"
             />
-            <CopyButton text={`https://opinflow-xi.vercel.app/register?ref=${data.referralCode}`} />
+            <CopyButton text={`${baseUrl}/register?ref=${data.referralCode}`} />
           </div>
         </div>
 
