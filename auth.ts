@@ -348,12 +348,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return session;
     },
     async signIn({ user, account }) {
-      if (account?.provider && account.provider !== "credentials" && user.id) {
+      // vkid is a credentials provider — BLOCKED check is inside its authorize()
+      const isRealOAuth = account?.provider && account.provider !== "credentials" && account.provider !== "vkid";
+      if (isRealOAuth && user.id) {
         try {
           const currentUser = await prisma.user.findUnique({
             where: { id: user.id },
-            select: { role: true, email: true, referralCode: true },
+            select: { role: true, email: true, referralCode: true, status: true },
           });
+
+          if (currentUser?.status === "BLOCKED") {
+            return "/auth/error?error=BLOCKED";
+          }
+
           const targetRole = resolveManagedRole(user.email ?? currentUser?.email ?? "", "RESPONDENT");
 
           if (currentUser && isRespondentSocialOnlyRole(currentUser.role) && targetRole !== "ADMIN") {
@@ -364,7 +371,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             where: { id: user.id },
             data: {
               role: targetRole,
-              status: "ACTIVE",
               emailVerified: new Date(),
               ...(!currentUser?.referralCode && {
                 referralCode: Math.random().toString(36).slice(2, 9).toUpperCase(),

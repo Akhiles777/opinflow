@@ -24,6 +24,10 @@ const errorMap: Record<string, { title: string; description: string }> = {
     title: "Аккаунт уже связан с другим способом входа",
     description: "Попробуйте войти тем способом, которым регистрировались изначально.",
   },
+  BLOCKED: {
+    title: "Аккаунт заблокирован",
+    description: "Ваш аккаунт заблокирован администратором. Обратитесь в поддержку для уточнения причин.",
+  },
   RESPONDENT_SOCIAL_ONLY: {
     title: "Соцвход доступен не для всех ролей",
     description:
