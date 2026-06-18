@@ -56,15 +56,13 @@ function roleLabel(role: UserRow["role"]) {
 }
 
 function statusVariant(status: UserRow["status"]): "active" | "pending" | "rejected" {
-  if (status === "ACTIVE") return "active";
   if (status === "BLOCKED") return "rejected";
-  return "pending";
+  return "active";
 }
 
 function statusLabel(status: UserRow["status"]) {
-  if (status === "ACTIVE") return "Активен";
   if (status === "BLOCKED") return "Заблокирован";
-  return "Не подтверждён";
+  return "Активен";
 }
 
 function complaintStatusVariant(status: ComplaintRow["status"]): "active" | "pending" | "rejected" | "moderation" {
