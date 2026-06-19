@@ -3,8 +3,10 @@
 import OpenAI from "openai";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
+import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import type { Question } from "@/types/survey";
 
 const ALLOWED_QUESTION_TYPES = [
   "SINGLE_CHOICE",
@@ -257,4 +259,58 @@ export async function generateSurveyWithAI(
   }
 
   return { success: true, survey };
+}
+
+// ─── Template actions ──────────────────────────────────────────────────────
+
+export type TemplateRow = {
+  id: string;
+  name: string;
+  questions: Question[];
+  createdAt: Date;
+};
+
+export async function saveAsTemplateAction(
+  name: string,
+  questions: Question[]
+): Promise<{ success: true; id: string } | { success: false; error: string }> {
+  const session = await auth();
+  if (!session?.user || session.user.role !== "CLIENT") {
+    return { success: false, error: "Доступно только для заказчиков." };
+  }
+  const trimmedName = name.trim();
+  if (!trimmedName) return { success: false, error: "Введите название шаблона." };
+  if (questions.length === 0) return { success: false, error: "Нет вопросов для сохранения." };
+
+  const template = await prisma.surveyTemplate.create({
+    data: {
+      creatorId: session.user.id,
+      name: trimmedName,
+      questions: questions as unknown as Prisma.InputJsonValue,
+    },
+  });
+  revalidatePath("/client/surveys/create");
+  return { success: true, id: template.id };
+}
+
+export async function getMyTemplatesAction(): Promise<TemplateRow[]> {
+  const session = await auth();
+  if (!session?.user || session.user.role !== "CLIENT") return [];
+  const rows = await prisma.surveyTemplate.findMany({
+    where: { creatorId: session.user.id },
+    orderBy: { createdAt: "desc" },
+  });
+  return rows.map((t) => ({
+    id: t.id,
+    name: t.name,
+    questions: t.questions as unknown as Question[],
+    createdAt: t.createdAt,
+  }));
+}
+
+export async function deleteTemplateAction(id: string): Promise<void> {
+  const session = await auth();
+  if (!session?.user || session.user.role !== "CLIENT") return;
+  await prisma.surveyTemplate.deleteMany({ where: { id, creatorId: session.user.id } });
+  revalidatePath("/client/surveys/create");
 }

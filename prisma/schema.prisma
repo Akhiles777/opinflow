@@ -38,6 +38,7 @@ model User {
   pushSubscriptions PushSubscription[]
   notifications     Notification[]
   invoices          Invoice[]
+  surveyTemplates   SurveyTemplate[]  @relation("TemplateCreator")
   @@map("users")
 }
 
@@ -582,4 +583,16 @@ model Invoice {
   user User @relation(fields: [userId], references: [id])
 
   @@map("invoices")
+}
+
+model SurveyTemplate {
+  id        String   @id @default(cuid())
+  creatorId String
+  name      String
+  questions Json
+  createdAt DateTime @default(now())
+
+  creator User @relation("TemplateCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+
+  @@map("survey_templates")
 }
