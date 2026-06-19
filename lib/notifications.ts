@@ -54,7 +54,7 @@ export async function notify(params: NotifyParams) {
     where:  { id: params.userId },
     select: { email: true, name: true },
   })
-  if (!user?.email) return
+  if (!user?.email || user.email.endsWith("@oauth.potokmneny.local")) return
 
   const name = user.name ?? 'Пользователь'
   let emailSent = false
