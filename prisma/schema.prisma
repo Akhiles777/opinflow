@@ -217,6 +217,10 @@ model Survey {
   startsAt        DateTime?
   endsAt          DateTime?
   moderationNote  String?
+  generatedByAI   Boolean   @default(false)
+  aiPrompt        String?
+  aiIndustry      String?
+  aiTargetAudience String?
 
   creator    User             @relation("SurveyCreator", fields: [creatorId], references: [id])
   responses  SurveyResponse[]

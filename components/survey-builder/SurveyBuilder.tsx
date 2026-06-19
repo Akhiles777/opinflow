@@ -16,6 +16,7 @@ type Props = {
   minReward: number;
   userName?: string | null;
   userEmail?: string | null;
+  initialDraft?: SurveyDraft;
 };
 
 const STEP_TITLES = ["Основное", "Вопросы", "Аудитория", "Бюджет"];
@@ -64,10 +65,10 @@ function estimateReach(draft: SurveyDraft) {
   return Math.max(500, Math.round(reach));
 }
 
-export default function SurveyBuilder({ balance, commissionRate, minReward, userName, userEmail }: Props) {
+export default function SurveyBuilder({ balance, commissionRate, minReward, userName, userEmail, initialDraft }: Props) {
   const router = useRouter();
   const [step, setStep] = useState(1);
-  const [draft, setDraft] = useState<SurveyDraft>(EMPTY_DRAFT);
+  const [draft, setDraft] = useState<SurveyDraft>(initialDraft ?? EMPTY_DRAFT);
   const [error, setError] = useState<string | null>(null);
   const [draftStatus, setDraftStatus] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
@@ -82,8 +83,9 @@ export default function SurveyBuilder({ balance, commissionRate, minReward, user
   const initials = (userName || userEmail || "UX").slice(0, 2).toUpperCase();
   const displayName = userName || (userEmail ? userEmail.split("@")[0] : "UX");
 
-  // Restore draft from localStorage
+  // Restore draft from localStorage (skipped when initialDraft is provided by AI flow)
   useEffect(() => {
+    if (initialDraft) { setHydrated(true); return; }
     try {
       const raw = window.localStorage.getItem(DRAFT_KEY);
       if (!raw) { setHydrated(true); return; }
@@ -93,7 +95,7 @@ export default function SurveyBuilder({ balance, commissionRate, minReward, user
       if (restored) { setDraft(restored); setStep(restoredStep); setDraftStatus("Черновик восстановлен"); }
     } catch { window.localStorage.removeItem(DRAFT_KEY); }
     finally { setHydrated(true); }
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-save draft
   useEffect(() => {
