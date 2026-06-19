@@ -97,17 +97,57 @@ async function checkEmail(): Promise<{ ok: boolean; error?: string; hint?: strin
   }
 }
 
+async function checkMozen(): Promise<{ ok: boolean; error?: string; endpoints?: unknown[] }> {
+  const username = stripQuotes(process.env.MOZEN_USERNAME ?? "");
+  const password = stripQuotes(process.env.MOZEN_PASSWORD ?? "");
+  const baseUrl = stripQuotes(process.env.MOZEN_BASE_URL ?? "https://hmetal.mozenscrap.ru");
+
+  if (!username || !password) {
+    return { ok: false, error: "MOZEN_USERNAME/PASSWORD not set" };
+  }
+
+  try {
+    // Step 1: get token
+    const loginRes = await fetch(`${baseUrl}/token/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
+    if (!loginRes.ok) {
+      return { ok: false, error: `Login failed: ${loginRes.status} ${await loginRes.text()}` };
+    }
+    const { access } = await loginRes.json() as { access: string };
+
+    // Step 2: list endpoints
+    const epRes = await fetch(`${baseUrl}/endpoint/`, {
+      headers: { Authorization: `Bearer ${access}`, "Content-Type": "application/json" },
+    });
+    const epText = await epRes.text();
+    let endpoints: unknown[] = [];
+    try { endpoints = JSON.parse(epText); } catch { /* not JSON */ }
+
+    return {
+      ok: epRes.ok,
+      error: epRes.ok ? undefined : `GET /endpoint/ → ${epRes.status}: ${epText.slice(0, 300)}`,
+      endpoints: Array.isArray(endpoints) ? endpoints : [{ raw: epText.slice(0, 500) }],
+    };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
 export async function GET() {
   const session = await auth();
   if (session?.user?.role !== "ADMIN") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const [s3, email] = await Promise.all([checkS3(), checkEmail()]);
+  const [s3, email, mozen] = await Promise.all([checkS3(), checkEmail(), checkMozen()]);
 
   return NextResponse.json({
     s3,
     email,
+    mozen,
     env: {
       S3_BUCKET: stripQuotes(process.env.S3_BUCKET ?? "") || "(not set)",
       S3_ENDPOINT: stripQuotes(process.env.S3_ENDPOINT ?? "") || "(not set)",
