@@ -126,10 +126,28 @@ async function checkMozen(): Promise<{ ok: boolean; error?: string; endpoints?: 
     let endpoints: unknown[] = [];
     try { endpoints = JSON.parse(epText); } catch { /* not JSON */ }
 
+    const summary = Array.isArray(endpoints) ? endpoints.map((ep: unknown) => {
+      const e = ep as Record<string, unknown>;
+      const balances = Array.isArray(e.balances) ? e.balances : [];
+      const bal = balances[0] as Record<string, unknown> | undefined;
+      const status = e.status as Record<string, unknown> | undefined;
+      return {
+        id: e.id,
+        name: e.short_name,
+        status: status?.iname,
+        balance: bal ? `${bal.balance} ${bal.currency} (${bal.bank_name} ...${String(bal.acc_number).slice(-4)})` : "—",
+        needsFunding: bal ? Number(bal.balance) === 0 : true,
+      };
+    }) : [];
+
+    const hasBalance = summary.some((s) => !s.needsFunding);
+
     return {
-      ok: epRes.ok,
-      error: epRes.ok ? undefined : `GET /endpoint/ → ${epRes.status}: ${epText.slice(0, 300)}`,
-      endpoints: Array.isArray(endpoints) ? endpoints : [{ raw: epText.slice(0, 500) }],
+      ok: epRes.ok && hasBalance,
+      error: epRes.ok
+        ? hasBalance ? undefined : "Баланс торговой точки = 0 — пополните счёт в кабинете Mozen"
+        : `GET /endpoint/ → ${epRes.status}: ${epText.slice(0, 300)}`,
+      endpoints: summary,
     };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : String(err) };
