@@ -8,6 +8,9 @@ import AISurveySettings from "@/components/survey-builder/AISurveySettings";
 import type { GeneratedSurveyDraft, AiQuestionType, TemplateRow } from "@/actions/ai-survey-generation";
 import { getMyTemplatesAction, deleteTemplateAction } from "@/actions/ai-survey-generation";
 import type { Question } from "@/types/survey";
+import { EMPTY_DRAFT } from "@/types/survey";
+
+const DRAFT_KEY = "opinflow:client-survey-draft:v1";
 
 type Tab = "manual" | "ai" | "templates";
 type AIStep = "form" | "review" | "settings";
@@ -42,6 +45,9 @@ export default function SurveyCreateTabs({ balance, commissionRate, minReward, u
   const [aiDraft, setAiDraft] = useState<GeneratedSurveyDraft | null>(null);
   const [fromTemplate, setFromTemplate] = useState(false);
   const [aiCharged, setAiCharged] = useState(false);
+
+  // Incremented to force SurveyBuilder remount after AI→manual transfer
+  const [builderKey, setBuilderKey] = useState(0);
 
   // Data passed from review → settings
   const [settingsTitle, setSettingsTitle] = useState("");
@@ -79,6 +85,21 @@ export default function SurveyCreateTabs({ balance, commissionRate, minReward, u
 
   function onSettingsBack() {
     setAiStep("review");
+  }
+
+  function handleTransferToManual(title: string, questions: Question[]) {
+    try {
+      localStorage.setItem(
+        DRAFT_KEY,
+        JSON.stringify({ step: 1, draft: { ...EMPTY_DRAFT, title, questions } })
+      );
+    } catch {
+      // ignore storage errors
+    }
+    setBuilderKey((k) => k + 1);
+    setTab("manual");
+    setAiStep("form");
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   // ── Template handlers ────────────────────────────────────────────────────
@@ -141,6 +162,7 @@ export default function SurveyCreateTabs({ balance, commissionRate, minReward, u
       {/* ── Manual tab ──────────────────────────────────────────────────── */}
       {tab === "manual" && (
         <SurveyBuilder
+          key={builderKey}
           balance={balance}
           commissionRate={commissionRate}
           minReward={minReward}
@@ -161,6 +183,7 @@ export default function SurveyCreateTabs({ balance, commissionRate, minReward, u
               draft={aiDraft}
               fromTemplate={fromTemplate}
               onConfirm={onReviewConfirm}
+              onTransferToManual={handleTransferToManual}
               onBack={() => {
                 if (fromTemplate) { goTab("templates"); } else { setAiStep("form"); }
               }}

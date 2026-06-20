@@ -60,9 +60,10 @@ type Props = {
   onConfirm: (title: string, questions: Question[]) => void;
   onBack: () => void;
   fromTemplate?: boolean;
+  onTransferToManual?: (title: string, questions: Question[]) => void;
 };
 
-export default function AIDraftReview({ draft, onConfirm, onBack, fromTemplate }: Props) {
+export default function AIDraftReview({ draft, onConfirm, onBack, fromTemplate, onTransferToManual }: Props) {
   const [title, setTitle] = useState(draft.title);
   const [questions, setQuestions] = useState<DraftQ[]>(() =>
     draft.questions.map((q) => ({
@@ -73,6 +74,9 @@ export default function AIDraftReview({ draft, onConfirm, onBack, fromTemplate }
       required: q.isRequired,
     }))
   );
+
+  // Sentinel ref — we scroll to it after adding a question
+  const listEndRef = useRef<HTMLDivElement>(null);
 
   // Template save state
   const [showTemplateModal, setShowTemplateModal] = useState(false);
@@ -176,6 +180,10 @@ export default function AIDraftReview({ draft, onConfirm, onBack, fromTemplate }
         required: true,
       },
     ]);
+    // Scroll to the sentinel div placed after the list — runs after React flushes the new item
+    requestAnimationFrame(() => {
+      listEndRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
   }
 
   // ── Template save ────────────────────────────────────────────────────────
@@ -381,18 +389,32 @@ export default function AIDraftReview({ draft, onConfirm, onBack, fromTemplate }
               </div>
             </div>
           ))}
+          {/* Sentinel — scrollIntoView target after adding a question */}
+          <div ref={listEndRef} />
         </div>
       </div>
 
       {/* Footer */}
       <div className="flex flex-col gap-3 border-t border-site-border pt-4 sm:flex-row sm:items-center sm:justify-between">
-        <button
-          type="button"
-          onClick={openTemplateModal}
-          className="rounded-xl border border-site-border px-4 py-2.5 text-sm font-medium text-site-heading hover:bg-site-section"
-        >
-          Сохранить как шаблон
-        </button>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <button
+            type="button"
+            onClick={openTemplateModal}
+            className="rounded-xl border border-site-border px-4 py-2.5 text-sm font-medium text-site-heading hover:bg-site-section"
+          >
+            Сохранить как шаблон
+          </button>
+          {onTransferToManual && (
+            <button
+              type="button"
+              onClick={() => onTransferToManual(title.trim() || "Без названия", questions.map(toSurveyQuestion))}
+              title="Перенести все вопросы в ручной конструктор для детальной настройки"
+              className="rounded-xl border border-site-border px-4 py-2.5 text-sm font-medium text-site-muted hover:bg-site-section hover:text-site-heading"
+            >
+              Открыть в конструкторе
+            </button>
+          )}
+        </div>
         <button
           type="button"
           onClick={handleContinue}
