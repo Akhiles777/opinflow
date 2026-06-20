@@ -4,7 +4,7 @@ import { useState, useTransition, useRef } from "react";
 import type { GeneratedSurveyDraft, AiQuestionType } from "@/actions/ai-survey-generation";
 import { saveAsTemplateAction } from "@/actions/ai-survey-generation";
 import type { Question } from "@/types/survey";
-import { AIWizardProgress } from "@/components/survey-builder/AISurveySettings";
+import AIWizardProgress from "@/components/survey-builder/AIWizardProgress";
 
 const TYPE_LABELS: Record<AiQuestionType, string> = {
   SINGLE_CHOICE: "Одиночный выбор",
