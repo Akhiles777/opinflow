@@ -3,10 +3,8 @@
 import { useState, useTransition, useRef } from "react";
 import type { GeneratedSurveyDraft, AiQuestionType } from "@/actions/ai-survey-generation";
 import { saveAsTemplateAction } from "@/actions/ai-survey-generation";
-import { EMPTY_DRAFT } from "@/types/survey";
-import type { SurveyDraft, Question } from "@/types/survey";
-
-const DRAFT_KEY = "opinflow:client-survey-draft:v1";
+import type { Question } from "@/types/survey";
+import { AIWizardProgress } from "@/components/survey-builder/AISurveySettings";
 
 const TYPE_LABELS: Record<AiQuestionType, string> = {
   SINGLE_CHOICE: "Одиночный выбор",
@@ -59,7 +57,7 @@ function toSurveyQuestion(q: DraftQ): Question {
 
 type Props = {
   draft: GeneratedSurveyDraft;
-  onConfirm: (draft: SurveyDraft) => void;
+  onConfirm: (title: string, questions: Question[]) => void;
   onBack: () => void;
   fromTemplate?: boolean;
 };
@@ -202,40 +200,30 @@ export default function AIDraftReview({ draft, onConfirm, onBack, fromTemplate }
     });
   }
 
-  // ── Continue to SurveyBuilder ────────────────────────────────────────────
+  // ── Continue to settings step ────────────────────────────────────────────
 
   function handleContinue() {
-    const surveyDraft: SurveyDraft = {
-      ...EMPTY_DRAFT,
-      title: title.trim() || "Без названия",
-      questions: questions.map(toSurveyQuestion),
-    };
-    // Write to localStorage — SurveyBuilder reads on remount (step 2 = questions step)
-    try {
-      localStorage.setItem(DRAFT_KEY, JSON.stringify({ step: 2, draft: surveyDraft }));
-    } catch {
-      // ignore storage errors
-    }
-    onConfirm(surveyDraft);
+    onConfirm(title.trim() || "Без названия", questions.map(toSurveyQuestion));
   }
 
   // ── Render ───────────────────────────────────────────────────────────────
 
   return (
     <div className="mx-auto max-w-3xl space-y-5">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={onBack}
-          className="flex items-center gap-1 rounded-lg border border-site-border px-3 py-1.5 text-sm text-site-muted hover:text-site-heading"
-        >
-          ← Назад
-        </button>
-        <span className="text-sm text-site-muted">
-          {fromTemplate ? "Из шаблона" : "Сгенерировано ИИ · 50 ₽ списано"}
-        </span>
-      </div>
+      {/* Wizard progress */}
+      {!fromTemplate && <AIWizardProgress step={2} />}
+
+      {/* Back link */}
+      <button
+        type="button"
+        onClick={onBack}
+        className="flex items-center gap-1.5 text-sm text-site-muted hover:text-site-heading"
+      >
+        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M19 12H5M12 5l-7 7 7 7" />
+        </svg>
+        {fromTemplate ? "Назад к шаблонам" : "Назад"}
+      </button>
 
       {/* Targeting recommendation (AI-only) */}
       {!fromTemplate && draft.targetingRecommendation && (
@@ -410,7 +398,7 @@ export default function AIDraftReview({ draft, onConfirm, onBack, fromTemplate }
           onClick={handleContinue}
           className="rounded-xl bg-brand px-6 py-2.5 text-sm font-semibold text-white hover:bg-brand-dark"
         >
-          Продолжить к настройке опроса →
+          Далее: параметры опроса →
         </button>
       </div>
 
