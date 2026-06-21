@@ -225,7 +225,7 @@ export default function AIDraftReview({ draft, onConfirm, onBack, fromTemplate, 
       <button
         type="button"
         onClick={onBack}
-        className="flex items-center gap-1.5 text-sm text-site-muted hover:text-site-heading"
+        className="flex items-center gap-1.5 text-sm text-dash-muted hover:text-dash-heading"
       >
         <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M19 12H5M12 5l-7 7 7 7" />
@@ -235,17 +235,17 @@ export default function AIDraftReview({ draft, onConfirm, onBack, fromTemplate, 
 
       {/* Targeting recommendation (AI-only) */}
       {!fromTemplate && draft.targetingRecommendation && (
-        <div className="rounded-2xl border border-blue-200 bg-blue-50 px-5 py-4 dark:border-blue-900 dark:bg-blue-950/30">
-          <p className="text-xs font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400">
+        <div className="rounded-2xl border border-brand/25 bg-brand/8 px-5 py-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-brand-light">
             Рекомендация ИИ по аудитории
           </p>
-          <p className="mt-1 text-sm text-blue-900 dark:text-blue-200">{draft.targetingRecommendation}</p>
+          <p className="mt-1 text-sm text-dash-body">{draft.targetingRecommendation}</p>
         </div>
       )}
 
       {/* Survey title */}
       <div>
-        <label className="mb-1.5 block text-sm font-medium text-site-heading">
+        <label className="mb-1.5 block text-sm font-medium text-dash-heading">
           Название опроса
         </label>
         <input
@@ -253,18 +253,18 @@ export default function AIDraftReview({ draft, onConfirm, onBack, fromTemplate, 
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Название опроса"
-          className="w-full rounded-xl border border-site-border bg-site-section px-4 py-3 text-sm text-site-heading placeholder:text-site-muted focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
+          className="w-full rounded-xl border border-dash-border bg-dash-bg px-4 py-3 text-sm text-dash-heading placeholder:text-dash-muted focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
         />
       </div>
 
       {/* Questions list */}
       <div>
         <div className="mb-3 flex items-center justify-between">
-          <p className="text-sm font-semibold text-site-heading">Вопросы ({questions.length})</p>
+          <p className="text-sm font-semibold text-dash-heading">Вопросы ({questions.length})</p>
           <button
             type="button"
             onClick={addQuestion}
-            className="rounded-lg border border-brand px-3 py-1.5 text-xs font-medium text-brand hover:bg-brand/5"
+            className="rounded-lg border border-brand px-3 py-1.5 text-xs font-medium text-brand hover:bg-brand/10"
           >
             + Добавить вопрос
           </button>
@@ -274,7 +274,7 @@ export default function AIDraftReview({ draft, onConfirm, onBack, fromTemplate, 
           {questions.map((q, idx) => (
             <div
               key={q.id}
-              className="rounded-2xl border border-site-border bg-site-card p-4"
+              className="rounded-2xl border border-dash-border bg-dash-card p-4"
             >
               <div className="flex gap-3">
                 {/* Up/Down controls */}
@@ -283,19 +283,19 @@ export default function AIDraftReview({ draft, onConfirm, onBack, fromTemplate, 
                     type="button"
                     onClick={() => moveUp(idx)}
                     disabled={idx === 0}
-                    className="rounded p-1 text-site-muted hover:text-site-heading disabled:opacity-25"
+                    className="rounded p-1 text-dash-muted hover:text-dash-heading disabled:opacity-25"
                     aria-label="Выше"
                   >
                     <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                       <path d="M18 15l-6-6-6 6" />
                     </svg>
                   </button>
-                  <span className="text-center text-xs font-semibold text-site-muted">{idx + 1}</span>
+                  <span className="text-center text-xs font-semibold text-dash-muted">{idx + 1}</span>
                   <button
                     type="button"
                     onClick={() => moveDown(idx)}
                     disabled={idx === questions.length - 1}
-                    className="rounded p-1 text-site-muted hover:text-site-heading disabled:opacity-25"
+                    className="rounded p-1 text-dash-muted hover:text-dash-heading disabled:opacity-25"
                     aria-label="Ниже"
                   >
                     <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -312,7 +312,7 @@ export default function AIDraftReview({ draft, onConfirm, onBack, fromTemplate, 
                     value={q.text}
                     onChange={(e) => setText(idx, e.target.value)}
                     placeholder="Текст вопроса"
-                    className="w-full rounded-lg border border-site-border bg-site-bg px-3 py-2 text-sm text-site-heading placeholder:text-site-muted focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
+                    className="w-full rounded-lg border border-dash-border bg-dash-bg px-3 py-2 text-sm text-dash-heading placeholder:text-dash-muted focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
                   />
 
                   {/* Type + Required */}
@@ -320,13 +320,13 @@ export default function AIDraftReview({ draft, onConfirm, onBack, fromTemplate, 
                     <select
                       value={q.type}
                       onChange={(e) => setType(idx, e.target.value as AiQuestionType)}
-                      className="rounded-lg border border-site-border bg-site-bg px-3 py-1.5 text-xs text-site-body focus:border-brand focus:outline-none"
+                      className="rounded-lg border border-dash-border bg-dash-bg px-3 py-1.5 text-xs text-dash-body focus:border-brand focus:outline-none"
                     >
                       {(Object.keys(TYPE_LABELS) as AiQuestionType[]).map((t) => (
                         <option key={t} value={t}>{TYPE_LABELS[t]}</option>
                       ))}
                     </select>
-                    <label className="flex cursor-pointer items-center gap-1.5 text-xs text-site-muted">
+                    <label className="flex cursor-pointer items-center gap-1.5 text-xs text-dash-muted">
                       <input
                         type="checkbox"
                         checked={q.required}
@@ -342,19 +342,19 @@ export default function AIDraftReview({ draft, onConfirm, onBack, fromTemplate, 
                     <div className="space-y-1.5 pl-1">
                       {q.options.map((opt, optIdx) => (
                         <div key={optIdx} className="flex items-center gap-2">
-                          <span className="text-xs text-site-muted">{optIdx + 1}.</span>
+                          <span className="text-xs text-dash-muted">{optIdx + 1}.</span>
                           <input
                             type="text"
                             value={opt}
                             onChange={(e) => setOption(idx, optIdx, e.target.value)}
                             placeholder={`Вариант ${optIdx + 1}`}
-                            className="flex-1 rounded-lg border border-site-border bg-site-bg px-3 py-1.5 text-xs text-site-body placeholder:text-site-muted focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
+                            className="flex-1 rounded-lg border border-dash-border bg-dash-bg px-3 py-1.5 text-xs text-dash-body placeholder:text-dash-muted focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
                           />
                           <button
                             type="button"
                             onClick={() => removeOption(idx, optIdx)}
                             disabled={q.options.length <= 2}
-                            className="p-1 text-site-muted hover:text-red-500 disabled:opacity-25"
+                            className="p-1 text-dash-muted hover:text-red-400 disabled:opacity-25"
                             aria-label="Удалить вариант"
                           >
                             <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -379,7 +379,7 @@ export default function AIDraftReview({ draft, onConfirm, onBack, fromTemplate, 
                   type="button"
                   onClick={() => deleteQuestion(idx)}
                   disabled={questions.length <= 1}
-                  className="mt-1 shrink-0 p-1 text-site-muted hover:text-red-500 disabled:opacity-25"
+                  className="mt-1 shrink-0 p-1 text-dash-muted hover:text-red-400 disabled:opacity-25"
                   aria-label="Удалить вопрос"
                 >
                   <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -395,12 +395,12 @@ export default function AIDraftReview({ draft, onConfirm, onBack, fromTemplate, 
       </div>
 
       {/* Footer */}
-      <div className="flex flex-col gap-3 border-t border-site-border pt-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 border-t border-dash-border pt-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-2 sm:flex-row">
           <button
             type="button"
             onClick={openTemplateModal}
-            className="rounded-xl border border-site-border px-4 py-2.5 text-sm font-medium text-site-heading hover:bg-site-section"
+            className="rounded-xl border border-dash-border px-4 py-2.5 text-sm font-medium text-dash-heading hover:bg-dash-bg"
           >
             Сохранить как шаблон
           </button>
@@ -409,7 +409,7 @@ export default function AIDraftReview({ draft, onConfirm, onBack, fromTemplate, 
               type="button"
               onClick={() => onTransferToManual(title.trim() || "Без названия", questions.map(toSurveyQuestion))}
               title="Перенести все вопросы в ручной конструктор для детальной настройки"
-              className="rounded-xl border border-site-border px-4 py-2.5 text-sm font-medium text-site-muted hover:bg-site-section hover:text-site-heading"
+              className="rounded-xl border border-dash-border px-4 py-2.5 text-sm font-medium text-dash-muted hover:bg-dash-bg hover:text-dash-heading"
             >
               Открыть в конструкторе
             </button>
@@ -426,10 +426,10 @@ export default function AIDraftReview({ draft, onConfirm, onBack, fromTemplate, 
 
       {/* Template name modal */}
       {showTemplateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="mx-4 w-full max-w-sm rounded-2xl bg-site-card p-6 shadow-xl">
-            <h3 className="text-base font-semibold text-site-heading">Сохранить как шаблон</h3>
-            <p className="mt-1 text-sm text-site-muted">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="mx-4 w-full max-w-sm rounded-2xl border border-dash-border bg-dash-card p-6 shadow-xl">
+            <h3 className="text-base font-semibold text-dash-heading">Сохранить как шаблон</h3>
+            <p className="mt-1 text-sm text-dash-muted">
               Шаблон сохранит вопросы. Вы сможете создавать новые опросы на его основе.
             </p>
             <input
@@ -438,11 +438,11 @@ export default function AIDraftReview({ draft, onConfirm, onBack, fromTemplate, 
               value={templateName}
               onChange={(e) => setTemplateName(e.target.value)}
               placeholder="Название шаблона"
-              className="mt-4 w-full rounded-xl border border-site-border bg-site-section px-4 py-2.5 text-sm text-site-heading placeholder:text-site-muted focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
+              className="mt-4 w-full rounded-xl border border-dash-border bg-dash-bg px-4 py-2.5 text-sm text-dash-heading placeholder:text-dash-muted focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
               onKeyDown={(e) => { if (e.key === "Enter") handleSaveTemplate(); }}
             />
             {templateStatus && (
-              <p className={`mt-2 text-xs ${templateStatus.startsWith("✓") ? "text-green-600" : "text-red-500"}`}>
+              <p className={`mt-2 text-xs ${templateStatus.startsWith("✓") ? "text-green-400" : "text-red-400"}`}>
                 {templateStatus}
               </p>
             )}
@@ -450,7 +450,7 @@ export default function AIDraftReview({ draft, onConfirm, onBack, fromTemplate, 
               <button
                 type="button"
                 onClick={() => setShowTemplateModal(false)}
-                className="flex-1 rounded-xl border border-site-border py-2.5 text-sm font-medium text-site-muted hover:text-site-heading"
+                className="flex-1 rounded-xl border border-dash-border py-2.5 text-sm font-medium text-dash-muted hover:text-dash-heading"
               >
                 Отмена
               </button>

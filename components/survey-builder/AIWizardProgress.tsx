@@ -17,17 +17,17 @@ export default function AIWizardProgress({ step }: { step: 1 | 2 | 3 }) {
                   ? "bg-brand text-white"
                   : s.n === step
                   ? "bg-brand text-white ring-2 ring-brand/30"
-                  : "bg-site-border text-site-muted"
+                  : "bg-dash-border/60 text-dash-muted"
               }`}
             >
               {s.n < step ? "✓" : s.n}
             </span>
-            <span className={`text-xs font-medium ${s.n === step ? "text-site-heading" : "text-site-muted"}`}>
+            <span className={`text-xs font-medium ${s.n === step ? "text-dash-heading" : "text-dash-muted"}`}>
               {s.label}
             </span>
           </div>
           {i < steps.length - 1 && (
-            <div className={`h-px w-8 ${s.n < step ? "bg-brand" : "bg-site-border"}`} />
+            <div className={`h-px w-8 ${s.n < step ? "bg-brand" : "bg-dash-border"}`} />
           )}
         </div>
       ))}

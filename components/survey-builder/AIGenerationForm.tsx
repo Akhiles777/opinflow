@@ -54,9 +54,9 @@ export default function AIGenerationForm({ balance, onSuccess }: Props) {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <div className="rounded-2xl border border-brand/20 bg-brand/5 p-4 text-sm text-site-body">
-        <p className="font-semibold text-site-heading">Как это работает</p>
-        <p className="mt-1 text-site-muted">
+      <div className="rounded-2xl border border-brand/20 bg-brand/5 p-4 text-sm text-dash-body">
+        <p className="font-semibold text-dash-heading">Как это работает</p>
+        <p className="mt-1 text-dash-muted">
           Опишите вашу исследовательскую задачу, и ИИ сгенерирует 8–12 вопросов. Вы сможете
           отредактировать их перед публикацией.
         </p>
@@ -64,7 +64,7 @@ export default function AIGenerationForm({ balance, onSuccess }: Props) {
 
       {/* Task description */}
       <div className="space-y-2">
-        <label className="block text-sm font-medium text-site-heading">
+        <label className="block text-sm font-medium text-dash-heading">
           Задача исследования <span className="text-red-500">*</span>
         </label>
         <div className="relative">
@@ -75,31 +75,31 @@ export default function AIGenerationForm({ balance, onSuccess }: Props) {
             rows={5}
             maxLength={1000}
             disabled={isPending}
-            className="w-full resize-none rounded-xl border border-site-border bg-site-section px-4 py-3 text-sm text-site-body placeholder:text-site-muted focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand disabled:opacity-60"
+            className="w-full resize-none rounded-xl border border-dash-border bg-dash-bg px-4 py-3 text-sm text-dash-body placeholder:text-dash-muted focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand disabled:opacity-60"
           />
           <span
             className={`absolute bottom-2 right-3 text-xs ${
-              description.length < 20 ? "text-red-400" : "text-site-muted"
+              description.length < 20 ? "text-red-400" : "text-dash-muted"
             }`}
           >
             {description.length}/1000
           </span>
         </div>
         {description.length > 0 && description.length < 20 && (
-          <p className="text-xs text-red-500">Минимум 20 символов</p>
+          <p className="text-xs text-red-400">Минимум 20 символов</p>
         )}
       </div>
 
       {/* Industry */}
       <div className="space-y-2">
-        <label className="block text-sm font-medium text-site-heading">
-          Отрасль <span className="text-site-muted">(необязательно)</span>
+        <label className="block text-sm font-medium text-dash-heading">
+          Отрасль <span className="text-dash-muted">(необязательно)</span>
         </label>
         <select
           value={industry}
           onChange={(e) => setIndustry(e.target.value)}
           disabled={isPending}
-          className="w-full rounded-xl border border-site-border bg-site-section px-4 py-3 text-sm text-site-body focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand disabled:opacity-60"
+          className="w-full rounded-xl border border-dash-border bg-dash-bg px-4 py-3 text-sm text-dash-body focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand disabled:opacity-60"
         >
           <option value="">Не указана</option>
           {INDUSTRIES.map((opt) => (
@@ -112,8 +112,8 @@ export default function AIGenerationForm({ balance, onSuccess }: Props) {
 
       {/* Target audience */}
       <div className="space-y-2">
-        <label className="block text-sm font-medium text-site-heading">
-          Целевая аудитория <span className="text-site-muted">(необязательно)</span>
+        <label className="block text-sm font-medium text-dash-heading">
+          Целевая аудитория <span className="text-dash-muted">(необязательно)</span>
         </label>
         <input
           type="text"
@@ -122,25 +122,25 @@ export default function AIGenerationForm({ balance, onSuccess }: Props) {
           placeholder="Например: женщины 25-45 лет, покупающие онлайн"
           maxLength={200}
           disabled={isPending}
-          className="w-full rounded-xl border border-site-border bg-site-section px-4 py-3 text-sm text-site-body placeholder:text-site-muted focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand disabled:opacity-60"
+          className="w-full rounded-xl border border-dash-border bg-dash-bg px-4 py-3 text-sm text-dash-body placeholder:text-dash-muted focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand disabled:opacity-60"
         />
       </div>
 
       {/* Error */}
       {error && (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="rounded-xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
           {error}
         </div>
       )}
 
       {/* CTA */}
       <div className="flex items-center justify-between gap-4">
-        <p className="text-sm text-site-muted">
+        <p className="text-sm text-dash-muted">
           Стоимость генерации:{" "}
-          <span className={`font-semibold ${hasEnough ? "text-site-heading" : "text-red-500"}`}>
+          <span className={`font-semibold ${hasEnough ? "text-dash-heading" : "text-red-400"}`}>
             50 ₽
           </span>
-          {!hasEnough && <span className="ml-1 text-red-500">(недостаточно средств)</span>}
+          {!hasEnough && <span className="ml-1 text-red-400">(недостаточно средств)</span>}
         </p>
         <button
           onClick={handleSubmit}
@@ -162,7 +162,7 @@ export default function AIGenerationForm({ balance, onSuccess }: Props) {
       </div>
 
       {isPending && (
-        <p className="text-center text-xs text-site-muted">
+        <p className="text-center text-xs text-dash-muted">
           Это займёт 10–30 секунд. Не закрывайте страницу.
         </p>
       )}

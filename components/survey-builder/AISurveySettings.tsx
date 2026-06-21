@@ -108,7 +108,7 @@ export default function AISurveySettings({ title, questions, balance, commission
       <button
         type="button"
         onClick={onBack}
-        className="flex items-center gap-1.5 text-sm text-site-muted hover:text-site-heading"
+        className="flex items-center gap-1.5 text-sm text-dash-muted hover:text-dash-heading"
       >
         <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M19 12H5M12 5l-7 7 7 7" />
@@ -117,25 +117,25 @@ export default function AISurveySettings({ title, questions, balance, commission
       </button>
 
       {/* Questions summary */}
-      <div className="rounded-2xl border border-site-border bg-site-section">
+      <div className="rounded-2xl border border-dash-border bg-dash-card">
         <button
           type="button"
           onClick={() => setQuestionsOpen((v) => !v)}
-          className="flex w-full items-center justify-between px-4 py-3 text-sm font-medium text-site-heading"
+          className="flex w-full items-center justify-between px-4 py-3 text-sm font-medium text-dash-heading"
         >
           <span>Вопросы опроса ({questions.length})</span>
           <svg
-            className={`h-4 w-4 text-site-muted transition-transform ${questionsOpen ? "rotate-180" : ""}`}
+            className={`h-4 w-4 text-dash-muted transition-transform ${questionsOpen ? "rotate-180" : ""}`}
             viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
           >
             <path d="M6 9l6 6 6-6" />
           </svg>
         </button>
         {questionsOpen && (
-          <ol className="divide-y divide-site-border border-t border-site-border">
+          <ol className="divide-y divide-dash-border border-t border-dash-border">
             {questions.map((q, i) => (
-              <li key={q.id} className="px-4 py-2.5 text-sm text-site-body">
-                <span className="mr-2 text-xs font-semibold text-site-muted">{i + 1}.</span>
+              <li key={q.id} className="px-4 py-2.5 text-sm text-dash-body">
+                <span className="mr-2 text-xs font-semibold text-dash-muted">{i + 1}.</span>
                 {q.title}
               </li>
             ))}
@@ -145,27 +145,27 @@ export default function AISurveySettings({ title, questions, balance, commission
 
       {/* Title */}
       <div>
-        <label className="mb-1.5 block text-sm font-medium text-site-heading">
-          Название опроса <span className="text-red-500">*</span>
+        <label className="mb-1.5 block text-sm font-medium text-dash-heading">
+          Название опроса <span className="text-red-400">*</span>
         </label>
         <input
           type="text"
           value={surveyTitle}
           onChange={(e) => setSurveyTitle(e.target.value)}
           placeholder="Например: Оценка нового мобильного банка"
-          className="w-full rounded-xl border border-site-border bg-site-section px-4 py-3 text-sm text-site-heading placeholder:text-site-muted focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
+          className="w-full rounded-xl border border-dash-border bg-dash-bg px-4 py-3 text-sm text-dash-heading placeholder:text-dash-muted focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
         />
       </div>
 
       {/* Category */}
       <div>
-        <label className="mb-1.5 block text-sm font-medium text-site-heading">
-          Категория <span className="text-red-500">*</span>
+        <label className="mb-1.5 block text-sm font-medium text-dash-heading">
+          Категория <span className="text-red-400">*</span>
         </label>
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value)}
-          className="w-full rounded-xl border border-site-border bg-site-section px-4 py-3 text-sm text-site-body focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
+          className="w-full rounded-xl border border-dash-border bg-dash-bg px-4 py-3 text-sm text-dash-body focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
         >
           <option value="">— Выберите категорию —</option>
           {CATEGORIES.map((c) => (
@@ -176,25 +176,25 @@ export default function AISurveySettings({ title, questions, balance, commission
 
       {/* Description */}
       <div>
-        <label className="mb-1.5 block text-sm font-medium text-site-heading">
+        <label className="mb-1.5 block text-sm font-medium text-dash-heading">
           Описание{" "}
-          <span className="text-xs font-normal text-site-muted">(необязательно)</span>
+          <span className="text-xs font-normal text-dash-muted">(необязательно)</span>
         </label>
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Коротко опишите цель исследования"
           rows={3}
-          className="w-full resize-none rounded-xl border border-site-border bg-site-section px-4 py-3 text-sm text-site-body placeholder:text-site-muted focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
+          className="w-full resize-none rounded-xl border border-dash-border bg-dash-bg px-4 py-3 text-sm text-dash-body placeholder:text-dash-muted focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
         />
       </div>
 
       {/* Budget */}
-      <div className="space-y-4 rounded-2xl border border-site-border p-5">
-        <p className="text-sm font-semibold text-site-heading">Бюджет</p>
+      <div className="space-y-4 rounded-2xl border border-dash-border bg-dash-card p-5">
+        <p className="text-sm font-semibold text-dash-heading">Бюджет</p>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-site-muted">
+            <label className="mb-1.5 block text-xs font-medium text-dash-muted">
               Кол-во респондентов (мин. {MIN_RESPONSES})
             </label>
             <input
@@ -204,11 +204,11 @@ export default function AISurveySettings({ title, questions, balance, commission
               value={maxResponses}
               onChange={(e) => handleResponsesInput(e.target.value)}
               onBlur={handleResponsesBlur}
-              className="w-full rounded-xl border border-site-border bg-site-section px-4 py-2.5 text-sm text-site-body focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
+              className="w-full rounded-xl border border-dash-border bg-dash-bg px-4 py-2.5 text-sm text-dash-body focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
             />
           </div>
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-site-muted">
+            <label className="mb-1.5 block text-xs font-medium text-dash-muted">
               Вознаграждение за ответ (мин. {minReward} ₽)
             </label>
             <div className="relative">
@@ -219,16 +219,20 @@ export default function AISurveySettings({ title, questions, balance, commission
                 value={reward}
                 onChange={(e) => handleRewardInput(e.target.value)}
                 onBlur={handleRewardBlur}
-                className="w-full rounded-xl border border-site-border bg-site-section px-4 py-2.5 pr-8 text-sm text-site-body focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
+                className="w-full rounded-xl border border-dash-border bg-dash-bg px-4 py-2.5 pr-8 text-sm text-dash-body focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
               />
-              <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-site-muted">₽</span>
+              <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-dash-muted">₽</span>
             </div>
           </div>
         </div>
 
         {/* Budget breakdown */}
-        <div className={`rounded-xl px-4 py-3 text-sm ${hasEnough ? "bg-green-50 dark:bg-green-950/30" : "bg-red-50 dark:bg-red-950/30"}`}>
-          <div className={`space-y-1 ${hasEnough ? "text-green-800 dark:text-green-200" : "text-red-800 dark:text-red-200"}`}>
+        <div className={`rounded-xl border px-4 py-3 text-sm ${
+          hasEnough
+            ? "border-green-500/25 bg-green-500/10 text-green-300"
+            : "border-red-500/25 bg-red-500/10 text-red-300"
+        }`}>
+          <div className="space-y-1">
             <div className="flex justify-between">
               <span>Выплаты ({maxResponses} × {reward} ₽)</span>
               <span>{base.toLocaleString("ru")} ₽</span>
@@ -243,7 +247,7 @@ export default function AISurveySettings({ title, questions, balance, commission
             </div>
             <div className="flex justify-between pt-0.5 text-xs opacity-70">
               <span>Баланс после оплаты</span>
-              <span className={balance - total < 0 ? "text-red-600 font-medium" : ""}>
+              <span className={balance - total < 0 ? "font-medium text-red-400" : ""}>
                 {(balance - total).toLocaleString("ru")} ₽
               </span>
             </div>
@@ -254,32 +258,32 @@ export default function AISurveySettings({ title, questions, balance, commission
       {/* Dates */}
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-site-heading">Дата начала</label>
+          <label className="mb-1.5 block text-sm font-medium text-dash-heading">Дата начала</label>
           <input
             type="date"
             min={today}
             value={startsAt}
             onChange={(e) => setStartsAt(e.target.value)}
-            className="w-full rounded-xl border border-site-border bg-site-section px-4 py-3 text-sm text-site-body focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
+            className="w-full rounded-xl border border-dash-border bg-dash-bg px-4 py-3 text-sm text-dash-body focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
           />
         </div>
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-site-heading">
-            Дата окончания <span className="text-red-500">*</span>
+          <label className="mb-1.5 block text-sm font-medium text-dash-heading">
+            Дата окончания <span className="text-red-400">*</span>
           </label>
           <input
             type="date"
             min={startsAt || today}
             value={endsAt}
             onChange={(e) => setEndsAt(e.target.value)}
-            className="w-full rounded-xl border border-site-border bg-site-section px-4 py-3 text-sm text-site-body focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
+            className="w-full rounded-xl border border-dash-border bg-dash-bg px-4 py-3 text-sm text-dash-body focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
           />
         </div>
       </div>
 
       {/* Error */}
       {error && (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">
+        <div className="rounded-xl border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm text-red-400">
           {error}
         </div>
       )}
@@ -298,4 +302,3 @@ export default function AISurveySettings({ title, questions, balance, commission
     </div>
   );
 }
-

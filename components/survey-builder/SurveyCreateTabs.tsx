@@ -135,7 +135,7 @@ export default function SurveyCreateTabs({ balance, commissionRate, minReward, u
     <div>
       {/* Tab switcher */}
       {showTabs && (
-        <div className="mb-6 flex flex-wrap gap-1 rounded-2xl border border-site-border bg-site-section p-1 sm:w-fit">
+        <div className="mb-6 flex flex-wrap gap-1 rounded-2xl border border-dash-border bg-dash-bg p-1 sm:w-fit">
           {(
             [
               { id: "manual" as Tab, label: "Создать вручную" },
@@ -149,8 +149,8 @@ export default function SurveyCreateTabs({ balance, commissionRate, minReward, u
               onClick={() => goTab(item.id)}
               className={`rounded-xl px-5 py-2.5 text-sm font-medium transition-colors ${
                 tab === item.id
-                  ? "bg-white text-site-heading shadow-sm dark:bg-site-card"
-                  : "text-site-muted hover:text-site-heading"
+                  ? "bg-dash-card text-dash-heading shadow-sm"
+                  : "text-dash-muted hover:text-dash-heading"
               }`}
             >
               {item.label}
@@ -207,7 +207,7 @@ export default function SurveyCreateTabs({ balance, commissionRate, minReward, u
       {tab === "templates" && (
         <div className="mx-auto max-w-2xl">
           {!templatesLoaded ? (
-            <div className="flex items-center gap-2 text-sm text-site-muted">
+            <div className="flex items-center gap-2 text-sm text-dash-muted">
               <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -215,9 +215,9 @@ export default function SurveyCreateTabs({ balance, commissionRate, minReward, u
               Загружаем шаблоны…
             </div>
           ) : templates.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-site-border bg-site-section p-10 text-center">
-              <p className="text-sm font-semibold text-site-heading">Шаблонов пока нет</p>
-              <p className="mt-2 text-sm text-site-muted">
+            <div className="rounded-2xl border border-dashed border-dash-border bg-dash-card p-10 text-center">
+              <p className="text-sm font-semibold text-dash-heading">Шаблонов пока нет</p>
+              <p className="mt-2 text-sm text-dash-muted">
                 Создайте опрос с ИИ, отредактируйте вопросы и нажмите «Сохранить как шаблон» —
                 затем сможете быстро запускать похожие опросы.
               </p>
@@ -231,17 +231,17 @@ export default function SurveyCreateTabs({ balance, commissionRate, minReward, u
             </div>
           ) : (
             <div className="space-y-3">
-              <p className="text-xs text-site-muted">
+              <p className="text-xs text-dash-muted">
                 {templates.length} шаблон{templates.length === 1 ? "" : templates.length < 5 ? "а" : "ов"}
               </p>
               {templates.map((t) => (
                 <div
                   key={t.id}
-                  className="flex items-center gap-3 rounded-2xl border border-site-border bg-site-card p-4"
+                  className="flex items-center gap-3 rounded-2xl border border-dash-border bg-dash-card p-4"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-site-heading">{t.name}</p>
-                    <p className="mt-0.5 text-xs text-site-muted">
+                    <p className="truncate text-sm font-semibold text-dash-heading">{t.name}</p>
+                    <p className="mt-0.5 text-xs text-dash-muted">
                       {t.questions.length} вопрос{t.questions.length < 2 ? "" : t.questions.length < 5 ? "а" : "ов"} ·{" "}
                       {new Date(t.createdAt).toLocaleDateString("ru-RU", { day: "numeric", month: "short" })}
                     </p>
@@ -259,7 +259,7 @@ export default function SurveyCreateTabs({ balance, commissionRate, minReward, u
                       onClick={() => onDeleteTemplate(t.id)}
                       disabled={deletingId === t.id}
                       aria-label="Удалить шаблон"
-                      className="rounded-lg border border-site-border px-3 py-2 text-xs text-site-muted hover:border-red-300 hover:text-red-500 disabled:opacity-40"
+                      className="rounded-lg border border-dash-border px-3 py-2 text-xs text-dash-muted hover:border-red-400/50 hover:text-red-400 disabled:opacity-40"
                     >
                       {deletingId === t.id ? "…" : "✕"}
                     </button>
