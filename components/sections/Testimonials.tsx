@@ -180,11 +180,11 @@ type MosaicTile =
 const mosaicTiles: MosaicTile[] = [
   {
     kind: "logo",
-    src: "/Testimonials2/2MOOD_logo_main-_2_.png",
-    alt: "2MOOD",
-    light: "rounded-[22px] bg-[#F0ECFA] flex items-center justify-center p-3",
-    dark: "rounded-[22px] bg-white/10 flex items-center justify-center p-3",
-    imgClass: "h-full max-h-[48px] w-full object-contain opacity-85",
+    src: "/Testimonials2/family-cosmetic.png",
+    alt: "Family Cosmetic",
+    light: "rounded-[22px] bg-white flex items-center justify-center p-4",
+    dark: "rounded-[22px] bg-white/12 flex items-center justify-center p-4",
+    imgClass: "h-full max-h-[52px] w-full object-contain",
   },
   {
     kind: "logo",
