@@ -985,3 +985,45 @@ export async function deleteSurveyAction(surveyId: string) {
     return { error: "Не удалось удалить опрос" };
   }
 }
+
+// ─── Load DB survey back into SurveyDraft format (for "continue filling") ─────
+
+export async function loadSurveyAsDraftAction(
+  surveyId: string
+): Promise<{ success: true; draft: SurveyDraft } | { error: string }> {
+  const session = await requireRole("CLIENT");
+
+  const survey = await prisma.survey.findFirst({
+    where: { id: surveyId, creatorId: session.user.id, status: "DRAFT" },
+    include: {
+      questions: { orderBy: { order: "asc" } },
+    },
+  });
+
+  if (!survey) return { error: "Черновик не найден" };
+
+  const draft: SurveyDraft = {
+    title: survey.title,
+    description: survey.description ?? "",
+    category: survey.category ?? "",
+    questions: survey.questions.map((q) => mapSurveyQuestion(q)),
+    targetGender: (survey.targetGender as SurveyDraft["targetGender"]) ?? "any",
+    targetAgeMin: survey.targetAgeMin ?? 18,
+    targetAgeMax: survey.targetAgeMax ?? 65,
+    targetCities: survey.targetCities ?? [],
+    targetIncomes: survey.targetIncomes ?? [],
+    targetInterests: survey.targetInterests ?? [],
+    targetHasChildren: (survey.targetHasChildren as SurveyDraft["targetHasChildren"]) ?? "any",
+    targetEmploymentStatuses: survey.targetEmploymentStatuses ?? [],
+    targetIndustries: survey.targetIndustries ?? [],
+    targetMaritalStatuses: survey.targetMaritalStatuses ?? [],
+    maxResponses: survey.maxResponses ?? 50,
+    reward: survey.reward ? Number(survey.reward) : 50,
+    startsAt: survey.startsAt ? survey.startsAt.toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
+    endsAt: survey.endsAt
+      ? survey.endsAt.toISOString().split("T")[0]
+      : new Date(Date.now() + 7 * 86_400_000).toISOString().split("T")[0],
+  };
+
+  return { success: true, draft };
+}
