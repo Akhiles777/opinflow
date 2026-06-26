@@ -134,7 +134,7 @@ export default function SurveyHeader() {
               </Button>
               <button
                 type="button"
-                onClick={() => void signOut({ callbackUrl: "/" })}
+                onClick={async () => { await signOut({ redirect: false }); window.location.href = "/"; }}
                 className="inline-flex w-full items-center justify-center rounded-xl border border-site-border bg-site-card px-5 py-2.5 text-sm font-medium text-site-heading transition-all duration-200 hover:bg-site-section hover:border-site-border/80"
               >
                 Выйти

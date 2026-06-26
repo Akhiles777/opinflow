@@ -43,8 +43,18 @@ function isAuthCookie(name: string) {
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
-  const response = NextResponse.redirect(new URL("/", request.url), { status: 307 });
-  const secure = new URL(request.url).protocol === "https:";
+  // Behind a reverse proxy (nginx → Docker), request.url is the internal address
+  // (e.g. http://0.0.0.0:3000/logout). Read forwarded headers to get the real public URL.
+  const proto =
+    request.headers.get("x-forwarded-proto") ??
+    (new URL(request.url).protocol === "https:" ? "https" : "http");
+  const host =
+    request.headers.get("x-forwarded-host") ??
+    request.headers.get("host") ??
+    new URL(request.url).host;
+  const homeUrl = new URL("/", `${proto}://${host}`);
+  const response = NextResponse.redirect(homeUrl, { status: 307 });
+  const secure = proto === "https";
   const namesToClear = new Set(
     request.cookies.getAll().map((cookie) => cookie.name).filter((name) => isAuthCookie(name)),
   );

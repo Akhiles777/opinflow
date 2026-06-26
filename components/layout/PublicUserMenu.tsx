@@ -128,7 +128,7 @@ export default function PublicUserMenu({ name, email, image, role }: Props) {
           <div className="mt-2 pt-2 border-t border-[#EDE8F8] dark:border-white/10">
             <button
               type="button"
-              onClick={() => void signOut({ callbackUrl: "/" })}
+              onClick={async () => { await signOut({ redirect: false }); window.location.href = "/"; }}
               className="flex w-full items-center gap-3 rounded-[14px] border border-[#EDE8F8] dark:border-white/12 px-3.5 py-3 text-[15px] font-medium text-[#6E6884] dark:text-white/55 transition-all duration-150 hover:bg-[#FFF0F0] dark:hover:bg-white/8 hover:text-[#C0392B] dark:hover:text-red-400 hover:border-[#FFCCCC] dark:hover:border-red-400/30"
             >
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-[#F5F2FF] dark:bg-white/10">
