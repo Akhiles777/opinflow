@@ -36,6 +36,7 @@ type ComplaintRow = {
 
 type Props = {
   users: UserRow[];
+  tabCounts: { all: number; RESPONDENT: number; CLIENT: number; blocked: number };
   complaints: ComplaintRow[];
   activeTab: string;
   searchQuery: string;
@@ -83,7 +84,7 @@ function formatRub(n: number) {
   return `${new Intl.NumberFormat("ru-RU").format(n)} ₽`;
 }
 
-export default function AdminUsersClient({ users, complaints, activeTab, searchQuery }: Props) {
+export default function AdminUsersClient({ users, tabCounts, complaints, activeTab, searchQuery }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [blockTarget, setBlockTarget] = useState<UserRow | null>(null);
@@ -139,7 +140,7 @@ export default function AdminUsersClient({ users, complaints, activeTab, searchQ
   return (
     <div>
       {/* Tabs */}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {TABS.map((t) => {
           const active = t.value === activeTab || (t.value === "all" && !activeTab);
           return (
@@ -154,6 +155,11 @@ export default function AdminUsersClient({ users, complaints, activeTab, searchQ
               ].join(" ")}
             >
               {t.label}
+              {t.value !== "complaints" && (
+                <span className="ml-1.5 inline-flex h-5 min-w-5.5 items-center justify-center rounded-full bg-brand/10 px-1.5 text-[11px] font-semibold text-brand/70">
+                  {tabCounts[t.value as keyof typeof tabCounts] ?? 0}
+                </span>
+              )}
               {t.value === "complaints" && complaints.filter((c) => c.status === "PENDING").length > 0 && (
                 <span className="ml-1.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
                   {complaints.filter((c) => c.status === "PENDING").length}

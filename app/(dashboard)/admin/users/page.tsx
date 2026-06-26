@@ -93,6 +93,12 @@ export default async function AdminUsersPage({
       <div className="mt-8">
         <AdminUsersClient
           users={filteredUsers}
+          tabCounts={{
+            all: mappedUsers.length,
+            RESPONDENT: mappedUsers.filter((u) => u.role === "RESPONDENT").length,
+            CLIENT: mappedUsers.filter((u) => u.role === "CLIENT").length,
+            blocked: mappedUsers.filter((u) => u.status === "BLOCKED").length,
+          }}
           complaints={mappedComplaints}
           activeTab={tab}
           searchQuery={params.q ?? ""}
