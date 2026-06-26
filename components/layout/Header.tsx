@@ -4,7 +4,7 @@ import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { useTheme } from "next-themes";
 
 import SmoothHashLink from "@/components/ui/SmoothHashLink";
@@ -200,12 +200,13 @@ export default function Header({ dark: _dark }: { dark?: boolean } = {}) {
                 >
                   Мой кабинет
                 </Link>
-                <a
-                  href="/logout"
+                <button
+                  type="button"
+                  onClick={async () => { await signOut({ redirect: false }); window.location.href = "/"; }}
                   className="h-[46px] rounded-[14px] border flex items-center justify-center text-[16px] font-medium border-[#EDE8F8] text-[#6E6884] transition-colors hover:border-[#FFCCCC] hover:bg-[#FFF0F0] hover:text-[#C0392B] dark:border-white/12 dark:text-white/55 dark:hover:text-red-400"
                 >
                   Выйти
-                </a>
+                </button>
               </div>
             )}
           </div>
