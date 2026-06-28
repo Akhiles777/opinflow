@@ -1,8 +1,16 @@
 "use client";
-import { useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { QRCodeSVG } from "qrcode.react";
 import Modal from "@/components/dashboard/Modal";
 import Badge from "@/components/dashboard/Badge";
-import { createCorporateInvoiceAction, createDepositAction } from "@/actions/payments";
+import {
+  createCorporateInvoiceAction,
+  createDepositAction,
+  createOzonDepositAction,
+  checkOzonDepositAction,
+} from "@/actions/payments";
+
+type DepositMethod = "CARD" | "SBP_OZON" | "INVOICE";
 
 type Props = {
   balance: number;
@@ -24,6 +32,12 @@ type Props = {
   }>;
 };
 
+type OzonPending = {
+  sbpPayload: string;
+  ozonPaymentId: string;
+  amount: number;
+};
+
 const quickAmounts = [500, 1000, 5000, 10000];
 
 function formatRub(amount: number) {
@@ -32,30 +46,90 @@ function formatRub(amount: number) {
 
 function mapStatus(status: string) {
   const normalized = status.toUpperCase();
-
   if (normalized === "SUCCEEDED" || normalized === "COMPLETED") {
     return { v: "completed" as const, t: "Успешно" };
   }
-
   if (normalized === "WAITING" || normalized === "PENDING") {
     return { v: "pending" as const, t: "Ожидание" };
   }
-
   if (normalized === "CANCELED" || normalized === "CANCELLED" || normalized === "DRAFT") {
     return { v: "draft" as const, t: "Отменено" };
   }
-
   return { v: "rejected" as const, t: "Ошибка" };
+}
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  function handleCopy() {
+    void navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      className="mt-1 text-[12px] font-medium text-brand hover:underline"
+    >
+      {copied ? "Скопировано!" : "Скопировать ссылку СБП"}
+    </button>
+  );
 }
 
 export default function ClientWalletClient({ balance, transactions, payments, paymentSuccess }: Props) {
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [depositAmount, setDepositAmount] = useState("500");
-  const [depositMethod, setDepositMethod] = useState<"CARD" | "INVOICE">("CARD");
+  const [depositMethod, setDepositMethod] = useState<DepositMethod>("CARD");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, startTransition] = useTransition();
 
+  // Ozon СБП pending state
+  const [ozonPending, setOzonPending] = useState<OzonPending | null>(null);
+  const [ozonCheckStatus, setOzonCheckStatus] = useState<"idle" | "checking" | "confirmed" | "failed">("idle");
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   const normalizedAmount = useMemo(() => Number(depositAmount.replace(/[^\d]/g, "")), [depositAmount]);
+
+  const stopPolling = useCallback(() => {
+    if (pollRef.current) {
+      clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+  }, []);
+
+  const checkOzonStatus = useCallback(
+    async (paymentId: string) => {
+      setOzonCheckStatus("checking");
+      const result = await checkOzonDepositAction(paymentId);
+      if ("error" in result) { setOzonCheckStatus("idle"); return; }
+      if (result.status === "confirmed") {
+        stopPolling();
+        setOzonCheckStatus("confirmed");
+      } else if (result.status === "failed") {
+        stopPolling();
+        setOzonCheckStatus("failed");
+      } else {
+        setOzonCheckStatus("idle");
+      }
+    },
+    [stopPolling],
+  );
+
+  // Auto-poll every 10s while QR is shown
+  useEffect(() => {
+    if (!ozonPending) { stopPolling(); return; }
+    pollRef.current = setInterval(() => {
+      void checkOzonStatus(ozonPending.ozonPaymentId);
+    }, 10_000);
+    return stopPolling;
+  }, [ozonPending, checkOzonStatus, stopPolling]);
+
+  function resetOzon() {
+    stopPolling();
+    setOzonPending(null);
+    setOzonCheckStatus("idle");
+  }
 
   function handleDeposit() {
     setError(null);
@@ -71,15 +145,35 @@ export default function ClientWalletClient({ balance, transactions, payments, pa
         return;
       }
 
+      if (depositMethod === "SBP_OZON") {
+        const result = await createOzonDepositAction(normalizedAmount);
+        if ("error" in result) { setError(result.error); return; }
+        setShowDepositModal(false);
+        setOzonPending({ sbpPayload: result.sbpPayload, ozonPaymentId: result.ozonPaymentId, amount: result.amount });
+        return;
+      }
+
+      // CARD / YuKassa
       const result = await createDepositAction(normalizedAmount);
       if (result.error || !result.confirmationUrl) {
         setError(result.error ?? "Не удалось создать платёж");
         return;
       }
-
       window.location.href = result.confirmationUrl;
     });
   }
+
+  const depositButtonLabel = isLoading
+    ? depositMethod === "INVOICE"
+      ? "Формируем счёт..."
+      : depositMethod === "SBP_OZON"
+        ? "Создаём платёж СБП..."
+        : "Создаём платёж..."
+    : depositMethod === "INVOICE"
+      ? "Скачать счёт PDF"
+      : depositMethod === "SBP_OZON"
+        ? "Получить QR-код СБП"
+        : "Перейти к оплате";
 
   return (
     <div className="space-y-6">
@@ -89,6 +183,7 @@ export default function ClientWalletClient({ balance, transactions, payments, pa
         </div>
       ) : null}
 
+      {/* ── Баланс ────────────────────────────────────────────────────────── */}
       <section className="rounded-3xl border border-dash-border bg-dash-card p-6 sm:p-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="min-w-0">
@@ -98,7 +193,6 @@ export default function ClientWalletClient({ balance, transactions, payments, pa
               Средства используются для запуска опросов и резервируются при отправке опроса на модерацию.
             </p>
           </div>
-
           <button
             type="button"
             onClick={() => setShowDepositModal(true)}
@@ -109,6 +203,93 @@ export default function ClientWalletClient({ balance, transactions, payments, pa
         </div>
       </section>
 
+      {/* ── Ozon QR modal ─────────────────────────────────────────────────── */}
+      <Modal
+        open={!!ozonPending}
+        title="Оплата по СБП"
+        onClose={() => { if (ozonCheckStatus !== "confirmed") resetOzon(); }}
+        footer={
+          ozonCheckStatus === "confirmed" || ozonCheckStatus === "failed" ? (
+            <button
+              type="button"
+              onClick={() => { resetOzon(); window.location.reload(); }}
+              className="ml-auto rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-mid"
+            >
+              Обновить баланс
+            </button>
+          ) : (
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-xs text-dash-muted">
+                {ozonCheckStatus === "checking" ? "Проверяем статус…" : "Ожидание оплаты"}
+              </span>
+              <button
+                type="button"
+                onClick={() => ozonPending && void checkOzonStatus(ozonPending.ozonPaymentId)}
+                disabled={ozonCheckStatus === "checking"}
+                className="rounded-xl border border-dash-border bg-dash-bg px-4 py-2.5 text-sm font-semibold text-dash-heading hover:bg-dash-card disabled:opacity-50"
+              >
+                Проверить статус
+              </button>
+            </div>
+          )
+        }
+      >
+        {ozonPending && (
+          <div className="flex flex-col items-center gap-4 py-2 text-center">
+            {ozonCheckStatus === "confirmed" ? (
+              <>
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-500/15">
+                  <svg className="h-7 w-7 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <p className="font-semibold text-dash-heading">Платёж подтверждён!</p>
+                <p className="text-sm text-dash-muted">{formatRub(ozonPending.amount)} зачислено на баланс.</p>
+              </>
+            ) : ozonCheckStatus === "failed" ? (
+              <>
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-500/15">
+                  <svg className="h-7 w-7 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </div>
+                <p className="font-semibold text-dash-heading">Платёж отклонён</p>
+                <p className="text-sm text-dash-muted">Попробуйте ещё раз или выберите другой способ оплаты.</p>
+              </>
+            ) : (
+              <>
+                <p className="text-sm text-dash-muted">
+                  Отсканируйте QR в приложении вашего банка или нажмите кнопку&nbsp;«Открыть в&nbsp;банке»
+                </p>
+                <div className="rounded-2xl border border-dash-border bg-white p-3">
+                  <QRCodeSVG
+                    value={ozonPending.sbpPayload}
+                    size={200}
+                    bgColor="#ffffff"
+                    fgColor="#1a1a2e"
+                    level="M"
+                  />
+                </div>
+                <p className="text-[13px] font-semibold text-dash-heading">Сумма: {formatRub(ozonPending.amount)}</p>
+                <a
+                  href={ozonPending.sbpPayload}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center rounded-xl border border-brand/30 bg-brand/10 px-5 py-2.5 text-sm font-semibold text-brand hover:bg-brand/20 transition-colors"
+                >
+                  Открыть в банке
+                </a>
+                <CopyButton text={ozonPending.sbpPayload} />
+                <p className="max-w-xs text-xs text-dash-muted">
+                  Страница обновится автоматически после подтверждения оплаты. Ссылка действительна 10 минут.
+                </p>
+              </>
+            )}
+          </div>
+        )}
+      </Modal>
+
+      {/* ── Таблицы транзакций ─────────────────────────────────────────────── */}
       <div className="grid gap-6 xl:grid-cols-2">
         <div className="rounded-2xl border border-dash-border bg-dash-card p-6">
           <div className="text-sm font-semibold text-dash-heading">История транзакций</div>
@@ -178,14 +359,12 @@ export default function ClientWalletClient({ balance, transactions, payments, pa
         </div>
       </div>
 
+      {/* ── Deposit modal ─────────────────────────────────────────────────── */}
       <Modal
         open={showDepositModal}
         title="Пополнение баланса"
         onClose={() => {
-          if (!isLoading) {
-            setShowDepositModal(false);
-            setError(null);
-          }
+          if (!isLoading) { setShowDepositModal(false); setError(null); }
         }}
         footer={
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -196,13 +375,7 @@ export default function ClientWalletClient({ balance, transactions, payments, pa
               disabled={isLoading}
               className="rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-mid disabled:opacity-60"
             >
-              {isLoading
-                ? depositMethod === "INVOICE"
-                  ? "Формируем счёт..."
-                  : "Создаём платёж..."
-                : depositMethod === "INVOICE"
-                  ? "Скачать счёт PDF"
-                  : "Перейти к оплате"}
+              {depositButtonLabel}
             </button>
           </div>
         }
@@ -233,39 +406,44 @@ export default function ClientWalletClient({ balance, transactions, payments, pa
             ))}
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-3">
             <button
               type="button"
               onClick={() => setDepositMethod("CARD")}
               className={`rounded-2xl border p-4 text-left transition-colors ${
-                depositMethod === "CARD"
-                  ? "border-brand/30 bg-brand/10"
-                  : "border-dash-border bg-dash-bg hover:border-brand/20"
+                depositMethod === "CARD" ? "border-brand/30 bg-brand/10" : "border-dash-border bg-dash-bg hover:border-brand/20"
               }`}
             >
-              <div className="text-sm font-semibold text-dash-heading">Банковская карта / ЮKassa</div>
-              <div className="mt-2 text-sm text-dash-muted">
-                Моментальное пополнение через карту или СБП.
-              </div>
+              <div className="text-sm font-semibold text-dash-heading">Банковская карта</div>
+              <div className="mt-2 text-sm text-dash-muted">ЮKassa — карта, СБП, кошелёк.</div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setDepositMethod("SBP_OZON")}
+              className={`rounded-2xl border p-4 text-left transition-colors ${
+                depositMethod === "SBP_OZON" ? "border-brand/30 bg-brand/10" : "border-dash-border bg-dash-bg hover:border-brand/20"
+              }`}
+            >
+              <div className="text-sm font-semibold text-dash-heading">СБП через Ozon</div>
+              <div className="mt-2 text-sm text-dash-muted">QR-код, оплата в приложении банка.</div>
             </button>
 
             <button
               type="button"
               onClick={() => setDepositMethod("INVOICE")}
               className={`rounded-2xl border p-4 text-left transition-colors ${
-                depositMethod === "INVOICE"
-                  ? "border-brand/30 bg-brand/10"
-                  : "border-dash-border bg-dash-bg hover:border-brand/20"
+                depositMethod === "INVOICE" ? "border-brand/30 bg-brand/10" : "border-dash-border bg-dash-bg hover:border-brand/20"
               }`}
             >
               <div className="text-sm font-semibold text-dash-heading">Безналичный расчёт</div>
-              <div className="mt-2 text-sm text-dash-muted">
-                Сформируем счёт PDF для оплаты от юрлица или ИП по реквизитам из настроек.
-              </div>
+              <div className="mt-2 text-sm text-dash-muted">Счёт PDF для юрлица или ИП.</div>
             </button>
           </div>
 
-          {error ? <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-500">{error}</div> : null}
+          {error ? (
+            <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-500">{error}</div>
+          ) : null}
         </div>
       </Modal>
     </div>

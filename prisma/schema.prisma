@@ -376,6 +376,8 @@ model Payment {
   id              String        @id @default(cuid())
   userId          String
   yukassaId       String?       @unique
+  ozonExtId       String?       @unique
+  ozonPaymentId   String?
   type            PaymentType
   amount          Decimal       @db.Decimal(10, 2)
   status          PaymentStatus @default(PENDING)

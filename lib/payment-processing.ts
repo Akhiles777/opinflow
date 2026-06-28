@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { getDepositPaymentStatus, getPayoutStatus } from "@/lib/yukassa";
 import { getMozenPayoutStatus, mapMozenStatus } from "@/lib/mozen";
+import { getOzonPaymentStatus, isOzonPaymentConfirmed, isOzonPaymentFailed } from "@/lib/ozon-acquiring";
 import { Prisma } from "@prisma/client";
 import { notify } from "@/lib/notifications";
 
@@ -78,39 +79,68 @@ export async function creditDepositPaymentByYukassaId(yukassaId: string) {
   return creditDepositPayment(payment.id);
 }
 
+export async function creditDepositPaymentByOzonExtId(ozonExtId: string) {
+  const payment = await prisma.payment.findUnique({
+    where: { ozonExtId },
+    select: { id: true, status: true },
+  });
+
+  if (!payment || payment.status === "SUCCEEDED") {
+    return false;
+  }
+
+  return creditDepositPayment(payment.id);
+}
+
 export async function syncWaitingDepositPayments(userId: string) {
   const payments = await prisma.payment.findMany({
     where: {
       userId,
       type: "DEPOSIT",
       status: "WAITING",
-      yukassaId: { not: null },
     },
     orderBy: { createdAt: "desc" },
-    take: 10,
-    select: { id: true, yukassaId: true },
+    take: 20,
+    select: { id: true, yukassaId: true, ozonExtId: true, ozonPaymentId: true },
   });
 
   for (const payment of payments) {
-    if (!payment.yukassaId) {
+    // ── YuKassa ──────────────────────────────────────────────────────────────
+    if (payment.yukassaId) {
+      try {
+        const remote = await getDepositPaymentStatus(payment.yukassaId);
+        if (remote.status === "succeeded" && remote.paid === true) {
+          await creditDepositPayment(payment.id);
+        }
+        if (remote.status === "canceled") {
+          await prisma.payment.updateMany({
+            where: { id: payment.id, status: { not: "SUCCEEDED" } },
+            data: { status: "CANCELED" },
+          });
+        }
+      } catch (error) {
+        console.error("[payments][deposit-sync-yukassa]", error);
+      }
       continue;
     }
 
-    try {
-      const remote = await getDepositPaymentStatus(payment.yukassaId);
+    // ── Ozon Acquiring ───────────────────────────────────────────────────────
+    if (payment.ozonPaymentId) {
+      try {
+        const remote = await getOzonPaymentStatus(payment.ozonPaymentId);
+        if ("error" in remote) continue;
 
-      if (remote.status === "succeeded" && remote.paid === true) {
-        await creditDepositPayment(payment.id);
+        if (isOzonPaymentConfirmed(remote.operations)) {
+          await creditDepositPayment(payment.id);
+        } else if (isOzonPaymentFailed(remote.operations)) {
+          await prisma.payment.updateMany({
+            where: { id: payment.id, status: { not: "SUCCEEDED" } },
+            data: { status: "CANCELED" },
+          });
+        }
+      } catch (error) {
+        console.error("[payments][deposit-sync-ozon]", error);
       }
-
-      if (remote.status === "canceled") {
-        await prisma.payment.updateMany({
-          where: { id: payment.id, status: { not: "SUCCEEDED" } },
-          data: { status: "CANCELED" },
-        });
-      }
-    } catch (error) {
-      console.error("[payments][deposit-sync-error]", error);
     }
   }
 }

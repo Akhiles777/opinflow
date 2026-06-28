@@ -5,6 +5,7 @@ import EmptyState from "@/components/dashboard/EmptyState";
 import DeleteSurveyButton from "@/components/dashboard/DeleteSurveyButton";
 import { formatRub, getClientOverviewData, mapSurveyStatus } from "@/lib/dashboard-data";
 import { requireRole } from "@/lib/auth-utils";
+import TurnkeyOrderModal from "@/components/dashboard/TurnkeyOrderModal";
 
 const STAT_ICONS = [
   "/cabinets/client/Icons_money 24px.svg",
@@ -31,15 +32,25 @@ export default async function ClientOverviewPage() {
         title="Обзор"
         subtitle="Сводка по опросам и эффективности кампаний."
         right={
-          <a
+          
+          <div className="flex  sm:justify-between">
+            <div className="mr-5"> <TurnkeyOrderModal /> </div>
+            <a
             href="/client/surveys/create"
             className="inline-flex items-center gap-2 rounded-xl bg-[#7244F5] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_6px_18px_rgba(114,68,245,0.45)] transition-all hover:bg-[#6238DC] hover:shadow-[0_6px_18px_rgba(114,68,245,0.6)]"
           >
             <Image src="/icons/add-square.svg" width={18} height={18} alt="" />
             Создать опрос
+
           </a>
+             </div>   
+
         }
       />
+
+          <div >
+           
+          </div>
 
       {/* Stat cards */}
       <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">

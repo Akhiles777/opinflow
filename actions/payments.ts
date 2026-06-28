@@ -8,6 +8,7 @@ import { notify, notifyAdmin } from "@/lib/notifications";
 import { assertPayoutRequisitesValid, normalizeWithdrawalRequisitesForStorage } from "@/lib/yukassa-payout-requisites";
 import { YUKASSA_PAYOUT_HTTP_403_RU, YUKASSA_SBP_CONTRACT_FORBIDDEN_RESPONDENT_RU } from "@/lib/yukassa-payout-copy";
 import { createDepositPayment, createPayout, fetchSbpBanksForPayouts } from "@/lib/yukassa";
+import { createOzonPayment, getOzonPaymentStatus, isOzonPaymentConfirmed, isOzonPaymentFailed } from "@/lib/ozon-acquiring";
 import { createMozenPayout, getMozenPayoutStatus, mapMozenStatus } from "@/lib/mozen";
 import { syncProcessingWithdrawals, completeWithdrawalRequest, failWithdrawalRequest } from "@/lib/payment-processing";
 import { getPlatformSettings } from "@/lib/platform-settings";
@@ -494,4 +495,103 @@ export async function createCorporateInvoiceAction(amount: number) {
   }
 
   return { downloadUrl: `/api/invoices/draft?amount=${Math.round(amount)}`, error: null };
+}
+
+export async function createOzonDepositAction(amount: number): Promise<
+  { success: true; sbpPayload: string; ozonPaymentId: string; ozonExtId: string; amount: number } | { error: string }
+> {
+  const session = await requireRole("CLIENT");
+
+  if (amount < 100 || amount > 500000) {
+    return { error: "Сумма пополнения должна быть от 100 до 500 000 ₽" };
+  }
+
+  const extId = `ozon-deposit-${session.user.id}-${Date.now()}`;
+
+  const baseAppUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
+  const redirectUrl =
+    process.env.OZON_ACQUIRING_RETURN_URL ?? `${baseAppUrl}/client/wallet?payment=success`;
+  const notificationUrl =
+    process.env.OZON_ACQUIRING_NOTIFICATION_URL ?? `${baseAppUrl}/api/payments/ozon-webhook`;
+
+  try {
+    const result = await createOzonPayment({
+      extId,
+      amountRub: amount,
+      redirectUrl,
+      notificationUrl,
+      ttlSeconds: 600,
+    });
+
+    if ("error" in result) {
+      if (result.error.includes("OZON_ACQUIRING_NOT_CONFIGURED")) {
+        return { error: "Оплата через СБП (Ozon) не настроена." };
+      }
+      return { error: "Не удалось создать платёж СБП. Попробуйте другой способ оплаты." };
+    }
+
+    await prisma.payment.create({
+      data: {
+        userId: session.user.id,
+        ozonExtId: extId,
+        ozonPaymentId: result.paymentId,
+        type: "DEPOSIT",
+        amount: new Prisma.Decimal(amount),
+        status: "WAITING",
+        description: `Пополнение баланса на ${amount} ₽ через Ozon СБП`,
+        metadata: { source: "ozon-sbp" },
+      },
+    });
+
+    return {
+      success: true,
+      sbpPayload: result.sbpPayload,
+      ozonPaymentId: result.paymentId,
+      ozonExtId: extId,
+      amount,
+    };
+  } catch (error) {
+    console.error("[payments][ozon-deposit-error]", error);
+    return { error: "Не удалось создать платёж. Попробуйте ещё раз." };
+  }
+}
+
+export async function checkOzonDepositAction(
+  ozonPaymentId: string,
+): Promise<{ status: "confirmed" | "failed" | "pending" } | { error: string }> {
+  const session = await requireRole("CLIENT");
+
+  const record = await prisma.payment.findFirst({
+    where: { ozonPaymentId, userId: session.user.id },
+    select: { id: true, status: true, ozonExtId: true },
+  });
+
+  if (!record) return { error: "Платёж не найден" };
+
+  if (record.status === "SUCCEEDED") return { status: "confirmed" };
+  if (record.status === "CANCELED") return { status: "failed" };
+
+  try {
+    const remote = await getOzonPaymentStatus(ozonPaymentId);
+    if ("error" in remote) return { status: "pending" };
+
+    if (isOzonPaymentConfirmed(remote.operations)) {
+      // Credit via direct call (webhook may arrive later too — idempotent)
+      const { creditDepositPaymentByOzonExtId } = await import("@/lib/payment-processing");
+      if (record.ozonExtId) await creditDepositPaymentByOzonExtId(record.ozonExtId);
+      return { status: "confirmed" };
+    }
+
+    if (isOzonPaymentFailed(remote.operations)) {
+      await prisma.payment.updateMany({
+        where: { id: record.id, status: { not: "SUCCEEDED" } },
+        data: { status: "CANCELED" },
+      });
+      return { status: "failed" };
+    }
+
+    return { status: "pending" };
+  } catch {
+    return { status: "pending" };
+  }
 }
