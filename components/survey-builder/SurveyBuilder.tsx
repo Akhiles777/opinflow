@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { createSurveyAction } from "@/actions/surveys";
+import { createSurveyAction, saveDraftAction, deleteSurveyAction } from "@/actions/surveys";
 import StepAudience from "@/components/survey-builder/StepAudience";
 import StepBasic from "@/components/survey-builder/StepBasic";
 import StepBudget from "@/components/survey-builder/StepBudget";
@@ -16,6 +16,9 @@ type Props = {
   minReward: number;
   userName?: string | null;
   userEmail?: string | null;
+  initialDraftId?: string;
+  initialDraftStep?: number;
+  initialDraftData?: SurveyDraft;
 };
 
 const STEP_TITLES = ["Основное", "Вопросы", "Аудитория", "Бюджет"];
@@ -64,14 +67,26 @@ function estimateReach(draft: SurveyDraft) {
   return Math.max(500, Math.round(reach));
 }
 
-export default function SurveyBuilder({ balance, commissionRate, minReward, userName, userEmail }: Props) {
+type ServerSaveStatus = "idle" | "saving" | "saved" | "error";
+
+export default function SurveyBuilder({ balance, commissionRate, minReward, userName, userEmail, initialDraftId, initialDraftStep, initialDraftData }: Props) {
   const router = useRouter();
-  const [step, setStep] = useState(1);
-  const [draft, setDraft] = useState<SurveyDraft>(EMPTY_DRAFT);
+  const [step, setStep] = useState(initialDraftStep ?? 1);
+  const [draft, setDraft] = useState<SurveyDraft>(initialDraftData ?? EMPTY_DRAFT);
   const [error, setError] = useState<string | null>(null);
-  const [draftStatus, setDraftStatus] = useState<string | null>(null);
-  const [hydrated, setHydrated] = useState(false);
+  const [draftStatus, setDraftStatus] = useState<string | null>(initialDraftData ? "Черновик восстановлен" : null);
+  const [hydrated, setHydrated] = useState(!!initialDraftData);
   const [isSubmitting, startTransition] = useTransition();
+
+  // Server-side draft tracking
+  const [serverDraftId, setServerDraftId] = useState<string | null>(initialDraftId ?? null);
+  const [serverSaveStatus, setServerSaveStatus] = useState<ServerSaveStatus>("idle");
+  const isDirtyRef = useRef(false);
+  const draftRef = useRef(draft);
+  const stepRef = useRef(step);
+
+  useEffect(() => { draftRef.current = draft; }, [draft]);
+  useEffect(() => { stepRef.current = step; }, [step]);
 
   const totalBase = draft.maxResponses * draft.reward;
   const commission = Math.round(totalBase * commissionRate);
@@ -82,8 +97,9 @@ export default function SurveyBuilder({ balance, commissionRate, minReward, user
   const initials = (userName || userEmail || "UX").slice(0, 2).toUpperCase();
   const displayName = userName || (userEmail ? userEmail.split("@")[0] : "UX");
 
-  // Restore draft from localStorage
+  // Restore draft from localStorage (only if no server draft was loaded)
   useEffect(() => {
+    if (initialDraftData) return; // server draft takes priority
     try {
       const raw = window.localStorage.getItem(DRAFT_KEY);
       if (!raw) { setHydrated(true); return; }
@@ -93,21 +109,65 @@ export default function SurveyBuilder({ balance, commissionRate, minReward, user
       if (restored) { setDraft(restored); setStep(restoredStep); setDraftStatus("Черновик восстановлен"); }
     } catch { window.localStorage.removeItem(DRAFT_KEY); }
     finally { setHydrated(true); }
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Auto-save draft
+  // Local autosave (300ms debounce)
   useEffect(() => {
     if (!hydrated) return;
     const timer = window.setTimeout(() => {
       window.localStorage.setItem(DRAFT_KEY, JSON.stringify({ step, draft } satisfies PersistedDraft));
       setDraftStatus((cur) => cur === "Черновик восстановлен" ? cur : "Черновик сохранён");
+      isDirtyRef.current = true;
     }, 300);
     return () => window.clearTimeout(timer);
   }, [draft, step, hydrated]);
 
+  // Server autosave helper
+  const doServerSave = useCallback(async (currentDraft: SurveyDraft, currentStep: number) => {
+    setServerSaveStatus("saving");
+    try {
+      const result = await saveDraftAction(currentDraft, serverDraftId ?? undefined, currentStep);
+      if ("success" in result) {
+        setServerDraftId(result.surveyId ?? null);
+        isDirtyRef.current = false;
+        setServerSaveStatus("saved");
+        setTimeout(() => setServerSaveStatus((s) => s === "saved" ? "idle" : s), 3000);
+      } else {
+        setServerSaveStatus("error");
+        setTimeout(() => setServerSaveStatus((s) => s === "error" ? "idle" : s), 5000);
+      }
+    } catch {
+      setServerSaveStatus("error");
+      setTimeout(() => setServerSaveStatus((s) => s === "error" ? "idle" : s), 5000);
+    }
+  }, [serverDraftId]);
+
+  // Server autosave every 30 seconds if dirty
+  useEffect(() => {
+    if (!hydrated) return;
+    const interval = setInterval(() => {
+      if (isDirtyRef.current) {
+        void doServerSave(draftRef.current, stepRef.current);
+      }
+    }, 30_000);
+    return () => clearInterval(interval);
+  }, [hydrated, doServerSave]);
+
+  // Fire-and-forget save on page unload
+  useEffect(() => {
+    function handleUnload() {
+      if (isDirtyRef.current) {
+        void saveDraftAction(draftRef.current, serverDraftId ?? undefined, stepRef.current);
+      }
+    }
+    window.addEventListener("beforeunload", handleUnload);
+    return () => window.removeEventListener("beforeunload", handleUnload);
+  }, [serverDraftId]);
+
   function updateDraft(patch: Partial<SurveyDraft>) {
     setDraft((prev) => ({ ...prev, ...patch }));
     setError(null);
+    isDirtyRef.current = true;
   }
 
   function clearDraft() {
@@ -116,6 +176,8 @@ export default function SurveyBuilder({ balance, commissionRate, minReward, user
     setStep(1);
     setError(null);
     setDraftStatus("Черновик очищен");
+    setServerDraftId(null);
+    isDirtyRef.current = false;
   }
 
   function validateStep(s: number) {
@@ -150,7 +212,9 @@ export default function SurveyBuilder({ balance, commissionRate, minReward, user
     const err = validateStep(step);
     if (err) { setError(err); return; }
     setError(null);
-    setStep((p) => Math.min(p + 1, 4));
+    const nextStep = Math.min(step + 1, 4);
+    setStep(nextStep);
+    void doServerSave(draft, nextStep);
   }
 
   function handleSubmit() {
@@ -161,6 +225,10 @@ export default function SurveyBuilder({ balance, commissionRate, minReward, user
         const result = await createSurveyAction(draft);
         if (result.error || !result.success) { setError(result.error ?? "Не удалось создать опрос"); return; }
         window.localStorage.removeItem(DRAFT_KEY);
+        // Delete server draft after successful publish
+        if (serverDraftId) {
+          void deleteSurveyAction(serverDraftId);
+        }
         router.push(`/client/surveys/${result.surveyId}`);
       } catch { setError("Не удалось создать опрос. Попробуйте ещё раз."); }
     });
@@ -178,13 +246,24 @@ export default function SurveyBuilder({ balance, commissionRate, minReward, user
             <span className="text-[18px] font-bold text-[#7244F5]">{step}/4</span>
             <span className="ml-1 text-[18px] font-semibold text-dash-heading">{STEP_TITLES[step - 1]}</span>
           </div>
-          <button
-            type="button"
-            onClick={clearDraft}
-            className="rounded-xl border border-dash-border bg-dash-bg px-4 py-2 text-[13px] font-semibold text-dash-muted transition-colors hover:text-dash-heading"
-          >
-            Очистить черновик
-          </button>
+          <div className="flex items-center gap-3">
+            {serverSaveStatus === "saving" && (
+              <span className="text-[12px] text-dash-muted">Сохраняется…</span>
+            )}
+            {serverSaveStatus === "saved" && (
+              <span className="text-[12px] text-green-500">Сохранено</span>
+            )}
+            {serverSaveStatus === "error" && (
+              <span className="text-[12px] text-red-400">Не удалось сохранить</span>
+            )}
+            <button
+              type="button"
+              onClick={clearDraft}
+              className="rounded-xl border border-dash-border bg-dash-bg px-4 py-2 text-[13px] font-semibold text-dash-muted transition-colors hover:text-dash-heading"
+            >
+              Очистить черновик
+            </button>
+          </div>
         </div>
 
         {/* Step content */}

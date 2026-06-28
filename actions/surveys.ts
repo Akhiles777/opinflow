@@ -840,7 +840,7 @@ export async function createComplaintAction(params: {
   return { success: true };
 }
 
-export async function saveDraftAction(draft: SurveyDraft, surveyId?: string) {
+export async function saveDraftAction(draft: SurveyDraft, surveyId?: string, step?: number) {
   const session = await requireRole("CLIENT");
 
   const questions = draft.questions.map((question, index) => ({
@@ -888,6 +888,7 @@ export async function saveDraftAction(draft: SurveyDraft, surveyId?: string) {
           targetMaritalStatuses: draft.targetMaritalStatuses,
           startsAt: toDate(draft.startsAt),
           endsAt: toDate(draft.endsAt),
+          ...(step !== undefined && { draftStep: step }),
         },
       });
 
@@ -926,6 +927,7 @@ export async function saveDraftAction(draft: SurveyDraft, surveyId?: string) {
         targetMaritalStatuses: draft.targetMaritalStatuses,
         startsAt: toDate(draft.startsAt),
         endsAt: toDate(draft.endsAt),
+        draftStep: step ?? 1,
       },
     });
 
@@ -990,7 +992,7 @@ export async function deleteSurveyAction(surveyId: string) {
 
 export async function loadSurveyAsDraftAction(
   surveyId: string
-): Promise<{ success: true; draft: SurveyDraft } | { error: string }> {
+): Promise<{ success: true; draft: SurveyDraft; step: number } | { error: string }> {
   const session = await requireRole("CLIENT");
 
   const survey = await prisma.survey.findFirst({
@@ -1003,7 +1005,7 @@ export async function loadSurveyAsDraftAction(
   if (!survey) return { error: "Черновик не найден" };
 
   const draft: SurveyDraft = {
-    title: survey.title,
+    title: survey.title === "Без названия" ? "" : survey.title,
     description: survey.description ?? "",
     category: survey.category ?? "",
     questions: survey.questions.map((q) => mapSurveyQuestion(q)),
@@ -1025,5 +1027,5 @@ export async function loadSurveyAsDraftAction(
       : new Date(Date.now() + 7 * 86_400_000).toISOString().split("T")[0],
   };
 
-  return { success: true, draft };
+  return { success: true, draft, step: survey.draftStep ?? 1 };
 }

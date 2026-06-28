@@ -326,6 +326,7 @@ export async function getClientSurveysData(userId: string) {
   return surveys.map((survey) => ({
     id: survey.id,
     title: survey.title,
+    isDraft: survey.status === "DRAFT",
     answers: survey._count.sessions,
     progress: survey.maxResponses ? `${survey._count.sessions} / ${survey.maxResponses}` : `${survey._count.sessions} ответов`,
     budget: survey.budget ? Number(survey.budget) : "—",

@@ -1,6 +1,7 @@
 import * as React from "react";
 import PageHeader from "@/components/dashboard/PageHeader";
 import OrderExpertButton from "@/components/dashboard/OrderExpertButton";
+import TurnkeyOrderModal from "@/components/dashboard/TurnkeyOrderModal";
 import DataTable, { Column } from "@/components/dashboard/DataTable";
 import Badge from "@/components/dashboard/Badge";
 import EmptyState from "@/components/dashboard/EmptyState";
@@ -26,12 +27,20 @@ export default async function ClientSurveysPage() {
     {
       key: "actions",
       header: "Действия",
-      cell: (r) => (
-        <div className="flex flex-wrap gap-3 items-center">
-          <a className="text-sm font-semibold text-brand hover:underline" href={`/client/surveys/${r.id}`}>Статистика</a>
-          <OrderExpertButton surveyId={r.id} answers={r.answers} expertReview={r.expertReview} />
-        </div>
-      ),
+      cell: (r) =>
+        r.isDraft ? (
+          <a
+            className="inline-flex items-center rounded-lg bg-brand/10 px-3 py-1.5 text-sm font-semibold text-brand hover:bg-brand/20 transition-colors"
+            href={`/client/surveys/create?draft=${r.id}`}
+          >
+            Продолжить заполнение
+          </a>
+        ) : (
+          <div className="flex flex-wrap gap-3 items-center">
+            <a className="text-sm font-semibold text-brand hover:underline" href={`/client/surveys/${r.id}`}>Статистика</a>
+            <OrderExpertButton surveyId={r.id} answers={r.answers} expertReview={r.expertReview} />
+          </div>
+        ),
     },
   ];
 
@@ -41,12 +50,15 @@ export default async function ClientSurveysPage() {
         title="Мои опросы"
         subtitle="Реальные опросы заказчика, статусы и количество ответов."
         right={
-          <a
-            href="/client/surveys/create"
-            className="inline-flex items-center justify-center rounded-xl bg-brand px-6 py-3 text-sm font-semibold text-white hover:bg-brand-mid transition-colors"
-          >
-            Создать опрос
-          </a>
+          <div className="flex flex-wrap items-center gap-3">
+            <TurnkeyOrderModal />
+            <a
+              href="/client/surveys/create"
+              className="inline-flex items-center justify-center rounded-xl bg-brand px-6 py-3 text-sm font-semibold text-white hover:bg-brand-mid transition-colors"
+            >
+              Создать опрос
+            </a>
+          </div>
         }
       />
 

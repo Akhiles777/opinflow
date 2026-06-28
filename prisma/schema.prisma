@@ -222,6 +222,7 @@ model Survey {
   aiPrompt        String?
   aiIndustry      String?
   aiTargetAudience String?
+  draftStep       Int?
 
   creator    User             @relation("SurveyCreator", fields: [creatorId], references: [id])
   responses  SurveyResponse[]

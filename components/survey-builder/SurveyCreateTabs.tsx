@@ -7,7 +7,7 @@ import AIDraftReview from "@/components/survey-builder/AIDraftReview";
 import AISurveySettings from "@/components/survey-builder/AISurveySettings";
 import type { GeneratedSurveyDraft, AiQuestionType, TemplateRow } from "@/actions/ai-survey-generation";
 import { getMyTemplatesAction, deleteTemplateAction } from "@/actions/ai-survey-generation";
-import type { Question } from "@/types/survey";
+import type { Question, SurveyDraft } from "@/types/survey";
 import { EMPTY_DRAFT } from "@/types/survey";
 
 const DRAFT_KEY = "opinflow:client-survey-draft:v1";
@@ -21,6 +21,9 @@ type Props = {
   minReward: number;
   userName?: string | null;
   userEmail?: string | null;
+  initialDraftId?: string;
+  initialDraftStep?: number;
+  initialDraftData?: SurveyDraft;
 };
 
 function templateToGeneratedDraft(name: string, questions: TemplateRow["questions"]): GeneratedSurveyDraft {
@@ -39,7 +42,7 @@ function templateToGeneratedDraft(name: string, questions: TemplateRow["question
   };
 }
 
-export default function SurveyCreateTabs({ balance, commissionRate, minReward, userName, userEmail }: Props) {
+export default function SurveyCreateTabs({ balance, commissionRate, minReward, userName, userEmail, initialDraftId, initialDraftStep, initialDraftData }: Props) {
   const [tab, setTab] = useState<Tab>("manual");
   const [aiStep, setAiStep] = useState<AIStep>("form");
   const [aiDraft, setAiDraft] = useState<GeneratedSurveyDraft | null>(null);
@@ -168,6 +171,9 @@ export default function SurveyCreateTabs({ balance, commissionRate, minReward, u
           minReward={minReward}
           userName={userName}
           userEmail={userEmail}
+          initialDraftId={initialDraftId}
+          initialDraftStep={initialDraftStep}
+          initialDraftData={initialDraftData}
         />
       )}
 
