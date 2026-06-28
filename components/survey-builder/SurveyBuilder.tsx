@@ -176,8 +176,11 @@ export default function SurveyBuilder({ balance, commissionRate, minReward, user
     setStep(1);
     setError(null);
     setDraftStatus("Черновик очищен");
-    setServerDraftId(null);
     isDirtyRef.current = false;
+    if (serverDraftId) {
+      void deleteSurveyAction(serverDraftId);
+      setServerDraftId(null);
+    }
   }
 
   function validateStep(s: number) {
@@ -285,7 +288,12 @@ export default function SurveyBuilder({ balance, commissionRate, minReward, user
         <div className="flex items-center justify-between border-t border-dash-border px-6 py-4">
           <button
             type="button"
-            onClick={() => { setError(null); setStep((p) => Math.max(p - 1, 1)); }}
+            onClick={() => {
+              setError(null);
+              const prevStep = Math.max(step - 1, 1);
+              setStep(prevStep);
+              if (prevStep !== step) void doServerSave(draft, prevStep);
+            }}
             disabled={step === 1}
             className="rounded-xl border border-dash-border bg-dash-card px-5 py-2.5 text-[13px] font-semibold text-dash-heading transition-colors hover:bg-dash-bg disabled:pointer-events-none disabled:opacity-40"
           >
