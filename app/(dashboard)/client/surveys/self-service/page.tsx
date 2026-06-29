@@ -7,10 +7,12 @@ import PageHeader from "@/components/dashboard/PageHeader";
 const SELF_SERVICE_FREE_LIMIT = 5;
 
 const STATUS_LABELS: Record<string, string> = {
-  ACTIVE: "Активный",
-  COMPLETED: "Завершён",
+  ACTIVE: "Активна",
+  COMPLETED: "Завершена",
   DRAFT: "Черновик",
   PAUSED: "Пауза",
+  PENDING_MODERATION: "На модерации",
+  REJECTED: "Отклонена",
 };
 
 type BadgeVariant = "active" | "pending" | "rejected" | "draft" | "moderation" | "completed";
@@ -19,6 +21,8 @@ function statusBadge(status: string): BadgeVariant {
   if (status === "ACTIVE") return "active";
   if (status === "COMPLETED") return "completed";
   if (status === "DRAFT") return "draft";
+  if (status === "REJECTED") return "rejected";
+  if (status === "PENDING_MODERATION") return "moderation";
   return "pending";
 }
 

@@ -35,6 +35,7 @@ type Props = {
     adminNote: string | null;
     amount: number;
   } | null;
+  isSelfService?: boolean;
 };
 
 function sentimentColor(sentiment: "positive" | "negative" | "neutral") {
@@ -140,7 +141,7 @@ function SentimentDonut({
   );
 }
 
-export default function ClientSurveyAnalysis({ surveyId, analysis, quantitative, expertReview }: Props) {
+export default function ClientSurveyAnalysis({ surveyId, analysis, quantitative, expertReview, isSelfService }: Props) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isRunning, startRunTransition] = useTransition();
@@ -314,33 +315,41 @@ export default function ClientSurveyAnalysis({ surveyId, analysis, quantitative,
     );
   }
 
+  // For self-service: when analysis is not purchased yet — only show quantitative
+  if (isSelfService && !analysis) {
+    return <QuantitativeSection blocks={quantitative} />;
+  }
+
   if (!analysis || analysis.status === "PENDING" || analysis.status === "FAILED") {
     return (
       <div className="space-y-6">
         <QuantitativeSection blocks={quantitative} />
-        <div className="rounded-2xl border border-dash-border bg-dash-card p-6">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <div className="text-sm font-semibold text-dash-heading">ИИ-аналитика</div>
-              <div className="mt-2 text-sm text-dash-muted">
-                {analysis?.status === "FAILED"
-                  ? analysis.error || "Не удалось завершить ИИ-анализ."
-                  : "Запустите анализ открытых ответов: модель свяжет комментарии с графиками закрытых вопросов."}
+        {!isSelfService && (
+          <>
+            <div className="rounded-2xl border border-dash-border bg-dash-card p-6">
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <div className="text-sm font-semibold text-dash-heading">ИИ-аналитика</div>
+                  <div className="mt-2 text-sm text-dash-muted">
+                    {analysis?.status === "FAILED"
+                      ? analysis.error || "Не удалось завершить ИИ-анализ."
+                      : "Запустите анализ открытых ответов: модель свяжет комментарии с графиками закрытых вопросов."}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleRunAnalysis}
+                  disabled={isRunning}
+                  className="rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-mid disabled:opacity-60"
+                >
+                  {isRunning ? "Загрузка..." : analysis?.status === "FAILED" ? "Попробовать снова" : "Запустить ИИ-анализ"}
+                </button>
               </div>
+              {error ? <div className="mt-4 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-500">{error}</div> : null}
             </div>
-            <button
-              type="button"
-              onClick={handleRunAnalysis}
-              disabled={isRunning}
-              className="rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-mid disabled:opacity-60"
-            >
-              {isRunning ? "Загрузка..." : analysis?.status === "FAILED" ? "Попробовать снова" : "Запустить ИИ-анализ"}
-            </button>
-          </div>
-          {error ? <div className="mt-4 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-500">{error}</div> : null}
-        </div>
-
-        <ExpertReviewBlock />
+            <ExpertReviewBlock />
+          </>
+        )}
       </div>
     );
   }
@@ -368,7 +377,7 @@ export default function ClientSurveyAnalysis({ surveyId, analysis, quantitative,
           </div>
           {error ? <div className="mt-4 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-500">{error}</div> : null}
         </div>
-        <ExpertReviewBlock />
+        {!isSelfService && <ExpertReviewBlock />}
       </div>
     );
   }
@@ -391,14 +400,16 @@ export default function ClientSurveyAnalysis({ surveyId, analysis, quantitative,
             </div>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            <button
-              type="button"
-              onClick={handleRunAnalysis}
-              disabled={isRunning || isGeneratingPdf}
-              className="rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-mid disabled:opacity-60"
-            >
-              {isRunning ? "Загрузка..." : "Запустить анализ заново"}
-            </button>
+            {!isSelfService && (
+              <button
+                type="button"
+                onClick={handleRunAnalysis}
+                disabled={isRunning || isGeneratingPdf}
+                className="rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-mid disabled:opacity-60"
+              >
+                {isRunning ? "Загрузка..." : "Запустить анализ заново"}
+              </button>
+            )}
             <button
               type="button"
               onClick={handleGeneratePdf}
@@ -518,7 +529,7 @@ export default function ClientSurveyAnalysis({ surveyId, analysis, quantitative,
       </div>
       </div>
 
-      <ExpertReviewBlock />
+      {!isSelfService && <ExpertReviewBlock />}
     </div>
   );
 }

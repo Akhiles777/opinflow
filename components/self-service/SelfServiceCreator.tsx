@@ -10,7 +10,7 @@ import StepAudience from "@/components/survey-builder/StepAudience";
 import StepBudget from "@/components/survey-builder/StepBudget";
 import AIGenerationForm from "@/components/survey-builder/AIGenerationForm";
 import AIDraftReview from "@/components/survey-builder/AIDraftReview";
-import SelfServiceAISettings from "@/components/self-service/SelfServiceAISettings";
+import SelfServiceAISettings from "./SelfServiceAISettings";
 import { createSelfServiceSurveyAction } from "@/actions/self-service-surveys";
 import type { GeneratedSurveyDraft, AiQuestionType, TemplateRow } from "@/actions/ai-survey-generation";
 import { getMyTemplatesAction, deleteTemplateAction } from "@/actions/ai-survey-generation";

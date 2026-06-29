@@ -124,6 +124,7 @@ export default async function SelfServiceSurveyDetailPage({ params }: { params: 
         quantitative={quantBlocks}
         analysis={analysis}
         expertReview={null}
+        isSelfService={true}
       />
     </div>
   );
