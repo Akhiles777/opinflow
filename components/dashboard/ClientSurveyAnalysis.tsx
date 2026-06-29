@@ -214,18 +214,12 @@ export default function ClientSurveyAnalysis({ surveyId, analysis, quantitative,
           return;
         }
 
-        const blob = await response.blob();
-        const contentDisposition = response.headers.get("content-disposition");
-        const fileNameMatch = contentDisposition?.match(/filename=\"?([^\";]+)\"?/i);
-        const fileName = fileNameMatch?.[1] || `${surveyId}.pdf`;
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        URL.revokeObjectURL(url);
+        // iOS Safari doesn't support the `download` attribute on <a> tags and
+        // blocks programmatic .click() on blob URLs from async contexts.
+        // Navigate directly instead — Content-Disposition: attachment triggers
+        // the native download/share sheet on all platforms including iOS Safari.
+        void response.body?.cancel().catch(() => null);
+        window.location.href = `/api/reports/${surveyId}/download`;
       } catch {
         setError("Не удалось скачать PDF-отчёт");
       } finally {

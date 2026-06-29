@@ -88,9 +88,10 @@ const clientNav: NavSection[] = [
   {
     title: "Заказчик",
     items: [
-      { label: "Обзор",         href: "/client",                icon: "overview" },
-      { label: "Мои опросы",    href: "/client/surveys",        icon: "surveys" },
-      { label: "Создать опрос", href: "/client/surveys/create", icon: "create" },
+      { label: "Обзор",                  href: "/client",                             icon: "overview" },
+      { label: "Мои опросы", href: "/client/surveys",               icon: "surveys" },
+      { label: "Опрос для аудитории площадки",          href: "/client/surveys/create",              icon: "create" },
+      { label: "Анкета для своей базы",  href: "/client/surveys/self-service",        icon: "surveys" },
     ],
   },
   {

@@ -106,6 +106,7 @@ export async function getRespondentOverviewData(userId: string) {
       prisma.survey.findMany({
         where: {
           status: { in: ["ACTIVE", "PAUSED"] },
+          NOT: { surveyMode: "SELF_SERVICE" },
           AND: [
             { OR: [{ endsAt: null }, { endsAt: { gt: now } }] },
             { OR: [{ startsAt: null }, { startsAt: { lte: now } }] },
@@ -264,7 +265,7 @@ export async function getClientOverviewData(userId: string) {
       select: { balance: true },
     }),
     prisma.survey.findMany({
-      where: { creatorId: userId },
+      where: { creatorId: userId, NOT: { surveyMode: "SELF_SERVICE" } },
       orderBy: { createdAt: "desc" },
       select: {
         id: true,
@@ -301,7 +302,7 @@ export async function getClientOverviewData(userId: string) {
 
 export async function getClientSurveysData(userId: string) {
   const surveys = await prisma.survey.findMany({
-    where: { creatorId: userId },
+    where: { creatorId: userId, NOT: { surveyMode: "SELF_SERVICE" } },
     orderBy: { createdAt: "desc" },
     select: {
       id: true,

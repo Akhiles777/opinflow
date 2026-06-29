@@ -201,6 +201,8 @@ export async function getSurveyFeed(userId: string) {
     AND: [
       { OR: [{ endsAt: null }, { endsAt: { gt: now } }] },
       { OR: [{ startsAt: null }, { startsAt: { lte: now } }] },
+      // Exclude self-service surveys — they're only accessible via private link
+      { NOT: { surveyMode: "SELF_SERVICE" } },
     ],
   };
 

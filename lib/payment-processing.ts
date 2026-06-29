@@ -17,6 +17,7 @@ async function creditDepositPayment(paymentId: string) {
         id: true,
         userId: true,
         yukassaId: true,
+        ozonPaymentId: true,
         type: true,
         amount: true,
         status: true,
@@ -52,12 +53,18 @@ async function creditDepositPayment(paymentId: string) {
       },
     });
 
+    const description = payment.yukassaId
+      ? `Пополнение баланса через ЮKassa (${payment.yukassaId})`
+      : payment.ozonPaymentId
+        ? `Пополнение баланса через Ozon СБП (${payment.ozonPaymentId})`
+        : `Пополнение баланса (${payment.id})`;
+
     await tx.transaction.create({
       data: {
         walletId: wallet.id,
         type: "DEPOSIT",
         amount: payment.amount,
-        description: `Пополнение баланса через ЮKassa (${payment.yukassaId ?? payment.id})`,
+        description,
         status: "COMPLETED",
       },
     });

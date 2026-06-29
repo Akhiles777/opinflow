@@ -4,7 +4,6 @@ import { QRCodeSVG } from "qrcode.react";
 import Modal from "@/components/dashboard/Modal";
 import Badge from "@/components/dashboard/Badge";
 import {
-  createCorporateInvoiceAction,
   createDepositAction,
   createOzonDepositAction,
   checkOzonDepositAction,
@@ -133,18 +132,25 @@ export default function ClientWalletClient({ balance, transactions, payments, pa
 
   function handleDeposit() {
     setError(null);
-    startTransition(async () => {
-      if (depositMethod === "INVOICE") {
-        const result = (await createCorporateInvoiceAction(normalizedAmount)) as any;
-        if (result?.error || !result?.downloadUrl) {
-          setError(result?.error ?? "Не удалось сформировать счёт");
-          return;
-        }
-        window.open(result.downloadUrl, "_blank", "noopener,noreferrer");
-        setShowDepositModal(false);
+
+    // INVOICE: synchronous — no server action needed; the API route validates auth
+    // independently. Direct navigation works on all browsers including iOS Safari,
+    // which blocks window.open() called from async callback contexts.
+    if (depositMethod === "INVOICE") {
+      if (!normalizedAmount || normalizedAmount < 100) {
+        setError("Сумма счёта должна быть не меньше 100 ₽");
         return;
       }
+      if (normalizedAmount > 10_000_000) {
+        setError("Сумма не может превышать 10 000 000 ₽");
+        return;
+      }
+      setShowDepositModal(false);
+      window.location.href = `/api/invoices/draft?amount=${Math.round(normalizedAmount)}`;
+      return;
+    }
 
+    startTransition(async () => {
       if (depositMethod === "SBP_OZON") {
         const result = await createOzonDepositAction(normalizedAmount);
         if ("error" in result) { setError(result.error); return; }
@@ -163,17 +169,16 @@ export default function ClientWalletClient({ balance, transactions, payments, pa
     });
   }
 
-  const depositButtonLabel = isLoading
-    ? depositMethod === "INVOICE"
-      ? "Формируем счёт..."
-      : depositMethod === "SBP_OZON"
-        ? "Создаём платёж СБП..."
-        : "Создаём платёж..."
-    : depositMethod === "INVOICE"
+  const depositButtonLabel =
+    depositMethod === "INVOICE"
       ? "Скачать счёт PDF"
-      : depositMethod === "SBP_OZON"
-        ? "Получить QR-код СБП"
-        : "Перейти к оплате";
+      : isLoading
+        ? depositMethod === "SBP_OZON"
+          ? "Создаём платёж СБП..."
+          : "Создаём платёж..."
+        : depositMethod === "SBP_OZON"
+          ? "Получить QR-код СБП"
+          : "Перейти к оплате";
 
   return (
     <div className="space-y-6">

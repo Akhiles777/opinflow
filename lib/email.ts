@@ -237,6 +237,42 @@ export async function sendAdminNotificationEmail(
   });
 }
 
+// Приветствие нового респондента, добавленного через анкету для своей базы
+export async function sendRespondentWelcomeViaSelfServiceEmail(
+  email: string,
+  name: string,
+  resetToken: string,
+  surveyTitle: string
+) {
+  const base = getBaseUrl();
+  const link = `${base}/auth/reset-password?token=${resetToken}`;
+  await sendMail({
+    to: email,
+    subject: "Вы участвовали в опросе — добро пожаловать на ПотокМнений",
+    html: `
+      <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:40px 32px;">
+        <div style="background:#F3F0FF;border-radius:12px;padding:6px 14px;display:inline-block;margin-bottom:20px;">
+          <span style="color:#6D3AE2;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;">ПотокМнений</span>
+        </div>
+        <h2 style="color:#111827;margin:0 0 12px;">Привет, ${name}!</h2>
+        <p style="color:#374151;line-height:1.6;margin:0 0 16px;">
+          Вы только что прошли опрос <strong>«${surveyTitle}»</strong> и автоматически стали участником платформы <strong>ПотокМнений</strong>.
+        </p>
+        <p style="color:#374151;line-height:1.6;margin:0 0 16px;">
+          На платформе вы можете участвовать в оплачиваемых опросах и зарабатывать за своё мнение.
+          Чтобы войти в личный кабинет, установите пароль по кнопке ниже — ссылка действует 7 дней.
+        </p>
+        <a href="${link}" style="display:inline-block;background:#6D3AE2;color:#fff;text-decoration:none;padding:14px 28px;border-radius:10px;font-weight:600;font-size:15px;">
+          Установить пароль и войти
+        </a>
+        <p style="color:#9CA3AF;font-size:12px;margin-top:32px;">
+          Если вы не хотите участвовать в опросах — просто проигнорируйте это письмо. Ваш email не будет использоваться для рассылок без вашего согласия.
+        </p>
+      </div>
+    `,
+  });
+}
+
 // Статус опроса (заказчику)
 export async function sendSurveyStatusEmail(
   email: string,

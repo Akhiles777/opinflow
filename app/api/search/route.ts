@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
   // ── Respondent ─────────────────────────────────────────────────────────────
   if (role === "RESPONDENT") {
     const availableSurveys = await prisma.survey.findMany({
-      where: { status: "ACTIVE", title: { contains: q, mode: "insensitive" } },
+      where: { status: "ACTIVE", title: { contains: q, mode: "insensitive" }, NOT: { surveyMode: "SELF_SERVICE" } },
       take: 5,
       select: { id: true, title: true, category: true, reward: true, estimatedTime: true },
     });
@@ -129,7 +129,7 @@ export async function GET(request: NextRequest) {
     const mySurveys = await prisma.survey.findMany({
       where: { creatorId: userId, title: { contains: q, mode: "insensitive" } },
       take: 6,
-      select: { id: true, title: true, status: true, _count: { select: { sessions: true } } },
+      select: { id: true, title: true, status: true, surveyMode: true, _count: { select: { sessions: true } } },
     });
     if (mySurveys.length > 0) {
       groups.push({
@@ -139,7 +139,9 @@ export async function GET(request: NextRequest) {
           id: s.id,
           title: s.title,
           subtitle: `${s._count.sessions} ответов · ${mapSurveyStatus(s.status)}`,
-          href: `/client/surveys/${s.id}`,
+          href: (s.surveyMode ?? "POOL") === "SELF_SERVICE"
+            ? `/client/surveys/self-service/${s.id}`
+            : `/client/surveys/${s.id}`,
           icon: "survey",
         })),
       });

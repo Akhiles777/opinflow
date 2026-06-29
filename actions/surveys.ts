@@ -88,6 +88,7 @@ async function canSurveyBeStarted(surveyId: string) {
     select: {
       id: true,
       status: true,
+      surveyMode: true,
       startsAt: true,
       endsAt: true,
       maxResponses: true,
@@ -95,6 +96,11 @@ async function canSurveyBeStarted(surveyId: string) {
   });
 
   if (!survey || survey.status !== "ACTIVE") {
+    return { survey: null, error: "Опрос недоступен" as const };
+  }
+
+  // Self-service surveys are only accessible via private link, not the respondent pool
+  if ((survey.surveyMode ?? "POOL") === "SELF_SERVICE") {
     return { survey: null, error: "Опрос недоступен" as const };
   }
 

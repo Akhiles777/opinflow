@@ -223,6 +223,10 @@ model Survey {
   aiIndustry      String?
   aiTargetAudience String?
   draftStep       Int?
+  surveyMode      String    @default("POOL")   // "POOL" | "SELF_SERVICE"
+  publicLinkSlug  String?   @unique
+  aiAnalyticsPaid    Boolean   @default(false)
+  aiAnalyticsPaidAt  DateTime?
 
   creator    User             @relation("SurveyCreator", fields: [creatorId], references: [id])
   responses  SurveyResponse[]
