@@ -31,6 +31,22 @@ export default async function PublicSurveyPage({ params }: { params: Promise<{ s
 
   if (!survey || (survey.surveyMode ?? "POOL") !== "SELF_SERVICE") notFound();
 
+  if (survey.status === "PENDING_MODERATION") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-site-bg p-6">
+        <div className="w-full max-w-md rounded-2xl border border-dash-border bg-dash-card p-10 text-center">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-amber-100 text-3xl">
+            ⏳
+          </div>
+          <h1 className="text-xl font-bold text-dash-heading">Анкета на модерации</h1>
+          <p className="mt-2 text-sm text-dash-muted">
+            Эта анкета ещё проходит проверку. Обратитесь к создателю, чтобы узнать, когда она откроется.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   if (survey.status !== "ACTIVE") {
     return (
       <div className="flex min-h-screen items-center justify-center bg-site-bg p-6">

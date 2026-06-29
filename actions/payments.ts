@@ -528,7 +528,7 @@ export async function createOzonDepositAction(amount: number): Promise<
       if (result.error.includes("OZON_ACQUIRING_NOT_CONFIGURED")) {
         return { error: "Оплата через СБП (Ozon) не настроена." };
       }
-      return { error: `Не удалось создать платёж СБП. ${result.error}` };
+      return { error: "Не удалось создать платёж СБП. Попробуйте другой способ оплаты." };
     }
 
     await prisma.payment.create({

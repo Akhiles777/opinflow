@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import { requireRole } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
-import { mapSurveyQuestion } from "@/lib/survey-mappers";
 import { buildQuantitativeBlocks } from "@/lib/survey-quantitative";
 import { fetchSurveyAnalysisDiagnostics } from "@/lib/analysis-diagnostics-db";
 import PageHeader from "@/components/dashboard/PageHeader";
@@ -116,7 +115,7 @@ export default async function SelfServiceSurveyDetailPage({ params }: { params: 
         responseCount={survey._count.responses}
         walletBalance={Number(wallet?.balance ?? 0)}
         aiAnalyticsPaid={survey.aiAnalyticsPaid}
-        isActive={survey.status === "ACTIVE"}
+        status={survey.status}
       />
 
       {/* Quantitative + AI Analysis (always show quant; AI only if paid) */}
