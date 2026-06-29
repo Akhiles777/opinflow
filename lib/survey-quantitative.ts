@@ -7,6 +7,8 @@ export type QuantQuestionBlock = {
   type: QuestionType;
   totalAnswers: number;
   distribution: { label: string; count: number }[];
+  openAnswers?: string[];
+  rankMaxScore?: number;
 };
 
 type RawQuestionForQuant = Pick<
@@ -33,7 +35,7 @@ export function buildQuantitativeBlocks(questions: RawQuestionForQuant[]): Quant
     const question = mapSurveyQuestion(raw);
     const totalAnswers = raw.answers.length;
 
-    if (question.type === "SINGLE_CHOICE" || question.type === "MULTIPLE_CHOICE" || question.type === "RANKING") {
+    if (question.type === "SINGLE_CHOICE" || question.type === "MULTIPLE_CHOICE") {
       const counts: Record<string, number> = {};
       for (const option of question.options) {
         counts[option] = 0;
@@ -60,6 +62,58 @@ export function buildQuantitativeBlocks(questions: RawQuestionForQuant[]): Quant
           .map(([label, count]) => ({ label, count }))
           .sort((left, right) => right.count - left.count),
       });
+      continue;
+    }
+
+    if (question.type === "RANKING") {
+      const numOptions = question.options.length;
+      const scores: Record<string, number> = {};
+      for (const option of question.options) {
+        scores[option] = 0;
+      }
+
+      for (const answer of raw.answers) {
+        if (!Array.isArray(answer.value)) continue;
+        const ranked = answer.value.filter((item): item is string => typeof item === "string");
+        ranked.forEach((item, index) => {
+          if (item in scores) {
+            // 1st place = numOptions-1 pts, last place = 0 pts
+            scores[item] += numOptions - 1 - index;
+          }
+        });
+      }
+
+      const maxScore = Math.max(1, (numOptions - 1) * totalAnswers);
+
+      blocks.push({
+        id: raw.id,
+        title: question.title,
+        type: raw.type,
+        totalAnswers,
+        rankMaxScore: maxScore,
+        distribution: Object.entries(scores)
+          .map(([label, count]) => ({ label, count }))
+          .sort((left, right) => right.count - left.count),
+      });
+      continue;
+    }
+
+    if (question.type === "OPEN_TEXT") {
+      const openAnswers: string[] = [];
+      for (const answer of raw.answers) {
+        const text = normalizeAnswerValue(answer.value);
+        if (text?.trim()) openAnswers.push(text.trim());
+      }
+      if (openAnswers.length > 0 || totalAnswers > 0) {
+        blocks.push({
+          id: raw.id,
+          title: question.title,
+          type: raw.type,
+          totalAnswers,
+          distribution: [],
+          openAnswers,
+        });
+      }
       continue;
     }
 
@@ -135,9 +189,21 @@ export function quantitativeSummaryForPrompt(blocks: QuantQuestionBlock[], maxLe
 
   const text = blocks
     .map((block) => {
+      if (block.type === "OPEN_TEXT") {
+        const answers = (block.openAnswers ?? []).slice(0, 30).map((a) => `  • ${a}`).join("\n");
+        return `Вопрос [OPEN_TEXT]: «${block.title}»\nОтветов: ${block.totalAnswers}\n${answers}`;
+      }
+
       const lines = block.distribution
         .slice(0, 20)
-        .map((row) => `  • ${row.label}: ${row.count} (${block.totalAnswers > 0 ? Math.round((row.count / block.totalAnswers) * 100) : 0}%)`)
+        .map((row) => {
+          if (block.type === "RANKING" && block.rankMaxScore) {
+            const pct = Math.round((row.count / block.rankMaxScore) * 100);
+            return `  • ${row.label}: score ${row.count} (${pct}% от макс.)`;
+          }
+          const pct = block.totalAnswers > 0 ? Math.round((row.count / block.totalAnswers) * 100) : 0;
+          return `  • ${row.label}: ${row.count} (${pct}%)`;
+        })
         .join("\n");
       return `Вопрос [${block.type}]: «${block.title}»\nОтветов: ${block.totalAnswers}\n${lines}`;
     })

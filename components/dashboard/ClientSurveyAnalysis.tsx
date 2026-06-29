@@ -58,25 +58,67 @@ function QuantitativeSection({ blocks }: { blocks: QuantQuestionBlock[] }) {
       </p>
       <div className="mt-6 grid gap-8">
         {blocks.map((block) => {
+          if (block.type === "OPEN_TEXT") {
+            return (
+              <div key={block.id} className="rounded-2xl border border-dash-border bg-dash-bg p-5">
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <div className="text-base font-semibold text-dash-heading">{block.title}</div>
+                  <div className="text-xs uppercase tracking-[0.14em] text-dash-muted">
+                    открытый · ответов: {block.totalAnswers}
+                  </div>
+                </div>
+                {block.openAnswers && block.openAnswers.length > 0 ? (
+                  <div className="mt-4 grid gap-2 max-h-72 overflow-y-auto pr-1">
+                    {block.openAnswers.map((text, index) => (
+                      <div
+                        key={`${block.id}-open-${index}`}
+                        className="rounded-xl border border-dash-border bg-dash-card px-4 py-2.5 text-sm text-dash-body"
+                      >
+                        {text}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-4 text-sm text-dash-muted">Открытых ответов пока нет.</p>
+                )}
+              </div>
+            );
+          }
+
+          const isRanking = block.type === "RANKING";
           const maxCount = Math.max(1, ...block.distribution.map((row) => row.count));
+
           return (
             <div key={block.id} className="rounded-2xl border border-dash-border bg-dash-bg p-5">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <div className="text-base font-semibold text-dash-heading">{block.title}</div>
                 <div className="text-xs uppercase tracking-[0.14em] text-dash-muted">
-                  {block.type} · ответов: {block.totalAnswers}
+                  {isRanking ? "ранжирование" : block.type} · ответов: {block.totalAnswers}
                 </div>
               </div>
+              {isRanking && (
+                <p className="mt-1 text-xs text-dash-muted">Взвешенный рейтинг: чем выше балл, тем популярнее вариант.</p>
+              )}
               <div className="mt-4 grid gap-3">
-                {block.distribution.slice(0, 12).map((row) => {
-                  const pct = block.totalAnswers > 0 ? Math.round((row.count / block.totalAnswers) * 100) : 0;
+                {block.distribution.slice(0, 12).map((row, rowIndex) => {
+                  let pct: number;
+                  if (isRanking && block.rankMaxScore) {
+                    pct = block.rankMaxScore > 0 ? Math.round((row.count / block.rankMaxScore) * 100) : 0;
+                  } else {
+                    pct = block.totalAnswers > 0 ? Math.round((row.count / block.totalAnswers) * 100) : 0;
+                  }
                   const barWidth = maxCount > 0 ? Math.round((row.count / maxCount) * 100) : 0;
                   return (
                     <div key={`${block.id}-${row.label}`} className="space-y-1.5">
                       <div className="flex justify-between gap-3 text-sm">
-                        <span className="min-w-0 flex-1 text-dash-body">{row.label}</span>
+                        <span className="min-w-0 flex-1 text-dash-body">
+                          {isRanking && (
+                            <span className="mr-1.5 text-xs font-semibold text-dash-muted">#{rowIndex + 1}</span>
+                          )}
+                          {row.label}
+                        </span>
                         <span className="shrink-0 tabular-nums text-dash-muted">
-                          {row.count} · {pct}%
+                          {isRanking ? `${pct}%` : `${row.count} · ${pct}%`}
                         </span>
                       </div>
                       <div className="h-2.5 w-full overflow-hidden rounded-full bg-dash-border">
