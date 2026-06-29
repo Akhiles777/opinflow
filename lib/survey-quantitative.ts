@@ -185,15 +185,12 @@ export function buildQuantitativeBlocks(questions: RawQuestionForQuant[]): Quant
 }
 
 export function quantitativeSummaryForPrompt(blocks: QuantQuestionBlock[], maxLength = 12_000): string {
-  if (!blocks.length) return "";
+  // OPEN_TEXT answers are passed separately as openAnswers — exclude them here to avoid duplication
+  const closedBlocks = blocks.filter((b) => b.type !== "OPEN_TEXT");
+  if (!closedBlocks.length) return "";
 
-  const text = blocks
+  const text = closedBlocks
     .map((block) => {
-      if (block.type === "OPEN_TEXT") {
-        const answers = (block.openAnswers ?? []).slice(0, 30).map((a) => `  • ${a}`).join("\n");
-        return `Вопрос [OPEN_TEXT]: «${block.title}»\nОтветов: ${block.totalAnswers}\n${answers}`;
-      }
-
       const lines = block.distribution
         .slice(0, 20)
         .map((row) => {
