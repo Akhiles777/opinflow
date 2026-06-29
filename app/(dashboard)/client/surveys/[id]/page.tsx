@@ -241,7 +241,7 @@ export default async function ClientSurveyDetailPage({ params }: { params: Promi
     const question = mapSurveyQuestion(rawQuestion);
     const totalAnswers = rawQuestion.answers.length;
 
-    if (question.type === "SINGLE_CHOICE" || question.type === "MULTIPLE_CHOICE" || question.type === "RANKING") {
+    if (question.type === "SINGLE_CHOICE" || question.type === "MULTIPLE_CHOICE") {
       const counts: Record<string, number> = {};
       for (const option of question.options) {
         counts[option] = 0;
@@ -263,6 +263,34 @@ export default async function ClientSurveyDetailPage({ params }: { params: Promi
         ...question,
         totalAnswers,
         counts,
+        rankMaxScore: null as number | null,
+        recentText: [] as string[],
+        matrix: {} as Record<string, Record<string, number>>,
+      };
+    }
+
+    if (question.type === "RANKING") {
+      const numOptions = question.options.length;
+      const scores: Record<string, number> = {};
+      for (const option of question.options) {
+        scores[option] = 0;
+      }
+
+      for (const answer of rawQuestion.answers) {
+        if (!Array.isArray(answer.value)) continue;
+        const ranked = answer.value.filter((item): item is string => typeof item === "string");
+        ranked.forEach((item, index) => {
+          if (item in scores) {
+            scores[item] += numOptions - 1 - index;
+          }
+        });
+      }
+
+      return {
+        ...question,
+        totalAnswers,
+        counts: scores,
+        rankMaxScore: Math.max(1, (numOptions - 1) * totalAnswers) as number | null,
         recentText: [] as string[],
         matrix: {} as Record<string, Record<string, number>>,
       };
@@ -286,6 +314,7 @@ export default async function ClientSurveyDetailPage({ params }: { params: Promi
         ...question,
         totalAnswers,
         counts,
+        rankMaxScore: null as number | null,
         recentText: [] as string[],
         matrix: {} as Record<string, Record<string, number>>,
       };
@@ -313,6 +342,7 @@ export default async function ClientSurveyDetailPage({ params }: { params: Promi
         ...question,
         totalAnswers,
         counts: {} as Record<string, number>,
+        rankMaxScore: null as number | null,
         recentText: [] as string[],
         matrix,
       };
@@ -327,6 +357,7 @@ export default async function ClientSurveyDetailPage({ params }: { params: Promi
       ...question,
       totalAnswers,
       counts: {} as Record<string, number>,
+      rankMaxScore: null as number | null,
       recentText,
       matrix: {} as Record<string, Record<string, number>>,
     };
@@ -512,12 +543,48 @@ export default async function ClientSurveyDetailPage({ params }: { params: Promi
 
               {(question.type === "SINGLE_CHOICE" ||
                 question.type === "MULTIPLE_CHOICE" ||
-                question.type === "RANKING" ||
                 question.type === "SCALE") ? (
                 <div className="mt-5 grid gap-3">
                   {Object.entries(question.counts).map(([label, value]) => (
                     <DistributionBar key={label} label={label} value={value} total={question.totalAnswers} />
                   ))}
+                </div>
+              ) : null}
+
+              {question.type === "RANKING" ? (
+                <div className="mt-5 space-y-1">
+                  <p className="text-xs text-dash-muted">Взвешенный рейтинг: чем выше балл, тем популярнее вариант.</p>
+                  <div className="mt-3 grid gap-3">
+                    {Object.entries(question.counts)
+                      .sort(([, a], [, b]) => b - a)
+                      .map(([label, score], rankIndex) => {
+                        const maxScore = question.rankMaxScore ?? 1;
+                        return (
+                          <div key={label} className="space-y-2">
+                            <div className="flex items-center justify-between gap-3 text-sm">
+                              <span className="min-w-0 truncate text-dash-body">
+                                <span className="mr-1.5 text-xs font-semibold text-dash-muted">#{rankIndex + 1}</span>
+                                {label}
+                              </span>
+                              <span className="shrink-0 tabular-nums text-dash-muted">
+                                {percent(score, maxScore)}%
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-12 gap-1">
+                              {Array.from({ length: 12 }, (_, index) => (
+                                <div
+                                  key={`${label}-${index}`}
+                                  className={[
+                                    "h-2 rounded-full transition-colors",
+                                    index < getFilledSegments(score, maxScore) ? "bg-brand" : "bg-dash-border",
+                                  ].join(" ")}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
                 </div>
               ) : null}
 
