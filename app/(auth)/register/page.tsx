@@ -19,7 +19,7 @@ export default async function RegisterPage({ searchParams }: { searchParams: Sea
   const vkAppId = process.env.VK_CLIENT_ID?.trim() ?? null;
   const vkEnabled = hasVkClientId(process.env.VK_CLIENT_ID);
   const yandexEnabled = hasOAuthCredentials(process.env.YANDEX_CLIENT_ID, process.env.YANDEX_CLIENT_SECRET);
-  const initialRole = params.role === "CLIENT" ? "CLIENT" : "RESPONDENT";
+  const initialRole = params.role === "RESPONDENT" ? "RESPONDENT" : "CLIENT";
   const callbackUrl = params.callbackUrl || "/dashboard";
   const refCode = typeof params.ref === "string" ? params.ref.trim() : undefined;
 
